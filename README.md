@@ -19,6 +19,7 @@ files with yor C apps for them to run.
 
 
 notes/bugs:
+
     * C++ global destructors aren't invoked at app exit
     * C++ exceptions don't work yet due to _start not initializing them for newlib
     
