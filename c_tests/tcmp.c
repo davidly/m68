@@ -16,8 +16,6 @@ template <class T> void cmp( T a, T b )
     printf( "  lt %d le %d eq %d ge %d gt %d\n", lt, le, eq, ge, gt );
 } //cmp
 
-#if 0
-
 void cmp_double( double a, double b )
 {
     double diff = a - b;
@@ -53,8 +51,6 @@ void cmp_float( float a, float b )
     bool ge = ( diff >= 0.0 || abs_diff < FLT_EPSILON );
     printf( "  lt %d le %d eq %d ge %d gt %d\n", lt, le, eq, ge, gt );
 } //cmp_float
-
-#endif
 
 int main( int argc, char * argv[] )
 {
@@ -210,8 +206,6 @@ int main( int argc, char * argv[] )
     cmp( (int64_t) 0, (int64_t) 0x8000000000000000 );
     cmp( (int64_t) 0x7fffffffffffffff, (int64_t) 0x8000000000000000 );
 
-#if 0
-   /* the 68000 compiler uses invalid instructions (perhaps for later revs of 68k) for floating point routines */
     printf( "floating point:\n" );
     float f = -0.5f;
     double d = -0.5;
@@ -225,5 +219,4 @@ int main( int argc, char * argv[] )
         d += 0.1;
         ld += 0.1L;
     }
-#endif
 } //main

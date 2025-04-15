@@ -21,5 +21,7 @@ exit /b 0
 echo build m68.elf
 call mm68.bat
 
+call ma.bat tbcd
+
 :alldone
 

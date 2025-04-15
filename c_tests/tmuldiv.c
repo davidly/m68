@@ -147,7 +147,6 @@ int main()
     test_ui32( (uint32_t) -3, (uint32_t) -14 );
     test_ui32( (uint32_t) -37000, (uint32_t) -14 );
 
-#if 0    
     test_i64( (int64_t) 3, (int64_t) 14 );
     test_i64( (int64_t) 370000000, (int64_t) 14 );
 
@@ -162,7 +161,6 @@ int main()
     test_ui64( (uint64_t) -370000000, (uint64_t) 14 );
     test_ui64( (uint64_t) -3, (uint64_t) -14 );
     test_ui64( (uint64_t) -370000000, (uint64_t) -14 );
-#endif    
 
     printf( "tmuldiv ended with great success\n" );
     fflush( stdout );

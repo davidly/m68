@@ -12,3 +12,6 @@ done
 echo build m68.elf
 mm68.sh
 
+echo build tbcd
+ma.sh tbcd
+

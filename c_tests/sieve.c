@@ -16,7 +16,7 @@ int main()
         int i,k;
         int prime,count,iter;
 
-        for (iter = 1; iter <= 1; iter++) {    /* do program 10 times */
+        for (iter = 1; iter <= 10; iter++) {    /* do program 10 times */
                 count = 0;                      /* initialize prime counter */
                 for (i = 0; i <= SIZE; i++)     /* set all flags TRUE */
                         flags[i] = TRUE;

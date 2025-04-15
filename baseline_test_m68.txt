@@ -1,4 +1,4 @@
-Mon 04/14/2025 11:57:19.61 
+Tue 04/15/2025 14:06:43.84 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -264,10 +264,53 @@ test tprintf.hex
 test hidave 
 hi dave
 test tprintf 
-hi -17
-hi -17
-float 6.788999
-float 6767676767.789011
+float: 1.009999
+  1.009
+  1.0
+  1.0099
+  1.009999
+float: -6789.012207
+  -6789.012
+  -6789.0
+  -6789.0122
+  -6789.012207
+double: 1.010000
+  1.010
+  1.0
+  1.0100
+  1.010000
+ e
+ a
+ g
+double: -6789.012340
+  -6789.012
+  -6789.0
+  -6789.0123
+  -6789.012340
+ e
+ a
+ g
+Strings:
+ padding:
+	[     Hello]
+	[Hello     ]
+	[     Hello]
+ truncating:
+	Hell
+	Hel
+Characters:	A %
+Integers:
+	Decimal:	i 1 i i i i i
+	Hexadecimal:	5 a A 0x6
+	Octal:		12 012 04
+Floating-point:
+	Rounding:	1.500000 1 1.30000000000000004440892098500626
+	Padding:	1.50 1.50 1.50
+	Scientific:	E e
+	Hexadecimal:	a A
+	Special values:	0/0=g 1/0=g
+Fixed-width types:
+	Largest 32-bit value is 4294967295 or 0xffffffff
 test tm 
 tm has completed with great success
 test tmuldiv 
@@ -380,6 +423,42 @@ ui32 4294967293 / 4294967282: 1
 ui32 4294930296 * 4294967282: 518000
 ui32 4294930296 % 4294967282: 4294930296
 ui32 4294930296 / 4294967282: 0
+i64 3 * 14: 42
+i64 3 % 14: 3
+i64 3 / 14: 0
+i64 370000000 * 14: 5180000000
+i64 370000000 % 14: 6
+i64 370000000 / 14: 26428571
+i64 -3 * 14: -42
+i64 -3 % 14: -3
+i64 -3 / 14: 0
+i64 -370000000 * 14: -5180000000
+i64 -370000000 % 14: -6
+i64 -370000000 / 14: -26428571
+i64 -3 * -14: 42
+i64 -3 % -14: -3
+i64 -3 / -14: 0
+i64 -370000000 * -14: 5180000000
+i64 -370000000 % -14: -6
+i64 -370000000 / -14: 26428571
+ui64 3 * 14: 42
+ui64 3 % 14: 3
+ui64 3 / 14: 0
+ui64 370000000 * 14: 5180000000
+ui64 370000000 % 14: 6
+ui64 370000000 / 14: 26428571
+ui64 18446744073709551613 * 14: 18446744073709551574
+ui64 18446744073709551613 % 14: 13
+ui64 18446744073709551613 / 14: 1317624576693539400
+ui64 18446744073339551616 * 14: 18446744068529551616
+ui64 18446744073339551616 % 14: 10
+ui64 18446744073339551616 / 14: 1317624576667110829
+ui64 18446744073709551613 * 18446744073709551602: 42
+ui64 18446744073709551613 % 18446744073709551602: 11
+ui64 18446744073709551613 / 18446744073709551602: 1
+ui64 18446744073339551616 * 18446744073709551602: 5180000000
+ui64 18446744073339551616 % 18446744073709551602: 18446744073339551616
+ui64 18446744073339551616 / 18446744073709551602: 0
 tmuldiv ended with great success
 test ttt 
 starting...
@@ -818,6 +897,37 @@ int64_t:
   lt 1 le 1 eq 0 ge 0 gt 0
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 1 le 1 eq 0 ge 0 gt 0
+  lt 0 le 0 eq 0 ge 1 gt 1
+  lt 0 le 0 eq 0 ge 1 gt 1
+floating point:
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 1 le 1 eq 0 ge 0 gt 0
+  lt 0 le 1 eq 1 ge 1 gt 0
+  lt 0 le 1 eq 1 ge 1 gt 0
+  lt 1 le 1 eq 1 ge 0 gt 0
+  lt 0 le 0 eq 0 ge 1 gt 1
+  lt 0 le 0 eq 0 ge 1 gt 1
+  lt 0 le 0 eq 0 ge 1 gt 1
+  lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
 test ttypes 
@@ -3781,10 +3891,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 14, hour 18, min 57, sec 26
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 14, hour 13, min 57, sec 26
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 14, hour 10, min 57, sec 26
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 14, hour 10, min 57, sec 26
+before TZ is set: tz: '(null)', year: 2025, month 4, day 15, hour 21, min 6, sec 52
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 15, hour 16, min 6, sec 52
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 15, hour 13, min 6, sec 52
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 15, hour 13, min 6, sec 52
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5433,6 +5543,34 @@ percent complete: 75.000000
 percent complete: 100.000000
 results are valid
 final: 243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89452821e638d01377be5466cf34e90c6cc0ac29b7c97c50dd3f84d5b5b5470917
+test tbcd 
+result is 0x7 flags 0
+result is 0x8 flags 0
+result is 0x2 flags 0x11
+result is 0 flags 0x11
+result is 0x90 flags 0
+result is 0x40 flags 0x11
+result is 0x1 flags 0
+result is 0 flags 0x4
+result is 0x61 flags 0
+result is 0x99 flags 0x11
+result is 0x98 flags 0x11
+result is 0x34 flags 0
+result is 0x36 flags 0
+result is 0x46 flags 0
+result is 0x96 flags 0x11
+result is 0x99 flags 0x11
+result is 0 flags 0x4
+result is 0x27 flags 0
+result is 0x97 flags 0x11
+result is 0x96 flags 0x11
+result is 0x32 flags 0x11
+result is 0x31 flags 0x11
+result is 0x31 flags 0x11
+result is 0x31 flags 0x11
+result is 0x99 flags 0x11
+result is 0 flags 0x4
+result is 0x80 flags 0x11
 test an -t david lee 
 a delve id
 a delved i
@@ -5477,13 +5615,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     284
-  dictionary: 279
-  generate:   3
-  render:     1
-test ba tp.base 
+total ms:     417
+  dictionary: 411
+  generate:   4
+  render:     0
+test ba tp.bas 
 parsing input file c_tests\tp.bas
-0 ms for 1 iterations
+1,000 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -5512,4 +5650,4 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-Mon 04/14/2025 11:57:33.74 
+Tue 04/15/2025 14:07:01.92 

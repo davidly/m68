@@ -214,6 +214,8 @@ struct m68000
     bool check_condition( uint16_t c );
     void set_nzcv( uint32_t val, uint16_t size = 2 );
     template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior );
+    uint8_t bcd_add( uint8_t a, uint8_t b );
+    uint8_t bcd_sub( uint8_t a, uint8_t b );
 
     void push( uint32_t x )
     {

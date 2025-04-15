@@ -10,7 +10,7 @@
 
     notes:  -- supervisor mode is unimplemented
             -- a handful instructions aren't implemented because gcc+newlib don't use them:
-                 movep, tas, trapv, sbcd, nbcd, illegal, chk, abcd
+                 movep, tas, trapv, illegal, chk
             -- traps are largely unimplemented
             -- trap 0 maps to linux-equivalent system calls
             -- trap 15 maps to a couple m68k system calls
@@ -762,6 +762,8 @@ void m68000::trace_state()
                     else
                         tracer.Trace( "move a%u, usp\n", ea_reg );
                 }
+                else if ( 0x20 == bits11_6 ) // nbcd
+                    tracer.Trace( "nbcd %s\n", effective_string( true ) );
                 else
                     unhandled();
             }
@@ -823,7 +825,12 @@ void m68000::trace_state()
             uint16_t bits8_4 = opbits( 4, 5 );
 
             if ( 0x10 == bits8_4 ) // sbcd
-                unhandled();
+            {
+                if ( opbit( 3 ) ) // address register mode
+                    tracer.Trace( "sbcd -(a%u), -(a%u)\n", ea_reg, op_reg );
+                else // data register mode
+                    tracer.Trace( "sbcd d%u, d%u\n", ea_reg, op_reg );
+            }
             else if ( !bit8 && 3 == op_size ) // divu
                 tracer.Trace( "divu.w %s, d%u\n", effective_string(), op_reg );
             else if ( bit8 && 3 == op_size ) // divs
@@ -879,7 +886,12 @@ void m68000::trace_state()
             uint16_t bits5_4 = opbits( 4, 2 );
 
             if ( bit8 && 0 == bits7_6 && 0 == bits5_4 ) // abcd
-                unhandled();
+            {
+                if ( opbit( 3 ) ) // address register mode
+                    tracer.Trace( "abcd -(a%u), -(a%u)\n", ea_reg, op_reg );
+                else // data register mode
+                    tracer.Trace( "abcd d%u, d%u\n", ea_reg, op_reg );
+            }
             else if ( !bit8 && 3 == bits7_6 ) // mulu
                 tracer.Trace( "mulu.w %s, d%u\n", effective_string( true ), op_reg );
             else if ( bit8 && 3 == bits7_6 ) // muls
@@ -1089,6 +1101,59 @@ uint8_t m68000::add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx 
 
     return result;
 } //add8
+
+uint8_t m68000::bcd_add( uint8_t a, uint8_t b )
+{
+    uint8_t carry_lo = 0;
+    uint8_t sum_lo = ( a & 0xf ) + ( b & 0xf ) + (uint8_t) flag_x();
+    if ( sum_lo >= 10 )
+    {
+        carry_lo = 1;
+        sum_lo -= 10;
+    }
+
+    uint8_t sum_hi = ( ( a >> 4 ) & 0xf ) + ( ( b >> 4 ) & 0xf ) + carry_lo;
+    if ( sum_hi >= 10 )
+    {
+        setflag_c( true );
+        sum_hi -= 10;
+    }
+    else
+        setflag_c( false );
+
+    uint8_t result = ( sum_hi << 4 ) | sum_lo;
+    setflag_x( flag_c() );
+    if ( 0 != result )
+        setflag_z( false );
+    return result;
+} //bcd_add
+
+uint8_t m68000::bcd_sub( uint8_t a, uint8_t b )
+{
+    uint8_t borrow_lo = 0;
+
+    uint8_t diff_lo = ( a & 0xf ) - ( b & 0xf ) - (uint8_t) flag_x();
+    if ( diff_lo >= 10 )
+    {
+        borrow_lo = 1;
+        diff_lo += 10;
+    }
+
+    uint8_t diff_hi = ( ( a >> 4 ) & 0xf ) - ( ( b >> 4 ) & 0xf ) - borrow_lo;
+    if ( diff_hi >= 10 )
+    {
+        setflag_c( true );
+        diff_hi += 10;
+    }
+    else
+        setflag_c( false );
+
+    uint8_t result = ( diff_hi << 4 ) | diff_lo;
+    setflag_x( flag_c() );
+    if ( 0 != result )
+        setflag_z( false );
+    return result;
+} //bcd_sub
 
 bool m68000::check_condition( uint16_t c )
 {
@@ -2136,6 +2201,16 @@ uint64_t m68000::run()
                         else
                             usp = aregs[ ea_reg ];
                     }
+                    else if ( 0x20 == bits11_6 ) // nbcd
+                    {
+                        if ( 0 == ea_mode )
+                            dregs[ ea_reg ].b = bcd_sub( 0, dregs[ ea_reg ].b );
+                        else
+                        {
+                            uint32_t address = effective_address( true );
+                            setui8( address, bcd_sub( 0, effective_value8( address ) ) );
+                        }
+                    }
                     else
                         unhandled();
                 }
@@ -2279,7 +2354,16 @@ uint64_t m68000::run()
                 uint16_t bits8_4 = opbits( 4, 5 );
 
                 if ( 0x10 == bits8_4 ) // sbcd
-                    unhandled();
+                {
+                    if ( opbit( 3 ) ) // address register predecrement mode
+                    {
+                        aregs[ ea_reg ]--;
+                        aregs[ op_reg ]--;
+                        setui8( aregs[ op_reg ], bcd_sub( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ) ) );
+                    }
+                    else // data register mode
+                        dregs[ op_reg ].b = bcd_sub( dregs[ op_reg ].b, dregs[ ea_reg ].b );
+                }
                 else if ( !bit8 && 3 == op_size ) // divu
                 {
                     op_size = 1; // word operation
@@ -2589,7 +2673,18 @@ uint64_t m68000::run()
                 uint16_t bits5_4 = opbits( 4, 2 );
 
                 if ( bit8 && 0 == bits7_6 && 0 == bits5_4 ) // abcd
-                    unhandled();
+                {
+                    if ( opbit( 3 ) ) // address register predecrement mode
+                    {
+                        tracer.Trace( "  bcd ea %#x reg %#x, op %#x reg %#x\n", ea_reg, aregs[ ea_reg ], op_reg, aregs[ op_reg ] );
+                        aregs[ ea_reg ]--;
+                        aregs[ op_reg ]--;
+                        tracer.Trace( "  after decrement bcd ea reg %#x, op reg %#x\n", aregs[ ea_reg ], aregs[ op_reg ] );
+                        setui8( aregs[ op_reg ], bcd_add( getui8( aregs[ ea_reg ] ), getui8( aregs[ op_reg ] ) ) );
+                    }
+                    else // data register mode
+                        dregs[ op_reg ].b = bcd_add( dregs[ op_reg ].b, dregs[ ea_reg ].b );
+                }
                 else if ( !bit8 && 3 == bits7_6 ) // mulu
                 {
                     op_size = 1; // word operation
