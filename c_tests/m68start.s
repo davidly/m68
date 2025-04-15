@@ -29,12 +29,19 @@ _start:
         move.l %d0, -(%a7)
 
         jsr main
+
+                  jsr __libc_fini_array
         bra exit_emulator
 
   .global _init
   .type _init, @function
 _init:
         # call C and C++ initialization functions (this happens for free in newlib)
+    rts
+
+  .global _fini
+  .type _fini, @function
+_fini:
     rts
 
   .global exit_emulator
