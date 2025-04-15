@@ -53,11 +53,13 @@ c_tests folder (test apps + newlib stubs with Linux syscall support)
     * m.bat/m.sh:  builds C++ apps on Windows and Linux
     * mm68.bat/mm68.sh: builds the m68 emulator for the 68000 to run nested as another test case.
     * mall.bat/mall.sh: builds all test apps on Windows/Linux
+    * ma.bat/ma.sh: builds .s 68000 assembly file apps
     * *.c:         various test apps. 
+    * tbcd.s:      validates the 3 68000 BCD instructions
 
 notes/bugs:
 
     * C++ global destructors aren't invoked at app exit
     * C++ exceptions don't work yet due to _start not initializing them for newlib
-    * These insructions are unimplemented: movep, tas, trapv, sbcd, nbcd, illegal, chk, abcd
+    * These insructions are unimplemented: movep, tas, trapv, illegal, chk
     
