@@ -1,5 +1,5 @@
 # the bare minimum to start C apps that use syscall-less newlib on teh 68000
-# per calling conventions, I think d0, d1, a0, and a1 are scratch. others must be preserved.
+# per calling conventions, d0, d1, a0, and a1 are scratch. others must be preserved.
 
 .text
   .global  _start
