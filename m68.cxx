@@ -1196,9 +1196,9 @@ static int msc_clock_gettime( clockid_t clockid, struct timespec_syscall * tv )
 
 #endif
 
+#ifdef M68
 static int linux_translate_flags( int flags )
 {
-#ifdef M68
     int f = flags & 3; // copy rd/wr/rdrw
 
     if ( 0x200 & flags )
@@ -1215,11 +1215,8 @@ static int linux_translate_flags( int flags )
 
     tracer.Trace( "  flags translated from 68000 %x to linux %x\n", flags, f );
     return f;
-
-#else
-    return flags;
-#endif
 } //linux_translate_flags
+#endif
 
 #ifdef __APPLE__
 
@@ -1627,7 +1624,7 @@ static const char * lookup_syscall( uint32_t x )
     return "unknown";
 } //lookup_syscall
 
-static void update_result_errno( CPUClass & cpu, int result )
+static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
 {
     if ( result >= 0 || result <= -4096 ) // syscalls like write() return positive values to indicate success.
     {
@@ -1753,7 +1750,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 strcpy( pin, poutwin32 + 2 ); // get past C:
             }
             else
-                tracer.Trace( "  _getcwd failed on win32, error %d\n", errno );
+                tracer.Trace( "  _getcwd failed on win32, error %d\n", (int) errno );
 
             tracer.Trace( "  getcwd returning '%s'\n", pin );
 #else
@@ -2866,7 +2863,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             void * buf = cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             REG_TYPE buflen = ACCESS_REG( REG_ARG1 );
             unsigned int flags = (unsigned int) ACCESS_REG( REG_ARG2 );
-            int result = 0;
+            SIGNED_REG_TYPE result = 0;
 
 #if defined(_WIN32) || defined(__APPLE__) || defined( M68K )
             int * pbuf = (int *) buf;
@@ -3469,9 +3466,9 @@ static int ends_with( const char * str, const char * end )
     return ( 0 == _stricmp( str + len - lenend, end ) );
 } //ends_with
 
+#ifdef M68
 static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
 {
-#ifdef M68
     ElfHeader32 ehead = {0};
     fseek( fp, (long) 0, SEEK_SET );
     size_t read = fread( &ehead, 1, sizeof ehead, fp );
@@ -3943,11 +3940,8 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     tracer.Trace( "vm memory start:                 %p\n", memory.data() );
     tracer.Trace( "memory_size:                     %#x == %d\n", memory_size, memory_size );
 
-#endif //M68
     return true;
 } //load_image32
-
-#ifdef M68
 
 static bool load_68000_hex( const char * pimage )
 {
@@ -4092,8 +4086,10 @@ static bool load_image( const char * pimage, const char * app_args )
     if ( 0x464c457f != ehead.magic && 0x7f454c46 != ehead.magic )
         usage( "elf image file's magic header is invalid" );
 
+#ifdef M68
     if ( 1 == ehead.bit_width )
         return load_image32( fp, pimage, app_args );
+#endif
 
 #ifndef M68
 
@@ -4336,9 +4332,9 @@ static bool load_image( const char * pimage, const char * app_args )
     // write the command-line arguments into the vm memory in a place where _start can find them.
     // there's an array of pointers to the args followed by the arg strings at offset arg_data_offset.
 
-    uint64_t * parg_data = (uint64_t *) ( memory.data() + arg_data_offset );
     const uint32_t max_args = 40;
-    char * buffer_args = (char *) & ( parg_data[ max_args ] );
+    REG_TYPE aargs[ max_args ]; // vm pointers to each arguments
+    char * buffer_args = (char *) ( memory.data() + arg_data_offset );
     size_t image_len = strlen( pimage );
     vector<char> full_command( 2 + image_len + strlen( app_args ) );
     strcpy( full_command.data(), pimage );
@@ -4361,8 +4357,8 @@ static bool load_image( const char * pimage, const char * app_args )
             *space = 0;
 
         uint64_t offset = pargs - buffer_args;
-        parg_data[ app_argc ] = (uint64_t) ( offset + arg_data_offset + g_base_address + max_args * sizeof( uint64_t ) );
-        tracer.Trace( "  argument %d is '%s', at vm address %llx\n", app_argc, pargs, parg_data[ app_argc ] );
+        aargs[ app_argc ] = offset + g_base_address + arg_data_offset;
+        tracer.Trace( "  argument %d is '%s', at vm address %llx\n", app_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
 
         app_argc++;
         pargs += strlen( pargs );
@@ -4488,7 +4484,7 @@ static bool load_image( const char * pimage, const char * app_args )
     for ( int iarg = (int) app_argc - 1; iarg >= 0; iarg-- )
     {
         pstack--;
-        *pstack = parg_data[ iarg ];
+        *pstack = aargs[ iarg ];
     }
 
     pstack--;
