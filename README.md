@@ -1,11 +1,11 @@
 # m68
-m68 runs 68000 elf and Motorola hex binaries on Windows and Linux.
+m68 runs 68000 elf and Motorola hex binaries on Windows, macOS, and Linux.
 
 m68 loads binaries into memory then emulates the Motorola 68000 to execute them. 
 
 C and C++ programs in the c_tests folder can be built with a 68000 cross compiler on your platform 
 of choice. I've run buildgcc-8.2.0.sh on both Windows 11 running on AMD64 and Ubuntu running 
-on Arm64. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details.
+on Arm64 to build the GNU gcc 8.2.0 cross compiler. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details.
 
 The build scripts m.bat and m.sh in the c_tests folder can be used to build samples on Windows and Linux.
 mm68.bat and mm68.sh build the m68 emulator targeting the 68000 so the emulator can run itself recursively.
@@ -37,8 +37,8 @@ files:
     * djl_mmap.hxx: Support for mmap syscalls. Newlib doesn't use it so currently unused.
     * djl_os.hxx:   Abstracts various OS, CPU, and compiler-specific concepts
     * djltrace.hxx: Used for tracing status and instructions
-    * m.bat/m.sh:   Builds debug versions of m68 on Windows/Linux
-    * mr.bat/mr.sh: Builds release versions of m6 on Windows/Linux
+    * m.bat/mmac.sh/m.sh: Builds debug versions of m68 on Windows/macOS/Linux
+    * mr.bat/mrmac.sh/mr.sh: Builds release versions of m6 on Windows/macOS/Linux
     * runall.bat/runall.sh: Runs test apps in c_tests to validate m68
     * baseline_test_m68.txt: Expected results of runall.bat/runall.sh test scripts
     * mgr.bat/mclr.bat: Builds m68 on Windows using gcc and clang. clang and gcc versions of m68 are about 14% faster than msft C++.
