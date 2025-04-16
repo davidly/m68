@@ -2,14 +2,14 @@
 setlocal
 
 set _runcmd=m68 -h:60
-if "%1" == "nested" (set _runcmd=m68 -h:80 c_tests\m68.elf -h:60 )
+if "%1" == "nested" (set _runcmd=m68cl -h:80 c_tests\m68.elf -h:60 )
 
 set outputfile=test_m68.txt
 echo %date% %time% >%outputfile%
 
 rem note that tmuldiv results are incorrect due to compiler bugs but consistent with m68k
 
-set _applist=sieve e ttt tm ts tpi tmuldiv tstr mm tprintf
+set _applist=sieve e ttt tm ts tpi tmuldiv tstr mm tprintf tshift
 
 ( for %%a in (%_applist%) do ( call :appRun %%a ) )
 
@@ -18,7 +18,7 @@ rem for example, the old gcc for m68k has a different value for infinity for flo
 
 set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              tcmp ttypes tarray trw terrno mm_old ttime fileops tpi ^
-             t_setjmp td tf tap tphi mm ts glob nantst pis tbcd
+             t_setjmp td tf tap tphi mm ts glob nantst pis tbcd tshift
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 

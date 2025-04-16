@@ -14,4 +14,6 @@ mm68.sh
 
 echo build tbcd
 ma.sh tbcd
+ma.sh tshift
+
 

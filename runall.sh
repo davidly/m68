@@ -9,7 +9,7 @@ outputfile="test_m68.txt"
 date_time=$(date)
 echo "$date_time" >$outputfile
 
-for arg in sieve e ttt tm ts tpi tmuldiv tstr mm tprintf
+for arg in sieve e ttt tm ts tpi tmuldiv tstr mm tprintf tshift
 do
     echo test $arg.hex
     echo test $arg.hex >>$outputfile
@@ -18,7 +18,7 @@ done
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
              tcmp ttypes tarray trw terrno mm_old ttime fileops tpi \
-             t_setjmp td tf tap tphi mm ts glob nantst pis tbcd;
+             t_setjmp td tf tap tphi mm ts glob nantst pis tbcd tshift;
 do
     echo $arg
     echo test $arg >>$outputfile

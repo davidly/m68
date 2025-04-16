@@ -37,12 +37,13 @@ _start:
   .type _init, @function
 _init:
         # call C and C++ initialization functions (this happens for free in newlib)
-    rts
+        # make sure C++ exception objects are registered so unwind can find them (no idea how to do this)
+        rts
 
   .global _fini
   .type _fini, @function
 _fini:
-    rts
+        rts
 
   .global exit_emulator
   .type exit_emulator, @function

@@ -82,6 +82,21 @@ uint16_t inline get_bits16( uint16_t x, uint16_t lowbit, uint16_t len )
     return ( val & ( ( 1 << len ) - 1 ) );
 } //get_bits16
 
+bool sign8( uint8_t b )
+{
+    return( 0 != ( 0x80 & b ) );
+} //sign8
+
+bool sign16( uint16_t w )
+{
+    return( 0 != ( 0x8000 & w ) );
+} //sign16
+
+bool sign32( uint32_t l )
+{
+    return( 0 != ( 0x80000000 & l ) );
+} //sign32
+
 const char * m68000::render_flags()
 {
     static char flags[ 6 ] = { 0 };
@@ -282,7 +297,7 @@ uint32_t m68000::effective_address( bool force_imm_word )
             bool isl = get_bit16( extension, 11 );
             uint16_t scale = get_bits16( extension, 9, 2 );
             if ( 0 != scale )
-                unhandled();
+                unhandled(); // if not 0, it's a >68000 instruction
             int32_t displacement = sign_extend( get_bits16( extension, 0, 8 ), 7 ); // ignoring bit 8 apparently?
             uint32_t Xval = isa ? aregs[ Xn ] : dregs[ Xn ].l;
             if ( !isl )
@@ -553,11 +568,8 @@ void m68000::trace_state()
                     pc += 4;
                 else
                     pc += 2;
-                if ( 1 == ea_mode )
-                {
-                    tracer.Trace( "ori with mode 1 is an invalid opcode\n" );
+                if ( 1 == ea_mode ) // this is invalid on the 68000
                     unhandled();
-                }
                 tracer.Trace( "ori.%c #%u, %s\n", get_size(), val, effective_string() );
             }
             else if ( 0xa == bits11_8 ) // eori
@@ -815,7 +827,7 @@ void m68000::trace_state()
         case 7: // moveq
         {
             if ( opbit( 8 ) )
-                unhandled();
+                unhandled();  // it's not a 68000 instruction if this bit is set
 
             uint32_t data = sign_extend( opbits( 0, 8 ), 7 );
             tracer.Trace( "moveq #%d, d%u\n", data, op_reg );
@@ -877,7 +889,7 @@ void m68000::trace_state()
                 tracer.Trace( "cmpm.%c (a%u)+, (a%u)+\n", get_size(), ea_reg, op_reg );
             else if ( bit8 ) // eor
                 tracer.Trace( "eor.%c d%u, %s\n", get_size(), op_reg, effective_string( op_size < 2 ) );
-            else // cmp
+            else
                 unhandled();
             break;
         }
@@ -944,13 +956,13 @@ void m68000::trace_state()
         {
             uint16_t bits4_3 = opbits( 3, 2 );
             if ( 0 == op_reg && 3 == op_size ) // ASd memory
-                unhandled();
+                tracer.Trace( "as%c.w %s\n", opbit( 8 ) ? 'l' : 'r', effective_string() );
             else if ( 1 == op_reg && 3 == op_size ) // LSd memory
-                unhandled();
+                tracer.Trace( "ls%c.w %s\n", opbit( 8 ) ? 'l' : 'r', effective_string() );
             else if ( 2 == op_reg && 3 == op_size ) // ROXd memory
-                unhandled();
+                tracer.Trace( "rox%c.w %s\n", opbit( 8 ) ? 'l' : 'r', effective_string() );
             else if ( 3 == op_reg && 3 == op_size ) // ROd memory
-                unhandled();
+                tracer.Trace( "ro%c.w %s\n", opbit( 8 ) ? 'l' : 'r', effective_string() );
             else if ( 0 == bits4_3 ) // ASd
             {
                 bool is_left = opbit( 8 );
@@ -1010,9 +1022,6 @@ void m68000::trace_state()
     }
 
     //tracer.Trace( "80a28964: " ); tracer.TraceBinaryData( getmem( 0x80a28964 ), 4, 4 );
-    //tracer.Trace( "80a25928 + 20: " ); tracer.TraceBinaryData( getmem( 0x80a25928 + 20 ), 4, 4 );
-    //tracer.TraceBinaryData( getmem( 0xffd0 ), 48, 4 );
-    //tracer.TraceBinaryData( getmem( 0x3070 ), 16, 4 );
     //tracer.TraceBinaryData( getmem( 0x307c ), 32, 4 );
     pc = save_pc;
 } //trace_state
@@ -2693,10 +2702,8 @@ uint64_t m68000::run()
                 {
                     if ( opbit( 3 ) ) // address register predecrement mode
                     {
-                        tracer.Trace( "  bcd ea %#x reg %#x, op %#x reg %#x\n", ea_reg, aregs[ ea_reg ], op_reg, aregs[ op_reg ] );
                         aregs[ ea_reg ]--;
                         aregs[ op_reg ]--;
-                        tracer.Trace( "  after decrement bcd ea reg %#x, op reg %#x\n", aregs[ ea_reg ], aregs[ op_reg ] );
                         setui8( aregs[ op_reg ], bcd_add( getui8( aregs[ ea_reg ] ), getui8( aregs[ op_reg ] ) ) );
                     }
                     else // data register mode
@@ -2853,15 +2860,78 @@ uint64_t m68000::run()
             case 0xe: // ASd / LSd / ROXd / ROd
             {
                 uint16_t bits4_3 = opbits( 3, 2 );
-                if ( 0 == op_reg && 3 == op_size ) // ASd memory
-                    unhandled();
-                else if ( 1 == op_reg && 3 == op_size ) // LSd memory
-                    unhandled();
-                else if ( 2 == op_reg && 3 == op_size ) // ROXd memory
-                    unhandled();
-                else if ( 3 == op_reg && 3 == op_size ) // ROd memory
-                    unhandled();
-                else if ( 0 == bits4_3 || 1 == bits4_3 ) // ASd / LSd
+                if ( ( 0 == op_reg || 1 == op_reg ) && 3 == op_size ) // ASd / LSd memory
+                {
+                    bool is_asd = ( 0 == op_reg );
+                    bool is_left = opbit( 8 );
+                    uint32_t address = effective_address( true );
+                    uint16_t value = effective_value16( address );
+                    bool original_signed = ( 0 != ( value & 0x8000 ) );
+
+                    if ( is_left )
+                    {
+                        setflag_c( original_signed );
+                        setflag_x( original_signed );
+                        value <<= 1;
+                    }
+                    else
+                    {
+                        setflag_c( value & 1 );
+                        setflag_x( value & 1 );
+                        value >>= 1;
+                        if ( is_asd && original_signed )
+                            value |= 0x8000;
+                    }
+                    bool result_signed = ( 0 != ( value & 0x8000 ) );
+                    if ( is_asd )
+                        setflag_v( original_signed != result_signed );
+                    else
+                        setflag_v( false );
+                    setflag_n( result_signed );
+                    setflag_z( 0 == value );
+                    setui16( address, value );
+                }
+                else if ( ( 3 == op_reg || 2 == op_reg ) && 3 == op_size ) // ROd / ROXd memory
+                {
+                    bool is_rox = ( 2 == op_reg );
+                    bool is_left = opbit( 8 );
+                    uint32_t address = effective_address( true );
+                    uint16_t value = effective_value16( address );
+                    bool original_x = flag_x();
+                    bool original_signed = ( 0 != ( value & 0x8000 ) );
+
+                    if ( is_left )
+                    {
+                        if ( is_rox )
+                        {
+                            setflag_c( 0 != ( value & 0x8000 ) );
+                            setflag_x( 0 != ( value & 0x8000 ) );
+                        }
+                        else
+                            setflag_c( original_signed );
+
+                        value <<= 1;
+
+                        if ( ( is_rox && original_x ) || ( !is_rox && original_signed ) )
+                            value |= 1;
+                    }
+                    else
+                    {
+                        setflag_c( value & 1 );
+                        if ( is_rox )
+                            setflag_x( value & 1 );
+
+                        value >>= 1;
+
+                        if ( ( is_rox && original_x ) || ( !is_rox && flag_c() ) )
+                            value |= 0x8000;
+                    }
+                    setflag_v( false );
+                    setflag_n( ( 0 != ( value & 0x8000 ) ) );
+                    setflag_z( 0 == value );
+                    setui16( address, value );
+                }
+                else if ( 0 == bits4_3 || 1 == bits4_3 ) // ASd / LSd register
                 {
                     bool is_arithmetic = ( 0 == bits4_3 );
                     bool is_left = opbit( 8 );
@@ -2876,15 +2946,20 @@ uint64_t m68000::run()
                     else
                         shift = dregs[ op_reg ].l % 64;
 
+                    bool sign_changed = false;
+
                     if ( is_left )
                     {
                         if ( 0 == op_size )
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
-                                setflag_c( 0 != ( dregs[ ea_reg ].b & 0x80 ) );
+                                bool start_sign = sign8( dregs[ ea_reg ].b );
+                                setflag_c( start_sign );
                                 setflag_x( flag_c() );
                                 dregs[ ea_reg ].b <<= 1;
+                                if ( start_sign != sign8( dregs[ ea_reg ].b ) )
+                                    sign_changed = true;
                             }
                             setflag_n( dregs[ ea_reg ].b & 0x80 );
                             setflag_z( 0 == dregs[ ea_reg ].b );
@@ -2893,9 +2968,12 @@ uint64_t m68000::run()
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
-                                setflag_c( 0 != ( dregs[ ea_reg ].w & 0x8000 ) );
+                                bool start_sign = sign16( dregs[ ea_reg ].w );
+                                setflag_c( start_sign );
                                 setflag_x( flag_c() );
                                 dregs[ ea_reg ].w <<= 1;
+                                if ( start_sign != sign16( dregs[ ea_reg ].w ) )
+                                    sign_changed = true;
                             }
                             setflag_n( dregs[ ea_reg ].w & 0x8000 );
                             setflag_z( 0 == dregs[ ea_reg ].w );
@@ -2904,9 +2982,12 @@ uint64_t m68000::run()
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
-                                setflag_c( 0 != ( dregs[ ea_reg ].l & 0x80000000 ) );
+                                bool start_sign = sign32( dregs[ ea_reg ].l );
+                                setflag_c( start_sign );
                                 setflag_x( flag_c() );
                                 dregs[ ea_reg ].l <<= 1;
+                                if ( start_sign != sign32( dregs[ ea_reg ].l ) )
+                                    sign_changed = true;
                             }
                             setflag_n( dregs[ ea_reg ].l & 0x80000000 );
                             setflag_z( 0 == dregs[ ea_reg ].l );
@@ -2918,12 +2999,15 @@ uint64_t m68000::run()
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
+                                bool start_sign = sign8( dregs[ ea_reg ].b );
                                 setflag_c( dregs[ ea_reg ].b & 1 );
                                 setflag_x( flag_c() );
                                 bool hibit = dregs[ ea_reg ].b & 0x80;
                                 dregs[ ea_reg ].b >>= 1;
                                 if ( is_arithmetic && hibit ) // ASR
                                     dregs[ ea_reg ].b |= 0x80;
+                                if ( start_sign != sign8( dregs[ ea_reg ].b ) )
+                                    sign_changed = true;
                             }
                             setflag_n( dregs[ ea_reg ].b & 0x80 );
                             setflag_z( 0 == dregs[ ea_reg ].b );
@@ -2932,12 +3016,15 @@ uint64_t m68000::run()
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
+                                bool start_sign = sign16( dregs[ ea_reg ].w );
                                 setflag_c( dregs[ ea_reg ].w & 1 );
                                 setflag_x( flag_c() );
                                 bool hibit = dregs[ ea_reg ].w & 0x8000;
                                 dregs[ ea_reg ].w >>= 1;
                                 if ( is_arithmetic && hibit ) // ASR
                                     dregs[ ea_reg ].w |= 0x8000;
+                                if ( start_sign != sign16( dregs[ ea_reg ].w ) )
+                                    sign_changed = true;
                             }
                             setflag_n( dregs[ ea_reg ].w & 0x8000 );
                             setflag_z( 0 == dregs[ ea_reg ].w );
@@ -2946,20 +3033,131 @@ uint64_t m68000::run()
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
+                                bool start_sign = sign32( dregs[ ea_reg ].l );
                                 setflag_c( dregs[ ea_reg ].l & 1 );
                                 setflag_x( flag_c() );
                                 bool hibit = dregs[ ea_reg ].l & 0x80000000;
                                 dregs[ ea_reg ].l >>= 1;
                                 if ( is_arithmetic && hibit ) // ASR
                                     dregs[ ea_reg ].l |= 0x80000000;
+                                if ( start_sign != sign32( dregs[ ea_reg ].l ) )
+                                    sign_changed = true;
                             }
                             setflag_n( dregs[ ea_reg ].l & 0x80000000 );
                             setflag_z( 0 == dregs[ ea_reg ].l );
                         }
                     }
+                    if ( is_arithmetic )
+                        setflag_v( sign_changed );
+                    else
+                        setflag_v( false );
+                    if ( 0 == shift )
+                        setflag_c( false );
+                }
+                else if ( 2 == bits4_3 ) // ROXd register
+                {
+                    bool is_left = opbit( 8 );
+                    uint16_t shift = 0;
+                    bool is_imm = !opbit( 5 );
+                    if ( is_imm )
+                    {
+                        shift = op_reg;
+                        if ( 0 == shift )
+                            shift = 8;
+                    }
+                    else
+                        shift = dregs[ op_reg ].l % 64;
+
+                   if ( is_left )
+                   {
+                       if ( 0 == op_size )
+                       {
+                           for ( uint16_t i = 0; i < shift; i++ )
+                           {
+                               uint8_t xset = flag_x();
+                               setflag_c( 0 != ( dregs[ ea_reg ].b & 0x80 ) );
+                               setflag_x( flag_c() );
+                               dregs[ ea_reg ].b <<= 1;
+                               dregs[ ea_reg ].b |= xset;
+                           }
+                           setflag_n( dregs[ ea_reg ].b & 0x80 );
+                           setflag_z( 0 == dregs[ ea_reg ].b );
+                       }
+                       else if ( 1 == op_size )
+                       {
+                           for ( uint16_t i = 0; i < shift; i++ )
+                           {
+                               uint16_t xset = flag_x();
+                               setflag_c( 0 != ( dregs[ ea_reg ].w & 0x8000 ) );
+                               setflag_x( flag_c() );
+                               dregs[ ea_reg ].w <<= 1;
+                               dregs[ ea_reg ].b |= xset;
+                           }
+                           setflag_n( dregs[ ea_reg ].w & 0x8000 );
+                           setflag_z( 0 == dregs[ ea_reg ].w );
+                       }
+                       else if ( 2 == op_size )
+                       {
+                           for ( uint16_t i = 0; i < shift; i++ )
+                           {
+                               uint32_t xset = flag_x();
+                               setflag_c( 0 != ( dregs[ ea_reg ].l & 0x80000000 ) );
+                               setflag_x( flag_c() );
+                               dregs[ ea_reg ].l <<= 1;
+                               dregs[ ea_reg ].b |= xset;
+                           }
+                           setflag_n( dregs[ ea_reg ].l & 0x80000000 );
+                           setflag_z( 0 == dregs[ ea_reg ].l );
+                       }
+                   }
+                   else
+                   {
+                       if ( 0 == op_size )
+                       {
+                           for ( uint16_t i = 0; i < shift; i++ )
+                           {
+                               uint8_t xset = ( flag_x() << 7 );
+                               setflag_c( dregs[ ea_reg ].b & 1 );
+                               setflag_x( flag_c() );
+                               dregs[ ea_reg ].b >>= 1;
+                               dregs[ ea_reg ].b |= xset;
+                           }
+                           setflag_n( dregs[ ea_reg ].b & 0x80 );
+                           setflag_z( 0 == dregs[ ea_reg ].b );
+                       }
+                       else if ( 1 == op_size )
+                       {
+                           for ( uint16_t i = 0; i < shift; i++ )
+                           {
+                               uint16_t xset = ( flag_x() << 15 );
+                               setflag_c( dregs[ ea_reg ].w & 1 );
+                               setflag_x( flag_c() );
+                               dregs[ ea_reg ].w >>= 1;
+                               dregs[ ea_reg ].w |= xset;
+                           }
+                           setflag_n( dregs[ ea_reg ].w & 0x8000 );
+                           setflag_z( 0 == dregs[ ea_reg ].w );
+                       }
+                       else if ( 2 == op_size )
+                       {
+                           for ( uint16_t i = 0; i < shift; i++ )
+                           {
+                               uint32_t xset = ( flag_x() << 31 );
+                               setflag_c( dregs[ ea_reg ].l & 1 );
+                               setflag_x( flag_c() );
+                               dregs[ ea_reg ].l >>= 1;
+                               dregs[ ea_reg ].l |= xset;
+                           }
+                           setflag_n( dregs[ ea_reg ].l & 0x80000000 );
+                           setflag_z( 0 == dregs[ ea_reg ].l );
+                       }
+                   }
+                   
+                    if ( 0 == shift )
+                        setflag_c( flag_x() );
                     setflag_v( false );
                 }
-                else if ( 2 == bits4_3 ) // ROXd
+                else if ( 3 == bits4_3 ) // ROd register
                 {
                     bool is_left = opbit( 8 );
                     uint16_t shift = 0;
@@ -2979,108 +3177,7 @@ uint64_t m68000::run()
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
-                                uint8_t xset = flag_x();
                                 setflag_c( 0 != ( dregs[ ea_reg ].b & 0x80 ) );
-                                setflag_x( flag_c() );
-                                dregs[ ea_reg ].b <<= 1;
-                                dregs[ ea_reg ].b |= xset;
-                            }
-                            setflag_n( dregs[ ea_reg ].b & 0x80 );
-                            setflag_z( 0 == dregs[ ea_reg ].b );
-                        }
-                        else if ( 1 == op_size )
-                        {
-                            for ( uint16_t i = 0; i < shift; i++ )
-                            {
-                                uint16_t xset = flag_x();
-                                setflag_c( 0 != ( dregs[ ea_reg ].w & 0x8000 ) );
-                                setflag_x( flag_c() );
-                                dregs[ ea_reg ].w <<= 1;
-                                dregs[ ea_reg ].b |= xset;
-                            }
-                            setflag_n( dregs[ ea_reg ].w & 0x8000 );
-                            setflag_z( 0 == dregs[ ea_reg ].w );
-                        }
-                        else if ( 2 == op_size )
-                        {
-                            for ( uint16_t i = 0; i < shift; i++ )
-                            {
-                                uint32_t xset = flag_x();
-                                setflag_c( 0 != ( dregs[ ea_reg ].l & 0x80000000 ) );
-                                setflag_x( flag_c() );
-                                dregs[ ea_reg ].l <<= 1;
-                                dregs[ ea_reg ].b |= xset;
-                            }
-                            setflag_n( dregs[ ea_reg ].l & 0x80000000 );
-                            setflag_z( 0 == dregs[ ea_reg ].l );
-                        }
-                    }
-                    else
-                    {
-                        if ( 0 == op_size )
-                        {
-                            for ( uint16_t i = 0; i < shift; i++ )
-                            {
-                                uint8_t xset = ( flag_x() << 7 );
-                                setflag_c( dregs[ ea_reg ].b & 1 );
-                                setflag_x( flag_c() );
-                                dregs[ ea_reg ].b >>= 1;
-                                dregs[ ea_reg ].b |= xset;
-                            }
-                            setflag_n( dregs[ ea_reg ].b & 0x80 );
-                            setflag_z( 0 == dregs[ ea_reg ].b );
-                        }
-                        else if ( 1 == op_size )
-                        {
-                            for ( uint16_t i = 0; i < shift; i++ )
-                            {
-                                uint16_t xset = ( flag_x() << 15 );
-                                setflag_c( dregs[ ea_reg ].w & 1 );
-                                setflag_x( flag_c() );
-                                dregs[ ea_reg ].w >>= 1;
-                                dregs[ ea_reg ].w |= xset;
-                            }
-                            setflag_n( dregs[ ea_reg ].w & 0x8000 );
-                            setflag_z( 0 == dregs[ ea_reg ].w );
-                        }
-                        else if ( 2 == op_size )
-                        {
-                            for ( uint16_t i = 0; i < shift; i++ )
-                            {
-                                uint32_t xset = ( flag_x() << 31 );
-                                setflag_c( dregs[ ea_reg ].l & 1 );
-                                setflag_x( flag_c() );
-                                dregs[ ea_reg ].l >>= 1;
-                                dregs[ ea_reg ].l |= xset;
-                            }
-                            setflag_n( dregs[ ea_reg ].l & 0x80000000 );
-                            setflag_z( 0 == dregs[ ea_reg ].l );
-                        }
-                    }
-                    setflag_v( false );
-                }
-                else if ( 3 == bits4_3 ) // ROd
-                {
-                    bool is_left = opbit( 8 );
-                    uint16_t shift = 0;
-                    bool is_imm = !opbit( 5 );
-                    if ( is_imm )
-                    {
-                        shift = op_reg;
-                        if ( 0 == shift )
-                            shift = 8;
-                    }
-                    else
-                        shift = dregs[ op_reg ].l % 64;
-
-                    if ( is_left )
-                    {
-                        if ( 0 == op_size )
-                        {
-                            for ( uint16_t i = 0; i < shift; i++ )
-                            {
-                                setflag_c( 0 != ( dregs[ ea_reg ].b & 0x80 ) );
-                                setflag_x( flag_c() );
                                 dregs[ ea_reg ].b <<= 1;
                                 dregs[ ea_reg ].b |= (uint8_t) flag_c();
                             }
@@ -3092,7 +3189,6 @@ uint64_t m68000::run()
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
                                 setflag_c( 0 != ( dregs[ ea_reg ].w & 0x8000 ) );
-                                setflag_x( flag_c() );
                                 dregs[ ea_reg ].w <<= 1;
                                 dregs[ ea_reg ].w |= (uint16_t) flag_c();
                             }
@@ -3104,7 +3200,6 @@ uint64_t m68000::run()
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
                                 setflag_c( 0 != ( dregs[ ea_reg ].l & 0x80000000 ) );
-                                setflag_x( flag_c() );
                                 dregs[ ea_reg ].l <<= 1;
                                 dregs[ ea_reg ].l |= (uint32_t) flag_c();
                             }
@@ -3119,7 +3214,6 @@ uint64_t m68000::run()
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
                                 setflag_c( dregs[ ea_reg ].b & 1 );
-                                setflag_x( flag_c() );
                                 dregs[ ea_reg ].b >>= 1;
                                 dregs[ ea_reg ].b |= ( (uint8_t) flag_c() ) << 7;
                             }
@@ -3131,7 +3225,6 @@ uint64_t m68000::run()
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
                                 setflag_c( dregs[ ea_reg ].w & 1 );
-                                setflag_x( flag_c() );
                                 dregs[ ea_reg ].w >>= 1;
                                 dregs[ ea_reg ].w |= ( (uint16_t) flag_c() ) << 15;
                             }
@@ -3143,7 +3236,6 @@ uint64_t m68000::run()
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
                                 setflag_c( dregs[ ea_reg ].l & 1 );
-                                setflag_x( flag_c() );
                                 dregs[ ea_reg ].l >>= 1;
                                 dregs[ ea_reg ].l |= ( (uint32_t) flag_c() ) << 31;
                             }
@@ -3151,6 +3243,8 @@ uint64_t m68000::run()
                             setflag_z( 0 == dregs[ ea_reg ].l );
                         }
                     }
+                    if ( 0 == shift )
+                        setflag_c( false );
                     setflag_v( false );
                 }
                 break;

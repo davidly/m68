@@ -17,11 +17,6 @@
 #define AT_FDCWD -100
 
 extern "C" void __attribute__((noreturn)) exit_emulator( int status );
-
-//extern "C" long syscall1( long number, long arg0 );
-//extern "C" long syscall3( long number, long arg0, long arg1, long arg2 );
-//extern "C" long syscall4( long number, long arg0, long arg1, long arg2, long arg3 );
-//extern "C" long syscall5( long number, long arg0, long arg1, long arg2, long arg3, long arg4 );
 extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
 
 extern "C" long syscall( long number, ... )
@@ -47,8 +42,8 @@ extern "C" long syscall( long number, ... )
     return result;
 } //syscall
 
-int kill( pid_t pid, int sig ) { return -1; }
-pid_t getpid( void ) { return 0x69; }
+int kill( pid_t pid, int sig ) { exit_emulator( 0 ); }
+pid_t getpid( void ) { return 0x4955; } // IU is the best
 extern "C" void _exit( int code ) { exit_emulator( code ); }
 
 int close( int fd )
@@ -166,7 +161,6 @@ _READ_WRITE_RETURN_TYPE write( int fd, const void * buf, size_t count )
 
 extern "C" void exit( int status )
 {
-    // the newlib I'm using doesn't support calling atexit() registered functions including destructors for global objects.
     exit_emulator( status );
 }
 
@@ -189,8 +183,9 @@ void * sbrk( intptr_t increment )
 }
 
 /***********************************************************************************/
-/* the newlib with this compiler doesn't support printing floating point numbers   */
-/* so this ancient code is used instead */
+/* the newlib with this compiler doesn't support printing floating point numbers,  */
+/* 64-bit integers, or size_t %zd.                                                 */
+/* so this ancient code from Apple is used instead                                 */
 
 static int g_printf_fd = 1;
 
@@ -669,8 +664,8 @@ static char *copybyte_str;
 
 static void copybyte( char byte )
 {
-  *copybyte_str++ = byte;
-  *copybyte_str = '\0';
+    *copybyte_str++ = byte;
+    *copybyte_str = '\0';
 } //copybyte
 
 extern int sprintf( char *buf, const char *fmt, ... )

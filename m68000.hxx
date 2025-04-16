@@ -43,6 +43,7 @@ struct m68000
         beyond_mem = mem + memory.size();          // addresses beyond and later are illegal
         membase = mem - base;                      // real pointer to the start of the app's memory (prior to offset)
         setflag_s( true );                         // the 68000 boots in supervisor mode
+        sr |= 0x0700;                              // set irq level
 
         tracer.Trace( "pc %x, stack_size %x, stack_top %x, base %x, mem_size %x\n", pc, stack_size, stack_top, base, mem_size );
     } //m68000

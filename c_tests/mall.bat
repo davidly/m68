@@ -22,6 +22,7 @@ echo build m68.elf
 call mm68.bat
 
 call ma.bat tbcd
+call ma.bat tshift
 
 :alldone
 
