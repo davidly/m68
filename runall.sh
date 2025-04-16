@@ -2,7 +2,7 @@
 
 _m68cmd="m68 -h:60"
 if [ "$1" != "" ]; then
-    _m68cmd="m68 -h:60 c_tests/m68.elf"
+    _m68cmd="m68 -h:80 c_tests/m68.elf -h:60"
 fi    
 
 outputfile="test_m68.txt"
