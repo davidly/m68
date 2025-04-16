@@ -10,7 +10,7 @@
 
     notes:  -- supervisor mode is unimplemented
             -- a handful instructions aren't implemented because gcc+newlib don't use them:
-                 movep, tas, trapv, illegal, chk
+                 movep, trapv, illegal, chk
             -- traps are largely unimplemented
             -- trap 0 maps to linux-equivalent system calls
             -- trap 15 maps to a couple m68k system calls
@@ -54,8 +54,8 @@ __declspec(noinline)
 #endif
 void m68000::unhandled()
 {
-    printf( "unhandled op %lx\n", op );
-    tracer.Trace( "unhandled op %lx\n", op );
+    printf( "unhandled op %x\n", op );
+    tracer.Trace( "unhandled op %x\n", op );
     emulator_hard_termination( *this, "opcode not handled:", op );
 } //unhandled
 
@@ -764,6 +764,8 @@ void m68000::trace_state()
                 }
                 else if ( 0x20 == bits11_6 ) // nbcd
                     tracer.Trace( "nbcd %s\n", effective_string( true ) );
+                else if ( 0x2b == bits11_6 ) // tas
+                    tracer.Trace( "tas %s\n", effective_string( true ) );
                 else
                     unhandled();
             }
@@ -2209,6 +2211,21 @@ uint64_t m68000::run()
                         {
                             uint32_t address = effective_address( true );
                             setui8( address, bcd_sub( 0, effective_value8( address ) ) );
+                        }
+                    }
+                    else if ( 0x2b == bits11_6 ) // tas
+                    {
+                        if ( 0 == ea_mode )
+                        {
+                            set_nzcv( dregs[ ea_reg ].b, 0 );
+                            dregs[ ea_reg ].b |= 0x80;
+                        }
+                        else
+                        {
+                            uint32_t address = effective_address( true );
+                            uint8_t val = effective_value8( address );
+                            set_nzcv( val, 0 );
+                            setui8( address, val & 0x80 );
                         }
                     }
                     else

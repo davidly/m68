@@ -4557,7 +4557,7 @@ static void elf_info32( FILE * fp, bool verbose )
     printf( "  entry address: %#x\n", ehead.entry_point );
     printf( "  program entries: %u\n", ehead.program_header_table_entries );
     printf( "  program header entry size: %u\n", ehead.program_header_table_size );
-    printf( "  program offset: %u == %lx\n", ehead.program_header_table, ehead.program_header_table );
+    printf( "  program offset: %u == %x\n", ehead.program_header_table, ehead.program_header_table );
     printf( "  section entries: %u\n", ehead.section_header_table_entries );
     printf( "  section header entry size: %u\n", ehead.section_header_table_size );
     printf( "  section offset: %u == %#x\n", ehead.section_header_table, ehead.section_header_table );
