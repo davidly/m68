@@ -1,4 +1,4 @@
-Tue 04/15/2025 16:10:36.54 
+Wed 04/16/2025  9:16:30.12 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -923,7 +923,7 @@ floating point:
   lt 1 le 1 eq 0 ge 0 gt 0
   lt 0 le 1 eq 1 ge 1 gt 0
   lt 0 le 1 eq 1 ge 1 gt 0
-  lt 1 le 1 eq 1 ge 0 gt 0
+  lt 0 le 1 eq 1 ge 1 gt 0
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
@@ -3891,10 +3891,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 15, hour 23, min 10, sec 42
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 15, hour 18, min 10, sec 42
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 15, hour 15, min 10, sec 42
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 15, hour 15, min 10, sec 42
+before TZ is set: tz: '(null)', year: 2025, month 4, day 16, hour 16, min 16, sec 36
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 16, hour 11, min 16, sec 36
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 16, hour 8, min 16, sec 36
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 16, hour 8, min 16, sec 36
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5616,8 +5616,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     262
-  dictionary: 258
+total ms:     282
+  dictionary: 278
   generate:   3
   render:     0
 test ba tp.bas 
@@ -5651,4 +5651,4 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-Tue 04/15/2025 16:10:49.15 
+Wed 04/16/2025  9:16:44.51 

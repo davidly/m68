@@ -6,6 +6,10 @@
 
 //#pragma GCC optimize("O0")
 
+// the actual precision of LDBL with this version of the 68000 tools is much less than LDBL_EPSILON
+#undef LDBL_EPSILON
+#define LDBL_EPSILON DBL_EPSILON
+
 template <class T> void cmp( T a, T b )
 {
     bool gt = ( a > b );
@@ -34,7 +38,7 @@ void cmp_long_double( long double a, long double b )
     long double abs_diff = __builtin_fabsl( diff );
     bool gt = ( diff > 0.0 && abs_diff > LDBL_EPSILON );
     bool lt = ( diff < 0.0 && abs_diff > LDBL_EPSILON );
-    bool eq = ( abs_diff < DBL_EPSILON );
+    bool eq = ( abs_diff < LDBL_EPSILON );
     bool le = ( diff <= 0.0 || abs_diff < LDBL_EPSILON );
     bool ge = ( diff >= 0.0 || abs_diff < LDBL_EPSILON );
     printf( "  lt %d le %d eq %d ge %d gt %d\n", lt, le, eq, ge, gt );
@@ -205,6 +209,10 @@ int main( int argc, char * argv[] )
     cmp( (int64_t) 0x8000000000000001, (int64_t) 0x7ffffffffffffff8 );
     cmp( (int64_t) 0, (int64_t) 0x8000000000000000 );
     cmp( (int64_t) 0x7fffffffffffffff, (int64_t) 0x8000000000000000 );
+
+    // printf( " ldbl_epsilon: %.20lf\n", (double) LDBL_EPSILON );
+    // printf( " dbl_epsilon:  %.20lf\n", (double) DBL_EPSILON );
+    // printf( " flt_epsilon:  %.20lf\n", (double) FLT_EPSILON );
 
     printf( "floating point:\n" );
     float f = -0.5f;
