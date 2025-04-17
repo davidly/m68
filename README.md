@@ -3,9 +3,10 @@ m68 runs 68000 elf and Motorola hex binaries on Windows, macOS, and Linux.
 
 m68 loads binaries into memory then emulates the Motorola 68000 to execute them. 
 
-C and C++ programs in the c_tests folder can be built with a 68000 cross compiler on your platform 
-of choice. I've run buildgcc-8.2.0.sh on both Windows 11 running on AMD64 and Ubuntu running 
-on Arm64 to build the GNU gcc 8.2.0 cross compiler. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details. I've been unable to build the gcc 68000 cross compiler on macOS.
+C and C++ programs in the c_tests folder can be built with a 68000 cross compiler on most platforms. I've run buildgcc-8.2.0.sh on both Windows 11 running on AMD64 and Ubuntu running 
+on Arm64 to build the GNU gcc 8.2.0 cross compiler. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details. 
+
+I've been unable to build the gcc 68000 cross compiler on macOS and Raspberry PI 5.
 
 The build scripts m.bat and m.sh in the c_tests folder can be used to build samples on Windows and Linux.
 mm68.bat and mm68.sh build the m68 emulator targeting the 68000 so the emulator can run itself recursively.
