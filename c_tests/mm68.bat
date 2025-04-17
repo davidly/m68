@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 setlocal
 
 rem O3 and Ofast have at least 3 bugs in code generation that I've found
