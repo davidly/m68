@@ -1,4 +1,4 @@
-Wed 04/16/2025 15:56:42.37 
+Thu 04/17/2025  8:14:39.08 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -3974,10 +3974,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 16, hour 22, min 56, sec 50
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 16, hour 17, min 56, sec 50
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 16, hour 14, min 56, sec 50
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 16, hour 14, min 56, sec 50
+before TZ is set: tz: '(null)', year: 2025, month 4, day 17, hour 15, min 14, sec 45
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 17, hour 10, min 14, sec 45
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 17, hour 7, min 14, sec 45
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 17, hour 7, min 14, sec 45
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5736,6 +5736,19 @@ rol.b <memory>
   result e6e4 flags 2708
   result 86e3 flags 2718
   result e6e4 flags 2718
+test taddsubm 
+  result 11 flags 2700
+  result 77 flags 2700
+  result 10 flags 2700
+  result 77 flags 2700
+  result 1111 flags 2700
+  result 4444 flags 2700
+  result 1110 flags 2700
+  result 4444 flags 2700
+  result 11111111 flags 2700
+  result 99999999 flags 270a
+  result 11111110 flags 2700
+  result 99999999 flags 270a
 test an -t david lee 
 a delve id
 a delved i
@@ -5780,9 +5793,9 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     405
-  dictionary: 400
-  generate:   4
+total ms:     293
+  dictionary: 288
+  generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
@@ -5815,4 +5828,4 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-Wed 04/16/2025 15:57:00.45 
+Thu 04/17/2025  8:14:53.79 

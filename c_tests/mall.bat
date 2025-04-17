@@ -21,8 +21,17 @@ exit /b 0
 echo build m68.elf
 call mm68.bat
 
-call ma.bat tbcd
-call ma.bat tshift
+set _asmlist=tbcd tshift taddsubm
+
+( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
+
+goto :alldone
+
+:asmRun
+
+echo building %~1
+call ma.bat %~1
+exit /b 0
 
 :alldone
 

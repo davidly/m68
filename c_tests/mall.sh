@@ -12,10 +12,11 @@ done
 echo build m68.elf
 mm68.sh
 
-echo build tbcd
-ma.sh tbcd
+for arg in tbcd tshift taddsubm
+do
+    echo $arg
+    ma.sh $arg
+done
 
-echo build tshift
-ma.sh tshift
 
 

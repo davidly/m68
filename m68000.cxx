@@ -2515,7 +2515,26 @@ uint64_t m68000::run()
                 else if ( 0 == opbits( 4, 2 ) && opbit( 8 ) ) // subx
                 {
                     if ( opbit( 3 ) ) // true if both operands are memory with a register predecrement mode, false if both are d registers
-                        unhandled(); //tracer.Trace( "subx.%c -(a%u), -(a%u)\n", get_size(), ea_reg, op_reg );
+                    {
+                        if ( 0 == op_size )
+                        {
+                            aregs[ op_reg ] -= 1;
+                            aregs[ ea_reg ] -= 1;
+                            setui8( aregs[ op_reg ], sub8( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, true, true ) );
+                        }
+                        else if ( 1 == op_size )
+                        {
+                            aregs[ op_reg ] -= 2;
+                            aregs[ ea_reg ] -= 2;
+                            setui16( aregs[ op_reg ], sub16( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
+                        }
+                        else if ( 2 == op_size )
+                        {
+                            aregs[ op_reg ] -= 4;
+                            aregs[ ea_reg ] -= 4;
+                            setui32( aregs[ op_reg ], sub32( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, true, true ) );
+                        }
+                    }
                     else
                     {
                         if ( 0 == op_size )
@@ -2688,7 +2707,7 @@ uint64_t m68000::run()
                         }
                     }
                 }
-                else // cmp
+                else
                     unhandled();
                 break;
             }
@@ -2811,7 +2830,26 @@ uint64_t m68000::run()
                 else if ( 0 == opbits( 4, 2 ) && opbit( 8 ) ) // addx
                 {
                     if ( opbit( 3 ) ) // true if both operands are memory with a register predecrement mode, false if both are d registers
-                        unhandled(); //tracer.Trace( "addx.%c -(a%u), -(a%u)\n", get_size(), ea_reg, op_reg );
+                    {
+                        if ( 0 == op_size )
+                        {
+                            aregs[ op_reg ] -= 1;
+                            aregs[ ea_reg ] -= 1;
+                            setui8( aregs[ op_reg ], add8( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, true, true ) );
+                        }
+                        else if ( 1 == op_size )
+                        {
+                            aregs[ op_reg ] -= 2;
+                            aregs[ ea_reg ] -= 2;
+                            setui16( aregs[ op_reg ], add16( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
+                        }
+                        else if ( 2 == op_size )
+                        {
+                            aregs[ op_reg ] -= 4;
+                            aregs[ ea_reg ] -= 4;
+                            setui32( aregs[ op_reg ], add32( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, true, true ) );
+                        }
+                    }
                     else
                     {
                         if ( 0 == op_size )
@@ -3152,7 +3190,7 @@ uint64_t m68000::run()
                            setflag_z( 0 == dregs[ ea_reg ].l );
                        }
                    }
-                   
+
                     if ( 0 == shift )
                         setflag_c( flag_x() );
                     setflag_v( false );
