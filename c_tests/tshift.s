@@ -10,7 +10,7 @@ main:
     lea printf, %a3
     lea thing1, %a4
 
-#asr.b register
+# asr.b register
     lea asr_reg_buf, %a0
     move.l %a0, -(%a7)
     jsr (%a3)

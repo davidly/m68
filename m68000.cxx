@@ -32,6 +32,8 @@
 using namespace std;
 using namespace std::chrono;
 
+extern "C" long syscall( long number, ... );
+
 static uint32_t g_State = 0;
 
 const uint32_t stateTraceInstructions = 1;
@@ -289,7 +291,7 @@ uint32_t m68000::effective_address( bool force_imm_word )
         case 6: // Address with index (d8, An, Xn)
         {
             // 16 bits: 15        14-12       11                10-9                8-0
-            //          1=a, 0=b  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
+            //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
             pc += 2;
             uint16_t extension = getui16( pc );
             bool isa = get_bit16( extension, 15 );
@@ -298,11 +300,13 @@ uint32_t m68000::effective_address( bool force_imm_word )
             uint16_t scale = get_bits16( extension, 9, 2 );
             if ( 0 != scale )
                 unhandled(); // if not 0, it's a >68000 instruction
-            int32_t displacement = sign_extend( get_bits16( extension, 0, 8 ), 7 ); // ignoring bit 8 apparently?
-            uint32_t Xval = isa ? aregs[ Xn ] : dregs[ Xn ].l;
-            if ( !isl )
-                Xval &= 0xffff;
-            return aregs[ ea_reg ] + Xval + displacement;
+            int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
+            int32_t reg_displacement;
+            if ( isa )
+                reg_displacement = (int32_t) aregs[ Xn ];
+            else
+                reg_displacement = (int32_t) isl ? dregs[ Xn ].l : sign_extend( dregs[ Xn ].w, 15 );
+            return aregs[ ea_reg ] + displacement + reg_displacement;
             break;
         }
         case 7: // several
@@ -330,18 +334,18 @@ uint32_t m68000::effective_address( bool force_imm_word )
                 case 3: // program counter with index. ( d8, PC, Xn )
                 {
                     // 16 bits: 15        14-12       11                10-9                8-0
-                    //          1=a, 0=b  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
+                    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
                     pc += 2;
                     uint16_t extension = getui16( pc );
-                    bool is_a = get_bit16( extension, 15 );
-                    uint16_t reg = get_bits16( extension, 12, 3 );
-                    bool is_l = get_bit16( extension, 11 );
-                    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 );
+                    bool isa = get_bit16( extension, 15 );
+                    uint16_t Xn = get_bits16( extension, 12, 3 );
+                    bool isl = get_bit16( extension, 11 );
+                    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
                     int32_t reg_displacement;
-                    if ( is_l )
-                        reg_displacement = (int32_t) ( is_a ? aregs[ reg ] : dregs[ reg ].l );
+                    if ( isa )
+                        reg_displacement = (int32_t) aregs[ Xn ];
                     else
-                        reg_displacement = (int32_t) ( is_a ? sign_extend( 0xffff & aregs[ reg ], 15 ) : sign_extend( dregs[ reg ].w, 15 ) );
+                        reg_displacement = (int32_t) isl ? dregs[ Xn ].l : sign_extend( dregs[ Xn ].w, 15 );
                     return pc + displacement + reg_displacement;
                 }
                 case 4: // immediate #imm
@@ -2337,7 +2341,7 @@ uint64_t m68000::run()
             case 6: // bra / bsr / bcc
             {
                 uint16_t condition = opbits( 8, 4 );
-                volatile int16_t displacement = op & 0xff;
+                int16_t displacement = op & 0xff; 
                 bool two_byte_displacement = false;
                 if ( 0 != displacement )
                     displacement = sign_extend16( displacement, 7 );
@@ -2354,7 +2358,7 @@ uint64_t m68000::run()
                     pc += displacement;
                     continue;
                 }
-                else if ( check_condition( condition ) ) // including bra
+                else if ( check_condition( condition ) ) // bcc including bra
                 {
                     pc += ( 2 + displacement );
                     continue;
