@@ -128,6 +128,7 @@ struct m68000
     void setflag_n( bool f ) { sr &= 0xfff7; sr |= ( ( 0 != f ) << 3 ); }
     void setflag_x( bool f ) { sr &= 0xffef; sr |= ( ( 0 != f ) << 4 ); }
     void setflag_s( bool f ) { sr &= 0xdfff; sr |= ( ( 0 != f ) << 13 ); }
+    void setflags_cx( bool f ) { setflag_c( f ); setflag_x( f ); }
 
     bool flag_c() { return ( 0 != ( sr & 1 ) ); }
     bool flag_v() { return ( 0 != ( sr & 2 ) ); }
