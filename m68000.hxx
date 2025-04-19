@@ -122,20 +122,21 @@ struct m68000
         return ( ( r < beyond_mem ) && ( r >= mem ) );
     } //is_address_valid
 
-    void setflag_c( bool f ) { sr &= 0xfffe; sr |= ( 0 != f ); }
-    void setflag_v( bool f ) { sr &= 0xfffd; sr |= ( ( 0 != f ) << 1 ); }
-    void setflag_z( bool f ) { sr &= 0xfffb; sr |= ( ( 0 != f ) << 2 ); }
-    void setflag_n( bool f ) { sr &= 0xfff7; sr |= ( ( 0 != f ) << 3 ); }
-    void setflag_x( bool f ) { sr &= 0xffef; sr |= ( ( 0 != f ) << 4 ); }
-    void setflag_s( bool f ) { sr &= 0xdfff; sr |= ( ( 0 != f ) << 13 ); }
-    void setflags_cx( bool f ) { setflag_c( f ); setflag_x( f ); }
+    inline void setflag_c( bool f ) { sr &= 0xfffe; sr |= ( 0 != f ); }
+    inline void setflag_v( bool f ) { sr &= 0xfffd; sr |= ( ( 0 != f ) << 1 ); }
+    inline void setflag_z( bool f ) { sr &= 0xfffb; sr |= ( ( 0 != f ) << 2 ); }
+    inline void setflag_n( bool f ) { sr &= 0xfff7; sr |= ( ( 0 != f ) << 3 ); }
+    inline void setflag_x( bool f ) { sr &= 0xffef; sr |= ( ( 0 != f ) << 4 ); }
+    inline void setflag_s( bool f ) { sr &= 0xdfff; sr |= ( ( 0 != f ) << 13 ); }
+    inline void setflags_cx( bool f ) { setflag_c( f ); setflag_x( f ); }
+    inline void clearflags_cv() { sr &= 0xfffc; }
 
-    bool flag_c() { return ( 0 != ( sr & 1 ) ); }
-    bool flag_v() { return ( 0 != ( sr & 2 ) ); }
-    bool flag_z() { return ( 0 != ( sr & 4 ) ); }
-    bool flag_n() { return ( 0 != ( sr & 8 ) ); }
-    bool flag_x() { return ( 0 != ( sr & 16 ) ); }
-    bool flag_s() { return ( 0 != ( sr & 0x2000 ) ); }
+    inline bool flag_c() { return ( 0 != ( sr & 1 ) ); }
+    inline bool flag_v() { return ( 0 != ( sr & 2 ) ); }
+    inline bool flag_z() { return ( 0 != ( sr & 4 ) ); }
+    inline bool flag_n() { return ( 0 != ( sr & 8 ) ); }
+    inline bool flag_x() { return ( 0 != ( sr & 16 ) ); }
+    inline bool flag_s() { return ( 0 != ( sr & 0x2000 ) ); }
 
     // addresses to getX/setX should all be word (2-byte) aligned, but the m68k compiler assumes 1-byte alignment works
 
@@ -214,35 +215,65 @@ struct m68000
     uint8_t add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx );
     char get_size() { return ( 0 == op_size ) ? 'b' : ( 1 == op_size ) ? 'w' : ( 2 == op_size ) ? 'l' : '?'; }
     bool check_condition( uint16_t c );
-    void set_nzcv( uint32_t val, uint16_t size = 2 );
     template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior );
     uint8_t bcd_add( uint8_t a, uint8_t b );
     uint8_t bcd_sub( uint8_t a, uint8_t b );
 
-    void push( uint32_t x )
+    inline void push( uint32_t x )
     {
         aregs[ 7 ] -= 4;
         setui32( aregs[ 7 ], x );
     } //push
 
-    uint32_t pop()
+    inline uint32_t pop()
     {
         uint32_t result = getui32( aregs[ 7 ] );
         aregs[ 7 ] += 4;
         return result;
     } //pop
 
-    void push16( uint16_t x )
+    inline void push16( uint16_t x )
     {
         aregs[ 7 ] -= 2;
         setui16( aregs[ 7 ], x );
     } //push16
 
-    uint16_t pop16()
+    inline uint16_t pop16()
     {
         uint16_t result = getui16( aregs[ 7 ] );
         aregs[ 7 ] += 2;
         return result;
     } //pop16
+
+    inline void set_nzcv8( uint8_t val )
+    {
+        setflag_n( 0 != ( 0x80 & val ) );
+        setflag_z( 0 == val );
+        clearflags_cv();
+    } //set_nzcv8
+    
+    inline void set_nzcv16( uint16_t val )
+    {
+        setflag_n( 0 != ( 0x8000 & val ) );
+        setflag_z( 0 == val );
+        clearflags_cv();
+    } //set_nzcv16
+    
+    inline void set_nzcv32( uint32_t val )
+    {
+        setflag_n( 0 != ( 0x80000000 & val ) );
+        setflag_z( 0 == val );
+        clearflags_cv();
+    } //set_nzcv32
+    
+    inline void set_nzcv( uint32_t val, uint16_t size )
+    {
+        if ( 0 == size )
+            set_nzcv8( (uint8_t) val );
+        else if ( 1 == size )
+            set_nzcv16( (uint16_t) val );
+        else
+            set_nzcv32( val );
+    } //set_nzcv
 };
 
