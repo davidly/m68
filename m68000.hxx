@@ -207,6 +207,7 @@ struct m68000
     uint32_t effective_address2( uint16_t m, uint16_t reg );
     const char * effective_string( bool force_imm_word = false );
     const char * effective_string2( uint16_t m, uint16_t reg, bool force_imm_word = false );
+    int32_t get_ea_displacement();
     uint32_t sub32( uint32_t a, uint32_t b, bool setflags, bool setx, bool subx );
     uint16_t sub16( uint16_t a, uint16_t b, bool setflags, bool setx, bool subx );
     uint8_t sub8( uint8_t a, uint8_t b, bool setflags, bool setx, bool subx );

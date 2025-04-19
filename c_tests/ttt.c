@@ -295,42 +295,35 @@ void ttt()
     FindSolution( 4 );
 } //ttt
 
-#if 0
 float elapsed( struct timeval & a, struct timeval & b )
 {
-// printf shows floats/doubles off by 3 orders of magnitude
-//    printf( "a sec %ld, a usec %ld, b sec %ld, b usec %ld\n", a.tv_sec, a.tv_usec, b.tv_sec, b.tv_usec );
-//    printf( "printf: secdiff %ld, usecdiff %ld\n", b.tv_sec - a.tv_sec, b.tv_usec - a.tv_usec );
-//    rvos_printf( "rvos_printf: secdiff %ld, usecdiff %ld\n", b.tv_sec - a.tv_sec, b.tv_usec - a.tv_usec );
-
     int64_t aflat = a.tv_sec * 1000000 + a.tv_usec;
     int64_t bflat = b.tv_sec * 1000000 + b.tv_usec;
 
     int64_t diff = bflat - aflat;
     return diff / 1000.0f;
 } //elapsed
-#endif
 
 extern int main( int argc, char * argv[] )
 {
     printf( "starting...\n" );
 
     if ( 2 == argc )
-        sscanf( argv[ 1 ], "%d", &g_Iterations );  /* no atoi in MS C 1.0 */
+        g_Iterations = atoi( argv[1] ); //sscanf( argv[ 1 ], "%d", &g_Iterations );  /* no atoi in MS C 1.0 */
 
-//    struct timeval tv;
-//    gettimeofday( &tv, 0 );
+    struct timeval tv;
+    gettimeofday( &tv, 0 );
 
     ttt();
 
-//    struct timeval tv_after;
-//    gettimeofday( &tv_after, 0 );
+    struct timeval tv_after;
+    gettimeofday( &tv_after, 0 );
 
-//    float elap = elapsed( tv, tv_after );
+    float elap = elapsed( tv, tv_after );
 
     printf( "%ld moves\n", g_Moves );
     printf( "%d iterations\n", g_Iterations );
-//    printf( "%f milliseconds\n", elap ); 
+    printf( "%f milliseconds\n", elap ); 
     fflush( stdout );
 } //main
 

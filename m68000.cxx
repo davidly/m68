@@ -154,7 +154,7 @@ const char * m68000::effective_string( bool force_imm_word )
         case 6: // Address with index (d8, An, Xn)
         {
             // 16 bits: 15        14-12       11                10-9                8-0
-            //          1=a, 0=b  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
+            //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
             pc += 2;
             uint16_t extension = getui16( pc );
             bool isa = get_bit16( extension, 15 );
@@ -243,6 +243,26 @@ const char * m68000::effective_string2( uint16_t mval, uint16_t regval, bool for
     return pea;
 } //effective_string2
 
+int32_t m68000::get_ea_displacement()
+{
+    // 16 bits: 15        14-12       11                10-9                8  7-0
+    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
+
+    pc += 2;
+    uint16_t extension = getui16( pc );
+    bool isa = get_bit16( extension, 15 );
+    uint16_t Xn = get_bits16( extension, 12, 3 );
+    bool isl = get_bit16( extension, 11 );
+    uint16_t scale = get_bits16( extension, 9, 2 );
+    if ( 0 != scale )
+        unhandled(); // if not 0, it's a >68000 instruction
+    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
+    int32_t reg_displacement = isa ? aregs[ Xn ] : dregs[ Xn ].l;
+    if ( !isl )
+        reg_displacement = sign_extend( reg_displacement, 15 ); // both A and D registers behave like this per experimentation
+    return displacement + reg_displacement;
+} //get_ea_displacement
+
 uint32_t m68000::effective_address( bool force_imm_word )
 {
     //tracer.Trace( "\nea pc %x, ea_mode %x, ea_reg %x\n", pc, m, ea_reg );
@@ -255,55 +275,34 @@ uint32_t m68000::effective_address( bool force_imm_word )
             if ( 1 == op_size )
                 return dregs[ ea_reg ].w;
             return dregs[ ea_reg ].l;
-            break;
         }
         case 1: // Address register An
         {
             return aregs[ ea_reg ];
-            break;
         }
         case 2: // Address (An)
         {
             return aregs[ ea_reg ];
-            break;
         }
         case 3: // Address with postincrement (An)+
         {
             uint32_t result = aregs[ ea_reg ];
             aregs[ ea_reg ] += ( 1 << op_size );
             return result;
-            break;
         }
         case 4: // Address with predecrement -(An)
         {
             aregs[ ea_reg ] -= ( 1 << op_size );
             return aregs[ ea_reg ];
-            break;
         }
         case 5: // Address with displacement (d16, An)
         {
             pc += 2;
             return (uint32_t) ( aregs[ ea_reg ] + (int16_t) getui16( pc ) );
-            break;
         }
-        case 6: // Address with index (d8, An, Xn)
+        case 6: // Address with index ( d8, An, Xn )
         {
-            // 16 bits: 15        14-12       11                10-9                8  7-0
-            //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
-            pc += 2;
-            uint16_t extension = getui16( pc );
-            bool isa = get_bit16( extension, 15 );
-            uint16_t Xn = get_bits16( extension, 12, 3 );
-            bool isl = get_bit16( extension, 11 );
-            uint16_t scale = get_bits16( extension, 9, 2 );
-            if ( 0 != scale )
-                unhandled(); // if not 0, it's a >68000 instruction
-            int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
-            int32_t reg_displacement = isa ? aregs[ Xn ] : dregs[ Xn ].l;
-            if ( !isl )
-                reg_displacement = sign_extend( reg_displacement, 15 ); // both A and D registers behave like this per experimentation
-            return aregs[ ea_reg ] + displacement + reg_displacement;
-            break;
+            return aregs[ ea_reg ] + get_ea_displacement();
         }
         case 7: // several
         {
@@ -328,18 +327,8 @@ uint32_t m68000::effective_address( bool force_imm_word )
                 }
                 case 3: // program counter with index. ( d8, PC, Xn )
                 {
-                    // 16 bits: 15        14-12       11                10-9                8  7-0
-                    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
-                    pc += 2;
-                    uint16_t extension = getui16( pc );
-                    bool isa = get_bit16( extension, 15 );
-                    uint16_t Xn = get_bits16( extension, 12, 3 );
-                    bool isl = get_bit16( extension, 11 );
-                    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
-                    int32_t reg_displacement = isa ? aregs[ Xn ] : dregs[ Xn ].l;
-                    if ( !isl )
-                        reg_displacement = sign_extend( reg_displacement, 15 ); // both A and D registers behave like this per experimentation
-                    return pc + displacement + reg_displacement;
+                    int32_t displacement = get_ea_displacement();
+                    return pc + displacement;
                 }
                 case 4: // immediate #imm
                 {
@@ -359,7 +348,6 @@ uint32_t m68000::effective_address( bool force_imm_word )
                 default:
                     unhandled();
             }
-            break;
         }
         default:
             unhandled();
@@ -529,42 +517,21 @@ void m68000::trace_state()
             uint16_t bits11_6 = opbits( 6, 6 );
 
             if ( 0x003c == op ) // ori to CCR
-            {
-                uint16_t imm = getui16( pc + 2 ) & 0xff;
-                tracer.Trace( "ori #%x, ccr\n", imm );
-            }
+                tracer.Trace( "ori #%x, ccr\n", getui16( pc + 2 ) & 0xff );
             else if ( 0x007c == op ) // ori to SR
-            {
-                uint16_t imm = getui16( pc + 2 );
-                tracer.Trace( "ori #%x, ssr\n", imm );
-            }
+                tracer.Trace( "ori #%x, ssr\n", getui16( pc + 2 ) );
             else if ( 0x023c == op ) // andi to CCR
-            {
-                uint16_t imm = getui16( pc + 2 ) & 0xff;
-                tracer.Trace( "andi #%x, ccr\n", imm );
-            }
+                tracer.Trace( "andi #%x, ccr\n", getui16( pc + 2 ) & 0xff );
             else if ( 0x027c == op ) // andi to SR
-            {
-                uint16_t imm = getui16( pc + 2 );
-                tracer.Trace( "andi #%x, ssr\n", imm );
-            }
+                tracer.Trace( "andi #%x, ssr\n", getui16( pc + 2 ) );
             else if ( 0x0a3c == op ) // eori to CCR
-            {
-                uint16_t imm = getui16( pc + 2 ) & 0xff;
-                tracer.Trace( "eori #%x, ccr\n", imm );
-            }
+                tracer.Trace( "eori #%x, ccr\n", getui16( pc + 2 ) & 0xff );
             else if ( 0x0a7c == op ) // eori to SR
-            {
-                uint16_t imm = getui16( pc + 2 );
-                tracer.Trace( "eori #%x, ssr\n", imm );
-            }
+                tracer.Trace( "eori #%x, ssr\n", getui16( pc + 2 ) );
             else if ( 0 == bits11_8 ) // ori
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
-                if ( 2 == op_size )
-                    pc += 4;
-                else
-                    pc += 2;
+                pc += ( 2 == op_size ) ? 4 : 2;
                 if ( 1 == ea_mode ) // this is invalid on the 68000
                     unhandled();
                 tracer.Trace( "ori.%c #%u, %s\n", get_size(), val, effective_string() );
@@ -572,46 +539,31 @@ void m68000::trace_state()
             else if ( 0xa == bits11_8 ) // eori
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
-                if ( 2 == op_size )
-                    pc += 4;
-                else
-                    pc += 2;
+                pc += ( 2 == op_size ) ? 4 : 2;
                 tracer.Trace( "eori.%c #%u, %s\n", get_size(), val, effective_string() );
             }
             else if ( 2 == bits11_8 ) // andi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
-                if ( 2 == op_size )
-                    pc += 4;
-                else
-                    pc += 2;
+                pc += ( 2 == op_size ) ? 4 : 2;
                 tracer.Trace( "andi.%c #%u, %s\n", get_size(), val, effective_string() );
             }
             else if ( 0xc == bits11_8 ) // cmpi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
-                if ( 2 == op_size )
-                    pc += 4;
-                else
-                    pc += 2;
+                pc += ( 2 == op_size ) ? 4 : 2;
                 tracer.Trace( "cmpi.%c #%u, %s\n", get_size(), val, effective_string() );
             }
             else if ( 4 == bits11_8 ) // subi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
-                if ( 2 == op_size )
-                    pc += 4;
-                else
-                    pc += 2;
+                pc += ( 2 == op_size ) ? 4 : 2;
                 tracer.Trace( "subi.%c #%u, %s\n", get_size(), val, effective_string() );
             }
             else if ( 6 == bits11_8 ) // addi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
-                if ( 2 == op_size )
-                    pc += 4;
-                else
-                    pc += 2;
+                pc += ( 2 == op_size ) ? 4 : 2;
                 tracer.Trace( "addi.%c #%u, %s\n", get_size(), val, effective_string() );
             }
             else if ( 0x20 == bits11_6 ) // btst using address
@@ -1188,7 +1140,7 @@ bool m68000::check_condition( uint16_t c )
     assume_false;
 } //check_condition
 
-template < typename T > void do_swap( T & a, T & b ) { T tmp = a; a = b; b = tmp; }
+template < typename T > inline void do_swap( T & a, T & b ) { T tmp = a; a = b; b = tmp; }
 
 uint64_t m68000::run()
 {
@@ -1292,14 +1244,12 @@ uint64_t m68000::run()
                     {
                         if ( 0 == op_size )
                         {
-                            uint8_t imm = (uint8_t) getui16( pc );
-                            dregs[ ea_reg ].b |= imm;
+                            dregs[ ea_reg ].b |= (uint8_t) getui16( pc );
                             set_nzcv8( dregs[ ea_reg ].b );
                         }
                         else if ( 1 == op_size )
                         {
-                            uint16_t imm = getui16( pc );
-                            dregs[ ea_reg ].w |= imm;
+                            dregs[ ea_reg ].w |= getui16( pc );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
                         else if ( 2 == op_size )
@@ -1346,14 +1296,12 @@ uint64_t m68000::run()
                     {
                         if ( 0 == op_size )
                         {
-                            uint8_t imm = (uint8_t) getui16( pc );
-                            dregs[ ea_reg ].b &= imm;
+                            dregs[ ea_reg ].b &= (uint8_t) getui16( pc );
                             set_nzcv8( dregs[ ea_reg ].b );
                         }
                         else if ( 1 == op_size )
                         {
-                            uint16_t imm = getui16( pc );
-                            dregs[ ea_reg ].w &= imm;
+                            dregs[ ea_reg ].w &= getui16( pc );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
                         else if ( 2 == op_size )
@@ -1400,14 +1348,12 @@ uint64_t m68000::run()
                     {
                         if ( 0 == op_size )
                         {
-                            uint8_t imm = (uint8_t) getui16( pc );
-                            dregs[ ea_reg ].b ^= imm;
+                            dregs[ ea_reg ].b ^= (uint8_t) getui16( pc );
                             set_nzcv8( dregs[ ea_reg ].b );
                         }
                         else if ( 1 == op_size )
                         {
-                            uint16_t imm = getui16( pc );
-                            dregs[ ea_reg ].w ^= imm;
+                            dregs[ ea_reg ].w ^= getui16( pc );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
                         else if ( 2 == op_size )
@@ -1826,20 +1772,11 @@ uint64_t m68000::run()
                         {
                             uint32_t address = effective_address( op_size < 2 );
                             if ( 0 == op_size )
-                            {
-                                uint8_t val = effective_value8( address );
-                                setui8( address, sub8( 0, val, true, true, false ) );
-                            }
+                                setui8( address, sub8( 0, effective_value8( address ), true, true, false ) );
                             else if ( 1 == op_size )
-                            {
-                                uint16_t val = effective_value16( address );
-                                setui16( address, sub16( 0, val, true, true, false ) );
-                            }
+                                setui16( address, sub16( 0, effective_value16( address ), true, true, false ) );
                             else if ( 2 == op_size )
-                            {
-                                uint32_t val = effective_value32( address );
-                                setui32( address, sub32( 0, val, true, true, false ) );
-                            }
+                                setui32( address, sub32( 0, effective_value32( address ), true, true, false ) );
                         }
                     }
                     else if ( 0xe4 == bits11_4 ) // trap
@@ -2145,22 +2082,19 @@ uint64_t m68000::run()
 
                             if ( 0 == op_size )
                             {
-                                uint8_t val = getui8( address );
-                                val = ~val;
+                                uint8_t val = ~getui8( address );
                                 set_nzcv8( val );
                                 setui8( address, val );
                             }
                             else if ( 1 == op_size )
                             {
-                                uint16_t val = getui16( address );
-                                val = ~val;
+                                uint16_t val = ~getui16( address );
                                 set_nzcv16( val );
                                 setui16( address, val );
                             }
                             else
                             {
-                                uint32_t val = getui32( address );
-                                val = ~val;
+                                uint32_t val = ~getui32( address );
                                 set_nzcv32( val );
                                 setui32( address, val );
                             }
@@ -2596,29 +2530,17 @@ uint64_t m68000::run()
                     if ( bit8 )
                         source = effective_value32( effective_address() );
                     else
-                    {
-                        source = effective_value16( effective_address( true ) );
-                        source = sign_extend( source, 15 );
-                    }
+                        source = sign_extend( effective_value16( effective_address( true ) ), 15 );
                     sub32( aregs[ op_reg ], source, true, false, false );
                 }
                 else if ( op_mode <= 2 ) // cmp
                 {
                     if ( 0 == op_mode )
-                    {
-                        uint8_t val = effective_value8( effective_address( true ) );
-                        sub8( dregs[ op_reg ].b, val, true, false, false );
-                    }
+                        sub8( dregs[ op_reg ].b, effective_value8( effective_address( true ) ), true, false, false );
                     else if ( 1 == op_mode )
-                    {
-                        uint16_t val = effective_value16( effective_address( true ) );
-                        sub16( dregs[ op_reg ].w, val, true, false, false );
-                    }
+                        sub16( dregs[ op_reg ].w, effective_value16( effective_address( true ) ), true, false, false );
                     else if ( 2 == op_mode )
-                    {
-                        uint32_t val = effective_value32( effective_address() );
-                        sub32( dregs[ op_reg ].l, val, true, false, false );
-                    }
+                        sub32( dregs[ op_reg ].l, effective_value32( effective_address() ), true, false, false );
                     else
                         unhandled();
                     break;
@@ -2671,22 +2593,19 @@ uint64_t m68000::run()
                         uint32_t address = effective_address( op_size < 2 );
                         if ( 0 == op_size )
                         {
-                            uint8_t val = dregs[ op_reg ].b;
-                            val ^= effective_value8( address );
+                            uint8_t val = dregs[ op_reg ].b ^ effective_value8( address );
                             set_nzcv8( val );
                             setui8( address, val );
                         }
                         else if ( 1 == op_size )
                         {
-                            uint16_t val = dregs[ op_reg ].w;
-                            val ^= effective_value16( address );
+                            uint16_t val = dregs[ op_reg ].w ^ effective_value16( address );
                             set_nzcv16( val );
                             setui16( address, val );
                         }
                         else if ( 2 == op_size )
                         {
-                            uint32_t val = dregs[ op_reg ].l;
-                            val ^= effective_value32( address );
+                            uint32_t val = dregs[ op_reg ].l ^ effective_value32( address );
                             set_nzcv32( val );
                             setui32( address, val );
                         }
@@ -2777,20 +2696,17 @@ uint64_t m68000::run()
                     {
                         if ( 0 == op_size )
                         {
-                            uint8_t val = effective_value8( effective_address( true ) );
-                            dregs[ op_reg ].b &= val;
+                            dregs[ op_reg ].b &= effective_value8( effective_address( true ) );
                             set_nzcv8( dregs[ op_reg ].b );
                         }
                         else if ( 1 == op_size )
                         {
-                            uint16_t val = effective_value16( effective_address( true ) );
-                            dregs[ op_reg ].w &= val;
+                            dregs[ op_reg ].w &= effective_value16( effective_address( true ) );
                             set_nzcv16( dregs[ op_reg ].w );
                         }
                         else
                         {
-                            uint32_t val = effective_value32( effective_address() );
-                            dregs[ op_reg ].l &= val;
+                            dregs[ op_reg ].l &= effective_value32( effective_address() );
                             set_nzcv32( dregs[ op_reg ].l );
                         }
                     }
