@@ -496,7 +496,7 @@ void m68000::trace_state()
         strcat( symbol_offset, "\n            " );
     }
 
-    tracer.Trace( "pc %8x %s%s op %8x %4x %s", pc, symbol_name, symbol_offset, op, getui32( pc + 2 ), render_flags() );
+    tracer.Trace( "pc %8x %s%s op %6x %8x %s", pc, symbol_name, symbol_offset, op, getui32( pc + 2 ), render_flags() );
 
     static char acregs[ 16 * 16 + 10 ]; // way too much.
     acregs[ 0 ] = 0;

@@ -12,7 +12,7 @@ done
 echo build m68.elf
 mm68.sh
 
-for arg in tbcd tshift taddsubm tea
+for arg in tbcd tshift taddsubm tea ttt68
 do
     echo $arg
     ma.sh $arg
