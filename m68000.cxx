@@ -417,7 +417,7 @@ const char * condition_string( uint16_t c )
     }
 } //condition_string
 
-const char * movem_d0_a7( uint16_t x )
+const char * movem_a7_d0( uint16_t x ) // 0..15 == a7..d0. predecrement mode
 {
     static char ac[ 16 * 3 ];
     size_t len = 0;
@@ -444,9 +444,9 @@ const char * movem_d0_a7( uint16_t x )
 
     ac[ len ] = 0;
     return ac;
-} //movem_d0_a7
+} //movem_a7_d0
 
-const char * movem_a7_d0( uint16_t x )
+const char * movem_d0_a7( uint16_t x ) // 0..15 == d0..a7. post-increment and control modes
 {
     static char ac[ 16 * 3 ];
     size_t len = 0;
@@ -473,7 +473,7 @@ const char * movem_a7_d0( uint16_t x )
 
     ac[ len ] = 0;
     return ac;
-} //movem_a7_d0
+} //movem_d0_a7
 
 void m68000::trace_state()
 {
@@ -496,7 +496,7 @@ void m68000::trace_state()
         strcat( symbol_offset, "\n            " );
     }
 
-    tracer.Trace( "pc %8x %s%s op %6x %8x %s", pc, symbol_name, symbol_offset, op, getui32( pc + 2 ), render_flags() );
+    tracer.Trace( "pc %8x %s%s op %5x %8x %s", pc, symbol_name, symbol_offset, op, getui32( pc + 2 ), render_flags() );
 
     static char acregs[ 16 * 16 + 10 ]; // way too much.
     acregs[ 0 ] = 0;
@@ -546,25 +546,25 @@ void m68000::trace_state()
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
                 pc += ( 2 == op_size ) ? 4 : 2;
-                tracer.Trace( "andi.%c #%u, %s\n", get_size(), val, effective_string() );
+                tracer.Trace( "andi.%c #%d, %s\n", get_size(), val, effective_string() );
             }
             else if ( 0xc == bits11_8 ) // cmpi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
                 pc += ( 2 == op_size ) ? 4 : 2;
-                tracer.Trace( "cmpi.%c #%u, %s\n", get_size(), val, effective_string() );
+                tracer.Trace( "cmpi.%c #%d, %s\n", get_size(), val, effective_string() );
             }
             else if ( 4 == bits11_8 ) // subi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
                 pc += ( 2 == op_size ) ? 4 : 2;
-                tracer.Trace( "subi.%c #%u, %s\n", get_size(), val, effective_string() );
+                tracer.Trace( "subi.%c #%d, %s\n", get_size(), val, effective_string() );
             }
             else if ( 6 == bits11_8 ) // addi
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
                 pc += ( 2 == op_size ) ? 4 : 2;
-                tracer.Trace( "addi.%c #%u, %s\n", get_size(), val, effective_string() );
+                tracer.Trace( "addi.%c #%d, %s\n", get_size(), val, effective_string() );
             }
             else if ( 0x20 == bits11_6 ) // btst using address
             {
@@ -688,7 +688,7 @@ void m68000::trace_state()
                     else if ( memory_to_register ) // list, ea   == memory to register
                     {
                         pc += 2;
-                        const char * pregs = movem_d0_a7( getui16( pc ) ); // control mode is always d0..a7
+                        const char * pregs = movem_d0_a7( getui16( pc ) ); // control mode is always d0..a7 == 0..15
                         tracer.Trace( "movem.%c %s, %s\n", size_c, effective_string( !size_long ), pregs );
                     }
                     else // ea, list   == register to memory
