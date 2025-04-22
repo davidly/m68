@@ -1,4 +1,4 @@
-Sun 04/20/2025 10:22:30.35 
+Tue 04/22/2025  6:54:17.69 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -547,7 +547,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-20.659000 milliseconds
+24.913000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -3975,10 +3975,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 20, hour 17, min 22, sec 36
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 20, hour 12, min 22, sec 36
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 20, hour 9, min 22, sec 36
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 20, hour 9, min 22, sec 36
+before TZ is set: tz: '(null)', year: 2025, month 4, day 22, hour 13, min 54, sec 24
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 22, hour 8, min 54, sec 24
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 22, hour 5, min 54, sec 24
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 22, hour 5, min 54, sec 24
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5762,6 +5762,8 @@ result is 106
 result is 106
 test ttt68 
 moves: 6493
+test ttt68u 
+moves: 6493
 test an -t david lee 
 a delve id
 a delved i
@@ -5806,10 +5808,10 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     269
-  dictionary: 265
+total ms:     267
+  dictionary: 263
   generate:   3
-  render:     0
+  render:     1
 test ba tp.bas 
 parsing input file c_tests\tp.bas
 0 ms for 1 iterations
@@ -5842,4 +5844,4 @@ starting...
 6493 moves
 1 iterations
 0.000000 milliseconds
-Sun 04/20/2025 10:22:43.86 
+Tue 04/22/2025  6:54:31.57 

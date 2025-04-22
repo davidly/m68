@@ -21,7 +21,7 @@ exit /b 0
 echo build m68.elf
 call mm68.bat
 
-set _asmlist=tbcd tshift taddsubm tea ttt68
+set _asmlist=tbcd tshift taddsubm tea ttt68 ttt68u
 
 ( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
 
