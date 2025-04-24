@@ -4,8 +4,9 @@ struct m68000;
 
 // callbacks when instructions are executed
 
-extern void emulator_invoke_svc( m68000 & cpu );                                                // called when the ecall instruction is executed
+extern void emulator_invoke_svc( m68000 & cpu );                                                // called when the linux-style syscall instruction is executed
 extern void emulator_invoke_68k_trap15( m68000 & cpu );                                         // called when trap #15 is invoked for an IDE68K emulator system call
+extern void emulator_invoke_68k_trap2( m68000 & cpu );                                          // called when trap #2 for digital research cp/m 68k bdos calls
 extern const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset );              // returns the best guess for a symbol name and offset for the address
 extern void emulator_hard_termination( m68000 & cpu, const char *pcerr, uint64_t error_value ); // show an error and exit
 

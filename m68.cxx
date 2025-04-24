@@ -15,6 +15,7 @@
     This emulates 68000 machines running Linux, CP/M 68k, and the 68000 Visual Simulator Trap 0x15
     how to build a cross compiler for 68000 on Windows:
         http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet
+    It also runs some cp/m 68k v1.3 binaries. Tested with the C compiler, assembler, and linker. The apps they produce also run
 #else
     #error one of ARMOS, RVOS, or M68 must be defined
 #endif
@@ -3467,6 +3468,933 @@ static int ends_with( const char * str, const char * end )
 } //ends_with
 
 #ifdef M68
+
+#define CPM_FILENAME_LEN ( 8 + 3 + 1 + 1 ) // name + type + dot + null
+
+// this struct is used to cache FILE * objects to avoid open/close for each file access
+
+struct FileEntry
+{
+    char acName[ CPM_FILENAME_LEN ];
+    FILE * fp;
+};
+
+static bool g_forceLowercase = false;
+static uint8_t * g_DMA = 0;
+static vector<FileEntry> g_fileEntries;
+
+FILE * RemoveFileEntry( char * name )
+{
+    for ( size_t i = 0; i < g_fileEntries.size(); i++ )
+    {
+        if ( !strcmp( name, g_fileEntries[ i ].acName ) )
+        {
+            FILE * fp = g_fileEntries[ i ].fp;
+            tracer.Trace( "  removing file entry '%s'\n", name );
+            g_fileEntries.erase( g_fileEntries.begin() + i );
+            return fp;
+        }
+    }
+
+    tracer.Trace( "ERROR: could not remove file entry for '%s'\n", name );
+    return 0;
+} //RemoveFileEntry
+
+FILE * FindFileEntry( char * name )
+{
+    for ( size_t i = 0; i < g_fileEntries.size(); i++ )
+    {
+        if ( !strcmp( name, g_fileEntries[ i ].acName ) )
+        {
+            tracer.Trace( "  found file entry '%s'\n", name );
+            return g_fileEntries[ i ].fp;
+        }
+    }
+
+    tracer.Trace( "  could not find an open file entry for '%s'; that might be OK\n", name );
+    return 0;
+} //FindFileEntry
+
+#pragma pack( push, 1 )
+struct HeaderCPM68K    // .68k executable files for cp/m 68k v1.3
+{
+    uint16_t signature;
+    uint32_t cb_text;
+    uint32_t cb_data;
+    uint32_t cb_bss;
+    uint32_t cb_symbols;
+    uint32_t reserved;
+    uint32_t text_start;
+    uint16_t relocation_flag; // two bytes, but only the low byte has the flag
+
+    void swap_endianness()
+    {
+        signature = swap_endian16( signature );
+        cb_text = swap_endian32( cb_text );
+        cb_data = swap_endian32( cb_data );
+        cb_bss = swap_endian32( cb_bss );
+        cb_symbols = swap_endian32( cb_symbols );
+        reserved = swap_endian32( reserved );
+        text_start = swap_endian32( text_start );
+        relocation_flag = swap_endian16( relocation_flag );
+    }
+
+    void trace()
+    {
+        tracer.Trace( "cpm68k executable header:\n" );
+        tracer.Trace( "  signature: %#x\n", signature );
+        tracer.Trace( "  cb_text: %#x\n", cb_text );
+        tracer.Trace( "  cb_data: %#x\n", cb_data );
+        tracer.Trace( "  cb_bss: %#x\n", cb_bss );
+        tracer.Trace( "  cb_symbols: %#x\n", cb_symbols );
+        tracer.Trace( "  text_start: %#x\n", text_start );
+        tracer.Trace( "  relocation_flag: %#x\n", relocation_flag );
+    }
+};
+
+struct FCBCPM68K // file control block for cp/m
+{
+    uint8_t dr;         // drive
+    char f[ 8 ];        // filename
+    char t[ 3 ];        // file type
+    uint8_t ex;         // current extent number. normally set to 0 by user but is in range 0-31
+    uint8_t s1;
+    uint8_t s2;         // reserved for system use. set to 0 for open/make/search
+    uint8_t rc;         // record count, reserved for system use
+    uint8_t d[ 16 ];
+    uint8_t cr;         // current reacord to be read or written for sequential read/write operations. apps must set approprately.
+    uint8_t r0;         // (optional if app is doing random I/O) random record number. most significant byte in r0 then r1 then r2 as a 24-bit record
+    uint8_t r1;         // the byte order is the opposite of CP/M 2.2 for 8080 plus r2 is actually used!
+    uint8_t r2;
+
+    void make_filename( char * p )
+    {
+        for ( int i = 0; i < 8; i++ )
+        {
+            if ( ' ' == ( 0x7f & f[ i ] ) )
+                break;
+            *p++ = ( 0x7f & f[ i ] );
+        }
+        if ( ' ' != t[ 0 ] )
+        {
+            *p++ = '.';
+            for ( int i = 0; i < 3; i++ )
+            {
+                if ( ' ' == ( 0x7f & t[ i ] ) )
+                    break;
+                *p++ = ( 0x7f & t[ i ] );
+            }
+        }
+        *p++ = 0;
+    }
+    // r0 and r1 are a 16-bit count of 128 byte records
+
+    uint32_t GetRandomIOOffset() { return ( (uint32_t) this->r0 << 16 ) | ( (uint32_t) this->r1 << 8 ) | this->r2; }
+
+    void SetRandomIOOffset( uint16_t o )
+    {
+        this->r2 = ( 0xff & o );
+        this->r1 = ( ( o & 0xff00 ) >> 8 );
+        this->r0 = ( ( o & 0xff0000 ) >> 8 );
+    } //SetRandomIOOffset
+
+    void SetRecordCount( FILE * fp )
+    {
+        // set rc to file size in 128 byte records if < 16k, else 128
+        uint32_t file_size = portable_filelen( fp );
+        if ( file_size >= ( 16 * 1024 ) ) // CP/M 2.2 does this and Whitesmith C's A80.COM and LNK.COM depend on it
+            this->rc = 128;
+        else
+        {
+            uint32_t tail_size = ( file_size % ( 16 * 1024 ) ); // won't matter because of 16k check above
+            this->rc = (uint8_t) ( tail_size / 128 );
+            if ( 0 != ( tail_size % 128 ) )
+                this->rc++;
+        }
+    } //SetRecordCount
+
+    void UpdateSequentialOffset( uint32_t offset )
+    {
+        cr = (uint8_t) ( ( offset % ( (uint32_t) 16 * 1024 ) ) / (uint32_t) 128 );
+        ex = (uint8_t) ( ( offset % ( (uint32_t) 512 * 1024 ) ) / ( (uint32_t) 16 * 1024 ) );
+        s2 = (uint8_t) ( offset / ( (uint32_t) 512 * 1024 ) );
+        #ifdef WATCOM
+        tracer.Trace( "  new offset: %u, s2 %u, ex %u, cr %u\n", (uint16_t) offset, (uint16_t) s2, (uint16_t) ex, (uint16_t) cr );
+        #else
+        tracer.Trace( "  new offset: %u, s2 %u, ex %u, cr %u\n", offset, s2, ex, cr );
+        #endif
+    } //UpdateSequentialOffset
+
+    uint32_t GetSequentialOffset()
+    {
+        uint32_t curr = (uint32_t) cr * 128;
+        curr += ( (uint32_t) ex * ( (uint32_t) 16 * 1024 ) );
+        curr += ( (uint32_t) s2 * ( (uint32_t) 512 * 1024 ) );
+        return curr;
+    } //GetSequentialOffset
+
+    void Trace( bool justArg = false ) // justArg is the first 16 bytes at app startup
+    {
+        tracer.Trace( "  FCB at address %04x:\n", (uint32_t) ( (uint8_t * ) this - memory.data() ) );
+        tracer.Trace( "    drive:    %#x == %c\n", dr, ( 0 == dr ) ? 'A' : 'A' + dr - 1 );
+        tracer.Trace( "    filename: '%c%c%c%c%c%c%c%c'\n", 0x7f & f[0], 0x7f & f[1], 0x7f & f[2], 0x7f & f[3],
+                                                            0x7f & f[4], 0x7f & f[5], 0x7f & f[6], 0x7f & f[7] );
+        tracer.Trace( "    filetype: '%c%c%c'\n", 0x7f & t[0], 0x7f & t[1], 0x7f & t[2] );
+        tracer.Trace( "    R S A:    %d %d %d\n", 0 != ( 0x80 & t[0] ), 0 != ( 0x80 & t[1] ), 0 != ( 0x80 & t[2] ) );
+        tracer.Trace( "    ex:       %d\n", ex );
+        tracer.Trace( "    s1:       %u\n", s1 );
+        tracer.Trace( "    s2:       %u\n", s2 );
+        tracer.Trace( "    rc:       %u\n", rc );
+        if ( !justArg )
+        {
+            tracer.Trace( "    cr:       %u\n", cr );
+            tracer.Trace( "    r0:       %u\n", r0 );
+            tracer.Trace( "    r1:       %u\n", r1 );
+            tracer.Trace( "    r2:       %u\n", r2 );
+        }
+    } //Trace
+};
+
+struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory
+{
+    uint32_t lowest_tpa;                // 0
+    uint32_t highest_tpa;               // 4
+    uint32_t start_text;                // 8
+    uint32_t cb_text;                   // c
+    uint32_t start_data;                // 10
+    uint32_t cb_data;                   // 14
+    uint32_t start_bss;                 // 18
+    uint32_t cb_bss;                    // 1c
+    uint32_t cb_after_bss;              // 20
+    uint8_t drive;                      // 24 where the app was loaded
+    uint8_t reserved[ 19 ];             // 25 reserved. used for stop instruction when an app returns from _start
+    FCBCPM68K secondFCB;                // 38
+    FCBCPM68K firstFCB;                 // 5c
+    uint8_t cb_command_tail;            // 80 also start of default DMA buffer
+    uint8_t command_tail[ 127 ];        // 81
+};
+
+#pragma pack(pop)
+
+bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
+{
+    char * orig = pcFilename;
+
+    // note: the high bits are used for file attributes. Mask them away
+
+    for ( int i = 0; i < 8; i++ )
+    {
+        if ( ' ' == ( 0x7f & pfcb->f[ i ] ) )
+            break;
+        *pcFilename++ = ( 0x7f & pfcb->f[ i ] );
+    }
+
+    if ( ' ' != pfcb->t[0] )
+    {
+        *pcFilename++ = '.';
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( ' ' == ( 0x7f & pfcb->t[ i ] ) )
+                break;
+            *pcFilename++ = ( 0x7f & pfcb->t[ i ] );
+        }
+    }
+
+    *pcFilename = 0;
+
+    // CP/M assumes all filenames are uppercase. Linux users generally use all lowercase filenames
+
+    if ( g_forceLowercase )
+        _strlwr( orig );
+
+    return ( pcFilename != orig );
+} //parse_FCB_Filename
+
+void WriteRandom( m68000 & cpu )
+{
+    FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+    pfcb->Trace();
+    ACCESS_REG( REG_RESULT ) = 6; // seek past end of disk
+
+    char acFilename[ CPM_FILENAME_LEN ];
+    bool ok = parse_FCB_Filename( pfcb, acFilename );
+    if ( ok )
+    {
+        FILE * fp = FindFileEntry( acFilename );
+        if ( fp )
+        {
+            uint32_t record = pfcb->GetRandomIOOffset();
+            uint32_t file_offset = record * (uint32_t) 128;
+
+            fseek( fp, 0, SEEK_END );
+            uint32_t file_size = ftell( fp );
+            tracer.Trace( "  write random file %p, record %#x, file_offset %d, file_size %d\n", fp, record, file_offset, file_size );
+
+            if ( file_offset > file_size )
+            {
+                ok = !fseek( fp, file_offset, SEEK_SET );
+                if ( ok )
+                    file_size = ftell( fp );
+                else
+                    tracer.Trace( "  can't seek to extend file with zeros, error %d = %s\n", errno, strerror( errno ) );
+            }
+
+            if ( file_size >= file_offset )
+            {
+                ok = !fseek( fp, file_offset, SEEK_SET );
+                if ( ok )
+                {
+                    tracer.Trace( "  writing random at offset %#x\n", file_offset );
+                    tracer.TraceBinaryData( g_DMA, 128, 2 );
+                    size_t numwritten = fwrite( g_DMA, 128, 1, fp );
+                    if ( numwritten )
+                    {
+                        ACCESS_REG( REG_RESULT ) = 0;
+
+                        // The CP/M spec says random write should set the file offset such
+                        // that the following sequential I/O will be from the SAME location
+                        // as this random write -- not 128 bytes beyond.
+
+                        fseek( fp, file_offset, SEEK_SET );
+                    }
+                    else
+                        tracer.Trace( "ERROR: can't write in write random, error %d = %s\n", errno, strerror( errno ) );
+                }
+                else
+                    tracer.Trace( "ERROR: can't seek in write random, offset %#x, size %#x\n", file_offset, file_size );
+            }
+            else
+                tracer.Trace( "ERROR: write random at offset %d beyond end of file size %d\n", file_offset, file_size );
+        }
+        else
+            tracer.Trace( "ERROR: write random on unopened file\n" );
+    }
+    else
+        tracer.Trace( "ERROR: write random can't parse filename\n" );
+} //WriteRandom
+
+void emulator_invoke_68k_trap2( m68000 & cpu )
+{
+    char acFilename[ CPM_FILENAME_LEN ];
+    uint16_t function = ( 0xffff & ACCESS_REG( REG_SYSCALL ) );
+    tracer.Trace( "trap 2 cp/m 68k bdos call %u, first argument %#x\n", function, ACCESS_REG( REG_ARG0 ) );
+
+    // note: only the subset invoked by cp/m 68k versions of the C compiler, assembler, and linker are implemented.
+
+    switch ( function )
+    {
+        case 0: // system reset; exit the app
+        {
+            g_terminate = true;
+            cpu.end_emulation();
+            g_exit_code = (int) ACCESS_REG( REG_ARG0 ); // not part of the cp/m 68k spec but it seems handy
+            tracer.Trace( "  emulated app exit code %d\n", g_exit_code );
+            break;
+        }
+        case 9: // send $-terminated string to stdout
+        {
+            char * str = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            char * pdollar = strchr( str, '$' );
+            if ( pdollar )
+                tracer.Trace( "   string: %.*s\n", pdollar - str, str );
+            uint32_t count = 0;
+            while ( '$' != *str )
+            {
+                if ( count++ > 2000 ) // arbitrary limit, but probably a bug if this long
+                {
+                    tracer.Trace( "  ERROR: String to print is too long!\n", stderr );
+                    break;
+                }
+
+                uint8_t ch = *str++;
+                if ( 0x0d != ch )              // skip carriage return because line feed turns into cr+lf
+                    printf( "%c", ch );
+            }
+            fflush( stdout );
+            break;
+        }
+        case 15: // open file. success 0-3, error 0xff
+        {
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.TraceBinaryData( (uint8_t *) pfcb, sizeof( FCBCPM68K ), 4 );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                tracer.Trace( "  opening file '%s' for pfcb %p\n", acFilename, pfcb );
+                FILE * fp = FindFileEntry( acFilename );
+                if ( fp )
+                {
+                    // sometimes apps like the CP/M assembler ASM open files that are already open.
+                    // rewind it to position 0.
+
+                    fseek( fp, 0, SEEK_SET );
+                    ACCESS_REG( REG_RESULT ) = 0;
+                    pfcb->cr = 0;
+                    pfcb->SetRecordCount( fp ); // Whitesmith C 2.1 requires this to be set
+                    // don't reset extent on a re-open or LK80.COM will fail. pfcb->ex = 0;
+                    pfcb->s2 = 0;
+                    tracer.Trace( "  open used existing file and rewound to offset 0\n" );
+                }
+                else
+                {
+                    // the cp/m 2.2 spec says that filenames may contain question marks. I haven't found an app that uses that.
+
+                    fp = fopen( acFilename, "r+b" );
+                    if ( fp )
+                    {
+                        FileEntry fe;
+                        strcpy( fe.acName, acFilename );
+                        fe.fp = fp;
+                        g_fileEntries.push_back( fe );
+                        ACCESS_REG( REG_RESULT ) = 0;
+
+                        // Digital Research's lk80.com linker has many undocumented expectations no other apps I've tested have.
+                        // including rc > 0 after an open. Whitesmith C requires the record count set correctly.
+
+                        pfcb->cr = 0;
+                        pfcb->SetRecordCount( fp );
+                        pfcb->ex = 0;
+                        pfcb->s2 = 0;
+                        tracer.Trace( "  file opened successfully, record count: %u\n", pfcb->rc );
+                    }
+                    else
+                        tracer.Trace( "ERROR: can't open file '%s' error %d = %s\n", acFilename, errno, strerror( errno ) );
+                }
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in FCB\n" );
+            break;
+        }
+        case 16:
+        {
+            // close file. return 255 on error and 0..3 directory code otherwise
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = RemoveFileEntry( acFilename );
+                if ( fp )
+                {
+                    int ret = fclose( fp );
+
+                    if ( 0 == ret )
+                        ACCESS_REG( REG_RESULT ) = 0;
+                    else
+                        tracer.Trace( "ERROR: file close failed, error %d = %s\n", errno, strerror( errno ) );
+                }
+                else
+                    tracer.Trace( "ERROR: file close on file that's not open\n" );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in close call\n" );
+            break;
+        }
+        case 19:
+        {
+            // delete file. return 255 if file not found and 0..3 directory code otherwise
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                // if deleting an open file, close it first. CalcStar does this on file save.
+
+                if ( FindFileEntry( acFilename ) )
+                {
+                    FILE * fp = RemoveFileEntry( acFilename );
+                    if ( fp )
+                        fclose( fp );
+                }
+
+                int removeok = ( 0 == remove( acFilename ) );
+                tracer.Trace( "  attempt to remove file '%s' result ok: %d\n", acFilename, removeok );
+                if ( removeok )
+                    ACCESS_REG( REG_RESULT ) = 0;
+                else
+                    tracer.Trace( "  error %d = %s\n", errno, strerror( errno ) );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename for delete file\n" );
+            break;
+        }
+        case 22:
+        {
+            // make file. return 255 if out of space or the file exists. 0..3 directory code otherwise.
+            // "the Make function has the side effect of activating the FCB and thus a subsequent open is not necessary."
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                tracer.Trace( "  making file '%s'\n", acFilename );
+                FILE * fp = fopen( acFilename, "w+b" );
+                if ( fp )
+                {
+                    FileEntry fe;
+                    strcpy( fe.acName, acFilename );
+                    fe.fp = fp;
+                    g_fileEntries.push_back( fe );
+
+                    pfcb->cr = 0;
+                    pfcb->rc = 0;
+                    pfcb->ex = 0;
+                    pfcb->s2 = 0;
+
+                    tracer.Trace( "  successfully created fp %p for write\n", fp );
+                    ACCESS_REG( REG_RESULT ) = 0;
+                }
+                else
+                    tracer.Trace( "ERROR: unable to make file\n" );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in make file\n" );
+            break;
+        }
+        case 26:
+        {
+            // set the dma address (128 byte buffer for doing I/O)
+
+            tracer.Trace( "  updating DMA address; D %u = %#x\n", ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG0 ) );
+            g_DMA = memory.data() + ACCESS_REG( REG_ARG0 );
+            break;
+        }
+        case 32:
+        {
+            // get/set current user
+
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 33:
+        {
+            // read random
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 6; // seek past end of disk
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = FindFileEntry( acFilename );
+                if ( fp )
+                {
+                    uint32_t record = pfcb->GetRandomIOOffset();
+                    tracer.Trace( "  read random record %u == %#x\n", record, record );
+                    uint32_t file_offset = (uint32_t) record * (uint32_t) 128;
+                    memset( g_DMA, 0x1a, 128 ); // fill with ^z, the EOF marker in CP/M
+
+                    uint32_t file_size = portable_filelen( fp );
+
+                    // OS workaround for app bug: Turbo Pascal expects a read just past the end of file to succeed.
+
+                    if ( file_size == file_offset )
+                    {
+                        tracer.Trace( "  random read at eof, offset %u\n", file_size );
+                        ACCESS_REG( REG_RESULT ) = 1;
+                        break;
+                    }
+
+                    if ( file_size > file_offset )
+                    {
+                        uint32_t to_read = get_min( file_size - file_offset, (uint32_t) 128 );
+                        ok = !fseek( fp, file_offset, SEEK_SET );
+                        if ( ok )
+                        {
+                            tracer.Trace( "  reading random at offset %u == %#x. file size %u, to read %u\n", file_offset, file_offset, file_size, to_read );
+                            size_t numread = fread( g_DMA, 1, to_read, fp );
+                            if ( numread )
+                            {
+                                tracer.TraceBinaryData( g_DMA, to_read, 2 );
+                                ACCESS_REG( REG_RESULT ) = 0;
+
+                                // The CP/M spec says random read should set the file offset such
+                                // that the following sequential I/O will be from the SAME location
+                                // as this random read -- not 128 bytes beyond.
+
+                                pfcb->UpdateSequentialOffset( file_offset );
+                            }
+                            else
+                                tracer.Trace( "ERROR: can't read in read random\n" );
+                        }
+                        else
+                            tracer.Trace( "ERROR: can't seek in read random\n" );
+                    }
+                    else
+                    {
+                        ACCESS_REG( REG_RESULT ) = 1;
+                        tracer.Trace( "ERROR: read random read at %u beyond end of file size %u\n", file_offset, file_size );
+                    }
+                }
+                else
+                    tracer.Trace( "ERROR: read random on unopened file\n" );
+            }
+            else
+                tracer.Trace( "ERROR: read random can't parse filename\n" );
+            break;
+        }
+        case 34:
+        {
+            // write random
+
+            WriteRandom( cpu );
+            break;
+        }
+        case 35:
+        {
+            // Compute file size. A = 0 if ok, 0xff on failure. Sets r2 to 0 and r0/r1 to the number of 128 byte records
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                //pfcb->r2 = 0; // only supported in cp/m post version 2.2
+
+                FILE * fp = FindFileEntry( acFilename );
+                bool found = false;
+                if ( fp )
+                    found = true;
+                else
+                    fp = fopen( acFilename, "r+b" );
+
+                if ( fp )
+                {
+                    uint32_t file_size = portable_filelen( fp );
+                    file_size = round_up( file_size, (uint32_t) 128 ); // cp/m files round up in 128 byte records
+                    pfcb->SetRandomIOOffset( (uint16_t) ( file_size / 128 ) );
+                    ACCESS_REG( REG_RESULT ) = 0;
+                    tracer.Trace( "  file size is %u == %u records; r1 %#x r0 %#x\n", file_size, file_size / 128, pfcb->r1, pfcb->r0 );
+
+                    if ( !found )
+                        fclose( fp );
+                }
+                else
+                    tracer.Trace( "ERROR: compute file size can't find file '%s'\n", acFilename );
+            }
+            break;
+        }
+        default:
+        {
+            printf( "  unhandled cp/m bdos call %u\n", function );
+            tracer.Trace( "  unhandled cp/m bdos call %u\n", function );
+            break;
+        }
+    }
+} //emulator_invoke_68k_trap2
+
+bool write_fcb_arg( FCBCPM68K * arg, char * pc )
+{
+    if ( ':' == pc[ 1 ] )
+    {
+        if ( pc[0] > 'P' || pc[0] < 'A' )
+            return false; // don't write arguments that don't look like filenames
+
+        arg->dr = 1 + pc[0] - 'A';
+        pc += 2;
+    }
+
+    char * dot = strchr( pc, '.' );
+    if ( dot )
+    {
+        memcpy( & ( arg->f ), pc, get_min( (size_t) 8, (size_t) ( dot - pc ) ) );
+        memcpy( & ( arg->t ), dot + 1, get_min( (size_t) 3, strlen( dot + 1 ) ) );
+    }
+    else
+        memcpy( & ( arg->f ), pc, get_min( (size_t) 8, strlen( pc ) ) );
+
+    return true;
+} //write_fcb_arg
+
+bool load_cpm68k( const char * acApp, const char * acAppArgs )
+{
+    assert( 256 == sizeof( BasePageCPM ) ); // make sure the structure was defined correctly
+
+    FILE * fp = fopen( acApp, "rb" );
+    if ( !fp )
+    {
+        printf( "can't open cp/m 68k image file: %s\n", acApp );
+        return false;
+    }
+
+    CFile file( fp );
+    HeaderCPM68K head;
+    size_t read = fread( &head, sizeof( head ), 1, fp );
+    if ( 1 != read )
+    {
+        printf( "can't read header of cp/m 68k image file: %s\n", acApp );
+        return false;
+    }
+
+    head.swap_endianness();
+    head.trace();
+
+    if ( 0x601a != head.signature )
+    {
+        printf( "header of cp/m 68k image file isn't standard no-relocation 0x601a: %s\n", acApp );
+        return false;
+    }
+
+    uint32_t text_base;
+    if ( 0 != head.relocation_flag ) // 0 means they exist, != 0 means they don't exist
+        text_base = head.text_start;
+    else
+        text_base = 0x7b00; // arbitrary, but this is what an actual cp/m 68k machine uses
+
+    uint32_t image_size = head.cb_text + head.cb_data + head.cb_bss;
+    uint32_t memory_size = 0x100 + text_base + image_size; // base page + offset from 0 to start of code + total size of image loaded from the executable
+
+    // make it 16-byte aligned for no particular reason
+
+    if ( memory_size & 0xf )
+    {
+        memory_size += 16;
+        memory_size &= ~0xf;
+    }
+
+    g_end_of_data = memory_size;
+    g_brk_offset = memory_size;
+    g_highwater_brk = memory_size;
+    memory_size += g_brk_commit;
+
+    g_bottom_of_stack = memory_size;
+    memory_size += g_stack_commit;
+
+#if 0 // no map functionality in cp/m 68k
+    memory_size = round_up( memory_size, (REG_TYPE) 4096 ); // mmap should hand out 4k-aligned pages
+    g_mmap_offset = memory_size;
+    memory_size += g_mmap_commit;
+#endif
+
+    memory.resize( memory_size );
+    memset( memory.data() + g_brk_offset, 0, memory_size - g_brk_offset );
+
+    g_base_address = 0;
+    uint32_t base_page = text_base - 0x100; // where the base page (256 bytes) resides
+    BasePageCPM * pbasepage = (BasePageCPM *) ( memory.data() + base_page );
+    g_execution_address = text_base;
+#if 0 // no map functionality in cp/m 68k
+    g_mmap.initialize( g_base_address + g_mmap_offset, g_mmap_commit, memory.data() - g_base_address );
+#endif
+    g_top_of_stack = (REG_TYPE) g_bottom_of_stack + g_stack_commit;
+    pbasepage->reserved[ 1 ] = 0x4e; // stop instruction at at offset 0x26 in the base page (not a cp/m standard)
+    pbasepage->reserved[ 2 ] = 0x72;
+
+    // per the cp/m 68k spec there must be two 32-bit values at the top of the stack for base address and return location at app completion
+    g_top_of_stack -= 8;
+    uint32_t * preturn_address = (uint32_t *) & memory[ g_top_of_stack ];
+    uint32_t * pbase_page_address = (uint32_t *) & memory[ g_top_of_stack + 4 ];
+    *preturn_address = swap_endian32( base_page + 0x26 );
+    *pbase_page_address = swap_endian32( base_page );
+    tracer.Trace( "memory at top of stack address %#x:\n", g_top_of_stack );
+    tracer.TraceBinaryData( & memory[ g_top_of_stack ], 8, 4 );
+    
+    fseek( fp, (long) sizeof( head ), SEEK_SET );
+    read = fread( memory.data() + text_base, head.cb_text + head.cb_data, 1, fp );
+    if ( 1 != read )
+    {
+        printf( "can't read text and data segments of cp/m 68k image file: %s\n", acApp );
+        return false;
+    }
+
+    while ( ' ' == *acAppArgs )
+        acAppArgs++;
+
+    uint8_t arg_len = (uint8_t) strlen( acAppArgs );
+    if ( arg_len > 126 )
+    {
+        printf( "app arguments for cp/m can't be > 126 characters long\n" );
+        return false;
+    }
+
+    memset( & ( pbasepage->firstFCB.f ), ' ', 11 ); // 8 filename + 3 type
+    memset( & ( pbasepage->secondFCB.f ), ' ', 11 );
+
+    pbasepage->cb_command_tail = arg_len;
+    strcpy( (char *) ( pbasepage->command_tail ), acAppArgs );
+    tracer.Trace( "arg_len %u, command tail %s\n", arg_len, acAppArgs );
+
+    // put what look like filenames on the command tail in the two FCBs in the base page. Apps don't much use this.
+
+    char acCopy[ 128 ];
+    strcpy( acCopy, acAppArgs );
+
+    char * pcArg1 = 0;
+    char * pcArg2 = 0;
+    char * pa = acCopy;
+
+    while ( *pa && !pcArg1 && !pcArg2 )
+    {
+        if ( ' ' == *pa )
+            pa++;
+        else if ( '-' == *pa )
+        {
+            while ( *pa && ' ' != *pa )
+                pa++;
+        }
+        else if ( ':' == * ( pa + 1 ) )
+            pa += 2;
+        else if ( !pcArg1 )
+        {
+            pcArg1 = pa;
+            while ( *pa && ' ' != *pa )
+                pa++;
+        }
+        else
+        {
+            pcArg2 = pa;
+            while ( *pa && ' ' != *pa )
+                pa++;
+        }
+    }
+
+    if ( pcArg1 )
+    {
+        char * p = pcArg1;
+        while ( *p )
+        {
+            if ( ' ' == *p )
+                *p = 0;
+            else
+                p++;
+        }
+        tracer.Trace( "    arg1: '%s'\n", pcArg1 );
+        strupr( pcArg1 );
+        write_fcb_arg( & ( pbasepage->firstFCB ), pcArg1 );
+    }
+    if ( pcArg2 )
+    {
+        char * p = pcArg2;
+        while ( *p )
+        {
+            if ( ' ' == *p )
+                *p = 0;
+            else
+                p++;
+        }
+        tracer.Trace( "    arg2: '%s'\n", pcArg2 );
+        strupr( pcArg2 );
+        write_fcb_arg( & ( pbasepage->secondFCB ), pcArg2 );
+    }
+
+    // malloc / brk in the C runtime for DR C use some of these values
+
+    pbasepage->lowest_tpa = 0;
+    pbasepage->highest_tpa = g_base_address + memory_size - 1;
+    pbasepage->start_text = swap_endian32( text_base );
+    pbasepage->cb_text = swap_endian32( head.cb_text );
+    pbasepage->start_data = swap_endian32( text_base + head.cb_text );
+    pbasepage->cb_data = swap_endian32( head.cb_data );
+    pbasepage->start_bss = swap_endian32( text_base + head.cb_text + head.cb_data );
+    pbasepage->cb_bss = swap_endian32( head.cb_bss );
+    pbasepage->cb_after_bss = swap_endian32( g_brk_commit );
+
+    g_DMA = memory.data() + text_base - 0x80; // midway through the base page
+
+    if ( 0 == head.relocation_flag ) // 0 means they exist
+    {
+        uint32_t data_base = text_base; // + head.cb_text; with 0x601a all bases belong to text_base
+        uint32_t bss_base = text_base; // data_base + head.cb_data;
+        uint16_t * pimage = (uint16_t *) ( memory.data() + text_base );
+        uint32_t relocation_words = ( head.cb_text + head.cb_data ) / 2;
+        vector<uint16_t> relocations;
+        relocations.resize( relocation_words );
+        fseek( fp, (long) sizeof( head ) + head.cb_text + head.cb_data + head.cb_symbols, SEEK_SET );
+        read = fread( relocations.data(), relocation_words * 2, 1, fp );
+        if ( 1 != read )
+        {
+            printf( "can't read relocations data of cp/m 68k image file: %s\n", acApp );
+            return false;
+        }
+
+        bool longword_mode = false;
+
+        for ( uint32_t i = 0; i < relocation_words; i++ )
+        {
+            uint16_t r = 7 & swap_endian16( relocations[ i ] );
+
+            if ( 1 == r )
+            {
+                //tracer.Trace( "updating relocation offset %u with data_base %#x, longword_mode %u\n", i, data_base, longword_mode );
+                if ( longword_mode )
+                {
+                    uint32_t * pfull = (uint32_t *) ( pimage + i - 1 );
+                    *pfull = swap_endian32( data_base + swap_endian32( *pfull ) );
+                    longword_mode = false;
+                }    
+                else
+                    pimage[ i ] = swap_endian16( ( 0xffff & data_base ) + swap_endian16( pimage[ i ] ) );
+            }
+            else if ( 2 == r )
+            {
+                //tracer.Trace( "updating relocation offset %u with text_base %#x, longword_mode %u\n", i, text_base, longword_mode );
+                if ( longword_mode )
+                {
+                    uint32_t * pfull = (uint32_t *) ( pimage + i - 1 );
+                    *pfull = swap_endian32( text_base + swap_endian32( *pfull ) );
+                    longword_mode = false;
+                }
+                else
+                    pimage[ i ] = swap_endian16( (uint16_t) text_base + swap_endian16( pimage[ i ] ) );
+            }
+            else if ( 3 == r )
+            {
+                //tracer.Trace( "updating relocation offset %u with bss_base %#x, longword_mode %u\n", i, bss_base, longword_mode );
+                if ( longword_mode )
+                {
+                    uint32_t * pfull = (uint32_t *) ( pimage + i - 1 );
+                    *pfull = swap_endian32( bss_base + swap_endian32( *pfull ) );
+                    longword_mode = false;
+                }
+                else
+                    pimage[ i ] = swap_endian16( (uint16_t) bss_base + swap_endian16( pimage[ i ] ) );
+            }
+            else if ( 5 == r )
+                longword_mode = true;
+            else
+                longword_mode = false;
+        }
+    }
+
+    tracer.Trace( "memory map from highest to lowest addresses:\n" );
+    tracer.Trace( "  first byte beyond allocated memory:                 %x\n", g_base_address + memory_size );
+#if 0 // no mmap support in cp/m 68k
+    tracer.Trace( "  <mmap arena>                                        (%d = %x bytes)\n", g_mmap_commit, g_mmap_commit );
+    tracer.Trace( "  mmap start adddress:                                %x\n", g_base_address + g_mmap_offset );
+    tracer.Trace( "  <align to 4k-page for mmap allocations>\n" );
+#endif
+    tracer.Trace( "  actual top of stack:                                %x\n", g_top_of_stack + 8 );
+    tracer.Trace( "  initial stack pointer g_top_of_stack:               %x\n", g_top_of_stack );
+    REG_TYPE stack_bytes = g_stack_commit;
+    tracer.Trace( "  <stack>                                             (%d == %x bytes)\n", stack_bytes, stack_bytes );
+    tracer.Trace( "  last byte stack can use (g_bottom_of_stack):        %x\n", g_base_address + g_bottom_of_stack );
+    tracer.Trace( "  <unallocated space between brk and the stack>       (%d == %llx bytes)\n", g_brk_commit, g_brk_commit );
+    tracer.Trace( "  end_of_data / current brk:                          %x\n", g_base_address + g_end_of_data );
+    tracer.Trace( "  <code + data from the .hex file>\n" );
+    tracer.Trace( "  initial pc execution_addess:                        %x\n", g_execution_address );
+    tracer.Trace( "  <code per the .68k file>\n" );
+    tracer.Trace( "  start of the address space:                         %x\n", g_base_address );
+
+    tracer.Trace( "vm memory first byte beyond:     %p\n", memory.data() + memory_size );
+    tracer.Trace( "vm memory start:                 %p\n", memory.data() );
+    tracer.Trace( "memory_size:                     %#x == %d\n", memory_size, memory_size );
+
+    tracer.Trace( "first 512 bytes starting at base page:\n" );
+    tracer.TraceBinaryData( memory.data() + text_base - 0x100, 512, 8 );
+
+    return true;
+} //load_cpm68k
+
 static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
 {
     ElfHeader32 ehead = {0};
@@ -4067,6 +4995,9 @@ static bool load_image( const char * pimage, const char * app_args )
 #ifdef M68
     if ( ends_with( pimage, ".hex" ) ) // Motorola 68000 hex file special-case
         return load_68000_hex( pimage ); // app args are lost with hex files
+
+    if ( ends_with( pimage, ".68k" ) ) // Digital Research CP/M 68K executable file
+        return load_cpm68k( pimage, app_args );
 #endif
 
     FILE * fp = fopen( pimage, "rb" );

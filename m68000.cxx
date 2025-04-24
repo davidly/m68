@@ -209,7 +209,7 @@ const char * m68000::effective_string( bool force_imm_word )
                     if ( force_imm_word )
                     {
                         pc += 2;
-                        address = sign_extend( getui16( pc ), 15 ); // only do the SE when destination is an A register?
+                        address = sign_extend( getui16( pc ), 15 ); // only do the sign extension when destination is an A register?
                     }
                     else
                     {
@@ -552,7 +552,7 @@ void m68000::trace_state()
             {
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
                 pc += ( 2 == op_size ) ? 4 : 2;
-                tracer.Trace( "cmpi.%c #%d, %s\n", get_size(), val, effective_string() );
+                tracer.Trace( "cmpi.%c #%d, %s\n", get_size(), val, effective_string( op_size < 2 ) );
             }
             else if ( 4 == bits11_8 ) // subi
             {
@@ -673,7 +673,11 @@ void m68000::trace_state()
                 else if ( 0x21 == bits11_6 ) // pea
                     tracer.Trace( "pea %s\n", effective_string() );
                 else if ( 0x3a == bits11_6 ) // jsr
-                    tracer.Trace( "jsr %s\n", effective_string() );
+                {
+                    tracer.Trace( "jsr %s  ;  ", effective_string() );
+                    uint16_t * pw = (uint16_t *) getmem( aregs[ 7 ] );
+                    tracer.Trace( "%04x %04x %04x %04x\n", flip_endian16( pw[ 0 ] ), flip_endian16( pw[ 1 ] ), flip_endian16( pw[ 2 ] ), flip_endian16( pw[ 3 ] ) );
+                }
                 else if ( 0x3b == bits11_6 ) // jmp
                     tracer.Trace( "jmp %s\n", effective_string() );
                 else if ( 0x22 == ( 0x2e & bits11_6 ) ) // movem
@@ -833,7 +837,7 @@ void m68000::trace_state()
             if ( 3 == op_mode || 7 == op_mode ) // cmpa
                 tracer.Trace( "cmpa.%c %s, a%u\n", bit8 ? 'l' : 'w', effective_string( !bit8 ), op_reg );
             else if ( op_mode <= 2 ) // cmp
-                tracer.Trace( "cmp.%c %s, d%u\n", ( 0 == op_mode ) ? 'b' : ( 1 == op_mode ) ? 'w' : 'l', effective_string(), op_reg );
+                tracer.Trace( "cmp.%c %s, d%u\n", ( 0 == op_mode ) ? 'b' : ( 1 == op_mode ) ? 'w' : 'l', effective_string( op_mode < 2 ), op_reg );
             else if ( bit8 && 1 == ea_mode ) // cmpm
                 tracer.Trace( "cmpm.%c (a%u)+, (a%u)+\n", get_size(), ea_reg, op_reg );
             else if ( bit8 ) // eor
@@ -897,7 +901,7 @@ void m68000::trace_state()
                 if ( 0 != ( op_mode & 4 ) ) // Dn + <ea> => ea
                     tracer.Trace( "add.%c d%u, %s\n", get_size(), op_reg, effective_string() );
                 else // <ea> + Dn => Dn
-                    tracer.Trace( "add.%c %s, d%u\n", get_size(), effective_string(), op_reg );
+                    tracer.Trace( "add.%c %s, d%u\n", get_size(), effective_string( op_size < 2 ), op_reg );
             }
             break;
         }
@@ -1784,11 +1788,13 @@ uint64_t m68000::run()
                         uint16_t vector = op & 0xf;
                         if ( 15 == vector )
                         {
-                            emulator_invoke_68k_trap15( *this );
+                            emulator_invoke_68k_trap15( *this ); // 68k emulator emulator
                             pc += 2;
                         }
                         else if ( 0 == vector )
-                            emulator_invoke_svc( *this );
+                            emulator_invoke_svc( *this ); // linux-style syscall
+                        else if ( 2 == vector ) 
+                            emulator_invoke_68k_trap2( *this ); // digital research cp/m 68k bdos vector
                         else
                             tracer.Trace( "trap %u invoked but there is no handler\n", vector );
                     }

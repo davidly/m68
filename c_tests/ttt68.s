@@ -75,6 +75,14 @@ run_move:
     moveq.l #score_max, %d3     | beta
     moveq.l #score_min, %d4     | alpha
     jsr minmax_min
+
+    cmpi #score_tie, %d0
+    beq _run_move_ok
+    pea failure_string
+    jsr printf
+    adda #4, %a7
+
+  _run_move_ok:
     move.w (%a7)+, %d0
     clr.b (%a6, %d0)
     rts
@@ -444,6 +452,9 @@ board:
 
 moves_string:
     .string "moves: %lu\n"
+
+failure_string:
+    .string "result isn't a tie\n"
 
 .align  4
 winprocs:
