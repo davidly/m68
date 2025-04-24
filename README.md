@@ -18,6 +18,8 @@ then calls main(). newlib68.c has the small wrappers that are called by newlib t
 system calls into the m68 emulator via the Trap insruction. It's required to link these two object
 files with yor C apps for them to link and run.
 
+m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some sample .c and .s apps that can be built and run.
+
 usage: M68 <M68 arguments> <elf_executable> <app arguments>
    
        arguments:    -e     just show information about the elf executable; don't actually run it
@@ -58,8 +60,17 @@ c_tests folder (test apps + newlib stubs with Linux syscall support)
     * *.c:         various test apps. 
     * tbcd.s:      validates the 3 68000 BCD instructions
 
+cpm folder:
+
+    * standard distribution of the Digital Research C compiler, assembler, and linker with support files
+    * e.c, sieve.c, tm.c, ttt.c: apps that can be built with the C compiler running in m68
+    * ttt68u.s: a 68000 assembly version of ttt with loops unrolled for performance.
+    * m.bat/m.sh: builds C apps
+    * ma.bat/ma.sh: builds .s assembly apps
+
 notes/bugs:
 
     * C++ exceptions don't work yet due to _start not initializing them for newlib
     * These insructions are unimplemented: movep, tas, trapv, illegal, chk
+    * Only the subset of CP/M 68K required to run the C compiler, assembler, and linker along with some test apps has been implemented.
     
