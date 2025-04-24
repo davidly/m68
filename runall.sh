@@ -26,11 +26,11 @@ do
     $_m68cmd c_tests/$arg.elf >>$outputfile
 done
 
-for arg in ttt68u ttt e sieve tm
+for arg in TTT68U TTT E SIEVE TM
 do
-    echo test $arg.68k
-    echo test $arg.68k >>$outputfile
-    $_m68cmd cpm/$arg.68k >>$outputfile
+    echo test $arg.68K
+    echo test $arg.68K >>$outputfile
+    $_m68cmd cpm/$arg.68K >>$outputfile
 done
 
 echo test an
