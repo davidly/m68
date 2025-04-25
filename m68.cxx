@@ -3452,13 +3452,16 @@ const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
 
     if ( 0 == g_symbols32.size() )
     {
-        SymbolEntryCPM key = {0};
-        key.value = address;
-        SymbolEntryCPM * psym = (SymbolEntryCPM *) my_bsearch( &key, g_cpmSymbols.data(), g_cpmSymbols.size(), sizeof( key ), symbol_find_compare_cpm );
-        if ( 0 != psym )
+        if ( 0 != g_cpmSymbols.size() )
         {
-            offset = address - psym->value;
-            return psym->name;
+            SymbolEntryCPM key = {0};
+            key.value = address;
+            SymbolEntryCPM * psym = (SymbolEntryCPM *) my_bsearch( &key, g_cpmSymbols.data(), g_cpmSymbols.size(), sizeof( key ), symbol_find_compare_cpm );
+            if ( 0 != psym )
+            {
+                offset = address - psym->value;
+                return psym->name;
+            }
         }
 
         return "";
