@@ -1756,12 +1756,21 @@ uint64_t m68000::run()
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].w = sr;
                         else
-                            setui16( effective_value32( effective_address() ), sr );
+                        {
+                            op_size = 1;
+                            setui16( effective_address( true ), sr );
+                        }
                     }
                     else if ( 0x13 == bits11_6 ) // move to ccr
+                    {
+                        op_size = 1;
                         sr = ( sr & 0xff00 ) | ( 0xff & effective_value16( effective_address( true ) ) );
+                    }
                     else if ( 0x1b == bits11_6 ) // move to sr
+                    {
+                        op_size = 1;
                         sr = effective_value16( effective_address( true ) );
+                    }
                     else if ( 4 == bits11_8 ) // neg
                     {
                         if ( 0 == ea_mode )

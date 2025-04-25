@@ -3905,6 +3905,44 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
             tracer.Trace( "  emulated app exit code %d\n", g_exit_code );
             break;
         }
+        case 2: // console output. d1.w ascii chracter
+        {
+            // console output
+            // CP/M 2.2 checks for ^s and ^q to pause and resume output. If output is paused due to ^s,
+            // a subsequent ^c terminates the application. ^q resumes output then ^c has no effect.
+
+            uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
+            if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
+            {
+                tracer.Trace( "  bdos console out: %02x == '%c'\n", ch, printable( ch ) );
+                printf( "%c", ch );
+                fflush( stdout );
+            }
+
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 6: // direct console i/o
+        {
+            uint16_t cmd = (uint16_t) ( 0xffff & ACCESS_REG( REG_ARG0 ) );
+            if ( 0xff == cmd ) // input
+            {
+            }
+            else if ( 0xfe == cmd ) // status
+            {
+            }
+            else // output
+            {
+                uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
+                if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
+                {
+                    tracer.Trace( "  bdos console i/o output: %02x == '%c'\n", ch, printable( ch ) );
+                    printf( "%c", ch );
+                    fflush( stdout );
+                }
+            }
+            break;
+        }
         case 9: // send $-terminated string to stdout
         {
             char * str = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
@@ -3925,6 +3963,11 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
                     printf( "%c", ch );
             }
             fflush( stdout );
+            break;
+        }
+        case 12: // return version number
+        {
+            ACCESS_REG( REG_RESULT ) = 0x2022; // cp/m-68k v1.1
             break;
         }
         case 15: // open file. success 0-3, error 0xff
@@ -4071,6 +4114,13 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
             }
             else
                 tracer.Trace( "ERROR: can't parse filename in make file\n" );
+            break;
+        }
+        case 25:
+        {
+            // return current disk
+
+            ACCESS_REG( REG_RESULT ) = 0;
             break;
         }
         case 26:
@@ -4401,7 +4451,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     // malloc / brk in the C runtime for DR C use some of these values
 
     pbasepage->lowest_tpa = 0;
-    pbasepage->highest_tpa = g_base_address + memory_size - 1;
+    pbasepage->highest_tpa = swap_endian32( g_base_address + memory_size - 1 );
     pbasepage->start_text = swap_endian32( text_base );
     pbasepage->cb_text = swap_endian32( head.cb_text );
     pbasepage->start_data = swap_endian32( text_base + head.cb_text );
@@ -4499,6 +4549,9 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
                 sym.value += text_base;
             else if ( sym.type & 0x100 )
                 sym.value += bss_base;
+
+            // the DR tools create some symbols that aren't null-terminated
+            sym.name[ 7 ] = 0;
         }
 
         // add a final entry with a very large value so the lookup doesn't have to worry about that edge case
