@@ -23,7 +23,7 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 
-set _cpmlist=ttt68u ttt e sieve tm
+set _cpmlist=TTT68U TTT E SIEVE TM FILEOPS TPI
 
 ( for %%a in (%_cpmlist%) do ( call :cpmRun %%a ) )
 
@@ -71,8 +71,8 @@ exit /b 0
 
 :cpmRun
 
-echo test %~1.68k
-echo test %~1.68k >>%outputfile%
+echo test %~1.68K
+echo test %~1.68K >>%outputfile%
 %_runcmd% cpm\%~1.68k >>%outputfile%
 exit /b 0
 

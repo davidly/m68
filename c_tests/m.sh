@@ -20,4 +20,3 @@ $gccpath/bin/m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 $gcccmd $incpaths -mcpu=68000 -x c++ -fno-use-cxa-atexit -O2 $1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o $1.elf
 
 
-

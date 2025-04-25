@@ -675,8 +675,8 @@ void m68000::trace_state()
                 else if ( 0x3a == bits11_6 ) // jsr
                 {
                     tracer.Trace( "jsr %s  ;  ", effective_string() );
-                    uint16_t * pw = (uint16_t *) getmem( aregs[ 7 ] );
-                    tracer.Trace( "%04x %04x %04x %04x\n", flip_endian16( pw[ 0 ] ), flip_endian16( pw[ 1 ] ), flip_endian16( pw[ 2 ] ), flip_endian16( pw[ 3 ] ) );
+                    uint8_t * pb = (uint8_t *) getmem( aregs[ 7 ] );
+                    tracer.Trace( "%02x %02x %02x %02x %02x %02x %02x %02x\n", pb[ 0 ], pb[ 1 ], pb[ 2 ], pb[ 3 ], pb[ 4 ], pb[ 5 ], pb[ 6 ], pb[ 7 ] );
                 }
                 else if ( 0x3b == bits11_6 ) // jmp
                     tracer.Trace( "jmp %s\n", effective_string() );
@@ -1736,8 +1736,9 @@ uint64_t m68000::run()
                     sr = getui16( pc );
 
                     // the gnu cc I'm using invokes this instruction in exit(). make a linux standard exit call
+                    // it's also used by the cp/m 68k emulator when an app returns from its entrypoint
 
-                    dregs[ 1 ].l = 0; // exit code
+                    dregs[ 1 ].l = dregs[ 0 ].l; // exit code. probably not really there but it's worth a try
                     dregs[ 0 ].l = 93; // exit syscall
                     emulator_invoke_svc( *this );
                 }

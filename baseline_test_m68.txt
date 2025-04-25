@@ -1,4 +1,4 @@
-Thu 04/24/2025 15:36:39.79 
+Thu 04/24/2025 19:37:40.83 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -547,7 +547,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-23.457000 milliseconds
+23.846000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -3975,10 +3975,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 24, hour 22, min 36, sec 45
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 24, hour 17, min 36, sec 45
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 24, hour 14, min 36, sec 45
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 24, hour 14, min 36, sec 45
+before TZ is set: tz: '(null)', year: 2025, month 4, day 25, hour 2, min 37, sec 47
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 24, hour 21, min 37, sec 47
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 24, hour 18, min 37, sec 47
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 24, hour 18, min 37, sec 47
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5764,18 +5764,74 @@ test ttt68
 moves: 6493
 test ttt68u 
 moves: 6493
-test ttt68u.68k 
+test TTT68U.68K 
 moves: 64930
-test ttt.68k 
+test TTT.68K 
 move count:      6493
 iteration count: 10
-test e.68k 
+test E.68K 
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
-test sieve.68k 
+test SIEVE.68K 
 1899 primes.
-test tm.68k 
+test TM.68K 
 test malloc completed with great success
+test FILEOPS.68K 
+fp: BBEC
+current offset: 0
+result of fseek: 0
+file length from ftell: 0
+empty file length: 0
+result of fseek: 0
+result of fwrite (should be 1): 1
+current offset: 8320
+result of fseek: 0
+file length from ftell: 8320
+8192 + 128 = 8320 file length from portable_filelen: 8320
+result of fseek to middle of file: 0
+result of fwrite to middle of file (should be 1): 1
+fp: BBEC
+current offset: 0
+result of fseek: 0
+file length from ftell: 8320
+8192 + 128 = 8320 file length from cpm_filelen: 8320
+result of read at offset 0: 512
+result of read at offset 512: 512
+result of read at offset 1024: 512
+result of read at offset 1536: 512
+result of read at offset 2048: 512
+result of read at offset 2560: 512
+result of read at offset 3072: 512
+result of read at offset 3584: 512
+result of read at offset 4096: 512
+result of read at offset 4608: 512
+result of read at offset 5120: 512
+result of read at offset 5632: 512
+result of read at offset 6144: 512
+result of read at offset 6656: 512
+result of read at offset 7168: 512
+result of read at offset 7680: 512
+result of read at offset 8192: 128
+testing backwards read
+result of read at offset 8192: 128
+result of read at offset 7680: 512
+result of read at offset 7168: 512
+result of read at offset 6656: 512
+result of read at offset 6144: 512
+result of read at offset 5632: 512
+result of read at offset 5120: 512
+result of read at offset 4608: 512
+result of read at offset 4096: 512
+result of read at offset 3584: 512
+result of read at offset 3072: 512
+result of read at offset 2560: 512
+result of read at offset 2048: 512
+result of read at offset 1536: 512
+result of read at offset 1024: 512
+result of read at offset 512: 512
+result of read at offset 0: 512
+test TPI.68K 
+314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
 test an -t david lee 
 a delve id
 a delved i
@@ -5820,13 +5876,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     254
-  dictionary: 251
-  generate:   2
+total ms:     249
+  dictionary: 245
+  generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-1,000 ms for 1 iterations
+0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -5856,4 +5912,4 @@ starting...
 6493 moves
 1 iterations
 0.000000 milliseconds
-Thu 04/24/2025 15:36:53.44 
+Thu 04/24/2025 19:37:54.69 

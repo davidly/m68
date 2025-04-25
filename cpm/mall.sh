@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -x
 
-for arg in e sieve ttt tm
+for arg in e sieve ttt tm fileops tpi
 do
     echo $arg
     m.sh $arg

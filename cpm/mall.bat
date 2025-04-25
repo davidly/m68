@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set _clist=e sieve ttt tm
+set _clist=e sieve ttt tm fileops tpi
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 

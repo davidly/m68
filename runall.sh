@@ -26,7 +26,7 @@ do
     $_m68cmd c_tests/$arg.elf >>$outputfile
 done
 
-for arg in TTT68U TTT E SIEVE TM
+for arg in TTT68U TTT E SIEVE TM FILEOPS TPI
 do
     echo test $arg.68K
     echo test $arg.68K >>$outputfile

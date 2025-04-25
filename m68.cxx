@@ -3305,6 +3305,67 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
 
 #ifdef M68
 
+void append_string( char * pc, const char * a )
+{
+    size_t len = strlen( pc );
+    if ( 0 != len )
+    {
+        pc[ len++ ] = ',';
+        pc[ len++ ] = ' ';
+    }
+
+    strcpy( pc + len, a );
+} //append_string
+
+#pragma pack( push, 1 )
+struct SymbolEntryCPM
+{
+    char name[ 8 ];
+    uint16_t type;
+    uint32_t value;
+
+    void swap_endianness()
+    {
+        type = swap_endian16( type );
+        value = swap_endian32( value );
+    }
+
+    const char * get_type()
+    {
+        static char ac[ 80 ];
+        ac[ 0 ] = 0;
+
+        if ( 0x8000 & type )
+            append_string( ac, "defined" );
+        if ( 0x4000 & type )
+            append_string( ac, "equated" );
+        if ( 0x2000 & type )
+            append_string( ac, "global" );
+        if ( 0x1000 & type )
+            append_string( ac, "equated-register" );
+        if ( 0x800 & type )
+            append_string( ac, "external reference" );
+        if ( 0x400 & type )
+            append_string( ac, "data-based-relocatable" );
+        if ( 0x200 & type )
+            append_string( ac, "text-based-relocatable" );
+        if ( 0x100 & type )
+            append_string( ac, "bss-based-relocatable" );
+
+        return ac;
+    }
+
+    void trace()
+    {
+        tracer.Trace( "  %#16x", value );
+        tracer.Trace( "  %10s", name );
+        tracer.Trace( "  %s\n", get_type() );
+    }
+};
+#pragma pack(pop)
+
+static vector<SymbolEntryCPM> g_cpmSymbols;
+
 static int symbol_find_compare32( const void * a, const void * b )
 {
     ElfSymbol32 & sa = * (ElfSymbol32 *) a;
@@ -3325,6 +3386,29 @@ static int symbol_find_compare32( const void * a, const void * b )
         return 1;
     return -1;
 } //symbol_find_compare32
+
+static int symbol_find_compare_cpm( const void * a, const void * b )
+{
+    SymbolEntryCPM & sa = * (SymbolEntryCPM *) a;
+    SymbolEntryCPM & sb = * (SymbolEntryCPM *) b;
+
+    if ( 0 == sa.name[0] ) // a is the key
+    {
+        SymbolEntryCPM * pnext = ( ( & sb ) + 1 );
+        if ( sa.value >= sb.value && sa.value < pnext->value )
+            return 0;
+    }
+    else // b is the key
+    {
+        SymbolEntryCPM * pnext = ( ( & sa ) + 1 );
+        if ( sb.value >= sa.value && sb.value < pnext->value )
+            return 0;
+    }
+
+    if ( sa.value > sb.value )
+        return 1;
+    return -1;
+} //symbol_find_compare_cpm
 
 #else
 
@@ -3361,11 +3445,24 @@ vector<ElfSymbol32> g_symbols32;  // symbols in the elf image
 
 const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
 {
-    if ( 0 == g_symbols32.size() )
-        return "";
-
     if ( address < g_base_address || address > ( g_base_address + memory.size() ) )
         return "";
+
+    // if no elf symbols, try CPM symbols
+
+    if ( 0 == g_symbols32.size() )
+    {
+        SymbolEntryCPM key = {0};
+        key.value = address;
+        SymbolEntryCPM * psym = (SymbolEntryCPM *) my_bsearch( &key, g_cpmSymbols.data(), g_cpmSymbols.size(), sizeof( key ), symbol_find_compare_cpm );
+        if ( 0 != psym )
+        {
+            offset = address - psym->value;
+            return psym->name;
+        }
+
+        return "";
+    }
 
     ElfSymbol32 key = {0};
     key.value = address;
@@ -3516,6 +3613,7 @@ FILE * FindFileEntry( char * name )
 } //FindFileEntry
 
 #pragma pack( push, 1 )
+
 struct HeaderCPM68K    // .68k executable files for cp/m 68k v1.3
 {
     uint16_t signature;
@@ -3675,6 +3773,18 @@ struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory
 };
 
 #pragma pack(pop)
+
+static int symbol_compare_cpm( const void * a, const void * b )
+{
+    SymbolEntryCPM * pa = (SymbolEntryCPM *) a;
+    SymbolEntryCPM * pb = (SymbolEntryCPM *) b;
+
+    if ( pa->value > pb->value )
+        return 1;
+    if ( pa->value == pb->value )
+        return 0;
+    return -1;
+} //symbol_compare_cpm
 
 bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
 {
@@ -4298,11 +4408,11 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     pbasepage->cb_after_bss = swap_endian32( g_brk_commit );
 
     g_DMA = memory.data() + text_base - 0x80; // midway through the base page
+    uint32_t data_base = text_base; // + head.cb_text; with 0x601a all bases belong to text_base
+    uint32_t bss_base = text_base; // data_base + head.cb_data;
 
     if ( 0 == head.relocation_flag ) // 0 means they exist
     {
-        uint32_t data_base = text_base; // + head.cb_text; with 0x601a all bases belong to text_base
-        uint32_t bss_base = text_base; // data_base + head.cb_data;
         uint16_t * pimage = (uint16_t *) ( memory.data() + text_base );
         uint32_t relocation_words = ( head.cb_text + head.cb_data ) / 2;
         vector<uint16_t> relocations;
@@ -4362,6 +4472,44 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
             else
                 longword_mode = false;
         }
+    }
+
+    if ( 0 != head.cb_symbols ) // if they exist, load symbols so disassembly and hard termination can show them
+    {
+        uint32_t symbol_count = head.cb_symbols / sizeof( SymbolEntryCPM );
+        g_cpmSymbols.resize( symbol_count );
+        fseek( fp, (long) sizeof( head ) + head.cb_text + head.cb_data, SEEK_SET );
+        read = fread( g_cpmSymbols.data(), head.cb_symbols, 1, fp );
+        if ( 1 != read )
+        {
+            printf( "can't read symbol data of cp/m 68k image file: %s\n", acApp );
+            return false;
+        }
+
+        for ( uint32_t i = 0; i < symbol_count; i++ )
+        {
+            SymbolEntryCPM & sym = g_cpmSymbols[ i ];
+            sym.swap_endianness();
+            if ( sym.type & 0x400 )
+                sym.value += data_base;
+            else if ( sym.type & 0x200 )
+                sym.value += text_base;
+            else if ( sym.type & 0x100 )
+                sym.value += bss_base;
+        }
+
+        // add a final entry with a very large value so the lookup doesn't have to worry about that edge case
+
+        SymbolEntryCPM last;
+        strcpy( last.name, "!last" );
+        last.value = 0xffffffff;
+        g_cpmSymbols.push_back( last );
+
+        my_qsort( g_cpmSymbols.data(), g_cpmSymbols.size(), sizeof( SymbolEntryCPM ), symbol_compare_cpm );
+
+        tracer.Trace( "symbols:\n" );
+        for ( uint32_t i = 0; i < symbol_count; i++ )
+            g_cpmSymbols[ i ].trace();
     }
 
     tracer.Trace( "memory map from highest to lowest addresses:\n" );
