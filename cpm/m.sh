@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 str=$(tr '[a-z]' '[A-Z]' <<< $1)
 
