@@ -134,7 +134,7 @@ int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, s
 
 int unlink( const char * path )
 {
-    return (int) syscall( SYS_unlinkat, AT_FDCWD, path );
+    return (int) syscall( SYS_unlinkat, AT_FDCWD, path, 0 );
 }
 
 int fstat( int fd, struct stat * buf )
