@@ -1803,8 +1803,13 @@ uint64_t m68000::run()
                         }
                         else if ( 0 == vector )
                             emulator_invoke_svc( *this ); // linux-style syscall
-                        else if ( 2 == vector ) 
+                        else if ( 2 == vector )
+                        {
+                            uint32_t oldpc = pc;
                             emulator_invoke_68k_trap2( *this ); // digital research cp/m 68k bdos vector
+                            if ( pc != oldpc ) // likely chained to a new program
+                                continue;
+                        }
                         else
                             tracer.Trace( "trap %u invoked but there is no handler\n", vector );
                     }

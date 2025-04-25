@@ -33,6 +33,11 @@ struct m68000
 
     m68000( vector<uint8_t> & memory, uint32_t base_address, uint32_t start, uint32_t stack_commit, uint32_t top_of_stack )
     {
+        reset( memory, base_address, start, stack_commit, top_of_stack );
+    } //m68000
+
+    void reset( vector<uint8_t> & memory, uint32_t base_address, uint32_t start, uint32_t stack_commit, uint32_t top_of_stack )
+    {
         memset( this, 0, sizeof( *this ) );
         pc = start;
         stack_size = stack_commit;                 // remember how much of the top of RAM is allocated to the stack

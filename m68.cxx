@@ -3789,471 +3789,6 @@ static int symbol_compare_cpm( const void * a, const void * b )
     return -1;
 } //symbol_compare_cpm
 
-bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
-{
-    char * orig = pcFilename;
-
-    // note: the high bits are used for file attributes. Mask them away
-
-    for ( int i = 0; i < 8; i++ )
-    {
-        if ( ' ' == ( 0x7f & pfcb->f[ i ] ) )
-            break;
-        *pcFilename++ = ( 0x7f & pfcb->f[ i ] );
-    }
-
-    if ( ' ' != pfcb->t[0] )
-    {
-        *pcFilename++ = '.';
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            if ( ' ' == ( 0x7f & pfcb->t[ i ] ) )
-                break;
-            *pcFilename++ = ( 0x7f & pfcb->t[ i ] );
-        }
-    }
-
-    *pcFilename = 0;
-
-    // CP/M assumes all filenames are uppercase. Linux users generally use all lowercase filenames
-
-    if ( g_forceLowercase )
-        _strlwr( orig );
-
-    return ( pcFilename != orig );
-} //parse_FCB_Filename
-
-void WriteRandom( m68000 & cpu )
-{
-    FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-    pfcb->Trace();
-    ACCESS_REG( REG_RESULT ) = 6; // seek past end of disk
-
-    char acFilename[ CPM_FILENAME_LEN ];
-    bool ok = parse_FCB_Filename( pfcb, acFilename );
-    if ( ok )
-    {
-        FILE * fp = FindFileEntry( acFilename );
-        if ( fp )
-        {
-            uint32_t record = pfcb->GetRandomIOOffset();
-            uint32_t file_offset = record * (uint32_t) 128;
-
-            fseek( fp, 0, SEEK_END );
-            uint32_t file_size = ftell( fp );
-            tracer.Trace( "  write random file %p, record %#x, file_offset %d, file_size %d\n", fp, record, file_offset, file_size );
-
-            if ( file_offset > file_size )
-            {
-                ok = !fseek( fp, file_offset, SEEK_SET );
-                if ( ok )
-                    file_size = ftell( fp );
-                else
-                    tracer.Trace( "  can't seek to extend file with zeros, error %d = %s\n", errno, strerror( errno ) );
-            }
-
-            if ( file_size >= file_offset )
-            {
-                ok = !fseek( fp, file_offset, SEEK_SET );
-                if ( ok )
-                {
-                    tracer.Trace( "  writing random at offset %#x\n", file_offset );
-                    tracer.TraceBinaryData( g_DMA, 128, 2 );
-                    size_t numwritten = fwrite( g_DMA, 128, 1, fp );
-                    if ( numwritten )
-                    {
-                        ACCESS_REG( REG_RESULT ) = 0;
-
-                        // The CP/M spec says random write should set the file offset such
-                        // that the following sequential I/O will be from the SAME location
-                        // as this random write -- not 128 bytes beyond.
-
-                        fseek( fp, file_offset, SEEK_SET );
-                    }
-                    else
-                        tracer.Trace( "ERROR: can't write in write random, error %d = %s\n", errno, strerror( errno ) );
-                }
-                else
-                    tracer.Trace( "ERROR: can't seek in write random, offset %#x, size %#x\n", file_offset, file_size );
-            }
-            else
-                tracer.Trace( "ERROR: write random at offset %d beyond end of file size %d\n", file_offset, file_size );
-        }
-        else
-            tracer.Trace( "ERROR: write random on unopened file\n" );
-    }
-    else
-        tracer.Trace( "ERROR: write random can't parse filename\n" );
-} //WriteRandom
-
-void emulator_invoke_68k_trap2( m68000 & cpu )
-{
-    char acFilename[ CPM_FILENAME_LEN ];
-    uint16_t function = ( 0xffff & ACCESS_REG( REG_SYSCALL ) );
-    tracer.Trace( "trap 2 cp/m 68k bdos call %u, first argument %#x\n", function, ACCESS_REG( REG_ARG0 ) );
-
-    // note: only the subset invoked by cp/m 68k versions of the C compiler, assembler, and linker are implemented.
-
-    switch ( function )
-    {
-        case 0: // system reset; exit the app
-        {
-            g_terminate = true;
-            cpu.end_emulation();
-            g_exit_code = (int) ACCESS_REG( REG_ARG0 ); // not part of the cp/m 68k spec but it seems handy
-            tracer.Trace( "  emulated app exit code %d\n", g_exit_code );
-            break;
-        }
-        case 2: // console output. d1.w ascii chracter
-        {
-            // console output
-            // CP/M 2.2 checks for ^s and ^q to pause and resume output. If output is paused due to ^s,
-            // a subsequent ^c terminates the application. ^q resumes output then ^c has no effect.
-
-            uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
-            if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
-            {
-                tracer.Trace( "  bdos console out: %02x == '%c'\n", ch, printable( ch ) );
-                printf( "%c", ch );
-                fflush( stdout );
-            }
-
-            ACCESS_REG( REG_RESULT ) = 0;
-            break;
-        }
-        case 6: // direct console i/o
-        {
-            uint16_t cmd = (uint16_t) ( 0xffff & ACCESS_REG( REG_ARG0 ) );
-            if ( 0xff == cmd ) // input
-            {
-            }
-            else if ( 0xfe == cmd ) // status
-            {
-            }
-            else // output
-            {
-                uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
-                if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
-                {
-                    tracer.Trace( "  bdos console i/o output: %02x == '%c'\n", ch, printable( ch ) );
-                    printf( "%c", ch );
-                    fflush( stdout );
-                }
-            }
-            break;
-        }
-        case 9: // send $-terminated string to stdout
-        {
-            char * str = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            char * pdollar = strchr( str, '$' );
-            if ( pdollar )
-                tracer.Trace( "   string: %.*s\n", pdollar - str, str );
-            uint32_t count = 0;
-            while ( '$' != *str )
-            {
-                if ( count++ > 2000 ) // arbitrary limit, but probably a bug if this long
-                {
-                    tracer.Trace( "  ERROR: String to print is too long!\n", stderr );
-                    break;
-                }
-
-                uint8_t ch = *str++;
-                if ( 0x0d != ch )              // skip carriage return because line feed turns into cr+lf
-                    printf( "%c", ch );
-            }
-            fflush( stdout );
-            break;
-        }
-        case 12: // return version number
-        {
-            ACCESS_REG( REG_RESULT ) = 0x2022; // cp/m-68k v1.1
-            break;
-        }
-        case 15: // open file. success 0-3, error 0xff
-        {
-            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            tracer.TraceBinaryData( (uint8_t *) pfcb, sizeof( FCBCPM68K ), 4 );
-            pfcb->Trace();
-            ACCESS_REG( REG_RESULT ) = 255;
-            bool ok = parse_FCB_Filename( pfcb, acFilename );
-            if ( ok )
-            {
-                tracer.Trace( "  opening file '%s' for pfcb %p\n", acFilename, pfcb );
-                FILE * fp = FindFileEntry( acFilename );
-                if ( fp )
-                {
-                    // sometimes apps like the CP/M assembler ASM open files that are already open.
-                    // rewind it to position 0.
-
-                    fseek( fp, 0, SEEK_SET );
-                    ACCESS_REG( REG_RESULT ) = 0;
-                    pfcb->cr = 0;
-                    pfcb->SetRecordCount( fp ); // Whitesmith C 2.1 requires this to be set
-                    // don't reset extent on a re-open or LK80.COM will fail. pfcb->ex = 0;
-                    pfcb->s2 = 0;
-                    tracer.Trace( "  open used existing file and rewound to offset 0\n" );
-                }
-                else
-                {
-                    // the cp/m 2.2 spec says that filenames may contain question marks. I haven't found an app that uses that.
-
-                    fp = fopen( acFilename, "r+b" );
-                    if ( fp )
-                    {
-                        FileEntry fe;
-                        strcpy( fe.acName, acFilename );
-                        fe.fp = fp;
-                        g_fileEntries.push_back( fe );
-                        ACCESS_REG( REG_RESULT ) = 0;
-
-                        // Digital Research's lk80.com linker has many undocumented expectations no other apps I've tested have.
-                        // including rc > 0 after an open. Whitesmith C requires the record count set correctly.
-
-                        pfcb->cr = 0;
-                        pfcb->SetRecordCount( fp );
-                        pfcb->ex = 0;
-                        pfcb->s2 = 0;
-                        tracer.Trace( "  file opened successfully, record count: %u\n", pfcb->rc );
-                    }
-                    else
-                        tracer.Trace( "ERROR: can't open file '%s' error %d = %s\n", acFilename, errno, strerror( errno ) );
-                }
-            }
-            else
-                tracer.Trace( "ERROR: can't parse filename in FCB\n" );
-            break;
-        }
-        case 16:
-        {
-            // close file. return 255 on error and 0..3 directory code otherwise
-
-            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            pfcb->Trace();
-            ACCESS_REG( REG_RESULT ) = 255;
-            bool ok = parse_FCB_Filename( pfcb, acFilename );
-            if ( ok )
-            {
-                FILE * fp = RemoveFileEntry( acFilename );
-                if ( fp )
-                {
-                    int ret = fclose( fp );
-
-                    if ( 0 == ret )
-                        ACCESS_REG( REG_RESULT ) = 0;
-                    else
-                        tracer.Trace( "ERROR: file close failed, error %d = %s\n", errno, strerror( errno ) );
-                }
-                else
-                    tracer.Trace( "ERROR: file close on file that's not open\n" );
-            }
-            else
-                tracer.Trace( "ERROR: can't parse filename in close call\n" );
-            break;
-        }
-        case 19:
-        {
-            // delete file. return 255 if file not found and 0..3 directory code otherwise
-
-            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            pfcb->Trace();
-            ACCESS_REG( REG_RESULT ) = 255;
-            bool ok = parse_FCB_Filename( pfcb, acFilename );
-            if ( ok )
-            {
-                // if deleting an open file, close it first. CalcStar does this on file save.
-
-                if ( FindFileEntry( acFilename ) )
-                {
-                    FILE * fp = RemoveFileEntry( acFilename );
-                    if ( fp )
-                        fclose( fp );
-                }
-
-                int removeok = ( 0 == remove( acFilename ) );
-                tracer.Trace( "  attempt to remove file '%s' result ok: %d\n", acFilename, removeok );
-                if ( removeok )
-                    ACCESS_REG( REG_RESULT ) = 0;
-                else
-                    tracer.Trace( "  error %d = %s\n", errno, strerror( errno ) );
-            }
-            else
-                tracer.Trace( "ERROR: can't parse filename for delete file\n" );
-            break;
-        }
-        case 22:
-        {
-            // make file. return 255 if out of space or the file exists. 0..3 directory code otherwise.
-            // "the Make function has the side effect of activating the FCB and thus a subsequent open is not necessary."
-
-            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            pfcb->Trace();
-            ACCESS_REG( REG_RESULT ) = 255;
-            bool ok = parse_FCB_Filename( pfcb, acFilename );
-            if ( ok )
-            {
-                tracer.Trace( "  making file '%s'\n", acFilename );
-                FILE * fp = fopen( acFilename, "w+b" );
-                if ( fp )
-                {
-                    FileEntry fe;
-                    strcpy( fe.acName, acFilename );
-                    fe.fp = fp;
-                    g_fileEntries.push_back( fe );
-
-                    pfcb->cr = 0;
-                    pfcb->rc = 0;
-                    pfcb->ex = 0;
-                    pfcb->s2 = 0;
-
-                    tracer.Trace( "  successfully created fp %p for write\n", fp );
-                    ACCESS_REG( REG_RESULT ) = 0;
-                }
-                else
-                    tracer.Trace( "ERROR: unable to make file\n" );
-            }
-            else
-                tracer.Trace( "ERROR: can't parse filename in make file\n" );
-            break;
-        }
-        case 25:
-        {
-            // return current disk
-
-            ACCESS_REG( REG_RESULT ) = 0;
-            break;
-        }
-        case 26:
-        {
-            // set the dma address (128 byte buffer for doing I/O)
-
-            tracer.Trace( "  updating DMA address; D %u = %#x\n", ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG0 ) );
-            g_DMA = memory.data() + ACCESS_REG( REG_ARG0 );
-            break;
-        }
-        case 32:
-        {
-            // get/set current user
-
-            ACCESS_REG( REG_RESULT ) = 0;
-            break;
-        }
-        case 33:
-        {
-            // read random
-
-            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            pfcb->Trace();
-            ACCESS_REG( REG_RESULT ) = 6; // seek past end of disk
-            bool ok = parse_FCB_Filename( pfcb, acFilename );
-            if ( ok )
-            {
-                FILE * fp = FindFileEntry( acFilename );
-                if ( fp )
-                {
-                    uint32_t record = pfcb->GetRandomIOOffset();
-                    tracer.Trace( "  read random record %u == %#x\n", record, record );
-                    uint32_t file_offset = (uint32_t) record * (uint32_t) 128;
-                    memset( g_DMA, 0x1a, 128 ); // fill with ^z, the EOF marker in CP/M
-
-                    uint32_t file_size = portable_filelen( fp );
-
-                    // OS workaround for app bug: Turbo Pascal expects a read just past the end of file to succeed.
-
-                    if ( file_size == file_offset )
-                    {
-                        tracer.Trace( "  random read at eof, offset %u\n", file_size );
-                        ACCESS_REG( REG_RESULT ) = 1;
-                        break;
-                    }
-
-                    if ( file_size > file_offset )
-                    {
-                        uint32_t to_read = get_min( file_size - file_offset, (uint32_t) 128 );
-                        ok = !fseek( fp, file_offset, SEEK_SET );
-                        if ( ok )
-                        {
-                            tracer.Trace( "  reading random at offset %u == %#x. file size %u, to read %u\n", file_offset, file_offset, file_size, to_read );
-                            size_t numread = fread( g_DMA, 1, to_read, fp );
-                            if ( numread )
-                            {
-                                tracer.TraceBinaryData( g_DMA, to_read, 2 );
-                                ACCESS_REG( REG_RESULT ) = 0;
-
-                                // The CP/M spec says random read should set the file offset such
-                                // that the following sequential I/O will be from the SAME location
-                                // as this random read -- not 128 bytes beyond.
-
-                                pfcb->UpdateSequentialOffset( file_offset );
-                            }
-                            else
-                                tracer.Trace( "ERROR: can't read in read random\n" );
-                        }
-                        else
-                            tracer.Trace( "ERROR: can't seek in read random\n" );
-                    }
-                    else
-                    {
-                        ACCESS_REG( REG_RESULT ) = 1;
-                        tracer.Trace( "ERROR: read random read at %u beyond end of file size %u\n", file_offset, file_size );
-                    }
-                }
-                else
-                    tracer.Trace( "ERROR: read random on unopened file\n" );
-            }
-            else
-                tracer.Trace( "ERROR: read random can't parse filename\n" );
-            break;
-        }
-        case 34:
-        {
-            // write random
-
-            WriteRandom( cpu );
-            break;
-        }
-        case 35:
-        {
-            // Compute file size. A = 0 if ok, 0xff on failure. Sets r0/r1/2 to the number of 128 byte records
-
-            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            pfcb->Trace();
-            ACCESS_REG( REG_RESULT ) = 255;
-            bool ok = parse_FCB_Filename( pfcb, acFilename );
-            if ( ok )
-            {
-                FILE * fp = FindFileEntry( acFilename );
-                bool found = false;
-                if ( fp )
-                    found = true;
-                else
-                    fp = fopen( acFilename, "r+b" );
-
-                if ( fp )
-                {
-                    uint32_t file_size = portable_filelen( fp );
-                    file_size = round_up( file_size, (uint32_t) 128 ); // cp/m files round up in 128 byte records
-                    pfcb->SetRandomIOOffset( file_size / 128 );
-                    ACCESS_REG( REG_RESULT ) = 0;
-                    tracer.Trace( "  file size is %u == %u records; r2 %#x r1 %#x r0 %#x\n", file_size, file_size / 128, pfcb->r2, pfcb->r1, pfcb->r0 );
-
-                    if ( !found )
-                        fclose( fp );
-                }
-                else
-                    tracer.Trace( "ERROR: compute file size can't find file '%s'\n", acFilename );
-            }
-            break;
-        }
-        default:
-        {
-            printf( "  unhandled cp/m bdos call %u\n", function );
-            tracer.Trace( "  unhandled cp/m bdos call %u\n", function );
-            break;
-        }
-    }
-} //emulator_invoke_68k_trap2
-
 bool write_fcb_arg( FCBCPM68K * arg, char * pc )
 {
     if ( ':' == pc[ 1 ] )
@@ -4596,6 +4131,612 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
 
     return true;
 } //load_cpm68k
+
+bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
+{
+    char * orig = pcFilename;
+
+    // note: the high bits are used for file attributes. Mask them away
+
+    for ( int i = 0; i < 8; i++ )
+    {
+        if ( ' ' == ( 0x7f & pfcb->f[ i ] ) )
+            break;
+        *pcFilename++ = ( 0x7f & pfcb->f[ i ] );
+    }
+
+    if ( ' ' != pfcb->t[0] )
+    {
+        *pcFilename++ = '.';
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( ' ' == ( 0x7f & pfcb->t[ i ] ) )
+                break;
+            *pcFilename++ = ( 0x7f & pfcb->t[ i ] );
+        }
+    }
+
+    *pcFilename = 0;
+
+    // CP/M assumes all filenames are uppercase. Linux users generally use all lowercase filenames
+
+    if ( g_forceLowercase )
+        _strlwr( orig );
+
+    return ( pcFilename != orig );
+} //parse_FCB_Filename
+
+void WriteRandom( m68000 & cpu )
+{
+    FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+    pfcb->Trace();
+    ACCESS_REG( REG_RESULT ) = 6; // seek past end of disk
+
+    char acFilename[ CPM_FILENAME_LEN ];
+    bool ok = parse_FCB_Filename( pfcb, acFilename );
+    if ( ok )
+    {
+        FILE * fp = FindFileEntry( acFilename );
+        if ( fp )
+        {
+            uint32_t record = pfcb->GetRandomIOOffset();
+            uint32_t file_offset = record * (uint32_t) 128;
+
+            fseek( fp, 0, SEEK_END );
+            uint32_t file_size = ftell( fp );
+            tracer.Trace( "  write random file %p, record %#x, file_offset %d, file_size %d\n", fp, record, file_offset, file_size );
+
+            if ( file_offset > file_size )
+            {
+                ok = !fseek( fp, file_offset, SEEK_SET );
+                if ( ok )
+                    file_size = ftell( fp );
+                else
+                    tracer.Trace( "  can't seek to extend file with zeros, error %d = %s\n", errno, strerror( errno ) );
+            }
+
+            if ( file_size >= file_offset )
+            {
+                ok = !fseek( fp, file_offset, SEEK_SET );
+                if ( ok )
+                {
+                    tracer.Trace( "  writing random at offset %#x\n", file_offset );
+                    tracer.TraceBinaryData( g_DMA, 128, 2 );
+                    size_t numwritten = fwrite( g_DMA, 128, 1, fp );
+                    if ( numwritten )
+                    {
+                        ACCESS_REG( REG_RESULT ) = 0;
+
+                        // The CP/M spec says random write should set the file offset such
+                        // that the following sequential I/O will be from the SAME location
+                        // as this random write -- not 128 bytes beyond.
+
+                        fseek( fp, file_offset, SEEK_SET );
+                    }
+                    else
+                        tracer.Trace( "ERROR: can't write in write random, error %d = %s\n", errno, strerror( errno ) );
+                }
+                else
+                    tracer.Trace( "ERROR: can't seek in write random, offset %#x, size %#x\n", file_offset, file_size );
+            }
+            else
+                tracer.Trace( "ERROR: write random at offset %d beyond end of file size %d\n", file_offset, file_size );
+        }
+        else
+            tracer.Trace( "ERROR: write random on unopened file\n" );
+    }
+    else
+        tracer.Trace( "ERROR: write random can't parse filename\n" );
+} //WriteRandom
+
+void emulator_invoke_68k_trap2( m68000 & cpu )
+{
+    char acFilename[ CPM_FILENAME_LEN ];
+    uint16_t function = ( 0xffff & ACCESS_REG( REG_SYSCALL ) );
+    tracer.Trace( "trap 2 cp/m 68k bdos call %u, first argument %#x\n", function, ACCESS_REG( REG_ARG0 ) );
+
+    // note: only the subset invoked by cp/m 68k versions of the C compiler, assembler, and linker are implemented.
+
+    switch ( function )
+    {
+        case 0: // system reset; exit the app
+        {
+            g_terminate = true;
+            cpu.end_emulation();
+            g_exit_code = (int) ACCESS_REG( REG_ARG0 ); // not part of the cp/m 68k spec but it seems handy
+            tracer.Trace( "  emulated app exit code %d\n", g_exit_code );
+            break;
+        }
+        case 2: // console output. d1.w ascii chracter
+        {
+            // console output
+            // CP/M 2.2 checks for ^s and ^q to pause and resume output. If output is paused due to ^s,
+            // a subsequent ^c terminates the application. ^q resumes output then ^c has no effect.
+
+            uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
+            if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
+            {
+                tracer.Trace( "  bdos console out: %02x == '%c'\n", ch, printable( ch ) );
+                printf( "%c", ch );
+                fflush( stdout );
+            }
+
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 6: // direct console i/o
+        {
+            uint16_t cmd = (uint16_t) ( 0xffff & ACCESS_REG( REG_ARG0 ) );
+            if ( 0xff == cmd ) // input
+            {
+            }
+            else if ( 0xfe == cmd ) // status
+            {
+            }
+            else // output
+            {
+                uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
+                if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
+                {
+                    tracer.Trace( "  bdos console i/o output: %02x == '%c'\n", ch, printable( ch ) );
+                    printf( "%c", ch );
+                    fflush( stdout );
+                }
+            }
+            break;
+        }
+        case 9: // send $-terminated string to stdout
+        {
+            char * str = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            char * pdollar = strchr( str, '$' );
+            if ( pdollar )
+                tracer.Trace( "   string: %.*s\n", pdollar - str, str );
+            uint32_t count = 0;
+            while ( '$' != *str )
+            {
+                if ( count++ > 2000 ) // arbitrary limit, but probably a bug if this long
+                {
+                    tracer.Trace( "  ERROR: String to print is too long!\n", stderr );
+                    break;
+                }
+
+                uint8_t ch = *str++;
+                if ( 0x0d != ch )              // skip carriage return because line feed turns into cr+lf
+                    printf( "%c", ch );
+            }
+            fflush( stdout );
+            break;
+        }
+        case 11: // get console status
+        {
+            // for now lie and say no characters are available
+
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 12: // return version number
+        {
+            ACCESS_REG( REG_RESULT ) = 0x2022; // cp/m-68k v1.1
+            break;
+        }
+        case 15: // open file. success 0-3, error 0xff
+        {
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.TraceBinaryData( (uint8_t *) pfcb, sizeof( FCBCPM68K ), 4 );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                tracer.Trace( "  opening file '%s' for pfcb %p\n", acFilename, pfcb );
+                FILE * fp = FindFileEntry( acFilename );
+                if ( fp )
+                {
+                    // sometimes apps like the CP/M assembler ASM open files that are already open.
+                    // rewind it to position 0.
+
+                    fseek( fp, 0, SEEK_SET );
+                    ACCESS_REG( REG_RESULT ) = 0;
+                    pfcb->cr = 0;
+                    pfcb->SetRecordCount( fp ); // Whitesmith C 2.1 requires this to be set
+                    // don't reset extent on a re-open or LK80.COM will fail. pfcb->ex = 0;
+                    pfcb->s2 = 0;
+                    tracer.Trace( "  open used existing file and rewound to offset 0\n" );
+                }
+                else
+                {
+                    // the cp/m 2.2 spec says that filenames may contain question marks. I haven't found an app that uses that.
+
+                    fp = fopen( acFilename, "r+b" );
+                    if ( fp )
+                    {
+                        FileEntry fe;
+                        strcpy( fe.acName, acFilename );
+                        fe.fp = fp;
+                        g_fileEntries.push_back( fe );
+                        ACCESS_REG( REG_RESULT ) = 0;
+
+                        // Digital Research's lk80.com linker has many undocumented expectations no other apps I've tested have.
+                        // including rc > 0 after an open. Whitesmith C requires the record count set correctly.
+
+                        pfcb->cr = 0;
+                        pfcb->SetRecordCount( fp );
+                        pfcb->ex = 0;
+                        pfcb->s2 = 0;
+                        tracer.Trace( "  file opened successfully, record count: %u\n", pfcb->rc );
+                    }
+                    else
+                        tracer.Trace( "ERROR: can't open file '%s' error %d = %s\n", acFilename, errno, strerror( errno ) );
+                }
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in FCB\n" );
+            break;
+        }
+        case 16:
+        {
+            // close file. return 255 on error and 0..3 directory code otherwise
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = RemoveFileEntry( acFilename );
+                if ( fp )
+                {
+                    int ret = fclose( fp );
+
+                    if ( 0 == ret )
+                        ACCESS_REG( REG_RESULT ) = 0;
+                    else
+                        tracer.Trace( "ERROR: file close failed, error %d = %s\n", errno, strerror( errno ) );
+                }
+                else
+                    tracer.Trace( "ERROR: file close on file that's not open\n" );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in close call\n" );
+            break;
+        }
+        case 19:
+        {
+            // delete file. return 255 if file not found and 0..3 directory code otherwise
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                // if deleting an open file, close it first. CalcStar does this on file save.
+
+                if ( FindFileEntry( acFilename ) )
+                {
+                    FILE * fp = RemoveFileEntry( acFilename );
+                    if ( fp )
+                        fclose( fp );
+                }
+
+                int removeok = ( 0 == remove( acFilename ) );
+                tracer.Trace( "  attempt to remove file '%s' result ok: %d\n", acFilename, removeok );
+                if ( removeok )
+                    ACCESS_REG( REG_RESULT ) = 0;
+                else
+                    tracer.Trace( "  error %d = %s\n", errno, strerror( errno ) );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename for delete file\n" );
+            break;
+        }
+        case 20:
+        {
+            // read sequential. return 0 on success or non-0 on failure:
+            // reads 128 bytes from cr of the extent and increments cr.
+            // if cr overflows, the extent is incremented and cr is set to 0 for the next read
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = FindFileEntry( acFilename );
+                if ( fp )
+                {
+                    // apps like Digital Research's linker LK80 update pcb->cr and pfcb->ex between
+                    // calls to sequential read and effectively does random reads using sequential I/O.
+                    // This is illegal (the doc says apps can't touch this data, but that ship has sailed and sunk).
+
+                    uint32_t file_size = portable_filelen( fp );
+                    uint32_t curr = pfcb->GetSequentialOffset();
+                    uint16_t dmaOffset = (uint16_t) ( g_DMA - memory.data() );
+                    tracer.Trace( "  file size: %#x = %u, current %#x = %u, dma %#x = %u\n",
+                                  file_size, file_size, curr, curr, dmaOffset, dmaOffset );
+
+                    if ( curr < file_size )
+                    {
+                        fseek( fp, curr, SEEK_SET );
+
+                        uint32_t to_read = get_min( file_size - curr, (uint32_t) 128 );
+                        memset( g_DMA, 0x1a, 128 ); // fill with ^z, the EOF marker in CP/M
+
+                        size_t numread = fread( g_DMA, 1, to_read, fp );
+                        if ( numread > 0 )
+                        {
+                            tracer.TraceBinaryData( g_DMA, 128, 2 );
+                            ACCESS_REG( REG_RESULT ) = 0;
+                            pfcb->UpdateSequentialOffset( curr + 128 );
+                        }
+                        else
+                        {
+                            ACCESS_REG( REG_RESULT ) = 1;
+                            tracer.Trace( "  read error %d = %s, so returning a = 1\n", errno, strerror( errno ) );
+                        }
+                    }
+                    else
+                    {
+                        ACCESS_REG( REG_RESULT ) = 1;
+                        tracer.Trace( "  at the end of file, so returning a = 1\n" );
+                    }
+                }
+                else
+                    tracer.Trace( "ERROR: can't read from a file that's not open\n" );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in read sequential file\n" );
+            break;
+        }
+        case 21:
+        {
+            // write sequential. return 0 on success or non-0 on failure (out of disk space)
+            // reads 128 bytes from cr of the extent and increments cr.
+            // if cr overflows, the extent is incremented and cr is set to 0 for the next read
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = FindFileEntry( acFilename );
+                if ( fp )
+                {
+                    uint32_t file_size = portable_filelen( fp );
+                    uint32_t curr = pfcb->GetSequentialOffset();
+                    uint16_t dmaOffset = (uint16_t) ( g_DMA - memory.data() );
+                    tracer.Trace( "  writing at offset %#x = %u, file size is %#x = %u, dma %#x = %u\n",
+                                  curr, curr, file_size, file_size, dmaOffset, dmaOffset );
+                    fseek( fp, curr, SEEK_SET );
+
+                    tracer.TraceBinaryData( g_DMA, 128, 2 );
+                    size_t numwritten = fwrite( g_DMA, 128, 1, fp );
+                    if ( numwritten > 0 )
+                    {
+                        ACCESS_REG( REG_RESULT ) = 0;
+                        pfcb->UpdateSequentialOffset( curr + 128 );
+                        pfcb->SetRecordCount( fp ); // Whitesmith C v2.1's A80.COM assembler requires this
+                    }
+                    else
+                        tracer.Trace( "ERROR: fwrite returned %zd, errno %d = %s\n", numwritten, errno, strerror( errno ) );
+                }
+                else
+                    tracer.Trace( "ERROR: can't write to a file that's not open\n" );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in write sequential file\n" );
+            break;
+        }
+        case 22:
+        {
+            // make file. return 255 if out of space or the file exists. 0..3 directory code otherwise.
+            // "the Make function has the side effect of activating the FCB and thus a subsequent open is not necessary."
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                tracer.Trace( "  making file '%s'\n", acFilename );
+                FILE * fp = fopen( acFilename, "w+b" );
+                if ( fp )
+                {
+                    FileEntry fe;
+                    strcpy( fe.acName, acFilename );
+                    fe.fp = fp;
+                    g_fileEntries.push_back( fe );
+
+                    pfcb->cr = 0;
+                    pfcb->rc = 0;
+                    pfcb->ex = 0;
+                    pfcb->s2 = 0;
+
+                    tracer.Trace( "  successfully created fp %p for write\n", fp );
+                    ACCESS_REG( REG_RESULT ) = 0;
+                }
+                else
+                    tracer.Trace( "ERROR: unable to make file\n" );
+            }
+            else
+                tracer.Trace( "ERROR: can't parse filename in make file\n" );
+            break;
+        }
+        case 25:
+        {
+            // return current disk
+
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 26:
+        {
+            // set the dma address (128 byte buffer for doing I/O)
+
+            tracer.Trace( "  updating DMA address; D %u = %#x\n", ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG0 ) );
+            g_DMA = memory.data() + ACCESS_REG( REG_ARG0 );
+            break;
+        }
+        case 32:
+        {
+            // get/set current user
+
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 33:
+        {
+            // read random
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 6; // seek past end of disk
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = FindFileEntry( acFilename );
+                if ( fp )
+                {
+                    uint32_t record = pfcb->GetRandomIOOffset();
+                    tracer.Trace( "  read random record %u == %#x\n", record, record );
+                    uint32_t file_offset = (uint32_t) record * (uint32_t) 128;
+                    memset( g_DMA, 0x1a, 128 ); // fill with ^z, the EOF marker in CP/M
+
+                    uint32_t file_size = portable_filelen( fp );
+
+                    // OS workaround for app bug: Turbo Pascal expects a read just past the end of file to succeed.
+
+                    if ( file_size == file_offset )
+                    {
+                        tracer.Trace( "  random read at eof, offset %u\n", file_size );
+                        ACCESS_REG( REG_RESULT ) = 1;
+                        break;
+                    }
+
+                    if ( file_size > file_offset )
+                    {
+                        uint32_t to_read = get_min( file_size - file_offset, (uint32_t) 128 );
+                        ok = !fseek( fp, file_offset, SEEK_SET );
+                        if ( ok )
+                        {
+                            tracer.Trace( "  reading random at offset %u == %#x. file size %u, to read %u\n", file_offset, file_offset, file_size, to_read );
+                            size_t numread = fread( g_DMA, 1, to_read, fp );
+                            if ( numread )
+                            {
+                                tracer.TraceBinaryData( g_DMA, to_read, 2 );
+                                ACCESS_REG( REG_RESULT ) = 0;
+
+                                // The CP/M spec says random read should set the file offset such
+                                // that the following sequential I/O will be from the SAME location
+                                // as this random read -- not 128 bytes beyond.
+
+                                pfcb->UpdateSequentialOffset( file_offset );
+                            }
+                            else
+                                tracer.Trace( "ERROR: can't read in read random\n" );
+                        }
+                        else
+                            tracer.Trace( "ERROR: can't seek in read random\n" );
+                    }
+                    else
+                    {
+                        ACCESS_REG( REG_RESULT ) = 1;
+                        tracer.Trace( "ERROR: read random read at %u beyond end of file size %u\n", file_offset, file_size );
+                    }
+                }
+                else
+                    tracer.Trace( "ERROR: read random on unopened file\n" );
+            }
+            else
+                tracer.Trace( "ERROR: read random can't parse filename\n" );
+            break;
+        }
+        case 34:
+        {
+            // write random
+
+            WriteRandom( cpu );
+            break;
+        }
+        case 35:
+        {
+            // Compute file size. A = 0 if ok, 0xff on failure. Sets r0/r1/2 to the number of 128 byte records
+
+            FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pfcb->Trace();
+            ACCESS_REG( REG_RESULT ) = 255;
+            bool ok = parse_FCB_Filename( pfcb, acFilename );
+            if ( ok )
+            {
+                FILE * fp = FindFileEntry( acFilename );
+                bool found = false;
+                if ( fp )
+                    found = true;
+                else
+                    fp = fopen( acFilename, "r+b" );
+
+                if ( fp )
+                {
+                    uint32_t file_size = portable_filelen( fp );
+                    file_size = round_up( file_size, (uint32_t) 128 ); // cp/m files round up in 128 byte records
+                    pfcb->SetRandomIOOffset( file_size / 128 );
+                    ACCESS_REG( REG_RESULT ) = 0;
+                    tracer.Trace( "  file size is %u == %u records; r2 %#x r1 %#x r0 %#x\n", file_size, file_size / 128, pfcb->r2, pfcb->r1, pfcb->r0 );
+
+                    if ( !found )
+                        fclose( fp );
+                }
+                else
+                    tracer.Trace( "ERROR: compute file size can't find file '%s'\n", acFilename );
+            }
+            break;
+        }
+        case 47: // chain to program
+        {
+            tracer.Trace( "chain to len %u command '%s'\n", * g_DMA, g_DMA + 1 );
+            char * pcmdline = (char *) ( g_DMA + 1 );
+            char * ptail = strchr( pcmdline, ' ' );
+            if ( ptail )
+            {
+                *ptail = 0;
+                ptail++;
+            }
+            else
+                ptail = pcmdline + strlen( pcmdline );
+
+            char acApp[ CPM_FILENAME_LEN ];
+            strcpy( acApp, pcmdline );
+            char acAppArgs[ 128 ];
+            strcpy( acAppArgs, ptail );
+
+            if ( load_cpm68k( acApp, acAppArgs ) )
+            {
+                tracer.Trace( "loaded chained app successfully\n" );
+                cpu.reset( memory, g_base_address, g_execution_address, g_stack_commit, g_top_of_stack );
+            }
+            else
+            {
+                ACCESS_REG( REG_RESULT ) = 0xff;
+                tracer.Trace( "unable to load chained app\n" );
+            }
+            break;
+        }
+        case 48: // flush buffers
+        {
+            fflush( 0 );
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        default:
+        {
+            printf( "  unhandled cp/m bdos call %u\n", function );
+            tracer.Trace( "  unhandled cp/m bdos call %u\n", function );
+            break;
+        }
+    }
+} //emulator_invoke_68k_trap2
 
 static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
 {
