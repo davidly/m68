@@ -3591,11 +3591,11 @@ struct FCBCPM68K // file control block for cp/m
 
     uint32_t GetRandomIOOffset() { return ( (uint32_t) this->r0 << 16 ) | ( (uint32_t) this->r1 << 8 ) | this->r2; }
 
-    void SetRandomIOOffset( uint16_t o )
+    void SetRandomIOOffset( uint32_t o )
     {
         this->r2 = ( 0xff & o );
-        this->r1 = ( ( o & 0xff00 ) >> 8 );
-        this->r0 = ( ( o & 0xff0000 ) >> 8 );
+        this->r1 = ( 0xff & ( o >> 8 ) );
+        this->r0 = ( 0xff & ( o >> 16 ) );
     } //SetRandomIOOffset
 
     void SetRecordCount( FILE * fp )
@@ -4051,7 +4051,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
         }
         case 35:
         {
-            // Compute file size. A = 0 if ok, 0xff on failure. Sets r2 to 0 and r0/r1 to the number of 128 byte records
+            // Compute file size. A = 0 if ok, 0xff on failure. Sets r0/r1/2 to the number of 128 byte records
 
             FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             pfcb->Trace();
@@ -4059,8 +4059,6 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
             bool ok = parse_FCB_Filename( pfcb, acFilename );
             if ( ok )
             {
-                //pfcb->r2 = 0; // only supported in cp/m post version 2.2
-
                 FILE * fp = FindFileEntry( acFilename );
                 bool found = false;
                 if ( fp )
@@ -4072,9 +4070,9 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
                 {
                     uint32_t file_size = portable_filelen( fp );
                     file_size = round_up( file_size, (uint32_t) 128 ); // cp/m files round up in 128 byte records
-                    pfcb->SetRandomIOOffset( (uint16_t) ( file_size / 128 ) );
+                    pfcb->SetRandomIOOffset( file_size / 128 );
                     ACCESS_REG( REG_RESULT ) = 0;
-                    tracer.Trace( "  file size is %u == %u records; r1 %#x r0 %#x\n", file_size, file_size / 128, pfcb->r1, pfcb->r0 );
+                    tracer.Trace( "  file size is %u == %u records; r2 %#x r1 %#x r0 %#x\n", file_size, file_size / 128, pfcb->r2, pfcb->r1, pfcb->r0 );
 
                     if ( !found )
                         fclose( fp );
