@@ -1,14 +1,14 @@
 # m68
-m68 runs 68000 elf and Motorola hex binaries on Windows, macOS, and Linux.
+m68 runs 68000 elf, Motorola hex, and CP/m 68K binaries on Windows, macOS, and Linux.
 
-m68 loads binaries into memory then emulates the Motorola 68000 to execute them. 
+m68 loads binaries into memory then emulates the Motorola 68000 and requires system calls to execute them. 
 
 C and C++ programs in the c_tests folder can be built with a 68000 cross compiler on most platforms. I've run buildgcc-8.2.0.sh on both Windows 11 running on AMD64 and Ubuntu running 
 on Arm64 to build the GNU gcc 8.2.0 cross compiler. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details. 
 
 I've been unable to build the gcc 68000 cross compiler on macOS and Raspberry PI 5.
 
-The build scripts m.bat and m.sh in the c_tests folder can be used to build samples on Windows and Linux.
+The build scripts m.bat and m.sh in the c_tests folder can be used to build samples on Windows, macOS, and Linux.
 mm68.bat and mm68.sh build the m68 emulator targeting the 68000 so the emulator can run itself recursively.
 mall.bat and mall.sh build all of the sample apps.
 
@@ -20,19 +20,21 @@ files with yor C apps for them to link and run.
 
 m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some sample .c and .s apps that can be built and run.
 
-usage: M68 <M68 arguments> <elf_executable> <app arguments>
+Trap 0 is used for linux-style syscalls, Trap 2 is used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
+
+usage: M68 <M68 arguments> <executable> <app arguments>
    
        arguments:    -e     just show information about the elf executable; don't actually run it
                      -h:X   # of meg for the heap (brk space). 0..1024 are valid. default is 40
-                     -i     if -t is set, also enables instruction tracing
-                     -m:X   # of meg for mmap space. 0..1024 are valid. default is 40
+                     -i     if -t is set, also enables instruction tracing with symbols.
+                     -m:X   # of meg for mmap space. 0..1024 are valid. default is 40. 0 for CP/M.
                      -p     shows performance information at app exit
                      -t     enable debug tracing to m68.log
                      -v     used with -e shows verbose information (e.g. symbols)
 
 files:
 
-    * m68.cxx:      Loads programs and services Linux-style syscall() requests from apps
+    * m68.cxx:      Loads programs and OS services (Linux-style syscall() or CP/M 68K BDOS) from apps
     * linuxem.h:    Defines syscall IDs. Same values as for RISC-V 64 and Arm64.
     * m68000.cxx:   Emulates a 68000
     * m68000.hxx:   Header for the 68000
@@ -42,7 +44,7 @@ files:
     * djltrace.hxx: Used for tracing status and instructions
     * m.bat/mmac.sh/m.sh: Builds debug versions of m68 on Windows/macOS/Linux
     * mr.bat/mrmac.sh/mr.sh: Builds release versions of m6 on Windows/macOS/Linux
-    * runall.bat/runall.sh: Runs test apps in c_tests to validate m68
+    * runall.bat/runall.sh: Runs test apps in c_tests to validate m68. Use argument "nested" to run the 68000 c_tests\m68.elf in the native m68.
     * baseline_test_m68.txt: Expected results of runall.bat/runall.sh test scripts
     * mgr.bat/mclr.bat: Builds m68 on Windows using gcc and clang. clang and gcc versions of m68 are about 14% faster than msft C++.
     * words.txt:    Dictionary file for the AN test app
@@ -57,7 +59,7 @@ c_tests folder (test apps + newlib stubs with Linux syscall support)
     * mm68.bat/mm68.sh: builds the m68 emulator for the 68000 to run nested as another test case.
     * mall.bat/mall.sh: builds all test apps on Windows/Linux
     * ma.bat/ma.sh: builds .s 68000 assembly file apps
-    * *.c:         various test apps. 
+    * *.c:         various test apps in C and C++. All are built as C++.
     * tbcd.s:      validates the 3 68000 BCD instructions
 
 cpm folder:
@@ -67,10 +69,26 @@ cpm folder:
     * ttt68u.s: a 68000 assembly version of ttt with loops unrolled for performance.
     * m.bat/m.sh: builds C apps
     * ma.bat/ma.sh: builds .s assembly apps
+    * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
+
+mtpascal folder:
+
+    * standard distribution of the Digital Research MT Pascal compiler
+    * e.pas, sieve.pas, ttt.pas: apps that can be built with the Pascal compiler running in m68
+    * m.bat/m.sh: builds Pascal apps
+    * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
+
+cb68 folder:
+
+    * standard distribution of the Digital Research BASIC compiler
+    * e.bas, sieve.bas, ttt.bas: apps that can be built with the BASIC compiler running in m68
+    * m.bat/m.sh: builds BASIC apps
+    * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
 
 notes/bugs:
 
-    * C++ exceptions don't work yet due to _start not initializing them for newlib
+    * C++ exceptions don't work due to _start not initializing them for newlib
     * These insructions are unimplemented: movep, tas, trapv, illegal, chk
-    * Only the subset of CP/M 68K required to run the C compiler, assembler, and linker along with some test apps has been implemented.
+    * Only the subset of CP/M 68K required to run the compilers, assembler, and linker along with some test apps have been implemented.
+    * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
     
