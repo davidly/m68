@@ -6,7 +6,9 @@ if [ "$1" != "" ]; then
     M68Nested=1
 else
     M68Nested=    
-fi    
+fi
+
+export M68Nested
 
 outputfile="test_m68.txt"
 date_time=$(date)

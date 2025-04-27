@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -x
 
+export M68Nested
+
 for arg in e sieve ttt tm fileops tpi
 do
     echo building $arg
