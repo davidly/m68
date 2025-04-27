@@ -3,6 +3,9 @@
 _m68cmd="m68 -h:60"
 if [ "$1" != "" ]; then
     _m68cmd="m68 -h:80 c_tests/m68.elf -h:60"
+    M68Nested=1
+else
+    M68Nested=    
 fi    
 
 outputfile="test_m68.txt"
@@ -17,20 +20,23 @@ do
 done
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
-             tcmp ttypes tarray trw terrno mm_old ttime fileops tpi \
-             t_setjmp td tf tap tphi mm ts glob nantst pis \
-             tbcd tshift taddsubm tea ttt68 ttt68u;
+           tcmp ttypes tarray trw terrno mm_old ttime fileops tpi \
+           t_setjmp td tf tap tphi mm ts glob nantst pis \
+           tbcd tshift taddsubm tea ttt68 ttt68u;
 do
     echo $arg
     echo test $arg >>$outputfile
     $_m68cmd c_tests/$arg.elf >>$outputfile
 done
 
-for arg in TTT68U TTT E SIEVE TM FILEOPS TPI
+for arg in cpm mtpascal cb68
 do
-    echo test $arg.68K
-    echo test $arg.68K >>$outputfile
-    $_m68cmd cpm/$arg.68K >>$outputfile
+    echo compiler test $arg
+    echo compiler test $arg >>$outputfile
+    pushd $arg 1>/dev/null
+    mall.sh >>../$outputfile
+    runall.sh >>../$outputfile
+    popd 1>/dev/null
 done
 
 echo test an

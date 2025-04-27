@@ -1,0 +1,32 @@
+(*  VERSION 0001 *)
+(*  DATE 03/11/84*)
+(* definition of file info block for CPM-68K *)
+const
+   notopen = 0;
+   fwrite = $100;
+   frdwr = $200;
+   frandom = $300;
+   fconio = $400;
+   ftrmio = $500;
+   flstout = $600;
+   fauxio = $700;
+
+type
+ fibpaoc = packed array [0..0] of char;
+ fib =  record
+          fname : string[37];                           (*    0 *)
+          option: integer;                              (*   38 *)
+          buflen: integer;                              (*   40 *)
+          bufidx: integer;                              (*   42 *)
+          iosize: integer;                              (*   44 *)
+          feoln,                                        (*   48 *)
+          feof  : boolean;                              (*   46 *)
+          fbufadr:^fibpaoc;                             (*   50 *)
+          nosectrs,                                     (*   56 *)
+          ftext : boolean;                              (*   54 *)
+          sysid: integer; (*fileid on unix, conn for udi     58 *)
+          fbuffer: fibpaoc                              (*   60 *)
+        end;
+
+
+

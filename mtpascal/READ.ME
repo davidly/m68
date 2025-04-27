@@ -1,0 +1,595 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    *****************************
+                    * R E L E A S E   N O T E S *
+                    *****************************
+
+
+                             PASCAL/MT+
+
+                             VERSION 3.3
+
+
+                  FOR THE CP/M-68K OPERATING SYSTEM
+
+
+            Copyright (c) 1984 by Digital Research, Inc.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                1-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+
+        These release notes pertain to both the software  and
+        the   documentation  set  for  the  Digital  Research
+        product:
+
+
+                             Pascal/MT+
+
+                  For the CP/M-68K Operating System
+
+
+
+        They provide the most current information regarding:
+
+           o changes to the software, or problems  that  have
+             been  identified since the product was released.
+
+           o errors or omissions  in  the  documentation  set
+             that  could not be corrected because of the lead
+             time needed for production and printing.
+
+
+
+        Note:  These release notes have been formatted so you
+        can  print them on your own printer, cut them to size
+        (6 1/2 x 8 1/2), and place them in your manuals.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                1-2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+                *************************************
+                **  Pascal/MT+ Distribution Disks  **
+                *************************************
+
+
+
+        Digital Research supplies the Pascal/MT+  Programming
+        System  for  CP/M-68K  on  a variety of disk formats.
+        Whichever format you receive, your distribution disks
+        should contain the following files:
+
+
+                    File                  Content or Use
+
+                 MT68.68K *      Pascal/MT+ compiler
+                 MT68.000 *      Compiler overlay
+                 DIS68.68K *     Disassembler
+                 MTERRS.TXT      Compiler error message text file
+                 READ.ME         Latest Release Notes for your version
+
+        * supplied in relocatable format.  You can use the RELOC
+          utility to configure the file for your system.
+
+                 PASLIB.L68      Pascal/MT+ Run-time System module
+                 FPREALS.L68     Floating-point arithmetic module
+                 FULLHEAP.O      Heap management module
+
+                 FIBDEF.LIB      File Information Block definition
+
+                 HLT.S           CP/M-68K halt routine
+                 IOMOD.S         Source file for I/O routine
+                 CPMGET.S        Source file for GET routine
+                 CPMINI.S        Source file for initialization routine
+
+
+
+
+
+
+
+
+
+
+                                1-3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+                           Sample Programs
+
+                 BDOS6.PAS       Demonstrates direct call to BDOS function 6
+                 BDOS23.PAS      Demonstrates direct call to BDOS function 23
+                 CHAIN1.PAS      First program in chaining demonstration
+                 CHAIN2.PAS      Second program in chaining demonstration
+                 DEMOINLN.PAS    Demonstrates INLINE
+                 PEEKPOKE.PAS    Simulates BASIC Peek and Poke operations
+                 PPRIME.PAS      Sieve of Eratosthenese
+                 TEST1.PAS       Sample Program to demonstrate compile and link
+                 FT1.PAS         File transfer using BLOCKREAD/BLOCKWRITE
+                 FT2.PAS         File transfer using GNB/WNB
+                 FT3.PAS         File transfer using SEEKREAD/SEEKWRITE
+                 FT4.PAS         File transfer using GET/PUT
+
+
+
+                           **************************
+                           * RUNNING UNDER CP/M-68K *
+                           **************************
+
+
+
+        The following remarks apply to  Pascal/MT+  Version  3.3  running
+        under the CP/M-68K operating system.
+
+
+           o The Pascal Language Programmer's Guide for  CP/M-68K  (first
+             edition)  describes  the  operation  of  the  linkage editor
+             LINK68, which is supplied with version 1.2 of CP/M-68K.
+
+             If you have an eariler version of CP/M-68K, it was  supplied
+             with the linkage editor LO68.  Both LO68 and LINK68 can link
+             Pascal/MT+ programs and create command files in  the  proper
+             format.  However,  LINK68  has different command-line syntax
+             and improved error messages.  If you use LO68, you must  use
+             the documentation supplied with your operating system.
+
+
+
+
+
+
+                                1-4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+           o The maximum module size is  32767  bytes,  and  the  maximum
+             procedure  size  is  8192  bytes.  There is a maximum of 200
+             procedures per module and a total of 1024 global symbols per
+             module.  The  maximum  amount  of  global data per module is
+             65535 bytes.
+
+           o The  facility  for  handling  INTERRUPT  procedures  is  not
+             implemented in this version.
+
+           o REAL numbers using the BCD format  are  not  implemented  in
+             this  version;  there  is  no BCDREALS run-time library.  It
+             will be supplied in following versions.
+
+           o Due to a  problem  with  CP/M-68K,  you  cannot  invoke  the
+             compiler  from a SUBMIT file unless you explicitly enter the
+             name of the overlay file (MT68.000).  That  is,  the  SUBMIT
+             file  must  contain  the  root  module, the overlay, and the
+             disassembler (if required) as follows:
+
+               mt68 <myfile>
+               mt68.000
+               dis68.68k
+
+
+
+
+                              *********************
+                              * SOFTWARE PROBLEMS *
+                              *********************
+
+
+
+        The following remarks apply to problems that have been identified
+        in the current release.
+
+
+        Problem:  The compiler halts indefinitely (requiring a reboot) if
+        the  source code has a missing delimiter, *) on the right side of
+        a comment.
+
+
+
+
+                                1-5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+        Solution: Make  sure  all  comments  in  your  source  code  have
+        beginning and closing delimiters.
+
+
+        Problem:  The compiler will not detect the erroneous declaration
+
+          SET OF nums
+
+        where nums is type REAL, even though set operations  are  defined
+        only for ordinal types.
+
+        Solution: Do not declare a set of type REAL.
+
+
+        Problem:  The set membership operator IN does not accept negative
+        arguments.
+
+        Solution: None at this time.
+
+
+        Problem:  The T and W source-code  options  do  not  flag  STRING
+        operations   and  report  Error  500  as  documented.  When  used
+        together, they report incorrect error messages, and do not detect
+        all non-standard features.
+
+        Solution: None at this time.
+
+
+        Problem:  The  $K9  and  $K10  options  do  not  work  when  used
+        together.
+
+        Solution: None at this time.
+
+
+        Problem:   There  are  errors  in  allocating  array  bounds  for
+        conformant  arrays  of  two  or more dimensions.  One-dimensional
+        conformant arrays work correctly.
+
+        Solution: None at this time.
+
+
+
+
+                                1-6
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+        Problem:  The OUT function does not generate correct code.
+
+        Solution: None at this time.
+
+
+        Problem:  Strings longer than 80 characters cannot be  passed  by
+        value.
+
+        Solution: Pass strings longer than 80  characters  by  reference.
+        You  can also declare a single-dimensional ARRAY OF CHAR which is
+        the exact size of the string (count the characters) and pass  the
+        array's name by value.
+
+
+        Problem:  Procedures cannot be passed as parameters.
+
+        Solution: None at this time.
+
+
+        Problem:  It is not possible to perform  recursive  output  using
+        WRITE  (or  WRITELN).  That  is,  a  WRITE (or WRITELN) statement
+        cannot contain a call to a function that does any I/O.
+
+        Solution: None at this time.
+
+
+        Problem: If a pointer is declared at the global level,  and  then
+        in  a  local procedure the pointer is used before being declared,
+        the compiler reserves storage based on the global declaration but
+        references the local one.
+
+        Solution: Don't use the same  identifier  for  global  and  local
+        variables.
+
+
+
+
+
+
+
+
+
+
+                                1-7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+                          ****************************
+                          **  DOCUMENTATION ERRATA  **
+                          ****************************
+
+
+
+        The following are errors in  the  Pascal/MT+  Language  Reference
+        Manual (February 1983 edition):
+
+
+        Page 3-3
+
+        Change WORD(x) to WRD(x)
+
+
+        Page 6-2
+
+        Change the third paragraph to read:
+
+        "The data type for a function must be a  simple  type.   Put  the
+        type name after a colon at the end of the function heading.
+
+
+        Page 6-8
+
+        In Table 6-1, change the Returns type for the Function  ABS  from
+        REAL to "same as NUM".
+
+
+        Page 6-10
+
+        In Table 6-1, the Function ADDR returns a POINTER not an  INTEGER
+        type.  Also  change  FUNCTION @RLS to PROCEDURE @RLS.  Delete the
+        word FUNCTION in front of @HERR.
+
+
+
+
+
+
+
+
+
+                                1-8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Pascal/MT+                              Release Notes
+
+
+        Page 6-12
+
+        Change the first sentence in the second paragraph to read:
+
+        "You can use ADDR to reference external variables."
+
+
+        Page 6-13
+
+        Change the example to ARCTAN(1) = 0.78539
+
+
+        Page 6-19
+
+        Change the first sentence in the second paragraph to read:
+
+        "CLOSEDEL closes and deletes  files  after  use."   In  the  last
+        paragraph,  change File Control Blocks (FCBs) to File Information
+        Blocks (FIBs).
+
+
+        Page 6-68
+
+        Change the fifth paragraph to read:
+
+        "WRITE and WRITELN treat strings as arrays of  characters.   They
+        do not write the length byte to TEXT files."
+
+
+        Page 7-2
+
+        In the second paragraph, change F2 to F3 in:
+
+          F2^ := 45;
+
+        puts the integer value 45 in the buffer of the file variable  F2.
+
+
+
+
+
+
+
+                                1-9
+
+
+

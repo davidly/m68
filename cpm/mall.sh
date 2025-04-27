@@ -3,13 +3,13 @@
 
 for arg in e sieve ttt tm fileops tpi
 do
-    echo $arg
+    echo building $arg
     m.sh $arg
 done
 
 for arg in ttt68u
 do
-    echo $arg
+    echo building $arg
     ma.sh $arg
 done
 

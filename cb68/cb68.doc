@@ -1,0 +1,248 @@
+------------------------------------------------------------------
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|           ================================================     |
+|           |                                              |     |      
+|           |                                              |     |
+|           |      *****  CBASIC Compiler  CB68  *****     |     |
+|           |                                              |     |
+|           |            for the CP/M-68K Family           |     |
+|           |             of Operating Systems             |     |
+|           |                                              |     |
+|           |                ---------------               |     |
+|           |                                              |     |
+|           |               READ.ME File Notes             |     |
+|           |                                              |     |
+|           |               - November 1983 -              |     |
+|           |                                              |     |
+|           |             Digital Research Inc.            |     |
+|           |                 P.O. Box 579                 |     |
+|           |           Pacific Grove, CA  93950           |     |
+|           |                                              |     |
+|           ================================================     |
+|                                                                |
+|                                                                |
+|                                                                |
+|         This file presents enhancements  and  modifications    |
+|         made  to  Digital Research  CBASIC Compiler -- CB68    |
+|         software and documentation.   Changes described  in    |
+|         this file  apply to  CB68 software  Version 1.0 and    |
+|         the "CBASIC Compiler (CB68) Programmer's  Guide for    |
+|         the  CP/M-68K  Family  Operating  Systems"    First    |
+|         Edition  August 1983.                                  |
+|                                                                |
+|         You can print  the information in this file on your    |
+|         line  printer  using  8 by 11 inch  paper  with the    |
+|         printer set to 6 lines per inch.   You can trim the    |
+|         pages along the dotted  lines and place  the  pages    |
+|         in your product documentation binder.                  |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |      
+|                                                                |
+|                                                                |
+|                                                                |
+------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------
+|    CBASIC Compiler - CB68 READ.ME File Notes     November 1983 |
+|                                                                |
+|                                                                |
+|                           SOFTWARE NOTES                       |
+|             ===========================================        |
+|                                                                |
+|       1. PRINT USING statement outputs an incorrect exponent   |
+|          value if the value is negative and the format field   |
+|          does  not  contain  a  digit  position  before  the   |
+|          decimal point.  To  work-around,  always  provide a   |
+|          digit position or  leading negative sign before the   |
+|          decimal point.  For example, #.####^ or -.####^.      |
+|                                                                |
+|       2. Hexadecimal   constants   between   0FA000000   and   |
+|          0FAFFFFFF inclusive  produce an  internal  compiler   |
+|          failure  (FATAL COMPILER ERROR 210)  or  cause  the   |
+|          compiler  to  hang.      To  work-around,  use  the   |
+|          equivalent decimal values.                            |
+|                                                                |
+|       3. The run-time system  does not trap  error CM when a   |
+|          .68K file specified in a CHAIN statement  cannot be   |
+|          found in the directory.  To work-around, attempt to   |
+|          OPEN the file prior to chaining.                      |
+|                                                                |
+|       4. An exponential expression  whose  exponent and base   |
+|          both equal zero,  evaluates  to  1.    However,  if   |
+|          either or both the exponent and base is represented   |
+|          by  a real  variable,  the  exponential  expression   |
+|          evaluates to 0.                                       |
+|                                                                |
+|       5. The compiler does not report an error when a prompt   |
+|          string for an INPUT LINE statement is not a literal   |
+|          string constant.  To work-around, do not use string   |
+|          variables or expressions as prompt strings.           |
+|                                                                |
+|       6. The  N  toggle  does  not  work   with  the  %DEBUG   |
+|          directive as documented.  To work-around, use the N   |
+|          toggle as a standard command line option only.        |
+|                                                                |
+|       7. The run-time  system  does  not  detect  error  CX.   |
+|          (An overlay does not fit in the overlay area.)        |
+|                                                                |
+|       8. A PRINT # statement that ends  with a comma  or  a    |
+|          backslash, produces and internal compiler failure.    |
+|          (FATAL COMPILER ERROR 214)                            |
+|                                                                |
+|                             Page 1                             |
+|                                                                |
+------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------
+|    CBASIC Compiler - CB68 READ.ME File Notes     November 1983 |
+|                                                                |
+|                                                                |
+|                                                                |
+|       9. Integers  are  32-bit,    two's  complement  binary   |
+|          numbers that range from  -2147483648 to +2147483647   |
+|          inclusive.                                            |
+|                                                                |
+|      10. Maximum string  length  is  2147483647  characters.   |
+|          Strings are stored internally with 4 length bytes.    |
+|                                                                |
+|      11. The LINK68 CH command line option is  required  to    |
+|          link chained modules.  If you omit the  CH  option    |
+|          from the command line,  LINK68 outputs  the  error    |
+|          "<_cbmain>" DOUBLY DEFINED in <filename>              |
+|                                                                |
+|      12. The run-time system does not support the  graphics    |
+|          extensions  or  the  DATE$  and  TIME$  functions.    |
+|          However, these keywords  are  still  reserved  for    |
+|          future implementations of CB68.                       |
+|                                                                |
+|                                                                | 
+|                         DOCUMENTATION NOTES                    |
+|             ===========================================        |
+|                                                                |
+|          The following  notes apply to the "CBASIC Compiler    |
+|          (CB68) Programmer's Guide for the CP/M-68K  Family    |
+|          of Operating Systems"  First Edition  August 1983.    |
+|                                                                |
+|       1. The last line in the  LINK68 display at the bottom    |
+|          of page 3-1 should read as folllows:                  |
+|                                                                |
+|          [ch] testpgm = test,cb68.l68,(one),(two)              |
+|                                                                |
+|       2. The 2nd and 3rd general formats for LINK68 command    |
+|          lines on page 3-2 should read as follows:             |
+|                                                                |
+|          2) LINK68 object-file {,object-file...}, cb68.l68     |
+|                                                                |
+|          3) LINK68 new-name = object-file                      |
+|                                {,object-file...}, cb68.l68     |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                 Page 2                         |
+|                                                                |
+------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------
+|    CBASIC Compiler - CB68 READ.ME File Notes     November 1983 |
+|                                                                |
+|                                                                |
+|                                                                |
+|       3. The last LINK68 overlay command  line  example  on    |
+|          page 3-8 should read as follows:                      |
+|                                                                |
+|          LINK68 [CH] TEST,CB68.L68, (A,B),(C,D,E),(F)          |
+|                                                                |
+|       4. The keywords MAT and PLOT were  omitted  from  the    |
+|          GRAPHICS keyword list on page E-8.   Also,  change    |
+|          the keyword TET to TEXT.                              |
+|                                                                |
+|       5. The   first   sentence   in   the   LOCALS  option    |
+|          description on page 3-6 should read as follows:       |
+|                                                                |
+|          Tells LINK68 to put local symbols  in  the  symbol    |
+|          table.                                                |
+|                                                                |
+|       6. The last line in the LINK68  display  on  page 1-4    |
+|          should read as follows:                               |
+|                                                                |
+|          test, cb68.l68                                        |
+|                                                                |
+|       7. The L toggle  description  on  page  2-9  does not    |
+|          mention that page length defaults to 66 lines.        |
+|                                                                |
+|       8. The U toggle description  on  page  2-9  does  not    |
+|          mention that variable names local  to  a  multiple    |
+|          line function are  NOT  recognized  as  explicitly    |
+|          undeclared.                                           |
+|                                                                |
+|                                                                |
+|                               VVVVVVV                          |
+|                                VVVVV                           |
+|                                 VVV                            |
+|                                  V                             |
+|                                                                |
+|                         END OF READ.ME FILE                    |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                                                |
+|                                Page 3                          |
+|                                                                |
+------------------------------------------------------------------
+

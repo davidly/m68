@@ -2,7 +2,10 @@
 setlocal
 
 set _runcmd=m68 -h:60
-if "%1" == "nested" (set _runcmd=m68cl -h:80 c_tests\m68.elf -h:60 )
+if "%1" == "nested" (
+  set _runcmd=m68cl -h:80 c_tests\m68.elf -h:60
+  set M68Nested=1
+)
 
 set outputfile=test_m68.txt
 echo %date% %time% >%outputfile%
@@ -23,9 +26,9 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 
-set _cpmlist=TTT68U TTT E SIEVE TM FILEOPS TPI
+set _compList=cpm mtpascal cb68
 
-( for %%a in (%_cpmlist%) do ( call :cpmRun %%a ) )
+( for %%a in (%_compList%) do ( call :compRun %%a ) )
 
 rem 1-off tests
 
@@ -69,11 +72,14 @@ echo test %~1 >>%outputfile%
 %_runcmd% c_tests\%~1 >>%outputfile%
 exit /b 0
 
-:cpmRun
+:compRun
 
-echo test %~1.68K
-echo test %~1.68K >>%outputfile%
-%_runcmd% cpm\%~1.68k >>%outputfile%
+echo compiler test %~1
+echo compiler test %~1 >>%outputfile%
+pushd %~1
+call mall.bat >>..\%outputfile%
+call runall.bat >>..\%outputfile%
+popd
 exit /b 0
 
 :alldone

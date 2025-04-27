@@ -3305,6 +3305,82 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
 
 #ifdef M68
 
+const char * bdos_functions[] =
+{
+    "system reset",                        // 0
+    "console input",
+    "console output",
+    "auxiliary input",
+    "auxiliary output",
+    "list output",
+    "direct console i/o",
+    "get i/o byte",
+    "set i/o byte",
+    "print string",
+    "read console buffer",                 // 10
+    "get console status",
+    "return version number",
+    "reset disk system",
+    "select disk",
+    "open file",
+    "close file",
+    "search for first",
+    "search for next",
+    "delete file",
+    "read sequential",                     // 20
+    "write sequential",
+    "make file",
+    "rename file",
+    "return login vector",
+    "return current disk",
+    "set dma address",
+    "27 is unused",
+    "write protect disk",
+    "get read-only vector",
+    "set file attributes",                 // 30
+    "get disk parmameters",
+    "get/set user code",
+    "read random",
+    "write random",
+    "compute file size",
+    "set random record",
+    "reset drive",
+    "38 is unused",
+    "39 is unused",
+    "write random with zero fill",         // 40
+    "41 is unused",
+    "42 is unused",
+    "43 is unused",
+    "44 is unused",
+    "45 is unused",
+    "get disk free space",
+    "chain to program",
+    "flush buffers"
+    "49 is unused",
+    "direct BIOS call",                    // 50
+    "51 is unused",
+    "52 is unused",
+    "53 is unused",
+    "54 is unused",
+    "55 is unused",
+    "56 is unused",
+    "57 is unused",
+    "58 is unused",
+    "program load",
+    "60 is unused",                        // 60
+    "set exception vector",
+    "set supervisor state",
+    "get/set tpa limits"
+};
+
+const char * bdos_function( uint32_t id )
+{
+    if ( id < _countof( bdos_functions ) )
+        return bdos_functions[ id ];
+
+    return "unknown";
+};
+
 void append_string( char * pc, const char * a )
 {
     size_t len = strlen( pc );
@@ -3816,6 +3892,10 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
 {
     assert( 256 == sizeof( BasePageCPM ) ); // make sure the structure was defined correctly
 
+    // if this is being called from the bdos chain call, reset global data structures.
+    memory.resize( 0 );
+    g_cpmSymbols.resize( 0 );
+
     FILE * fp = fopen( acApp, "rb" );
     if ( !fp )
     {
@@ -3873,7 +3953,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
 #endif
 
     memory.resize( memory_size );
-    memset( memory.data() + g_brk_offset, 0, memory_size - g_brk_offset );
+    memset( memory.data(), 0, memory.size() );
 
     g_base_address = 0;
     uint32_t base_page = text_base - 0x100; // where the base page (256 bytes) resides
@@ -4116,10 +4196,14 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     tracer.Trace( "  <stack>                                             (%d == %x bytes)\n", stack_bytes, stack_bytes );
     tracer.Trace( "  last byte stack can use (g_bottom_of_stack):        %x\n", g_base_address + g_bottom_of_stack );
     tracer.Trace( "  <unallocated space between brk and the stack>       (%d == %llx bytes)\n", g_brk_commit, g_brk_commit );
-    tracer.Trace( "  end_of_data / current brk:                          %x\n", g_base_address + g_end_of_data );
-    tracer.Trace( "  <code + data from the .hex file>\n" );
-    tracer.Trace( "  initial pc execution_addess:                        %x\n", g_execution_address );
-    tracer.Trace( "  <code per the .68k file>\n" );
+    tracer.Trace( "  end_of_bss / current brk:                           %x\n", g_base_address + g_end_of_data );
+    tracer.Trace( "  <uninitialized bss data\n" );
+    tracer.Trace( "  start of bss segment:                               %x\n", g_execution_address + head.cb_text + head.cb_data );
+    tracer.Trace( "  <initialized data from the .68k file>\n" );
+    tracer.Trace( "  start of data segment:                              %x\n", g_execution_address + head.cb_text );
+    tracer.Trace( "  <code from the .68k file>\n" );
+    tracer.Trace( "  initial pc execution_addess + start of code         %x\n", g_execution_address );
+    tracer.Trace( "  start of base page:                                 %x\n", base_page );
     tracer.Trace( "  start of the address space:                         %x\n", g_base_address );
 
     tracer.Trace( "vm memory first byte beyond:     %p\n", memory.data() + memory_size );
@@ -4127,7 +4211,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     tracer.Trace( "memory_size:                     %#x == %d\n", memory_size, memory_size );
 
     tracer.Trace( "first 512 bytes starting at base page:\n" );
-    tracer.TraceBinaryData( memory.data() + text_base - 0x100, 512, 8 );
+    tracer.TraceBinaryData( memory.data() + base_page, 512, 8 );
 
     return true;
 } //load_cpm68k
@@ -4234,9 +4318,9 @@ void emulator_invoke_68k_trap2( m68000 & cpu )
 {
     char acFilename[ CPM_FILENAME_LEN ];
     uint16_t function = ( 0xffff & ACCESS_REG( REG_SYSCALL ) );
-    tracer.Trace( "trap 2 cp/m 68k bdos call %u, first argument %#x\n", function, ACCESS_REG( REG_ARG0 ) );
+    tracer.Trace( "trap 2 cp/m 68k bdos call %u, argument %#x -- %s\n", function, ACCESS_REG( REG_ARG0 ), bdos_function( function ) );
 
-    // note: only the subset invoked by cp/m 68k versions of the C compiler, assembler, and linker are implemented.
+    // note: only the subset invoked by cp/m 68k versions of the C, BASIC, and Pascal compilers, assembler, and linker are implemented.
 
     switch ( function )
     {
