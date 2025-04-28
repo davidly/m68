@@ -2347,11 +2347,13 @@ uint64_t m68000::run()
                         if ( quotient > USHRT_MAX )
                             setflag_v( true );
                         else
+                        {
                             setflag_v( false );
-                        uint16_t remainder = (uint16_t) ( dividend % divisor );
-                        dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
-                        setflag_z( 0 == quotient );
-                        setflag_n( sign16( (uint16_t) quotient ) );
+                            uint16_t remainder = (uint16_t) ( dividend % divisor );
+                            dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
+                            setflag_z( 0 == quotient );
+                            setflag_n( sign16( (uint16_t) quotient ) );
+                        }
                     }
                     setflag_c( false );
                 }
@@ -2371,11 +2373,13 @@ uint64_t m68000::run()
                         if ( quotient > SHRT_MAX || quotient < SHRT_MIN )
                             setflag_v( true );
                         else
+                        {
                             setflag_v( false );
-                        int16_t remainder = ( dividend % (int32_t) divisor );
-                        dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
-                        setflag_z( 0 == quotient );
-                        setflag_n( sign16( (uint16_t) quotient ) );
+                            int16_t remainder = ( dividend % (int32_t) divisor );
+                            dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
+                            setflag_z( 0 == quotient );
+                            setflag_n( sign16( (uint16_t) quotient ) );
+                        }
                     }
                     setflag_c( false );
                 }

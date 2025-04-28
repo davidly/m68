@@ -3,7 +3,7 @@
 
 export M68Nested
 
-for arg in e sieve ttt tm fileops tpi
+for arg in e sieve ttt tm fileops tpi t_setjmp tmuldiv
 do
     echo building $arg
     m.sh $arg
