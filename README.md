@@ -19,6 +19,7 @@ system calls into the m68 emulator via the Trap insruction. It's required to lin
 files with yor C apps for them to link and run.
 
 m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some sample .c and .s apps that can be built and run.
+Those tools all run in m68 along with the binaries they produce. Same for the Pascal and BASIC compilers in the mtpascal and CB68 folders.
 
 Trap 0 is used for linux-style syscalls, Trap 2 is used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
 
