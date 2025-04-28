@@ -33,7 +33,7 @@
 using namespace std;
 using namespace std::chrono;
 
-extern "C" long syscall( long number, ... );
+//extern "C" long syscall( long number, ... );
 
 static uint32_t g_State = 0; // 32 instead of 8 bits is faster with the msft compiler
 
