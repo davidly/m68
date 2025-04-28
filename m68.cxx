@@ -896,14 +896,14 @@ static void usage( char const * perror = 0 )
     if ( 0 != perror )
         printf( "error: %s\n", perror );
 
-    printf( "usage: %s <%s arguments> <elf_executable> <app arguments>\n", APP_NAME, APP_NAME );
+    printf( "usage: %s <%s arguments> <executable> <app arguments>\n", APP_NAME, APP_NAME );
     printf( "   arguments:    -e     just show information about the elf executable; don't actually run it\n" );
 #ifdef RVOS
     printf( "                 -g     (internal) generate rcvtable.txt then exit\n" );
 #endif
     printf( "                 -h:X   # of meg for the heap (brk space). 0..1024 are valid. default is 40\n" );
-    printf( "                 -i     if -t is set, also enables instruction tracing\n" );
-    printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40\n" );
+    printf( "                 -i     if -t is set, also enables instruction tracing with symbols\n" );
+    printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40. 0 for CP/M\n" );
     printf( "                 -p     shows performance information at app exit\n" );
     printf( "                 -t     enable debug tracing to %ls\n", LOGFILE_NAME );
     printf( "                 -v     used with -e shows verbose information (e.g. symbols)\n" );
@@ -1521,12 +1521,11 @@ static const SysCall syscalls[] =
 const void * my_bsearch( const void * key, const void * vbase, size_t num, unsigned width, int (*compare)( const void * a, const void * b ) )
 {
     const char * base = (const char *) vbase;
-
-    size_t i = 0;
-    size_t j = num - 1;
+    int i = 0;
+    int j = (int) num - 1;
     do
     {
-        size_t k = ( j + i ) / 2;
+        int k = ( j + i ) / 2;
         const char * here = base + width*k;
         int cmp = ( *compare )( key, here );
         if ( 0 == cmp )
@@ -3449,12 +3448,12 @@ static int symbol_find_compare32( const void * a, const void * b )
 
     if ( 0 == sa.size ) // a is the key
     {
-        if ( sa.value >= sb.value && sa.value < ( sb.value + sb.size ) )
+        if ( ( sa.value == sb.value ) || ( sa.value > sb.value && sa.value < ( sb.value + sb.size ) ) )
             return 0;
     }
     else // b is the key
     {
-        if ( sb.value >= sa.value && sb.value < ( sa.value + sa.size ) )
+        if ( ( sb.value == sa.value ) || ( sb.value > sa.value && sb.value < ( sa.value + sa.size ) ) )
             return 0;
     }
 
@@ -3471,13 +3470,13 @@ static int symbol_find_compare_cpm( const void * a, const void * b )
     if ( 0 == sa.name[0] ) // a is the key
     {
         SymbolEntryCPM * pnext = ( ( & sb ) + 1 );
-        if ( sa.value >= sb.value && sa.value < pnext->value )
+        if ( ( sa.value == sb.value ) || ( sa.value > sb.value && sa.value < pnext->value ) )
             return 0;
     }
     else // b is the key
     {
         SymbolEntryCPM * pnext = ( ( & sa ) + 1 );
-        if ( sb.value >= sa.value && sb.value < pnext->value )
+        if ( ( sb.value == sa.value ) || ( sb.value > sa.value && sb.value < pnext->value ) )
             return 0;
     }
 

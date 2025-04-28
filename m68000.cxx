@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <limits.h>
 #include <chrono>
 
 #include <djltrace.hxx>
@@ -1798,7 +1799,7 @@ uint64_t m68000::run()
                         uint16_t vector = op & 0xf;
                         if ( 15 == vector )
                         {
-                            emulator_invoke_68k_trap15( *this ); // 68k emulator emulator
+                            emulator_invoke_68k_trap15( *this ); // 68k emulator
                             pc += 2;
                         }
                         else if ( 0 == vector )
@@ -2335,13 +2336,6 @@ uint64_t m68000::run()
                     op_size = 1; // word operation
                     uint32_t dividend = dregs[ op_reg ].l;
                     uint16_t divisor = effective_value16( effective_address( true ) );
-                    uint32_t hipart = dividend >> 16;
-                    if ( hipart > divisor )
-                    {
-                        setflag_v( true );
-                        break;
-                    }
-
                     if ( 0 == divisor )
                     {
                         dregs[ op_reg ].l = 0;
@@ -2349,7 +2343,11 @@ uint64_t m68000::run()
                     }
                     else
                     {
-                        uint32_t quotient = dividend / divisor;
+                        uint32_t quotient = dividend / (uint32_t) divisor;
+                        if ( quotient > USHRT_MAX )
+                            setflag_v( true );
+                        else
+                            setflag_v( false );
                         uint16_t remainder = (uint16_t) ( dividend % divisor );
                         dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
                         setflag_z( 0 == quotient );
@@ -2362,13 +2360,6 @@ uint64_t m68000::run()
                     op_size = 1; // word operation
                     int32_t dividend = (int32_t) dregs[ op_reg ].l;
                     int16_t divisor = (int16_t) effective_value16( effective_address( true ) );
-                    int32_t hipart = (int32_t) ( (uint32_t) dividend >> 16 );
-                    if ( (uint32_t) hipart > (uint32_t) (uint16_t) divisor )
-                    {
-                        setflag_v( true );
-                        break;
-                    }
-
                     if ( 0 == divisor )
                     {
                         dregs[ op_reg ].l = 0;
@@ -2376,8 +2367,12 @@ uint64_t m68000::run()
                     }
                     else
                     {
-                        uint32_t quotient = dividend / divisor;
-                        uint16_t remainder = (uint16_t) ( dividend % divisor );
+                        int32_t quotient = dividend / (int32_t) divisor;
+                        if ( quotient > SHRT_MAX || quotient < SHRT_MIN )
+                            setflag_v( true );
+                        else
+                            setflag_v( false );
+                        int16_t remainder = ( dividend % (int32_t) divisor );
                         dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
                         setflag_z( 0 == quotient );
                         setflag_n( sign16( (uint16_t) quotient ) );
