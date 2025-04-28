@@ -2446,11 +2446,11 @@ void emulator_invoke_svc( CPUClass & cpu )
 
 #endif
 
-#ifdef M68
+#if defined(M68) && !defined(__APPLE__)  // macOS and 68000 share the same open flags and are different than generic linux
             flags = linux_translate_flags( flags );
 #endif
 
-            tracer.Trace( "final flags passed to openat: %#llx\n", flags );
+            tracer.Trace( "  final directory %d, flags %#llx, mode %x passed to openat\n", directory, flags, mode );
             descriptor = openat( directory, pname, flags, mode );
 #endif
             update_result_errno( cpu, (int) descriptor );
