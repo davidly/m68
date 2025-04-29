@@ -19,9 +19,10 @@ system calls into the m68 emulator via the Trap insruction. It's required to lin
 files with yor C apps for them to link and run.
 
 m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some sample .c and .s apps that can be built and run.
-Those tools all run in m68 along with the binaries they produce. Same for the Pascal and BASIC compilers in the mtpascal and CB68 folders.
+Those tools all run in m68 along with the binaries they produce. Same for the Pascal and BASIC compilers in the mtpascal and CB68 folders. The DDT debugger works in the emulator including
+instruction tracing and breakpoints.
 
-Trap 0 is used for linux-style syscalls, Trap 2 is used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
+Trap 0 is used for linux-style syscalls, Trap 2 and trap 3 are used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
 
 usage: M68 <M68 arguments> <executable> <app arguments>
    
@@ -82,6 +83,7 @@ mtpascal folder:
 cb68 folder:
 
     * standard distribution of the Digital Research BASIC compiler
+    * DDT.68K and DDT68000.68K: debugger
     * e.bas, sieve.bas, ttt.bas: apps that can be built with the BASIC compiler running in m68
     * m.bat/m.sh: builds BASIC apps
     * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
@@ -89,7 +91,7 @@ cb68 folder:
 notes/bugs:
 
     * C++ exceptions don't work due to _start not initializing them for newlib
-    * These insructions are unimplemented: movep, tas, trapv, illegal, chk
-    * Only the subset of CP/M 68K required to run the compilers, assembler, and linker along with some test apps have been implemented.
+    * These insructions are unimplemented: movep and chk
+    * Only the subset of CP/M 68K BDOS and BIOS functions required to run the compilers, assembler, and linker along with some test apps have been implemented.
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
     
