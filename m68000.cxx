@@ -8,12 +8,12 @@
             https://en.wikipedia.org/wiki/SREC_(file_format)
             http://www.retroarchive.org/docs/cpm68_prog_guide_pt1.pdf
 
-    notes:  -- supervisor mode is unimplemented
-            -- a handful instructions aren't implemented because gcc+newlib don't use them:
-                 movep, trapv, illegal, chk
-            -- traps are largely unimplemented
-            -- trap 0 maps to linux-equivalent system calls
-            -- trap 15 maps to a couple m68k system calls
+    notes:  -- a handful instructions aren't implemented because gcc+newlib don't use them:
+                 movep, chk
+            -- trap 0 (32) maps to linux-equivalent system calls
+            -- trap 2 (34) maps to cp/m 68k bdos functions
+            -- trap 3 (35) maps to cp/m 68k bios functions
+            -- trap 15 (47) maps to a couple m68k system calls
 */
 
 
@@ -22,9 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <math.h>
 #include <limits.h>
-#include <chrono>
 
 #include <djltrace.hxx>
 
@@ -33,12 +31,13 @@
 using namespace std;
 using namespace std::chrono;
 
-//extern "C" long syscall( long number, ... );
+//extern "C" int syscall( long number, ... );
 
 static uint32_t g_State = 0; // 32 instead of 8 bits is faster with the msft compiler
 
 const uint32_t stateTraceInstructions = 1;
 const uint32_t stateEndEmulation = 2;
+const uint32_t stateInstructionTrace = 4;
 
 bool m68000::trace_instructions( bool t )
 {
@@ -102,13 +101,15 @@ inline bool sign32( uint32_t l )
 
 const char * m68000::render_flags()
 {
-    static char flags[ 6 ] = { 0 };
+    static char flags[ 8 ] = { 0 };
 
-    flags[ 0 ] = flag_c() ? 'C' : 'c';
-    flags[ 1 ] = flag_v() ? 'V' : 'v';
-    flags[ 2 ] = flag_z() ? 'Z' : 'z';
-    flags[ 3 ] = flag_n() ? 'N' : 'n';
-    flags[ 4 ] = flag_x() ? 'X' : 'x';
+    flags[ 0 ] = flag_t() ? 'T' : 't';
+    flags[ 1 ] = flag_s() ? 'S' : 's';
+    flags[ 2 ] = flag_c() ? 'C' : 'c';
+    flags[ 3 ] = flag_v() ? 'V' : 'v';
+    flags[ 4 ] = flag_z() ? 'Z' : 'z';
+    flags[ 5 ] = flag_n() ? 'N' : 'n';
+    flags[ 6 ] = flag_x() ? 'X' : 'x';
 
     return flags;
 } //render_flags
@@ -634,7 +635,7 @@ void m68000::trace_state()
             else if ( 0x4e75 == op ) // rts
                 tracer.Trace( "rts\n" );
             else if ( 0x4e73 == op ) // trapv
-                unhandled();
+                tracer.Trace( "trapv\n" );
             else if ( 0x4e77 == op ) // rtr
                 tracer.Trace( "rtr\n" );
             else if ( 0x4e70 == op ) // reset
@@ -643,6 +644,8 @@ void m68000::trace_state()
                 tracer.Trace( "stop\n" );
             else if ( 0x4e71 == op ) // nop
                 tracer.Trace( "nop\n" );
+            else if ( 0x4afc == op ) // illegal
+                tracer.Trace( "illegal\n" );
             else
             {
                 uint16_t bits11_6 = opbits( 6, 6 );
@@ -660,7 +663,7 @@ void m68000::trace_state()
                 else if ( 4 == bits11_8 ) // neg
                     tracer.Trace( "neg.%c %s\n", get_size(), effective_string( op_size < 2 ) );
                 else if ( 0xe4 == bits11_4 ) // trap
-                    tracer.Trace( "trap #%u\n", op & 0xf );
+                    tracer.Trace( "trap %#u + 32 = %#u\n", op & 0xf, ( op & 0xf ) + 32 );
                 else if ( 0x11 == bits11_7 && 0 == ea_mode ) // ext
                     tracer.Trace( "ext.%c d%u\n", opbit( 6 ) ? 'l' : 'w', ea_reg );
                 else if ( 0xa == bits11_8 ) // tst
@@ -975,6 +978,7 @@ void m68000::trace_state()
             unhandled();
     }
 
+    //tracer.Trace( "a270e2: %#x, a27082 %#x, 1ffa %#x\n", getui16( 0xa270e2 ), getui16( 0xa27082 ), getui16( 0x1ffa ) );
     //tracer.Trace( "80a28964: " ); tracer.TraceBinaryData( getmem( 0x80a28964 ), 4, 4 );
     //tracer.TraceBinaryData( getmem( 0x307c ), 32, 4 );
     pc = save_pc;
@@ -1145,6 +1149,56 @@ bool m68000::check_condition( uint16_t c )
     assume_false;
 } //check_condition
 
+const char * get_vector( uint16_t vector )
+{
+    switch( vector )
+    {
+        case 0: return "not a vector -- reset sp";
+        case 1: return "not a vector -- reset pc";
+        case 2: return "bus error";
+        case 3: return "address error";
+        case 4: return "illegal instruction";
+        case 5: return "division by zero";
+        case 6: return "chk instruction out of bounds";
+        case 7: return "trapv";
+        case 8: return "privilege violation";
+        case 9: return "trace";
+        case 10: return "unimplemented instruction line A";
+        case 11: return "unimplemented instruction line F";
+        default: return "unknown";
+    }
+} //get_vector
+
+bool m68000::handle_trap( uint16_t vector, uint32_t pc_return )
+{
+    if ( 0 != base )
+    {
+        tracer.Trace( "base isn't 0 so no trap vectors are available\n" );
+        return false;
+    }
+
+    if ( 5 == vector && 0 == getui32( vector * 4 ) ) // if divide by 0 and no vector is available, let the poor app run
+    {
+        tracer.Trace( "divide by 0 but no handler is available, so ignoring\n" );
+        return false;
+    }
+
+    uint16_t original_sr = sr;
+    set_supervisor_state();
+    push( pc_return );
+    push16( original_sr );
+    pc = getui32( vector * 4 );
+    if ( 0 == pc )
+    {
+        tracer.Trace( "no trap handler for %u == %s\n", vector, get_vector( vector ) );
+        printf( "no trap handler for %u == %s\n", vector, get_vector( vector ) );
+        emulator_hard_termination( *this, "trap vector entry is null.", vector );
+    }
+
+    tracer.Trace( "invoked trap %u == %s\n", vector, get_vector( vector ) );
+    return true;
+} //handle_trap
+
 template < typename T > inline void do_swap( T & a, T & b ) { T tmp = a; a = b; b = tmp; }
 
 uint64_t m68000::run()
@@ -1152,22 +1206,27 @@ uint64_t m68000::run()
     tracer.Trace( "code at pc %x:\n", pc );
     tracer.TraceBinaryData( getmem( pc ), 128, 4 );
 
+    bool skip_trace = false;
     uint64_t cycles = 0;
+    uint32_t prior_pc = 0;
 
     for ( ;; )
     {
         #ifndef NDEBUG
-            if ( aregs[ 7 ] > ( stack_top + 0x1000 ) ) // cut some slack to read argc/argv etc
-                emulator_hard_termination( *this, "stack pointer is above the top of its starting point:", aregs[ 7 ] );
+            if ( enforce_pc_sp_constraints )
+            {
+                if ( aregs[ 7 ] > ( stack_top + 0x1000 ) ) // cut some slack to read argc/argv etc
+                    emulator_hard_termination( *this, "stack pointer is above the top of its starting point:", aregs[ 7 ] );
 
-            if ( pc < base )
-                emulator_hard_termination( *this, "pc is lower than memory:", pc );
+                if ( pc < base )
+                    emulator_hard_termination( *this, "pc is lower than memory:", pc );
 
-            if ( pc >= ( base + mem_size - stack_size ) )
-                emulator_hard_termination( *this, "pc is higher than it should be:", pc );
+                if ( pc >= ( base + mem_size - stack_size ) )
+                    emulator_hard_termination( *this, "pc is higher than it should be:", pc );
+            }
 
             if ( 0 != ( aregs[ 7 ] & 1 ) ) // to avoid alignment faults
-                emulator_hard_termination( *this, "the stack pointer isn't 2-byte aligned:", pc );
+                emulator_hard_termination( *this, "the stack pointer isn't 2-byte aligned:", aregs[ 7 ] );
 
             if ( 0 != ( pc & 1 ) ) // to avoid alignment faults
                 emulator_hard_termination( *this, "the pc isn't 2-byte aligned:", pc );
@@ -1198,6 +1257,21 @@ uint64_t m68000::run()
                 break;
             }
 
+            if ( ( g_State & stateInstructionTrace ) && ! flag_s() )
+            {
+                if ( skip_trace )
+                {
+                    prior_pc = pc;
+                    skip_trace = false;
+                }
+                else
+                {
+                    g_State &= ~stateInstructionTrace;
+                    handle_trap( 9, pc );
+                    continue;
+                }
+            }
+
             if ( g_State & stateTraceInstructions )
                 trace_state();
         }
@@ -1216,8 +1290,15 @@ uint64_t m68000::run()
                 }
                 else if ( 0x007c == op ) // ori to SR
                 {
+                    if ( !flag_s() )
+                    {
+                        if ( handle_trap( 8, pc ) ) // not in supervisor state
+                            continue;
+                    }
+
                     pc += 2;
                     sr |= getui16( pc );
+                    perhaps_restore_usermode_state();
                 }
                 else if ( 0x023c == op ) // andi to CCR
                 {
@@ -1226,8 +1307,15 @@ uint64_t m68000::run()
                 }
                 else if ( 0x027c == op ) // andi to SR
                 {
+                    if ( !flag_s() )
+                    {
+                        if ( handle_trap( 8, pc ) ) // not in supervisor state
+                            continue;
+                    }
+
                     pc += 2;
                     sr &= getui16( pc );
+                    perhaps_restore_usermode_state();
                 }
                 else if ( 0x0a3c == op ) // eori to CCR
                 {
@@ -1236,8 +1324,15 @@ uint64_t m68000::run()
                 }
                 else if ( 0x0a7c == op ) // eori to SR
                 {
+                    if ( !flag_s() )
+                    {
+                        if ( handle_trap( 8, pc ) ) // not in supervisor state
+                            continue;
+                    }
+
                     pc += 2;
                     sr ^= getui16( pc );
+                    perhaps_restore_usermode_state();
                 }
                 else if ( 0 == bits11_8 ) // ori
                 {
@@ -1717,11 +1812,28 @@ uint64_t m68000::run()
                 }
                 else if ( 0x4e73 == op ) // rte
                 {
+                    if ( !flag_s() )
+                    {
+                        if ( handle_trap( 8, pc ) ) // not in supervisor state
+                            continue;
+                    }
+
                     sr = pop16();
+                    if ( flag_t() )
+                    {
+                        g_State |= stateInstructionTrace;
+                        skip_trace = true;
+                    }
                     pc = pop();
+                    perhaps_restore_usermode_state();
+                    continue;
                 }
                 else if ( 0x4e73 == op ) // trapv
-                    unhandled();
+                {
+                    if ( handle_trap( 0x1c, pc + 2 ) )
+                        continue;
+                    break;
+                }
                 else if ( 0x4e77 == op ) // rtr
                 {
                     sr = ( ( sr & 0xff00 ) | ( pop16() & 0xff ) );
@@ -1744,6 +1856,12 @@ uint64_t m68000::run()
                     emulator_invoke_svc( *this );
                 }
                 else if ( 0x4e71 == op ) {} // nop
+                else if ( 0x4afc == op ) // illegal
+                {
+                    if ( handle_trap( 4, pc ) ) // likely DDT's breakpoint. Want to return to this location after the interrupt restores the original instruction.
+                        continue;
+                    break;
+                }
                 else
                 {
                     uint16_t bits11_8 = opbits( 8, 4 );
@@ -1752,7 +1870,7 @@ uint64_t m68000::run()
                     uint16_t bits11_4 = opbits( 4, 8 );
                     uint16_t bits11_3 = opbits( 3, 9 );
 
-                    if ( 3 == bits11_6 ) // move from sr
+                    if ( 3 == bits11_6 ) // move from sr. Unpriviledged. Popek and Goldberg be damned.
                     {
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].w = sr;
@@ -1769,8 +1887,20 @@ uint64_t m68000::run()
                     }
                     else if ( 0x1b == bits11_6 ) // move to sr
                     {
+                        if ( !flag_s() )
+                        {
+                            if ( handle_trap( 8, pc ) ) // not in supervisor state
+                                continue;
+                        }
+
                         op_size = 1;
                         sr = effective_value16( effective_address( true ) );
+                        if ( flag_t() )
+                        {
+                            g_State |= stateInstructionTrace;
+                            skip_trace = true;
+                        }
+                        perhaps_restore_usermode_state();
                     }
                     else if ( 4 == bits11_8 ) // neg
                     {
@@ -1808,11 +1938,16 @@ uint64_t m68000::run()
                         {
                             uint32_t oldpc = pc;
                             emulator_invoke_68k_trap2( *this ); // digital research cp/m 68k bdos vector
-                            if ( pc != oldpc ) // likely chained to a new program
+                            if ( pc != oldpc ) // likely chained to a new program via bdos function 47
                                 continue;
                         }
+                        else if ( 3 == vector )
+                            emulator_invoke_68k_trap3( *this ); // digital research cp/m 68k bios vector
                         else
-                            tracer.Trace( "trap %u invoked but there is no handler\n", vector );
+                        {
+                            if ( handle_trap( vector + 0x20, pc + 2 ) )
+                                continue;
+                        }
                     }
                     else if ( 0x11 == bits11_7 && 0 == ea_mode ) // ext
                     {
@@ -2131,9 +2266,11 @@ uint64_t m68000::run()
                         uint32_t denom = effective_value32( effective_address() );
                         if ( 0 == denom )
                         {
+                            if ( handle_trap( 5, pc ) )
+                                continue;
+
+                            dregs[ dq ].l = 0; // just be nice to bad apps
                             dregs[ dr ].l = 0;
-                            dregs[ dq ].l = 0;
-                            // to do: divide by zero trap here.
                         }
                         else
                         {
@@ -2142,6 +2279,7 @@ uint64_t m68000::run()
                             dregs[ dq ].l = quotient;
                             dregs[ dr ].l = remainder;
                         }
+
                         setflag_c( false );
                         setflag_z( 0 == dregs[ dq ].l );
                         setflag_n( sign32( dregs[ dq ].l ) );
@@ -2278,7 +2416,7 @@ uint64_t m68000::run()
             case 6: // bra / bsr / bcc
             {
                 uint16_t condition = opbits( 8, 4 );
-                int16_t displacement = op & 0xff; 
+                int16_t displacement = op & 0xff;
                 bool two_byte_displacement = false;
                 if ( 0 != displacement )
                     displacement = sign_extend16( displacement, 7 );
@@ -2338,8 +2476,10 @@ uint64_t m68000::run()
                     uint16_t divisor = effective_value16( effective_address( true ) );
                     if ( 0 == divisor )
                     {
-                        dregs[ op_reg ].l = 0;
-                        // to do: divide by zero trap here.
+                        if ( handle_trap( 5, pc ) )
+                            continue;
+
+                        dregs[ op_reg ].l = 0; // just be nice
                     }
                     else
                     {
@@ -2364,8 +2504,10 @@ uint64_t m68000::run()
                     int16_t divisor = (int16_t) effective_value16( effective_address( true ) );
                     if ( 0 == divisor )
                     {
+                        if ( handle_trap( 5, pc ) )
+                            continue;
+
                         dregs[ op_reg ].l = 0;
-                        // do do: divide by zero trap here.
                     }
                     else
                     {

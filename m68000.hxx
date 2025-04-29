@@ -7,6 +7,7 @@ struct m68000;
 extern void emulator_invoke_svc( m68000 & cpu );                                                // called when the linux-style syscall instruction is executed
 extern void emulator_invoke_68k_trap15( m68000 & cpu );                                         // called when trap #15 is invoked for an IDE68K emulator system call
 extern void emulator_invoke_68k_trap2( m68000 & cpu );                                          // called when trap #2 for digital research cp/m 68k bdos calls
+extern void emulator_invoke_68k_trap3( m68000 & cpu );                                          // called when trap #3 for digital research cp/m 68k bios calls
 extern const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset );              // returns the best guess for a symbol name and offset for the address
 extern void emulator_hard_termination( m68000 & cpu, const char *pcerr, uint64_t error_value ); // show an error and exit
 
@@ -43,23 +44,27 @@ struct m68000
         stack_size = stack_commit;                 // remember how much of the top of RAM is allocated to the stack
         stack_top = top_of_stack;                  // where the stack started
         aregs[ 7 ] = top_of_stack;                 // points at argc with argv, penv, and aux records above it
-        base = base_address;                       // lowest valid address in the app's address space, maps to offset 0 in mem
+        base = base_address;                       // lowest valid address in the app's address space, maps to offset 0 in mem. If not 0, can't update trap vectors.
         mem = memory.data();                       // save the pointer, but don't take ownership
         mem_size = (uint32_t) memory.size();       // how much RAM is allocated ror the 68000
         beyond_mem = mem + memory.size();          // addresses beyond and later are illegal
         membase = mem - base;                      // real pointer to the start of the app's memory (prior to offset)
-        setflag_s( true );                         // the 68000 boots in supervisor mode
+        setflag_s( false );                        // the 68000 boots in supervisor mode, but we're just running an app here not booting an OS
         sr |= 0x0700;                              // set irq level
+        enforce_pc_sp_constraints = true;          // debug only asserts on values of pc and sp. meaningless after bdos 57
+        isp = 0x2000;                              // above trap vectors, below where apps are loaded
 
         tracer.Trace( "pc %x, stack_size %x, stack_top %x, base %x, mem_size %x\n", pc, stack_size, stack_top, base, mem_size );
     } //m68000
+
+    void relax_pc_sp_constraints() { enforce_pc_sp_constraints = false; }
 
     datareg_t dregs[ 8 ];
     uint32_t aregs[ 8 ];
     uint32_t pc;
     uint16_t sr;                                   // lower 8 bits is ccr (user accessible). upper 8 bits is supervisor only
-    uint32_t isp;                                  // interrupt/supervisor stack pointer (ssp == isp on 68000)
-    uint32_t usp;                                  // user stack pointer
+    uint32_t isp;                                  // interrupt/supervisor stack pointer (ssp == isp on 68000) when executing handlers
+    uint32_t usp;                                  // usermode stack pointer
 
     uint16_t op;                                   // the currently executing opcode found at pc
     uint16_t hi4;                                  // bits 15..12
@@ -77,6 +82,28 @@ struct m68000
     uint32_t stack_top;
     uint32_t mem_size;
     uint64_t cycles_so_far;                        // just an instruction count for now
+    bool enforce_pc_sp_constraints;                // after bdos 57 all bets are off for what's legal for pc and sp
+
+    inline void set_supervisor_state()
+    {
+        if ( !flag_s() ) // if already in supervisor mode then ignore
+        {
+            usp = aregs[ 7 ];
+            aregs[ 7 ] = isp;
+            tracer.Trace( "now in supervisor mode, isp %#x, usp %#x\n", isp, usp );
+            setflag_s( true );
+        }
+    } //set_supervisor_state
+
+    inline void perhaps_restore_usermode_state()
+    {
+        if ( !flag_s() ) // only call this function when SR may have changed out of supervisor mode
+        {
+            isp = aregs[ 7 ];
+            aregs[ 7 ] = usp;
+            tracer.Trace( "now in user mode, isp %#x, usp %#x\n", isp, usp );
+        }
+    } //perhaps_restore_usermode_state
 
     inline uint16_t opbits( uint32_t lowbit, uint32_t len ) const
     {
@@ -134,6 +161,7 @@ struct m68000
     inline void setflag_n( bool f ) { sr &= 0xfff7; sr |= ( ( 0 != f ) << 3 ); }
     inline void setflag_x( bool f ) { sr &= 0xffef; sr |= ( ( 0 != f ) << 4 ); }
     inline void setflag_s( bool f ) { sr &= 0xdfff; sr |= ( ( 0 != f ) << 13 ); }
+    inline void setflag_t( bool f ) { sr &= 0x7fff; sr |= ( ( 0 != f ) << 15 ); }
     inline void setflags_cx( bool f ) { setflag_c( f ); setflag_x( f ); }
     inline void clearflags_cv() { sr &= 0xfffc; }
 
@@ -143,6 +171,7 @@ struct m68000
     inline bool flag_n() { return ( 0 != ( sr & 8 ) ); }
     inline bool flag_x() { return ( 0 != ( sr & 16 ) ); }
     inline bool flag_s() { return ( 0 != ( sr & 0x2000 ) ); }
+    inline bool flag_t() { return ( 0 != ( sr & 0x8000 ) ); } // t1. t0 is always 0 on a 68000
 
     // addresses to getX/setX should all be word (2-byte) aligned, but the m68k compiler assumes 1-byte alignment works
 
@@ -225,6 +254,7 @@ struct m68000
     template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior );
     uint8_t bcd_add( uint8_t a, uint8_t b );
     uint8_t bcd_sub( uint8_t a, uint8_t b );
+    bool handle_trap( uint16_t vector, uint32_t pc_return );
 
     inline void push( uint32_t x )
     {
@@ -258,21 +288,21 @@ struct m68000
         setflag_z( 0 == val );
         clearflags_cv();
     } //set_nzcv8
-    
+
     inline void set_nzcv16( uint16_t val )
     {
         setflag_n( 0 != ( 0x8000 & val ) );
         setflag_z( 0 == val );
         clearflags_cv();
     } //set_nzcv16
-    
+
     inline void set_nzcv32( uint32_t val )
     {
         setflag_n( 0 != ( 0x80000000 & val ) );
         setflag_z( 0 == val );
         clearflags_cv();
     } //set_nzcv32
-    
+
     inline void set_nzcv( uint32_t val, uint16_t size )
     {
         if ( 0 == size )
