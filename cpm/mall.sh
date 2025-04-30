@@ -9,7 +9,7 @@ do
     m.sh $arg
 done
 
-for arg in ttt68u
+for arg in ttt68u tchk
 do
     echo building $arg
     ma.sh $arg

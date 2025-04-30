@@ -15,7 +15,7 @@ exit /b 0
 
 :makeasm
 
-set _asmlist=ttt68u
+set _asmlist=ttt68u tchk
 
 ( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
 

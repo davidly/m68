@@ -1,4 +1,4 @@
-Tue 04/29/2025 12:46:32.72 
+Tue 04/29/2025 20:03:19.55 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.378999 milliseconds
+25.927999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 29, hour 19, min 46, sec 38
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 29, hour 14, min 46, sec 38
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 29, hour 11, min 46, sec 38
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 29, hour 11, min 46, sec 38
+before TZ is set: tz: '(null)', year: 2025, month 4, day 30, hour 3, min 3, sec 26
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 29, hour 22, min 3, sec 26
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 29, hour 19, min 3, sec 26
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 29, hour 19, min 3, sec 26
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5846,6 +5846,7 @@ building tpi
 building t_setjmp
 building tmuldiv
 building ttt68u
+building tchk
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -6101,6 +6102,9 @@ ui32 4294687296 * 4294967292: 1120000
 ui32 4294687296 % 4294967292: 47676
 ui32 4294687296 / 4294967292: 65535
 tmuldiv ended with great success
+running TCHK
+chk trap invocations (4 expected): 4
+tchk completed with great success
 compiler test mtpascal 
 building e
 --------------------------------------------------
@@ -6505,8 +6509,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     264
-  dictionary: 260
+total ms:     272
+  dictionary: 268
   generate:   3
   render:     0
 test ba tp.bas 
@@ -6541,4 +6545,4 @@ starting...
 6493 moves
 1 iterations
 0.000000 milliseconds
-Tue 04/29/2025 12:46:50.56 
+Tue 04/29/2025 20:03:37.72 

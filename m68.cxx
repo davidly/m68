@@ -4129,7 +4129,7 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
 
     if ( 0x601a != head.signature )
     {
-        printf( "header of cp/m 68k image file isn't standard no-relocation 0x601a:\n" );
+        printf( "header of cp/m 68k image file isn't standard 0x601a:\n" );
         return false;
     }
 
@@ -4170,7 +4170,7 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
     uint32_t data_base = text_base; // + head.cb_text; with 0x601a all bases belong to text_base
     uint32_t bss_base = text_base; // data_base + head.cb_data;
 
-    if ( ! handle_relocations_cpm( fp, head, text_base, data_base, bss_base ) )
+    if ( !handle_relocations_cpm( fp, head, text_base, data_base, bss_base ) )
         return false;
 
     if ( !read_symbols_cpm( fp, head, text_base, data_base, bss_base ) )
@@ -4378,7 +4378,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     uint32_t data_base = text_base; // + head.cb_text; with 0x601a all bases belong to text_base
     uint32_t bss_base = text_base; // data_base + head.cb_data;
 
-    if ( ! handle_relocations_cpm( fp, head, text_base, data_base, bss_base ) )
+    if ( !handle_relocations_cpm( fp, head, text_base, data_base, bss_base ) )
         return false;
 
     if ( !read_symbols_cpm( fp, head, text_base, data_base, bss_base ) )

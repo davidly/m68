@@ -9,7 +9,7 @@
             http://www.retroarchive.org/docs/cpm68_prog_guide_pt1.pdf
 
     notes:  -- a handful instructions aren't implemented because gcc+newlib don't use them:
-                 movep, chk
+                 movep
             -- trap 0 (32) maps to linux-equivalent system calls
             -- trap 2 (34) maps to cp/m 68k bdos functions
             -- trap 3 (35) maps to cp/m 68k bios functions
@@ -708,10 +708,10 @@ void m68000::trace_state()
                 }
                 else if ( 7 == ( 7 & bits11_6 ) ) // lea
                     tracer.Trace( "lea %s, a%u\n", effective_string(), op_reg );
-                else if ( 6 == ( 7 & bits11_6 ) ) // chk
-                    unhandled();
+                else if ( opbit( 8 ) && !opbit( 6 ) ) // chk
+                    tracer.Trace( "chk.%c %s, d%u\n", opbit( 7 ) ? 'w' : 'l', effective_string( opbit( 7 ) ), op_reg );
                 else if ( 2 == bits11_8 ) // clr
-                    tracer.Trace( "clr.%c %s\n", get_size(), effective_string( op_size < 2 ) );
+                    tracer.Trace( "clr.%c %s\n", get_size(), effective_string( op_size < 2 ) ); // documentation is ambiguous, but apparently only .w is supported
                 else if ( 0 == bits11_8 ) // negx
                     tracer.Trace( "negx.%c %s\n", get_size(), effective_string( op_size < 2 ) );
                 else if ( 6 == bits11_8 ) // not
@@ -1171,7 +1171,7 @@ const char * get_vector( uint16_t vector )
 
 bool m68000::handle_trap( uint16_t vector, uint32_t pc_return )
 {
-    if ( 0 != base )
+    if ( 0 != base ) // likely running an .elf executable built with a modern compiler; not cpm 68k.
     {
         tracer.Trace( "base isn't 0 so no trap vectors are available\n" );
         return false;
@@ -1208,7 +1208,6 @@ uint64_t m68000::run()
 
     bool skip_trace = false;
     uint64_t cycles = 0;
-    uint32_t prior_pc = 0;
 
     for ( ;; )
     {
@@ -1257,13 +1256,10 @@ uint64_t m68000::run()
                 break;
             }
 
-            if ( ( g_State & stateInstructionTrace ) && ! flag_s() )
+            if ( ( g_State & stateInstructionTrace ) && ! flag_s() ) // no tracing in supervisor mode
             {
-                if ( skip_trace )
-                {
-                    prior_pc = pc;
+                if ( skip_trace ) // once tracing is enabled, execute one instruction and then trap.
                     skip_trace = false;
-                }
                 else
                 {
                     g_State &= ~stateInstructionTrace;
@@ -1291,10 +1287,8 @@ uint64_t m68000::run()
                 else if ( 0x007c == op ) // ori to SR
                 {
                     if ( !flag_s() )
-                    {
                         if ( handle_trap( 8, pc ) ) // not in supervisor state
                             continue;
-                    }
 
                     pc += 2;
                     sr |= getui16( pc );
@@ -1308,10 +1302,8 @@ uint64_t m68000::run()
                 else if ( 0x027c == op ) // andi to SR
                 {
                     if ( !flag_s() )
-                    {
                         if ( handle_trap( 8, pc ) ) // not in supervisor state
                             continue;
-                    }
 
                     pc += 2;
                     sr &= getui16( pc );
@@ -1325,10 +1317,8 @@ uint64_t m68000::run()
                 else if ( 0x0a7c == op ) // eori to SR
                 {
                     if ( !flag_s() )
-                    {
                         if ( handle_trap( 8, pc ) ) // not in supervisor state
                             continue;
-                    }
 
                     pc += 2;
                     sr ^= getui16( pc );
@@ -1813,10 +1803,8 @@ uint64_t m68000::run()
                 else if ( 0x4e73 == op ) // rte
                 {
                     if ( !flag_s() )
-                    {
                         if ( handle_trap( 8, pc ) ) // not in supervisor state
                             continue;
-                    }
 
                     sr = pop16();
                     if ( flag_t() )
@@ -1888,10 +1876,8 @@ uint64_t m68000::run()
                     else if ( 0x1b == bits11_6 ) // move to sr
                     {
                         if ( !flag_s() )
-                        {
                             if ( handle_trap( 8, pc ) ) // not in supervisor state
                                 continue;
-                        }
 
                         op_size = 1;
                         sr = effective_value16( effective_address( true ) );
@@ -2154,8 +2140,45 @@ uint64_t m68000::run()
                     }
                     else if ( 7 == ( 7 & bits11_6 ) ) // lea
                         aregs[ op_reg ] = effective_address();
-                    else if ( 6 == ( 7 & bits11_6 ) ) // chk
-                        unhandled();
+                    else if ( opbit( 8 ) && !opbit( 6 ) ) // chk
+                    {
+                        if ( opbit( 7 ) ) // word
+                        {
+                            op_size = 1;
+                            int16_t val = (int16_t) effective_value16( effective_address( true ) );
+                            int16_t dval = (int16_t) dregs[ op_reg ].w;
+                            if ( dval < 0 )
+                            {
+                                setflag_n( true );
+                                if ( handle_trap( 6, pc + 2 ) )
+                                    continue;
+                            }
+                            else if ( dval > val )
+                            {
+                                setflag_n( false );
+                                if ( handle_trap( 6, pc + 2 ) )
+                                    continue;
+                            }
+                        }
+                        else // long. The documentation is ambiguous, but apparently only .w is supported
+                        {
+                            op_size = 2;
+                            int32_t val = (int32_t) effective_value32( effective_address() );
+                            int32_t dval = (int32_t) dregs[ op_reg ].l;
+                            if ( dval < 0 )
+                            {
+                                setflag_n( true );
+                                if ( handle_trap( 6, pc ) )
+                                    continue;
+                            }
+                            else if ( dval > val )
+                            {
+                                setflag_n( false );
+                                if ( handle_trap( 6, pc ) )
+                                    continue;
+                            }
+                        }
+                    }
                     else if ( 2 == bits11_8 ) // clr
                     {
                         if ( 0 == ea_mode )

@@ -7,7 +7,7 @@ if "%M68Nested%" == "" (
   set _runit=..\m68 -h:60 ..\c_tests\m68.elf
 )
 
-set _clist=E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV
+set _clist=E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
