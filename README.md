@@ -69,6 +69,7 @@ cpm folder:
     * standard distribution of the Digital Research C compiler, assembler, and linker with support files
     * e.c, sieve.c, tm.c, ttt.c: apps that can be built with the C compiler running in m68
     * ttt68u.s: a 68000 assembly version of ttt with loops unrolled for performance.
+    * tchk.s: validates the chk instruction since I can't get the compilers to generate code using it
     * m.bat/m.sh: builds C apps
     * ma.bat/ma.sh: builds .s assembly apps
     * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
@@ -91,7 +92,7 @@ cb68 folder:
 notes/bugs:
 
     * C++ exceptions don't work due to _start not initializing them for newlib
-    * These insructions are unimplemented: movep and chk
+    * These insructions are unimplemented: movep
     * Only the subset of CP/M 68K BDOS and BIOS functions required to run the compilers, assembler, and linker along with some test apps have been implemented.
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
     
