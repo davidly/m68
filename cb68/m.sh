@@ -6,16 +6,14 @@ if [ "$1" = "" ]; then
   exit 1
 fi
 
-if [ "$M68Nested" = "" ]; then
-  _runcmd="../m68"
-else
-  _runcmd="../m68 -h:60 ../c_tests/m68.elf"
+if [ "$_m68runcmd" = "" ]; then
+  _m68runcmd=../m68
 fi
 
 str=$(tr '[a-z]' '[A-Z]' <<< $1)
 
 rm $str.68K 2>/dev/null
-$_runcmd cb68.68k $str.BAS
+$_m68runcmd cb68.68k $str.BAS
 
-$_runcmd link68.68k $str.o,CB68.L68
+$_m68runcmd link68.68k $str.o,CB68.L68
 rm $str.O 2>/dev/null

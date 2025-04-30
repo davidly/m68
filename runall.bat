@@ -1,10 +1,22 @@
 @echo off
 setlocal
 
-set _runcmd=m68 -h:60
+set _runcmd=m68
+set _M68runcmd=..\m68
+
 if "%1" == "nested" (
-  set _runcmd=m68cl -h:80 c_tests\m68.elf -h:60
-  set M68Nested=1
+  set _runcmd=m68cl -h:80 c_tests\m68.elf
+  set _M68runcmd=..\m68cl -h:80 ..\c_tests\m68.elf
+)
+
+if "%1" == "armos" (
+  set _runcmd=..\armos\armos -h:80 ..\armos\bin\m68
+  set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+)
+
+if "%1" == "rvos" (
+  set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
+  set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
 set outputfile=test_m68.txt
@@ -54,7 +66,7 @@ exit /b 0
 
 echo test m68.elf ttt 1
 echo test m68.elf ttt 1 >>%outputfile%
-%_runcmd% c_tests\m68.elf c_tests\ttt 1 >>%outputfile%
+%_runcmd% -h:60 c_tests\m68.elf c_tests\ttt 1 >>%outputfile%
 
 goto :alldone
 
