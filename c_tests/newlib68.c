@@ -81,6 +81,22 @@ extern "C" int openat( int dirfd, const char * pathname, int flags, ... )
     return (int) syscall( SYS_openat, dirfd, pathname, flags, mode ); // openat
 } //openat
 
+struct timespec_syscall {
+    uint64_t tv_sec;
+    uint64_t tv_nsec;
+};
+
+int usleep( useconds_t usec )
+{
+    // usleep is obsolete but used by this old GCC compiler. Use nanosleep instead
+
+    timespec_syscall ns = {0};
+    ns.tv_sec = usec / 1000000;
+    ns.tv_nsec = ( usec % 1000000 ) * 1000;
+
+    return (int) syscall( SYS_clock_nanosleep, 0 /* no clock id */, 0 /* no flags */, & ns );
+}
+
 int fstatat( int fd, const char * path, struct stat * buf, int flag )
 {
     return (int) syscall( SYS_newfstatat, fd, path, buf, flag );

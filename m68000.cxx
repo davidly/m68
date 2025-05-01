@@ -8,9 +8,7 @@
             https://en.wikipedia.org/wiki/SREC_(file_format)
             http://www.retroarchive.org/docs/cpm68_prog_guide_pt1.pdf
 
-    notes:  -- a handful instructions aren't implemented because gcc+newlib don't use them:
-                 movep
-            -- trap 0 (32) maps to linux-equivalent system calls
+    notes:  -- trap 0 (32) maps to linux-equivalent system calls
             -- trap 2 (34) maps to cp/m 68k bdos functions
             -- trap 3 (35) maps to cp/m 68k bios functions
             -- trap 15 (47) maps to a couple m68k system calls
@@ -77,24 +75,24 @@ static inline uint32_t get_bit32( uint32_t x, uint32_t bit_number )
     return ( ( x >> bit_number ) & 1 );
 } //get_bit32
 
-uint16_t inline get_bits16( uint16_t x, uint16_t lowbit, uint16_t len )
+static inline uint16_t get_bits16( uint16_t x, uint16_t lowbit, uint16_t len )
 {
     uint16_t val = ( x >> lowbit );
     assert( 16 != len ); // the next line of code wouldn't work but there are no callers that do this
     return ( val & ( ( 1 << len ) - 1 ) );
 } //get_bits16
 
-inline bool sign8( uint8_t b )
+static inline bool sign8( uint8_t b )
 {
     return( 0 != ( 0x80 & b ) );
 } //sign8
 
-inline bool sign16( uint16_t w )
+static inline bool sign16( uint16_t w )
 {
     return( 0 != ( 0x8000 & w ) );
 } //sign16
 
-inline bool sign32( uint32_t l )
+static inline bool sign32( uint32_t l )
 {
     return( 0 != ( 0x80000000 & l ) );
 } //sign32
@@ -394,7 +392,7 @@ inline uint8_t m68000::effective_value8( uint32_t x )
     return getui8( x );
 } //effective_value8
 
-const char * condition_string( uint16_t c )
+static const char * condition_string( uint16_t c )
 {
     switch( c )
     {
@@ -419,7 +417,7 @@ const char * condition_string( uint16_t c )
     }
 } //condition_string
 
-const char * movem_a7_d0( uint16_t x ) // 0..15 == a7..d0. predecrement mode
+static const char * movem_a7_d0( uint16_t x ) // 0..15 == a7..d0. predecrement mode
 {
     static char ac[ 16 * 3 ];
     size_t len = 0;
@@ -448,7 +446,7 @@ const char * movem_a7_d0( uint16_t x ) // 0..15 == a7..d0. predecrement mode
     return ac;
 } //movem_a7_d0
 
-const char * movem_d0_a7( uint16_t x ) // 0..15 == d0..a7. post-increment and control modes
+static const char * movem_d0_a7( uint16_t x ) // 0..15 == d0..a7. post-increment and control modes
 {
     static char ac[ 16 * 3 ];
     size_t len = 0;
@@ -567,6 +565,14 @@ void m68000::trace_state()
                 uint32_t val = ( 2 == op_size ) ? getui32( pc + 2 ) : ( 1 == op_size ) ? getui16( pc + 2 ) : ( getui16( pc + 2 ) & 0xff );
                 pc += ( 2 == op_size ) ? 4 : 2;
                 tracer.Trace( "addi.%c #%d, %s\n", get_size(), val, effective_string() );
+            }
+            else if ( opbit( 8 ) && 1 == ea_mode ) // movep
+            {
+                pc += 2;
+                if ( 0 == opbit( 7 ) )
+                    tracer.Trace( "movep.%c (%u,a%u), d%u\n", opbit( 6 ) ? 'l' : 'w', getui16( pc ), ea_reg, op_reg );
+                else
+                    tracer.Trace( "movep.%c d%u, (%u,a%u)\n", opbit( 6 ) ? 'l' : 'w', op_reg, getui16( pc ), ea_reg );
             }
             else if ( 0x20 == bits11_6 ) // btst using address
             {
@@ -1149,7 +1155,7 @@ bool m68000::check_condition( uint16_t c )
     assume_false;
 } //check_condition
 
-const char * get_vector( uint16_t vector )
+static const char * get_vector( uint16_t vector )
 {
     switch( vector )
     {
@@ -1590,6 +1596,47 @@ uint64_t m68000::run()
                     }
                     else
                         unhandled();
+                }
+                else if ( opbit( 8 ) && 1 == ea_mode ) // movep
+                {
+                    pc += 2;
+                    int32_t displacement = (int32_t) (int16_t) getui16( pc );
+                    uint32_t address = aregs[ ea_reg ] + displacement;
+                    if ( 0 == opbit( 7 ) ) // memory to register
+                    {
+                        if ( opbit( 6 ) ) // long
+                        {
+                            uint32_t val = getui8( address ) << 24;
+                            address += 2;
+                            val |= getui8( address ) << 16;
+                            address += 2;
+                            val |= getui8( address ) << 8;
+                            address += 2;
+                            val |= getui8( address );
+                            dregs[ op_reg ].l = val;
+                        }
+                        else
+                        {
+                            uint16_t val = getui8( address ) << 8;
+                            address += 2;
+                            val |= getui8( address );
+                            dregs[ op_reg ].w = val;
+                        }
+                    }
+                    else // register to memory
+                    {
+                        uint32_t val = dregs[ op_reg ].l;
+                        if ( opbit( 6 ) ) // long
+                        {
+                            setui8( address, val >> 24 );
+                            address += 2;
+                            setui8( address, 0xff & ( val >> 16 ) );
+                            address += 2;
+                        }
+                        setui8( address, 0xff & ( val >> 8 ) );
+                        address += 2;
+                        setui8( address, 0xff & val );
+                    }
                 }
                 else if ( 0x20 == bits11_6 || 4 == op_mode ) // btst
                 {
@@ -3363,4 +3410,3 @@ uint64_t m68000::run()
 
     return cycles;
 } //run
-

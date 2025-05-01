@@ -27,7 +27,7 @@ exit /b 0
 
 :makeasm
 
-set _asmlist=ttt68u tchk
+set _asmlist=ttt68u tchk tmovep
 
 ( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
 

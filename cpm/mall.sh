@@ -2,15 +2,15 @@
 #set -x
 
 if [ "$1" = "nested" ]; then
-	_m68runcmd="../m68 -h:60 ../c_tests/m68.elf"
+        _m68runcmd="../m68 -h:60 ../c_tests/m68.elf"
 fi
 
 if [ "$1" = "armos" ]; then
-	_m68runcmd="../../ArmOS/armos -h:60 ../../ArmOS/bin/m68"
+        _m68runcmd="../../ArmOS/armos -h:60 ../../ArmOS/bin/m68"
 fi
 
 if [ "$1" = "rvos" ]; then
-	_m68runcmd="../../rvos/rvos -h:60 ../../rvos/bin/m68"
+        _m68runcmd="../../rvos/rvos -h:60 ../../rvos/bin/m68"
 fi
 
 if [ "$_m68runcmd" = "" ]; then
@@ -25,7 +25,7 @@ do
     m.sh $arg
 done
 
-for arg in ttt68u tchk
+for arg in ttt68u tchk tmovep
 do
     echo building $arg
     ma.sh $arg

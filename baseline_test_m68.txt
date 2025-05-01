@@ -1,4 +1,4 @@
-Wed 04/30/2025 13:58:47.13 
+Wed 04/30/2025 20:37:13.38 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.386999 milliseconds
+24.881000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 4, day 30, hour 20, min 58, sec 53
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 30, hour 15, min 58, sec 53
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 30, hour 12, min 58, sec 53
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 30, hour 12, min 58, sec 53
+before TZ is set: tz: '(null)', year: 2025, month 5, day 1, hour 3, min 37, sec 19
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 4, day 30, hour 22, min 37, sec 19
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 4, day 30, hour 19, min 37, sec 19
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 4, day 30, hour 19, min 37, sec 19
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5847,6 +5847,7 @@ building t_setjmp
 building tmuldiv
 building ttt68u
 building tchk
+building tmovep
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -6105,6 +6106,10 @@ tmuldiv ended with great success
 running TCHK
 chk trap invocations (4 expected): 4
 tchk completed with great success
+running TMOVEP
+i t z y I U 
+values: 69747A79, 4955
+tmovep completed with great success
 compiler test mtpascal 
 building e
 --------------------------------------------------
@@ -6509,13 +6514,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     274
-  dictionary: 270
+total ms:     273
+  dictionary: 269
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-0 ms for 1 iterations
+1,000 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -6544,5 +6549,5 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-0.000000 milliseconds
-Wed 04/30/2025 13:59:04.90 
+1000.000000 milliseconds
+Wed 04/30/2025 20:37:31.19 
