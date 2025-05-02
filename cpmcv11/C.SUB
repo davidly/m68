@@ -1,0 +1,9 @@
+cp $1.c $1.i
+c0 $1.i $1.ic $1.st
+c1 $1.ic $1.s -l
+as -l -u  $1.s
+era $1.i
+era $1.st
+era $1.ic
+era $1.s
+

@@ -2,21 +2,21 @@
 setlocal
 
 set _runcmd=m68
-set _M68runcmd=..\m68
+set _M68runcmd=..\%_runcmd%
 
 if "%1" == "nested" (
-  set _runcmd=m68cl -h:80 c_tests\m68.elf
-  set _M68runcmd=..\m68cl -h:80 ..\c_tests\m68.elf
+  set _runcmd=m68 -h:80 c_tests\m68.elf
+  set _M68runcmd=..\%_runcmd%
 )
 
 if "%1" == "armos" (
   set _runcmd=..\armos\armos -h:80 ..\armos\bin\m68
-  set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+  set _M68runcmd=..\%_runcmd%
 )
 
 if "%1" == "rvos" (
   set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
-  set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+  set _M68runcmd=..\%_runcmd%
 )
 
 set outputfile=test_m68.txt
@@ -38,7 +38,7 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 
-set _compList=cpm mtpascal cb68
+set _compList=cpm mtpascal cb68 cpmcv11 cpmcv12
 
 ( for %%a in (%_compList%) do ( call :compRun %%a ) )
 

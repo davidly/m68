@@ -1,0 +1,5 @@
+as boot.s
+as -l lbios.s
+lo -s -t0 -uldr -o cpmldr.sys boot.o ldrlib lbios.o
+size cpmldr.sys
+

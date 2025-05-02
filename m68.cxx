@@ -4535,6 +4535,93 @@ void emulator_invoke_68k_trap3( m68000 & cpu ) // bios
     }
 } //emulator_invoke_68k_trap3
 
+uint8_t map_input( uint8_t input )
+{
+    uint8_t output = input;
+
+#if defined(_MSC_VER) || defined(WATCOM)
+    // On Windows, input is  0xe0 for standard arrow keys and 0 for keypad equivalents
+    // On DOS/WATCOM, input is 0 for both cases
+
+    if ( 0 == input || 0xe0 == input )
+    {
+        uint8_t next = (uint8_t) ConsoleConfiguration::portable_getch();
+
+        // map various keys to ^ XSEDCRG used in many apps.
+
+        if ( 'K' == next )                   // left arrow
+            output = 1 + 'S' - 'A';
+        else if ( 'P' == next )              // down arrow
+            output = 1 + 'X' - 'A';
+        else if ( 'M' == next )              // right arrow
+            output = 1 + 'D' - 'A';
+        else if ( 'H' == next )              // up arrow
+            output = 1 + 'E' - 'A';
+        else if ( 'Q' == next )              // page down
+            output = 1 + 'C' - 'A';
+        else if ( 'I' == next )              // page up
+            output = 1 + 'R' - 'A';
+        else if ( 'S' == next )              // del
+            output = 1 + 'G' - 'A';
+        else
+            tracer.Trace( "  no map_input mapping for %02x, second character %02x\n", input, next );
+
+        tracer.Trace( "    next character after %02x: %02x == '%c' mapped to %02x\n", input, printable( next ), output );
+    }
+#else // Linux / MacOS
+    if ( 0x1b == input )
+    {
+        if ( g_consoleConfig.portable_kbhit() )
+        {
+            tracer.Trace( "read an escape on linux... getting next char\n" );
+            uint8_t nexta = ConsoleConfiguration::portable_getch();
+            tracer.Trace( "read an escape on linux... getting next char again\n" );
+            uint8_t nextb = ConsoleConfiguration::portable_getch();
+            tracer.Trace( "  nexta: %02x. nextb: %02x\n", nexta, nextb );
+
+            if ( '[' == nexta )
+            {
+                if ( 'A' == nextb )              // up arrow
+                    output = 1 + 'E' - 'A';
+                else if ( 'B' == nextb )         // down arrow
+                    output = 1 + 'X' - 'A';
+                else if ( 'C' == nextb )         // right arrow
+                    output = 1 + 'D' - 'A';
+                else if ( 'D' == nextb )         // left arrow
+                    output = 1 + 'S' - 'A';
+                else if ( '5' == nextb )         // page up
+                {
+                    uint8_t nextc = g_consoleConfig.portable_getch();
+                    tracer.Trace( "  5 nextc: %02x\n", nextc );
+                    if ( '~' == nextc )
+                        output = 1 + 'R' - 'A';
+                }
+                else if ( '6' == nextb )         // page down
+                {
+                    uint8_t nextc = g_consoleConfig.portable_getch();
+                    tracer.Trace( "  6 nextc: %02x\n", nextc );
+                    if ( '~' == nextc )
+                        output = 1 + 'C' - 'A';
+                }
+                else if ( '3' == nextb )         // DEL on linux
+                {
+                    uint8_t nextc = g_consoleConfig.portable_getch();
+                    tracer.Trace( "  3 nextc: %02x\n", nextc );
+                    if ( '~' == nextc )
+                        output = 0x7f;
+                }
+                else
+                    tracer.Trace( "unhandled nextb %u == %02x\n", nextb, nextb ); // lots of other keys not on a cp/m machine here
+            }
+            else
+                tracer.Trace( "unhandled linux keyboard escape sequence\n" );
+        }
+    }
+#endif
+
+    return output;
+} //map_input
+
 void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
 {
     char acFilename[ CPM_FILENAME_LEN ];
@@ -4570,14 +4657,21 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             ACCESS_REG( REG_RESULT ) = 0;
             break;
         }
-        case 6: // direct console i/o
+        case 6: // direct console i/o. Note slightly different behavior than cp/m 80 v2.2 with the 0xff and 0xfe distinction
         {
             uint16_t cmd = (uint16_t) ( 0xffff & ACCESS_REG( REG_ARG0 ) );
-            if ( 0xff == cmd ) // input
+            if ( 0xff == cmd ) // input. block until a character is ready
             {
+                uint8_t input = (uint8_t) get_next_kbd_char();
+                tracer.Trace( "  read character %u == %02x == '%c'\n", input, input, printable( input ) );
+                ACCESS_REG( REG_RESULT ) = map_input( input );
             }
-            else if ( 0xfe == cmd ) // status
+            else if ( 0xfe == cmd ) // status. return non-zero if available and 0 if unavailable
             {
+                if ( is_kbd_char_available() )
+                    ACCESS_REG( REG_RESULT ) = 1;
+                else
+                    ACCESS_REG( REG_RESULT ) = 0;
             }
             else // output
             {
@@ -5009,6 +5103,16 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             }
             else
                 tracer.Trace( "ERROR: compute file size can't parse filename\n" );
+            break;
+        }
+        case 40:
+        {
+            // write random with zero fill.
+            // Just like 34 / write random except also fills any file-extending blocks with 0.
+            // The 34 implementation of WriteRandom already fills with zeros, so just use that.
+            // I haven't found any apps that call this, so I can't say it's really tested.
+
+            WriteRandom( cpu );
             break;
         }
         case 47: // chain to program

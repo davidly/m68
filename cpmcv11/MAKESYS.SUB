@@ -1,0 +1,4 @@
+as -l bios.s
+lo -r -ucpm -o cpm.rel cpmlib bios.o
+era bios.o
+

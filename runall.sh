@@ -31,7 +31,7 @@ do
     $_runcmd c_tests/$arg.elf >>$outputfile
 done
 
-for arg in cpm mtpascal cb68
+for arg in cpm mtpascal cb68 cpmcv11 cpmcv12
 do
     echo compiler test $arg
     echo compiler test $arg >>$outputfile

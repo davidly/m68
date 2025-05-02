@@ -185,14 +185,14 @@ const char * m68000::effective_string( bool force_imm_word )
                     snprintf( ea, _countof( ea ), "(#$%x)", address );
                     break;
                 }
-                case 2: // (d16, pc)
+                case 2: // ( d16, pc )
                 {
                     pc += 2;
                     int32_t displacement = (int32_t) (int16_t) getui16( pc );
                     snprintf( ea, _countof( ea ), "(#%d,pc)", displacement );
                     break;
                 }
-                case 3: // program counter with index. (d8, PC, Dn )
+                case 3: // program counter with index. ( d8, PC, Dn )
                 {
                     pc += 2;
                     uint16_t extension = getui16( pc );
@@ -209,7 +209,7 @@ const char * m68000::effective_string( bool force_imm_word )
                     if ( force_imm_word )
                     {
                         pc += 2;
-                        address = sign_extend( getui16( pc ), 15 ); // only do the sign extension when destination is an A register?
+                        address = sign_extend( getui16( pc ), 15 );
                     }
                     else
                     {
@@ -311,8 +311,7 @@ uint32_t m68000::effective_address( bool force_imm_word )
                 case 0: // absolute short (xxx).w
                 {
                     pc += 2;
-                    uint32_t address = sign_extend( getui16( pc ), 15 );
-                    return address;
+                    return (uint32_t) sign_extend( getui16( pc ), 15 );
                 }
                 case 1: // absolute long (xxx).l
                 {
@@ -320,14 +319,14 @@ uint32_t m68000::effective_address( bool force_imm_word )
                     pc += 4;
                     return address;
                 }
-                case 2: // Program counter with displacement (d16, pc)
+                case 2: // Program counter with displacement ( d16, pc )
                 {
                     pc += 2;
                     return pc + (int16_t) getui16( pc );
                 }
                 case 3: // program counter with index. ( d8, PC, Xn )
                 {
-                    int32_t displacement = get_ea_displacement();
+                    int32_t displacement = get_ea_displacement(); // this modifies pc so must be a separate line
                     return pc + displacement;
                 }
                 case 4: // immediate #imm
@@ -336,7 +335,7 @@ uint32_t m68000::effective_address( bool force_imm_word )
                     if ( force_imm_word ) // can't rely on op_size for instructions like cmpi that always want 4-byte immediates
                     {
                         pc += 2;
-                        address = sign_extend( getui16( pc ), 15 ); // only do the SE when the destination is an A register?
+                        address = sign_extend( getui16( pc ), 15 );
                     }
                     else
                     {
@@ -784,7 +783,7 @@ void m68000::trace_state()
             else
                 displacement = (int16_t) getui16( pc + 2 );
 
-            tracer.Trace( "b%s *%d\n", condition_string( condition ), displacement + 2 );
+            tracer.Trace( "b%s %d\n", condition_string( condition ), displacement + 2 );
             break;
         }
         case 7: // moveq
@@ -984,6 +983,8 @@ void m68000::trace_state()
             unhandled();
     }
 
+    //tracer.Trace( "a55a + 8: %#x\n", getui32( 0xa44a + 8 ) );
+    //tracer.Trace( "12aef0: %#x\n", getui32( 0x12aef0 ) );
     //tracer.Trace( "a270e2: %#x, a27082 %#x, 1ffa %#x\n", getui16( 0xa270e2 ), getui16( 0xa27082 ), getui16( 0x1ffa ) );
     //tracer.Trace( "80a28964: " ); tracer.TraceBinaryData( getmem( 0x80a28964 ), 4, 4 );
     //tracer.TraceBinaryData( getmem( 0x307c ), 32, 4 );
@@ -992,6 +993,7 @@ void m68000::trace_state()
 
 template < typename T, typename W > inline void m68000::set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior )
 {
+    assert( sizeof( W ) == ( 2 * sizeof( T ) ) );
     T signbit = (T) ( 1 << ( sizeof( T ) * 8 - 1 ) );
     bool a_neg = ( 0 != ( signbit & a ) );
     bool b_neg = ( 0 != ( signbit & b ) );
@@ -1495,14 +1497,14 @@ uint64_t m68000::run()
                     {
                         pc += 2;
                         uint8_t imm = getui16( pc ) & 0xff;
-                        uint8_t val = effective_value8( effective_address() );
+                        uint8_t val = effective_value8( effective_address() ); // mode 7 reg 4 imm is illegal
                         sub8( val, imm, true, false, false );
                     }
                     else if ( 1 == op_size )
                     {
                         pc += 2;
                         uint16_t imm = getui16( pc );
-                        uint16_t val = effective_value16( effective_address() );
+                        uint16_t val = effective_value16( effective_address() ); // mode 7 reg 4 imm is illegal
                         sub16( val, imm, true, false, false );
                     }
                     else if ( 2 == op_size )
@@ -3011,7 +3013,7 @@ uint64_t m68000::run()
                         }
                         else if ( 2 == op_size ) // long
                         {
-                            uint32_t address = effective_address( true );
+                            uint32_t address = effective_address();
                             uint32_t val = effective_value32( address );
                             setui32( address, add32( val, dregs[ op_reg ].l, true, true, false ) );
                         }
