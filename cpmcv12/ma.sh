@@ -13,9 +13,9 @@ fi
 str=$(tr '[a-z]' '[A-Z]' <<< $1)
 
 rm $str.68K 2>/dev/null
-$_m68runcmd as68.68k -l -u $str.S
+$_m68runcmd AS68.68K -l -u $str.S
 
-$_m68runcmd lo68.68k -r -u_nofloat -o $str.68K S.O $str.O CLIB
+$_m68runcmd LO68.68K -r -u_nofloat -o $str.68K S.O $str.O CLIB
 rm $str.O
 
 
