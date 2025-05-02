@@ -1,4 +1,4 @@
-Thu 05/01/2025 16:19:24.14 
+Fri 05/02/2025  8:56:05.52 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.249000 milliseconds
+37.861000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 1, hour 23, min 19, sec 30
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 1, hour 18, min 19, sec 30
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 1, hour 15, min 19, sec 30
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 1, hour 15, min 19, sec 30
+before TZ is set: tz: '(null)', year: 2025, month 5, day 2, hour 15, min 56, sec 13
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 2, hour 10, min 56, sec 13
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 2, hour 7, min 56, sec 13
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 2, hour 7, min 56, sec 13
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6472,14 +6472,14 @@ for  10  iterations
 final move count  6493
 compiler test cpmcv11 
 building e
- building sieve
- building ttt
- building tm
- building t_setjmp
- building ttt68u
- building tchk
- building tmovep
- running E
+building sieve
+building ttt
+building tm
+building t_setjmp
+building ttt68u
+building tchk
+building tmovep
+running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
 running SIEVE
@@ -6820,9 +6820,9 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     268
-  dictionary: 264
-  generate:   3
+total ms:     392
+  dictionary: 387
+  generate:   4
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
@@ -6855,5 +6855,5 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-0.000000 milliseconds
-Thu 05/01/2025 16:19:45.63 
+1000.000000 milliseconds
+Fri 05/02/2025  8:56:33.17 

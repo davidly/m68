@@ -4647,7 +4647,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             // a subsequent ^c terminates the application. ^q resumes output then ^c has no effect.
 
             uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
-            if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
+            if ( 0x0d != ch && 0 != ch )  // skip carriage return because line feed turns into cr+lf. Also, cp/m 68k as.68k v1 outputs a null character; ignore it.
             {
                 tracer.Trace( "  bdos console out: %02x == '%c'\n", ch, printable( ch ) );
                 printf( "%c", ch );
