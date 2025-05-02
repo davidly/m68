@@ -1,4 +1,4 @@
-Fri 05/02/2025  8:56:05.52 
+Fri 05/02/2025 11:28:21.70 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-37.861000 milliseconds
+38.333000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 2, hour 15, min 56, sec 13
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 2, hour 10, min 56, sec 13
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 2, hour 7, min 56, sec 13
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 2, hour 7, min 56, sec 13
+before TZ is set: tz: '(null)', year: 2025, month 5, day 2, hour 18, min 28, sec 29
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 2, hour 13, min 28, sec 29
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 2, hour 10, min 28, sec 29
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 2, hour 10, min 28, sec 29
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6525,7 +6525,7 @@ iteration count: 10
 running TM
 test malloc completed with great success
 running FILEOPS
-fp: BBEC
+fp: BB78
 current offset: 0
 result of fseek: 0
 file length from ftell: 0
@@ -6538,7 +6538,7 @@ file length from ftell: 8320
 8192 + 128 = 8320 file length from portable_filelen: 8320
 result of fseek to middle of file: 0
 result of fwrite to middle of file (should be 1): 1
-fp: BBEC
+fp: BB78
 current offset: 0
 result of fseek: 0
 file length from ftell: 8320
@@ -6618,36 +6618,6 @@ i8 -28 / 4: -7
 i8 -28 * -4: 112
 i8 -28 % -4: 0
 i8 -28 / -4: 7
-ui8 3 * 14: 42
-ui8 3 % 14: 3
-ui8 3 / 14: 0
-ui8 17 * 14: 238
-ui8 17 % 14: 3
-ui8 17 / 14: 1
-ui8 253 * 14: 214
-ui8 253 % 14: 1
-ui8 253 / 14: 18
-ui8 239 * 14: 18
-ui8 239 % 14: 1
-ui8 239 / 14: 17
-ui8 253 * 242: 42
-ui8 253 % 242: 11
-ui8 253 / 242: 1
-ui8 239 * 242: 238
-ui8 239 % 242: 239
-ui8 239 / 242: 0
-ui8 28 * 4: 112
-ui8 28 % 4: 0
-ui8 28 / 4: 7
-ui8 28 * 252: 144
-ui8 28 % 252: 28
-ui8 28 / 252: 0
-ui8 228 * 4: 144
-ui8 228 % 4: 0
-ui8 228 / 4: 57
-ui8 228 * 252: 112
-ui8 228 % 252: 228
-ui8 228 / 252: 0
 i16 3 * 14: 42
 i16 3 % 14: 3
 i16 3 / 14: 0
@@ -6721,10 +6691,10 @@ i32 -37000 * 14: -518000
 i32 -37000 % 14: -12
 i32 -37000 / 14: -2642
 i32 -3 * -14: 42
-i32 -3 % -14: -3
+i32 -3 % -14: 3
 i32 -3 / -14: 0
 i32 -37000 * -14: 518000
-i32 -37000 % -14: -12
+i32 -37000 % -14: 12
 i32 -37000 / -14: 2642
 i32 280000 * 4: 1120000
 i32 280000 % 4: 0
@@ -6738,36 +6708,6 @@ i32 -280000 / 4: -70000
 i32 -280000 * -4: 1120000
 i32 -280000 % -4: 0
 i32 -280000 / -4: 70000
-ui32 3 * 14: 42
-ui32 3 % 14: 3
-ui32 3 / 14: 0
-ui32 37000 * 14: 518000
-ui32 37000 % 14: 12
-ui32 37000 / 14: 2642
-ui32 4294967293 * 14: 4294967254
-ui32 4294967293 % 14: 65535
-ui32 4294967293 / 14: 65533
-ui32 4294930296 * 14: 4294449296
-ui32 4294930296 % 14: 65535
-ui32 4294930296 / 14: 28536
-ui32 4294967293 * 4294967282: 42
-ui32 4294967293 % 4294967282: 65535
-ui32 4294967293 / 4294967282: 65533
-ui32 4294930296 * 4294967282: 518000
-ui32 4294930296 % 4294967282: 65535
-ui32 4294930296 / 4294967282: 28536
-ui32 280000 * 4: 1120000
-ui32 280000 % 4: 0
-ui32 280000 / 4: 70000
-ui32 280000 * 4294967292: 4293847296
-ui32 280000 % 4294967292: 280000
-ui32 280000 / 4294967292: 0
-ui32 4294687296 * 4: 4293847296
-ui32 4294687296 % 4: 65531
-ui32 4294687296 / 4: 47680
-ui32 4294687296 * 4294967292: 1120000
-ui32 4294687296 % 4294967292: 47676
-ui32 4294687296 / 4294967292: 65535
 tmuldiv ended with great success
 running TCHK
 chk trap invocations (4 expected): 4
@@ -6820,8 +6760,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     392
-  dictionary: 387
+total ms:     387
+  dictionary: 382
   generate:   4
   render:     0
 test ba tp.bas 
@@ -6856,4 +6796,4 @@ starting...
 6493 moves
 1 iterations
 1000.000000 milliseconds
-Fri 05/02/2025  8:56:33.17 
+Fri 05/02/2025 11:28:49.21 
