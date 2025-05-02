@@ -7,11 +7,11 @@
 #include <io.h>
 #endif
 
-typedef unsigned char uint8_t;
+typedef char uint8_t;
 typedef char int8_t;
-typedef unsigned short uint16_t;
+typedef short uint16_t;
 typedef short int16_t;
-typedef unsigned long uint32_t;
+typedef long uint32_t;
 typedef long int32_t;
 typedef int bool;
 
@@ -47,7 +47,8 @@ long portable_filelen( fp ) FILE * fp;
     int result;
     long len;
     long offset;
-    long current = ftell( fp );
+    long current;
+    current = ftell( fp );
     printf( "current offset: %ld\n", current );
     offset = 0;
     result = fseek( fp, offset, SEEK_END );
@@ -58,7 +59,7 @@ long portable_filelen( fp ) FILE * fp;
     return len;
 } 
 
-void read_and_validate( offset, chunkLen, fp ) long offset; int chunkLen; FILE * fp;
+int read_and_validate( offset, chunkLen, fp ) long offset; int chunkLen; FILE * fp;
 {
     int result;
 
@@ -96,11 +97,12 @@ void read_and_validate( offset, chunkLen, fp ) long offset; int chunkLen; FILE *
 
 int main( argc, argv ) int argc; char *argv[];
 {
-    char * pcFile = "fileops.dat";
+    char * pcFile;
     FILE * fp;
     long len, offset;
     int chunkLen;
     int result;
+    pcFile = "fileops.dat";
 
     unlink( pcFile );
 

@@ -3,13 +3,13 @@
 
 static jmp_buf buf;
 
-void second()
+int second()
 {
     printf( "second\n" );
     longjmp( buf, 1 );   
 }
 
-void first()
+int first()
 {
     second();
     printf( "first (if this prints there is a bug)\n" );

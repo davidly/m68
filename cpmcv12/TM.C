@@ -55,9 +55,11 @@ char * my_calloc( cb, n ) int cb; int n;
 
 char * memset_x( p, v, c ) char * p; int v; int c;
 {
-    unsigned char * pc = (unsigned char *) p;
-    unsigned char val = (unsigned char) ( v & 0xff );
+    char * pc;
+    char val;
     int i;
+    pc = p;
+    val = ( v & 0xff );
 
     if ( 0 == p )
     {
@@ -82,11 +84,13 @@ char * memset_x( p, v, c ) char * p; int v; int c;
     return p;
 }
 
-void chkmem( p, v, c ) char * p; int v; int c;
+int chkmem( p, v, c ) char * p; int v; int c;
 {
-    unsigned char * pc = (unsigned char *) p;
-    unsigned char val = (unsigned char) ( v & 0xff );
+    char * pc;
+    char val;
     int i;
+    pc = p;
+    val = ( v & 0xff );
 
     if ( 0 == p )
     {

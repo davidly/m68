@@ -140,5 +140,10 @@
 * by experienced programmers.
 **************/
 #define NOSTARTUP int nostartup();
-iar side effects, and should be used only
-* by experienced
+programmers.
+**************/
+#define NOSTARTUP int nostartup();
+programmers.
+**************/
+#define NOSTARTUP int nostartup();
+

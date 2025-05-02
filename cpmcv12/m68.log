@@ -1,0 +1,81 @@
+  EstablishConsoleOutput width 0 height 0, outputEstablished 0
+old and new console output mode: 0003, 000f
+loading image as68.68k
+cpm68k executable header:
+  signature: 0x601a
+  cb_text: 0xbe16
+  cb_data: 0x128e
+  cb_bss: 0x2c54
+  cb_symbols: 0
+  text_start: 0x8d00
+  relocation_flag: 0xffff
+memory at top of stack address 0xa38af8:
+    0000  00 00 8c 26 00 00 8c 00                                                                            ...&....
+arg_len 9, command tail -l -u e.s
+    arg1: 'e.s'
+memory map from highest to lowest addresses:
+  first byte beyond allocated memory:                 a38b00
+  actual top of stack:                                a38b00
+  initial stack pointer g_top_of_stack:               a38af8
+  <stack>                                             (131072 == 20000 bytes)
+  last byte stack can use (g_bottom_of_stack):        a18b00
+  <unallocated space between brk and the stack>       (10485760 == a00000 bytes)
+  end_of_bss / current brk:                           18b00
+  <uninitialized bss data
+  start of bss segment:                               15da4
+  <initialized data from the .68k file>
+  start of data segment:                              14b16
+  <code from the .68k file>
+  initial pc execution_addess + start of code         8d00
+  start of base page:                                 8c00
+  start of the address space:                         0
+vm memory first byte beyond:     000001F3DFF8EB60
+vm memory start:                 000001F3DF556060
+memory_size:                     0xa38b00 == 10717952
+first 512 bytes starting at base page:
+        0000  00 00 00 00 00 a3 8a ff 00 00 8d 00 00 00 be 16 : 00 01 4b 16 00 00 12 8e 00 01 5d a4 00 00 2c 54  ..................K.......]...,T
+        0020  00 a0 00 00 00 00 4e 72 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 20 20 20 20 20 20 20  ......Nr.................       
+        0040  20 20 20 20 00 00 00 00 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 00 00 00 00 45 20 20      .........................E  
+        0060  20 20 20 20 20 53 20 20 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00       S  ........................
+        0080  09 2d 6c 20 2d 75 20 65 2e 73 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  .-l -u e.s......................
+        00a0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................................
+        00c0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................................
+        00e0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................................
+        0100  42 85 4e b9 00 01 4b 06 60 46 43 4c 45 41 52 36 : 38 4b 20 56 30 32 2e 30 30 2c 20 43 6f 70 79 72  B.N...K.`FCLEAR68K V02.00, Copyr
+        0120  69 67 68 74 28 63 29 20 31 39 38 34 2c 20 44 69 : 67 69 74 61 6c 20 52 65 73 65 61 72 63 68 20 58  ight(c) 1984, Digital Research X
+        0140  58 58 58 2d 30 30 30 30 2d 36 35 34 33 32 31 00 : 20 6f 00 04 23 c8 00 01 5d a6 22 68 00 18 d3 e8  XXX-0000-654321. o..#...]."h....
+        0160  00 1c 23 c9 00 01 5d aa 45 e8 00 80 10 1a 02 80 : 00 00 00 ff 3f 00 2f 0a 9d ce 4e b9 00 01 1a 04  ..#...].E...........?./...N.....
+        0180  4e f9 00 00 8d c6 20 6f 00 04 20 08 41 e8 01 00 : bf c8 64 04 70 ff 4e 75 23 c0 00 01 5d aa 42 80  N..... o.. .A.....d.p.Nu#...].B.
+        01a0  4e 75 4e 56 00 00 30 2f 00 08 22 2f 00 0a 4e 42 : bf f9 00 01 5d aa 64 14 30 3c 00 09 41 f9 00 01  NuNV..0/.."/..NB....].d.0<..A...
+        01c0  4b 16 22 08 4e 42 30 3c 00 00 4e 42 4e 5e 4e 75 : 20 6f 00 04 32 2f 00 08 30 2f 00 0a 48 c0 53 80  K.".NB0<..NBN^Nu o..2/..0/..H.S.
+        01e0  6f 06 10 c1 51 c8 ff fc 42 80 4e 75 20 6f 00 04 : 30 2f 00 08 4a 10 66 04 42 80 4e 75 b0 18 66 f4  o...Q...B.Nu o..0/..J.f.B.Nu..f.
+pc 8d00, stack_size 20000, stack_top a38af8, base 0, mem_size a38b00
+code at pc 8d00:
+    0000  42 85 4e b9 00 01 4b 06 60 46 43 4c 45 41 52 36 : 38 4b 20 56 30 32 2e 30 30 2c 20 43 6f 70 79 72  B.N...K.`FCLEAR68K V02.00, Copyr
+    0020  69 67 68 74 28 63 29 20 31 39 38 34 2c 20 44 69 : 67 69 74 61 6c 20 52 65 73 65 61 72 63 68 20 58  ight(c) 1984, Digital Research X
+    0040  58 58 58 2d 30 30 30 30 2d 36 35 34 33 32 31 00 : 20 6f 00 04 23 c8 00 01 5d a6 22 68 00 18 d3 e8  XXX-0000-654321. o..#...]."h....
+    0060  00 1c 23 c9 00 01 5d aa 45 e8 00 80 10 1a 02 80 : 00 00 00 ff 3f 00 2f 0a 9d ce 4e b9 00 01 1a 04  ..#...].E...........?./...N.....
+pc     8d00  op  4285 4eb90001 tscvznx a7:a38af8 ==> clr.l d5
+pc     8d02  op  4eb9    14b06 tscvZnx a7:a38af8 ==> jsr (#$14b06)  ;  00 00 8c 26 00 00 8c 00
+pc    14b06  op  4a85 670a2ebc tscvZnx a7:a38af4 ==> tst.l, d5
+pc    14b08  op  670a 2ebcffff tscvZnx a7:a38af4 ==> beq *12
+pc    14b14  op  4e75 53746163 tscvZnx a7:a38af4 ==> rts
+pc     8d08  op  6046 434c4541 tscvZnx a7:a38af8 ==> bra *72
+pc     8d50  op  206f    423c8 tscvZnx a7:a38af8 ==> movea.l 4(a7), a0
+pc     8d54  op  23c8    15da6 tscvZnx a0:8c00 a7:a38af8 ==> move.l a0, (#$15da6)
+pc     8d5a  op  2268   18d3e8 tscvznx a0:8c00 a7:a38af8 ==> movea.l 24(a0), a1
+pc     8d5e  op  d3e8   1c23c9 tscvznx a0:8c00 a1:15da4 a7:a38af8 ==> adda.l 28(a0), a1
+pc     8d62  op  23c9    15daa tscvznx a0:8c00 a1:189f8 a7:a38af8 ==> move.l a1, (#$15daa)
+pc     8d68  op  45e8   80101a tscvznx a0:8c00 a1:189f8 a7:a38af8 ==> lea 128(a0), a2
+pc     8d6c  op  101a  2800000 tscvznx a0:8c00 a1:189f8 a2:8c80 a7:a38af8 ==> move.b (a2)+, d0
+pc     8d6e  op   280       ff tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38af8 ==> andi.l #255, d0
+pc     8d74  op  3f00 2f0a9dce tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38af8 ==> move.w d0, -(a7)
+pc     8d76  op  2f0a 9dce4eb9 tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38af6 ==> move.l a2, -(a7)
+pc     8d78  op  9dce 4eb90001 tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38af2 ==> suba.l a6, a6
+pc     8d7a  op  4eb9    11a04 tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38af2 ==> jsr (#$11a04)  ;  00 00 8c 81 00 09 00 00
+pc    11a04  op  6c20 70657266 tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38aee ==> bge *34
+pc    11a26  op  2069 6e746572 tscvznx d0:9 a0:8c00 a1:189f8 a2:8c81 a7:a38aee ==> movea.l 28276(a1), a0
+pc    11a2a  op  6572 66616365 tscvznx d0:9 a1:189f8 a2:8c81 a7:a38aee ==> bcs *116
+pc    11a2c  op  6661 63652061 tscvznx d0:9 a1:189f8 a2:8c81 a7:a38aee ==> bne *99
+pc    11a8f  op  6f6e 206f6620 tscvznx d0:9 a1:189f8 a2:8c81 a7:a38aee ==> ble *112
+pc    11a91  op  206f 66200169 tscvznx d0:9 a1:189f8 a2:8c81 a7:a38aee ==> movea.l 26144(a7), a0

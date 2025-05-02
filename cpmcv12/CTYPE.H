@@ -49,5 +49,8 @@ extern	char	__atab[];
 #define	tolower(ch) (isupper(ch) ? (ch)+('a'-'A') : (ch))
 #define	toupper(ch) (islower(ch) ? (ch)+('A'-'a') : (ch))
 #define	toascii(ch) ((ch) & 0177)
-er(ch) ? (ch)+('a'-'A') : (ch))
-#define	toupper(ch) (is
+ower(ch) ? (ch)+('A'-'a') : (ch))
+#define	toascii(ch) ((ch) & 0177)
+ower(ch) ? (ch)+('A'-'a') : (ch))
+#define	toascii(ch) ((ch) & 0177)
+
