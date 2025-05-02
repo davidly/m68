@@ -92,7 +92,6 @@ cb68 folder:
 notes/bugs:
 
     * C++ exceptions don't work due to _start not initializing them for newlib
-    * These insructions are unimplemented: movep
     * Only the subset of CP/M 68K BDOS and BIOS functions required to run the compilers, assembler, and linker along with some test apps have been implemented.
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
     
