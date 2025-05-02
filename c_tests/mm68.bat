@@ -1,8 +1,6 @@
 @echo off
 setlocal
 
-rem O3 and Ofast have at least 3 bugs in code generation that I've found
-rem even O2 has bugs where some variables must be declared volatile or bad code is generated
 set _optflag=3
 
 set gccpath=..\gcc-8.2.0
