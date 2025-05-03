@@ -1112,7 +1112,7 @@ uint16_t m68000::add16( uint16_t a, uint16_t b, bool setflags, bool setx, bool a
 
 uint8_t m68000::add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx )
 {
-    uint16_t result_wide = (uint16_t) a + (uint16_t) b + + ( addx ? (uint16_t) flag_x() : 0 );
+    uint16_t result_wide = (uint16_t) a + (uint16_t) b + ( addx ? (uint16_t) flag_x() : 0 );
     uint8_t result = (uint8_t) result_wide;
 
     if ( setflags )
@@ -1189,10 +1189,10 @@ bool m68000::check_condition( uint16_t c )
         case 8: return !flag_v();                                    // overflow clear
         case 9: return flag_v();                                     // overflow set
         case 10: return !flag_n();                                   // plus (>= 0)
-        case 11: return flag_n();                                    // minus
+        case 11: return flag_n();                                    // minus (< 0)
         case 12: return ( flag_n() == flag_v() );                    // greater than or equal
         case 13: return ( flag_n() != flag_v() );                    // less than
-        case 14: return ( ( flag_n() == flag_v() ) && !flag_z() );   // greater than
+        case 14: return ( !flag_z() && ( flag_n() == flag_v() ) );   // greater than
         default: return ( flag_z() || ( flag_n() != flag_v() ) );    // less than or equal
     }
 
@@ -1203,8 +1203,8 @@ static const char * get_vector( uint16_t vector )
 {
     switch( vector )
     {
-        case 0: return "not a vector -- reset sp";
-        case 1: return "not a vector -- reset pc";
+        case 0: return "(not a vector) reset sp";
+        case 1: return "(not a vector) reset pc";
         case 2: return "bus error";
         case 3: return "address error";
         case 4: return "illegal instruction";
