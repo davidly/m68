@@ -24,6 +24,9 @@ instruction tracing and breakpoints.
 
 Trap 0 is used for linux-style syscalls, Trap 2 and trap 3 are used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
 
+I've built and tested m68 on Amd64 Windows and Ubuntu as well as Arm64 on Raspberry PI OS, Ubuntu, and macOS. It also builds with GCC targeting 68000 (mm68.bat/mm68.sh in c_tests) and runs
+in any other build of m68 recursively. I've also tested for RISC-V 64 on hardware running Debian and in the RVOS emulator.
+
 usage: M68 <M68 arguments> <executable> <app arguments>
    
        arguments:    -e     just show information about the elf executable; don't actually run it
@@ -73,6 +76,11 @@ cpm folder:
     * m.bat/m.sh: builds C apps
     * ma.bat/ma.sh: builds .s assembly apps
     * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
+
+cpmcv11 and cpmcv12 folders:
+
+    * older versions of the C compiler. v11 can't build and/or run some of the tests. The C runtime has a stack corruption when using printf.
+    * these compilers generate slower code than the one in the cpm folder. None of the compilers work with floating point.
 
 mtpascal folder:
 
