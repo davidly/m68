@@ -24,8 +24,11 @@ instruction tracing and breakpoints.
 
 Trap 0 is used for linux-style syscalls, Trap 2 and trap 3 are used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
 
-I've built and tested m68 on Amd64 Windows and Ubuntu as well as Arm64 on Raspberry PI OS, Ubuntu, and macOS. It also builds with GCC targeting 68000 (mm68.bat/mm68.sh in c_tests) and runs
-in any other build of m68 recursively. I've also tested for RISC-V 64 on hardware running Debian and in the RVOS emulator.
+I've built and tested m68 on Amd64 on Windows and Ubuntu as well as Arm64 on Raspberry PI OS, Ubuntu, and macOS. It also builds with GCC targeting 68000 (mm68.bat/mm68.sh in c_tests) and that runs in any other build of m68 recursively. I've also tested for RISC-V 64 on hardware running Debian and in the RVOS emulator.
+
+M68 can run the NTVAO 6502 + Apple 1 emulator built for 68000 targeting Linux.
+
+All test cases can run with plain m68, m68 nested in itself, or m68 running in ARMOS or RVOS for versions built for Arm64 or RISC-V 64.
 
 usage: M68 <M68 arguments> <executable> <app arguments>
    
