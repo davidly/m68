@@ -25,6 +25,7 @@ done
 # compile and run a basic app
 $_m68runcmd ../c_tests/ba -x -a:c ../c_tests/tp.bas
 cp ../c_tests/tp.s TP.S
+unix2dos TP.S
 ma.sh TP
 $_m68runcmd TP.68K
 

@@ -284,7 +284,7 @@ const char * MappedRegistersX86[] = { "ecx", "esi", "edi" };
 
 const char * MappedRegistersOIOS[] = { "rframe", "rarg1", "rarg2" };
 
-const char * MappedRegistersm68kCPM[] = { "d3", "d4", "d5", "d6", "d7" }; // only d registers are allowed
+const char * MappedRegistersm68kCPM[] = { "d3", "d4", "d5", "d6", "d7", "a3", "a4", "a5", "a6" };
 
 const char * MappedRegistersRiscV64[] = { "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11" };
 
