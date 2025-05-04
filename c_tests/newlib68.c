@@ -203,11 +203,16 @@ void * sbrk( intptr_t increment )
 /* 64-bit integers, or size_t %zd.                                                 */
 /* so this ancient code from Apple is used instead                                 */
 
-static int g_printf_fd = 1;
+static FILE * g_fprintf_FILE = 0;
 
 static void printf_putc( char c )
 {
-    write( g_printf_fd, &c, 1 );
+    write( 1, &c, 1 );
+}
+
+static void fprintf_putc( char c )
+{
+    fwrite( &c, 1, 1, g_fprintf_FILE );
 }
 
 #define isdigit(d) ((d) >= '0' && (d) <= '9')
@@ -668,7 +673,6 @@ static void _doprnt(
 
 extern int printf( const char *fmt, ... )
 {
-    g_printf_fd = 1; // stdout
     va_list listp;
     va_start( listp, fmt );
     _doprnt( fmt, &listp, printf_putc, 16 );
@@ -696,10 +700,10 @@ extern int sprintf( char *buf, const char *fmt, ... )
 
 extern int fprintf( FILE * fp, const char *fmt, ... )
 {
-    g_printf_fd = fileno( fp );
+    g_fprintf_FILE = fp;
     va_list listp;
     va_start( listp, fmt );
-    _doprnt( fmt, &listp, printf_putc, 16 );
+    _doprnt( fmt, &listp, fprintf_putc, 16 );
     va_end( listp );
     return 0;
 } //fprintf

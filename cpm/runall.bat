@@ -21,6 +21,12 @@ set _clist=E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK TMOVEP
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
+rem compile and run a basic app
+%_M68runcmd% ..\c_tests\ba -x -a:c ..\c_tests\tp.bas
+copy ..\c_tests\tp.s
+call ma.bat tp
+%_M68runcmd% tp.68k
+
 goto :alldone
 
 :crun
