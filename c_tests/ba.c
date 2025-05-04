@@ -4655,6 +4655,9 @@ const char * RemoveExclamations( const char * pc )
 
 void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool useRegistersInASM )
 {
+    // some C implemenations don't truncate with "w"
+    remove( outputfile );
+
     CFile fileOut( fopen( outputfile, "w" ) );
     FILE * fp = fileOut.get();
     if ( NULL == fileOut.get() )
