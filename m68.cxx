@@ -4640,6 +4640,15 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             tracer.Trace( "  emulated app exit code %d\n", g_exit_code );
             break;
         }
+        case 1: // console input. echo input to console
+        {
+            uint8_t ch = (uint8_t) get_next_kbd_char();
+            ACCESS_REG( REG_RESULT ) = map_input( ch );
+            tracer.Trace( "  bdos console in: %02x == '%c'\n", ch, printable( ch ) );
+            printf( "%c", ch );
+            fflush( stdout );
+            break;
+        }
         case 2: // console output. d1.w ascii chracter
         {
             // console output
