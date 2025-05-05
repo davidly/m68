@@ -1995,7 +1995,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             flags = windows_translate_flags( flags );
 #endif
 
-#ifdef M68
+#if defined(M68) && !defined(M68K)
             flags = linux_translate_flags( flags );
 #endif
 
@@ -2446,7 +2446,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 
 #endif
 
-#if defined(M68) && !defined(__APPLE__)  // macOS and 68000 share the same open flags and are different than generic linux
+#if defined(M68) && !defined(__APPLE__) && !defined(M68K)  // macOS and 68000 share the same open flags and are different than generic linux
             flags = linux_translate_flags( flags );
 #endif
 

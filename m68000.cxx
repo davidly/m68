@@ -163,7 +163,7 @@ const char * m68000::effective_string()
             uint16_t scale = get_bits16( extension, 9, 2 );
             if ( 0 != scale )
                 unhandled();
-            int32_t displacement = sign_extend( get_bits16( extension, 0, 8 ), 7 ); // ignoring bit 8 apparently?
+            int32_t displacement = sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
             snprintf( ea, _countof( ea ), "(%d,a%u,%c%u.%c)", displacement, ea_reg, isa ? 'a' : 'd', Xn, isl ? 'l' : 'w' );
             break;
         }
@@ -197,10 +197,10 @@ const char * m68000::effective_string()
                     pc += 2;
                     uint16_t extension = getui16( pc );
                     bool is_a = get_bit16( extension, 15 );
-                    uint16_t reg = get_bits16( extension, 12, 3 );
+                    uint16_t Xn = get_bits16( extension, 12, 3 );
                     bool is_l = get_bit16( extension, 11 );
                     int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 );
-                    snprintf( ea, _countof( ea ), "(#%d,pc,%c%u.%c)", displacement, is_a ? 'a' : 'd', reg, is_l ? 'l' : 'w' );
+                    snprintf( ea, _countof( ea ), "(#%d,pc,%c%u.%c)", displacement, is_a ? 'a' : 'd', Xn, is_l ? 'l' : 'w' );
                     break;
                 }
                 case 4: // immediate #imm
@@ -287,12 +287,14 @@ uint32_t m68000::effective_address()
         case 3: // Address with postincrement (An)+
         {
             uint32_t result = aregs[ ea_reg ];
-            aregs[ ea_reg ] += ( 1 << op_size );
+            uint32_t delta = ( ( 7 == ea_reg ) && ( 0 == op_size ) ) ? 2 : ( 1 << op_size ); // keep stack pointer 2-byte aligned
+            aregs[ ea_reg ] += delta;
             return result;
         }
         case 4: // Address with predecrement -(An)
         {
-            aregs[ ea_reg ] -= ( 1 << op_size );
+            uint32_t delta = ( ( 7 == ea_reg ) && ( 0 == op_size ) ) ? 2 : ( 1 << op_size ); // keep stack pointer 2-byte aligned
+            aregs[ ea_reg ] -= delta;
             return aregs[ ea_reg ];
         }
         case 5: // Address with displacement (d16, An)
@@ -590,10 +592,10 @@ void m68000::trace_state()
                 uint8_t bitnum = getui16( pc ) & 0xff;
                 bitnum %= ( 0 == ea_mode ) ? 32 : 8;
                 op_size = 0; // always a byte operation
-                tracer.Trace( "bclr #%u, %s\n", bitnum, effective_string() );
+                tracer.Trace( "bclr.%c #%u, %s\n", ( 0 == ea_mode ) ? 'l' : 'b', bitnum, effective_string() );
             }
             else if ( 6 == op_mode ) // bclr using register
-                tracer.Trace( "bclr d%u, %s\n", op_reg, effective_string() );
+                tracer.Trace( "bclr.%c d%u, %s\n", ( 0 == ea_mode ) ? 'l' : 'b', op_reg, effective_string() );
             else if ( 0x21 == bits11_6 ) // bchg using address
             {
                 pc += 2;
@@ -1023,7 +1025,7 @@ void m68000::trace_state()
             unhandled();
     }
 
-    //tracer.Trace( "a55a + 8: %#x\n", getui32( 0xa44a + 8 ) );
+    //tracer.Trace( "b224: %#x\n", getui32( 0xb224 ) );
     //tracer.Trace( "12aef0: %#x\n", getui32( 0x12aef0 ) );
     //tracer.Trace( "a270e2: %#x, a27082 %#x, 1ffa %#x\n", getui16( 0xa270e2 ), getui16( 0xa27082 ), getui16( 0x1ffa ) );
     //tracer.Trace( "80a28964: " ); tracer.TraceBinaryData( getmem( 0x80a28964 ), 4, 4 );
@@ -1727,7 +1729,7 @@ uint64_t m68000::run()
                     else
                     {
                         bitnum %= 8;
-                        op_size = 0; // always a byte operation
+                        op_size = 0; // always 1 byte when ea_mode <> 0
                         uint32_t address = effective_address();
                         uint8_t val = effective_value8( address );
                         setflag_z( 0 == get_bit16( val, bitnum ) );
