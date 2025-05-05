@@ -33,7 +33,7 @@ rem for example, the old gcc for m68k has a different value for infinity for flo
 
 set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              tcmp ttypes tarray trw terrno mm_old ttime fileops tpi ^
-             t_setjmp td tf tap tphi mm ts glob nantst pis ^
+             t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
              tbcd tshift taddsubm tea ttt68 ttt68u
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
