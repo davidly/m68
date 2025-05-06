@@ -1,4 +1,4 @@
-integer sz, flags, x, c, i, k
+integer sz, flags, x, c, i, k, prime
 1 sz = 8190
 2 DIM FLAGS(8191)
 3 PRINT "10 iterations"

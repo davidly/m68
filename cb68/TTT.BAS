@@ -20,7 +20,7 @@ integer b, al, be, l, wi, re, v, st, p, mc, sp, sv, sa, sb
 36 DIM sa(10)
 37 DIM sb(10)
 38 mc = 0
-40 FOR l = 1 TO 10
+40 FOR l = 1 TO 1
 41 mc = 0
 42 al = 2
 43 be = 9

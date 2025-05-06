@@ -1,4 +1,4 @@
-Mon 05/05/2025 14:33:26.93 
+Tue 05/06/2025  5:58:39.55 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-34.251998 milliseconds
+26.256999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 5, hour 21, min 33, sec 34
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 5, hour 16, min 33, sec 34
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 5, hour 13, min 33, sec 34
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 5, hour 13, min 33, sec 34
+before TZ is set: tz: '(null)', year: 2025, month 5, day 6, hour 12, min 58, sec 45
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 6, hour 7, min 58, sec 45
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 6, hour 4, min 58, sec 45
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 6, hour 4, min 58, sec 45
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5849,6 +5849,7 @@ building fileops
 building tpi
 building t_setjmp
 building tmuldiv
+building mm
 building ttt68u
 building tchk
 building tmovep
@@ -6114,6 +6115,8 @@ running TMOVEP
 i t z y I U 
 values: 69747A79, 4955
 tmovep completed with great success
+running MM
+summ is: 465880
 parsing input file ..\c_tests\tp.bas
 created assembler file: ..\c_tests\tp.s, use registers: yes, expression optimization: yes
         1 file(s) copied.
@@ -6223,6 +6226,43 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 ttt,paslib.l68 
+building mm
+--------------------------------------------------
+Pascal MT+68                           Version 3.3
+Serial  No. 3170-0000-000088   All Rights Reserved
+Copyright (c) 1984          Digital Research, Inc.
+--------------------------------------------------
+PASTEMP.TOK ROUTED TO DISK: @
+++++
+SYNTAX SCAN COMPLETE
+SYMBOL TABLE INITIALIZATION
+AVAILABLE MEMORY: 1048421
+USER TABLE SPACE: 1047745
+RELEASE 3.3 -- PHASE 1
+#####
+REMAINING MEMORY: 1047620
+RELEASE 3.3 -- PHASE 2
+MT+68K
+FILLA          24    SIZE:   142
+FILLB         166    SIZE:   150
+FILLC         316    SIZE:   136
+MATMULT       452    SIZE:   276
+SUMMIT        728    SIZE:   138
+MATRIX        866    SIZE:   106
+
+LINES :      76
+ERRORS:       0
+CODE  :     972
+BSS   :    4804
+
+PASCAL/MT+68K COMPILATION COMPLETE
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+mm,paslib.l68 
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -6232,6 +6272,8 @@ running TTT
 begin, loops 1
 moves evaluated:        6493
 iterations:             1
+running MM
+summ is: 465880
 compiler test cb68 
 building e
 --------------------------------------------------
@@ -6293,7 +6335,7 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 end of pass 1
 end of pass 2
-    1:     integer sz, flags, x, c, i, k
+    1:     integer sz, flags, x, c, i, k, prime
     2:     1 sz = 8190
     3:     2 DIM FLAGS(8191)
     4:     3 PRINT "10 iterations"
@@ -6316,8 +6358,8 @@ end of pass 2
    21:     20 PRINT c," PRIMES"
 end of compilation
 no errors detected
-code area size:    398       0000018eh
-data area size:    64        00000040h
+code area size:    338       00000152h
+data area size:    60        0000003ch
 common area size:  0         00000000h
 symbol table space remaining: 49697
 --------------------------------------------------
@@ -6365,7 +6407,7 @@ end of pass 2
    20:     36 DIM sa(10)
    21:     37 DIM sb(10)
    22:     38 mc = 0
-   23:     40 FOR l = 1 TO 10
+   23:     40 FOR l = 1 TO 1
    24:     41 mc = 0
    25:     42 al = 2
    26:     43 be = 9
@@ -6472,6 +6514,94 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 ttt.o,cb68.l68 
+building mm
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     REM A PROGRAM ID MULTIPLY MATRICES. 465880 EXPECTED RESULT
+    2:     rem runs 30x faster with integer than the default floating point
+    3:     rem integer M, N, A, I, J, C, B, K
+    4:     25 M = 20 : N = 20
+    5:     50 SUM = 0
+    6:     60 GOSUB 150
+    7:     65 REM PRINT "DIMENSIONED"
+    8:     70 GOSUB 200
+    9:     75 REM PRINT "A FILLED"
+   10:     80 GOSUB 280
+   11:     85 REM PRINT "B FILLED"
+   12:     90 GOSUB 360
+   13:     95 REM PRINT "C FILLED"
+   14:     100 GOSUB 440
+   15:     105 REM PRINT 1 "MULTIPLIED"
+   16:     110 GOSUB 540
+   17:     120 PRINT "SUM = ";SUM
+   18:     130 PRINT CHR$(7)
+   19:     140 GOTO 9999
+   20:     150 REM DIMENSION
+   21:     160 DIM A(20,20)
+   22:     170 DIM B(20,20)
+   23:     180 DIM C(20,20)
+   24:     190 RETURN
+   25:     200 REM FILL A
+   26:     210 FOR I = 1 TO 20
+   27:     220 FOR J = 1 TO 20
+   28:     230 A(I,J) = I + J
+   29:     240 NEXT
+   30:     250 NEXT
+   31:     260 RETURN
+   32:     270 REM *************
+   33:     280 REM FILL B
+   34:     290 FOR I = 1 TO 20
+   35:     300 FOR J = 1 TO 20
+   36:     310 B(I,J) = INT((I+J)/J)
+   37:     320 NEXT
+   38:     330 NEXT
+   39:     340 RETURN
+   40:     350 REM **********
+   41:     360 REM FILL C
+   42:     370 FOR I = 1 TO 20
+   43:     380 FOR J = 1 TO 20
+   44:     390 C(I,J) = 0
+   45:     400 NEXT
+   46:     410 NEXT
+   47:     420 RETURN
+   48:     430 REM **************
+   49:     440 REM ************ MULTIPLY
+   50:     450 FOR I = 1 TO 20
+   51:     460 FOR J = 1 TO 20
+   52:     470 FOR K = 1 TO 20
+   53:     480 C(I,J) = C(I,J) + A(I,K)*B(K,J)
+   54:     490 NEXT
+   55:     500 NEXT
+   56:     510 NEXT
+   57:     520 RETURN
+   58:     530 REM **************
+   59:     540 REM *************** SUMMIT
+   60:     550 FOR I = 1 TO 20
+   61:     560 FOR J = 1 TO 20
+   62:     570 SUM = SUM + C(I,J)
+   63:     580 NEXT
+   64:     590 NEXT
+   65:     600 RETURN
+   66:     610 REM ************************(
+   67:     9999 end
+end of compilation
+no errors detected
+code area size:    1822      0000071eh
+data area size:    72        00000048h
+common area size:  0         00000000h
+symbol table space remaining: 48461
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+mm.o,cb68.l68 
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -6479,8 +6609,11 @@ running SIEVE
 10 iterations
  1899               PRIMES
 running TTT
-for  10  iterations
+for  1  iterations
 final move count  6493
+running MM
+SUM =  465880
+
 compiler test cpmcv11 
 building e
 building sieve
@@ -6771,9 +6904,9 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     364
-  dictionary: 359
-  generate:   4
+total ms:     268
+  dictionary: 263
+  generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
@@ -6806,5 +6939,5 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-1000.000000 milliseconds
-Mon 05/05/2025 14:33:53.12 
+0.000000 milliseconds
+Tue 05/06/2025  5:59:00.78 
