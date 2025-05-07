@@ -14,7 +14,6 @@
             -- trap 15 (47) maps to a couple m68k system calls
 */
 
-
 #include <stdint.h>
 #include <memory.h>
 #include <stdio.h>
@@ -28,6 +27,10 @@
 
 using namespace std;
 using namespace std::chrono;
+
+#if defined( __GNUC__ ) && !defined( __APPLE__ ) && !defined( __clang__ )     // bogus warning in g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+#pragma GCC diagnostic ignored "-Wformat="
+#endif
 
 //extern "C" int syscall( long number, ... );
 
@@ -48,20 +51,6 @@ bool m68000::trace_instructions( bool t )
 } //trace_instructions
 
 void m68000::end_emulation() { g_State |= stateEndEmulation; }
-
-#ifdef _WIN32
-__declspec(noinline)
-#endif
-void m68000::unhandled()
-{
-    printf( "unhandled op %x\n", op );
-    tracer.Trace( "unhandled op %x\n", op );
-    emulator_hard_termination( *this, "opcode not handled:", op );
-} //unhandled
-
-#if defined( __GNUC__ ) && !defined( __APPLE__ ) && !defined( __clang__ )     // bogus warning in g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
-#pragma GCC diagnostic ignored "-Wformat="
-#endif
 
 static inline uint16_t get_bit16( uint16_t x, uint32_t bit_number )
 {
@@ -1152,7 +1141,6 @@ uint8_t m68000::bcd_add( uint8_t a, uint8_t b )
 uint8_t m68000::bcd_sub( uint8_t a, uint8_t b )
 {
     uint8_t borrow_lo = 0;
-
     uint8_t diff_lo = ( a & 0xf ) - ( b & 0xf ) - (uint8_t) flag_x();
     if ( diff_lo >= 10 )
     {
@@ -1250,6 +1238,16 @@ bool m68000::handle_trap( uint16_t vector, uint32_t pc_return )
     tracer.Trace( "invoked trap %u == %s\n", vector, get_vector( vector ) );
     return true;
 } //handle_trap
+
+#ifdef _WIN32
+__declspec(noinline)
+#endif
+void m68000::unhandled()
+{
+    printf( "unhandled op %x\n", op );
+    tracer.Trace( "unhandled op %x\n", op );
+    handle_trap( 4, pc ); // 4 is illegal instruction
+} //unhandled
 
 template < typename T > inline void do_swap( T & a, T & b ) { T tmp = a; a = b; b = tmp; }
 
@@ -1349,7 +1347,7 @@ uint64_t m68000::run()
                 else if ( 0x023c == op ) // andi to CCR
                 {
                     pc += 2;
-                    sr &= ( getui16( pc ) & 0xff );
+                    sr &= ( 0xff00 | ( getui16( pc ) & 0xff ) );
                 }
                 else if ( 0x027c == op ) // andi to SR
                 {
