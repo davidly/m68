@@ -6309,12 +6309,7 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                             fprintf( fp, "    lea      %s, a0\n", GenVariableName( vals[ t + 1 ].strValue ) );
 
                             if ( Token_CONSTANT == vals[ t + 4 ].token )
-#if 0
-                                fprintf( fp, "    move.l   #%d, d1\n", 4 * vals[ t + 4 ].value );
-                                fprintf( fp, "    move.l   (a0, d1), %s\n", GenVariableReg( varmap, vals[ variableToken ].strValue ) );
-#else
                                 fprintf( fp, "    move.l   %d(a0), %s\n", 4 * vals[ t + 4 ].value, GenVariableReg( varmap, vals[ variableToken ].strValue ) );
-#endif
                             else
                             {
                                 fprintf( fp, "    move.l   %s, d1\n", GenVariableReg( varmap, vals[ t + 4 ].strValue ) );
