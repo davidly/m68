@@ -16,7 +16,7 @@ if [ "$_m68runcmd" = "" ]; then
     _m68runcmd="../m68"
 fi
 
-for arg in E SIEVE TTT TM TTT68U T_SETJMP TCHK TMOVEP
+for arg in E SIEVE TTT TM TTT68U T_SETJMP TCHK TMOVEP MM
 do
   echo running $arg
   # the C runtime zeroes bss, so use a small bss

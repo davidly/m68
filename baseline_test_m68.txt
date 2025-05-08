@@ -1,4 +1,4 @@
-Tue 05/06/2025  5:58:39.55 
+Wed 05/07/2025 15:20:51.69 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-26.256999 milliseconds
+24.839000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 6, hour 12, min 58, sec 45
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 6, hour 7, min 58, sec 45
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 6, hour 4, min 58, sec 45
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 6, hour 4, min 58, sec 45
+before TZ is set: tz: '(null)', year: 2025, month 5, day 7, hour 22, min 20, sec 57
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 7, hour 17, min 20, sec 57
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 7, hour 14, min 20, sec 57
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 7, hour 14, min 20, sec 57
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6620,6 +6620,7 @@ building sieve
 building ttt
 building tm
 building t_setjmp
+building mm
 building ttt68u
 building tchk
 building tmovep
@@ -6646,6 +6647,8 @@ running TMOVEP
 i t z y I U 
 values: 69747A79, 4955
 tmovep completed with great success
+running MM
+summ is: 465880
 compiler test cpmcv12 
 building e
 building sieve
@@ -6904,8 +6907,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     268
-  dictionary: 263
+total ms:     272
+  dictionary: 268
   generate:   3
   render:     0
 test ba tp.bas 
@@ -6939,5 +6942,5 @@ test m68.elf ttt 1
 starting...
 6493 moves
 1 iterations
-0.000000 milliseconds
-Tue 05/06/2025  5:59:00.78 
+1000.000000 milliseconds
+Wed 05/07/2025 15:21:13.02 

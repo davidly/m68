@@ -385,16 +385,16 @@ static const char * condition_string( uint16_t c )
 {
     switch( c )
     {
-        case 0: return "ra"; // T -- normal branch
-        case 1: return "sr"; // F -- subroutine
-        case 2: return "hi"; // higher
-        case 3: return "ls"; // lower or same
-        case 4: return "cc"; // carry clear
-        case 5: return "cs"; // carry set
-        case 6: return "ne"; // not equal
-        case 7: return "eq"; // equal
-        case 8: return "vc"; // overflow clear
-        case 9: return "vs"; // overflow set
+        case  0: return "ra"; // T -- normal branch
+        case  1: return "sr"; // F -- subroutine
+        case  2: return "hi"; // higher
+        case  3: return "ls"; // lower or same
+        case  4: return "cc"; // carry clear
+        case  5: return "cs"; // carry set
+        case  6: return "ne"; // not equal
+        case  7: return "eq"; // equal
+        case  8: return "vc"; // overflow clear
+        case  9: return "vs"; // overflow set
         case 10: return "pl"; // plus
         case 11: return "mi"; // minus
         case 12: return "ge"; // greater than or equal
@@ -402,7 +402,10 @@ static const char * condition_string( uint16_t c )
         case 14: return "gt"; // greater than
         case 15: return "le"; // less than or equal
         default:
+        {
+            assert( false );
             return "???";
+        }
     }
 } //condition_string
 
@@ -1015,10 +1018,7 @@ void m68000::trace_state()
     }
 
     //tracer.Trace( "b224: %#x\n", getui32( 0xb224 ) );
-    //tracer.Trace( "12aef0: %#x\n", getui32( 0x12aef0 ) );
-    //tracer.Trace( "a270e2: %#x, a27082 %#x, 1ffa %#x\n", getui16( 0xa270e2 ), getui16( 0xa27082 ), getui16( 0x1ffa ) );
     //tracer.Trace( "80a28964: " ); tracer.TraceBinaryData( getmem( 0x80a28964 ), 4, 4 );
-    //tracer.TraceBinaryData( getmem( 0x307c ), 32, 4 );
 
     pc = save_pc;
     op_size = save_op_size;
@@ -1168,21 +1168,21 @@ bool m68000::check_condition( uint16_t c )
 {
     switch( c )
     {
-        case 0: return true;                                         // T -- normal branch
-        case 1: return false;                                        // F -- subroutine
-        case 2: return !flag_c() && !flag_z();                       // higher
-        case 3: return flag_c() || flag_z();                         // lower or same
-        case 4: return !flag_c();                                    // carry clear
-        case 5: return flag_c();                                     // carry set
-        case 6: return !flag_z();                                    // not equal
-        case 7: return flag_z();                                     // equal
-        case 8: return !flag_v();                                    // overflow clear
-        case 9: return flag_v();                                     // overflow set
-        case 10: return !flag_n();                                   // plus (>= 0)
+        case  0: return true;                                        // T -- normal branch
+        case  1: return false;                                       // F -- subroutine
+        case  2: return ! ( flag_c() || flag_z() );                  // higher
+        case  3: return flag_c() || flag_z();                        // lower or same
+        case  4: return ! flag_c();                                  // carry clear
+        case  5: return flag_c();                                    // carry set
+        case  6: return ! flag_z();                                  // not equal
+        case  7: return flag_z();                                    // equal
+        case  8: return ! flag_v();                                  // overflow clear
+        case  9: return flag_v();                                    // overflow set
+        case 10: return ! flag_n();                                  // plus (>= 0)
         case 11: return flag_n();                                    // minus (< 0)
         case 12: return ( flag_n() == flag_v() );                    // greater than or equal
         case 13: return ( flag_n() != flag_v() );                    // less than
-        case 14: return ( !flag_z() && ( flag_n() == flag_v() ) );   // greater than
+        case 14: return ( ! flag_z() && ( flag_n() == flag_v() ) );  // greater than
         default: return ( flag_z() || ( flag_n() != flag_v() ) );    // less than or equal
     }
 
@@ -1193,16 +1193,16 @@ static const char * get_vector( uint16_t vector )
 {
     switch( vector )
     {
-        case 0: return "(not a vector) reset sp";
-        case 1: return "(not a vector) reset pc";
-        case 2: return "bus error";
-        case 3: return "address error";
-        case 4: return "illegal instruction";
-        case 5: return "division by zero";
-        case 6: return "chk instruction out of bounds";
-        case 7: return "trapv";
-        case 8: return "privilege violation";
-        case 9: return "trace";
+        case  0: return "(not a vector) reset sp";
+        case  1: return "(not a vector) reset pc";
+        case  2: return "bus error";
+        case  3: return "address error";
+        case  4: return "illegal instruction";
+        case  5: return "division by zero";
+        case  6: return "chk instruction out of bounds";
+        case  7: return "trapv";
+        case  8: return "privilege violation";
+        case  9: return "trace";
         case 10: return "unimplemented instruction line A";
         case 11: return "unimplemented instruction line F";
         default: return "unknown";
@@ -1392,7 +1392,7 @@ uint64_t m68000::run()
                             dregs[ ea_reg ].w |= getui16( pc );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t imm = getui32( pc );
                             pc += 2;
@@ -1418,7 +1418,7 @@ uint64_t m68000::run()
                             setui16( dst, imm );
                             set_nzcv16( imm );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t imm = getui32( pc );
                             pc += 2;
@@ -1444,7 +1444,7 @@ uint64_t m68000::run()
                             dregs[ ea_reg ].w &= getui16( pc );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t imm = getui32( pc );
                             pc += 2;
@@ -1470,7 +1470,7 @@ uint64_t m68000::run()
                             setui16( dst, imm );
                             set_nzcv16( imm );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t imm = getui32( pc );
                             pc += 2;
@@ -1496,7 +1496,7 @@ uint64_t m68000::run()
                             dregs[ ea_reg ].w ^= getui16( pc );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t imm = getui32( pc );
                             pc += 2;
@@ -1522,7 +1522,7 @@ uint64_t m68000::run()
                             setui16( dst, imm );
                             set_nzcv16( imm );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t imm = getui32( pc );
                             pc += 2;
@@ -1549,15 +1549,13 @@ uint64_t m68000::run()
                         uint16_t val = effective_value16( effective_address() ); // mode 7 reg 4 imm is illegal
                         sub16( val, imm, true, false, false );
                     }
-                    else if ( 2 == op_size )
+                    else
                     {
                         uint32_t imm = getui32( pc + 2 );
                         pc += 4;
                         uint32_t val = effective_value32( effective_address() );
                         sub32( val, imm, true, false, false );
                     }
-                    else
-                        unhandled();
                 }
                 else if ( 4 == bits11_8 ) // subi
                 {
@@ -1585,7 +1583,7 @@ uint64_t m68000::run()
                         else
                             setui16( address, result );
                     }
-                    else if ( 2 == op_size )
+                    else
                     {
                         uint32_t imm = getui32( pc + 2 );
                         pc += 4;
@@ -1597,8 +1595,6 @@ uint64_t m68000::run()
                         else
                             setui32( address, result );
                     }
-                    else
-                        unhandled();
                 }
                 else if ( 6 == bits11_8 ) // addi
                 {
@@ -1626,7 +1622,7 @@ uint64_t m68000::run()
                         else
                             setui16( address, result );
                     }
-                    else if ( 2 == op_size )
+                    else
                     {
                         uint32_t imm = getui32( pc + 2 );
                         pc += 4;
@@ -1638,8 +1634,6 @@ uint64_t m68000::run()
                         else
                             setui32( address, result );
                     }
-                    else
-                        unhandled();
                 }
                 else if ( opbit( 8 ) && 1 == ea_mode ) // movep
                 {
@@ -1833,7 +1827,7 @@ uint64_t m68000::run()
                             dregs[ op_reg ].w = src;
                             set_nzcv16( src );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t src = effective_value32( effective_address() );
                             dregs[ op_reg ].l = src;
@@ -1852,6 +1846,7 @@ uint64_t m68000::run()
                             //tracer.Trace( "wrote byte %#x to address %#x\n", src, dst );
                             set_nzcv8( src );
 
+#if 0
                             // enormous hack. The gcc clib I'm using writes to 0xffffc when it wants to output a character to stdout
                             if ( 0xffffc == dst )
                             {
@@ -1865,6 +1860,7 @@ uint64_t m68000::run()
                                 dregs[ 1 ].l = save0;
                                 dregs[ 0 ].l = save7;
                             }
+#endif
                         }
                         else if ( 1 == op_size )
                         {
@@ -1873,7 +1869,7 @@ uint64_t m68000::run()
                             setui16( dst, src );
                             set_nzcv16( src );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t src = effective_value32( effective_address() );
                             uint32_t dst = effective_address2( op_mode, op_reg );
@@ -1987,7 +1983,7 @@ uint64_t m68000::run()
                                 dregs[ ea_reg ].b = sub8( 0, dregs[ ea_reg ].b, true, true, false );
                             else if ( 1 == op_size )
                                 dregs[ ea_reg ].w = sub16( 0, dregs[ ea_reg ].w, true, true, false );
-                            else if ( 2 == op_size )
+                            else
                                 dregs[ ea_reg ].l = sub32( 0, dregs[ ea_reg ].l, true, true, false );
                         }
                         else
@@ -1997,7 +1993,7 @@ uint64_t m68000::run()
                                 setui8( address, sub8( 0, effective_value8( address ), true, true, false ) );
                             else if ( 1 == op_size )
                                 setui16( address, sub16( 0, effective_value16( address ), true, true, false ) );
-                            else if ( 2 == op_size )
+                            else
                                 setui32( address, sub32( 0, effective_value32( address ), true, true, false ) );
                         }
                     }
@@ -2043,19 +2039,13 @@ uint64_t m68000::run()
                     else if ( 0xa == bits11_8 ) // tst
                     {
                         uint32_t val = effective_address();
-                        if ( 0 != ea_mode )
-                        {
-                            if ( 0 == op_size )
-                                val = getui8( val );
-                            else if ( 1 == op_size )
-                                val = getui16( val );
-                            else if ( 2 == op_size )
-                                val = getui32( val );
-                            else
-                                unhandled();
-                        }
 
-                        set_nzcv( val, op_size );
+                        if ( 0 == op_size )
+                            set_nzcv8( effective_value8( val ) );
+                        else if ( 1 == op_size )
+                            set_nzcv16( effective_value16( val ) );
+                        else
+                            set_nzcv32( effective_value32( val ) );
                     }
                     else if ( 0x1ca == bits11_3 ) // link
                     {
@@ -2291,7 +2281,7 @@ uint64_t m68000::run()
                             else
                                 setui32( address, 0 );
                         }
-                        set_nzcv( 0, 0 );
+                        set_nzcv32( 0 );
                     }
                     else if ( 0 == bits11_8 ) // negx
                     {
@@ -2474,10 +2464,8 @@ uint64_t m68000::run()
                             dregs[ ea_reg ].b = sub8( dregs[ ea_reg ].b, (uint8_t) data, true, true, false );
                         else if ( 1 == op_size )
                             dregs[ ea_reg ].w = sub16( dregs[ ea_reg ].w, (uint16_t) data, true, true, false );
-                        else if ( 2 == op_size )
-                            dregs[ ea_reg ].l = sub32( dregs[ ea_reg ].l, data, true, true, false );
                         else
-                            unhandled();
+                            dregs[ ea_reg ].l = sub32( dregs[ ea_reg ].l, data, true, true, false );
                     }
                     else if ( 1 == ea_mode )
                         aregs[ ea_reg ] -= data;
@@ -2488,10 +2476,8 @@ uint64_t m68000::run()
                             setui8( address, sub8( getui8( address ), (uint8_t) data, true, true, false ) );
                         else if ( 1 == op_size )
                             setui16( address, sub16( getui16( address ), (uint16_t) data, true, true, false ) );
-                        else if ( 2 == op_size )
-                            setui32( address, sub32( getui32( address ), data, true, true, false ) );
                         else
-                            unhandled();
+                            setui32( address, sub32( getui32( address ), data, true, true, false ) );
                     }
                 }
                 else // addq
@@ -2506,10 +2492,8 @@ uint64_t m68000::run()
                             dregs[ ea_reg ].b = add8( dregs[ ea_reg ].b, (uint8_t) data, true, true, false );
                         else if ( 1 == op_size )
                             dregs[ ea_reg ].w = add16( dregs[ ea_reg ].w, (uint16_t) data, true, true, false );
-                        else if ( 2 == op_size )
-                            dregs[ ea_reg ].l = add32( dregs[ ea_reg ].l, data, true, true, false );
                         else
-                            unhandled();
+                            dregs[ ea_reg ].l = add32( dregs[ ea_reg ].l, data, true, true, false );
                     }
                     else if ( 1 == ea_mode )
                         aregs[ ea_reg ] += data;
@@ -2520,10 +2504,8 @@ uint64_t m68000::run()
                             setui8( address, add8( getui8( address ), (uint8_t) data, true, true, false ) );
                         else if ( 1 == op_size )
                             setui16( address, add16( getui16( address ), (uint16_t) data, true, true, false ) );
-                        else if ( 2 == op_size )
-                            setui32( address, add32( getui32( address ), data, true, true, false ) );
                         else
-                            unhandled();
+                            setui32( address, add32( getui32( address ), data, true, true, false ) );
                     }
                 }
                 break;
@@ -2724,7 +2706,7 @@ uint64_t m68000::run()
                             aregs[ ea_reg ] -= 2;
                             setui16( aregs[ op_reg ], sub16( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             aregs[ op_reg ] -= 4;
                             aregs[ ea_reg ] -= 4;
@@ -2737,7 +2719,7 @@ uint64_t m68000::run()
                             dregs[ op_reg ].b = sub8( dregs[ op_reg ].b, dregs[ ea_reg ].b, true, true, true );
                         else if ( 1 == op_size )
                             dregs[ op_reg ].w = sub16( dregs[ op_reg ].w, dregs[ ea_reg ].w, true, true, true );
-                        else if ( 2 == op_size )
+                        else
                             dregs[ op_reg ].l = sub32( dregs[ op_reg ].l, dregs[ ea_reg ].l, true, true, true );
                     }
                 }
@@ -2749,7 +2731,7 @@ uint64_t m68000::run()
                             dregs[ op_reg ].b = sub8( dregs[ op_reg ].b, effective_value8( effective_address() ), true, true, false );
                         else if ( 1 == op_size ) // word
                             dregs[ op_reg ].w = sub16( dregs[ op_reg ].w, effective_value16( effective_address() ), true, true, false );
-                        else if ( 2 == op_size ) // long
+                        else // long
                             dregs[ op_reg ].l = sub32( dregs[ op_reg ].l, effective_value32( effective_address() ), true, true, false );
                     }
                     else // <ea> - Dn => <ea>
@@ -2780,7 +2762,7 @@ uint64_t m68000::run()
                             else
                                 setui16( address, result );
                         }
-                        else if ( 2 == op_size ) // long
+                        else // long
                         {
                             uint32_t address = effective_address();
                             uint32_t val = effective_value32( address );
@@ -2822,10 +2804,8 @@ uint64_t m68000::run()
                         sub8( dregs[ op_reg ].b, effective_value8( effective_address() ), true, false, false );
                     else if ( 1 == op_mode )
                         sub16( dregs[ op_reg ].w, effective_value16( effective_address() ), true, false, false );
-                    else if ( 2 == op_mode )
-                        sub32( dregs[ op_reg ].l, effective_value32( effective_address() ), true, false, false );
                     else
-                        unhandled();
+                        sub32( dregs[ op_reg ].l, effective_value32( effective_address() ), true, false, false );
                     break;
                 }
                 else if ( bit8 && 1 == ea_mode ) // cmpm
@@ -2842,14 +2822,12 @@ uint64_t m68000::run()
                         aregs[ op_reg ] += 2;
                         aregs[ ea_reg ] += 2;
                     }
-                    else if ( 2 == op_size )
+                    else
                     {
                         sub32( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, false, false );
                         aregs[ op_reg ] += 4;
                         aregs[ ea_reg ] += 4;
                     }
-                    else
-                        unhandled();
                 }
                 else if ( bit8 ) // eor
                 {
@@ -2865,7 +2843,7 @@ uint64_t m68000::run()
                             dregs[ ea_reg ].w ^= dregs[ op_reg ].w;
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             dregs[ ea_reg ].l ^= dregs[ op_reg ].l;
                             set_nzcv32( dregs[ ea_reg ].l );
@@ -2886,7 +2864,7 @@ uint64_t m68000::run()
                             set_nzcv16( val );
                             setui16( address, val );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             uint32_t val = dregs[ op_reg ].l ^ effective_value32( address );
                             set_nzcv32( val );
@@ -3027,7 +3005,7 @@ uint64_t m68000::run()
                             aregs[ ea_reg ] -= 2;
                             setui16( aregs[ op_reg ], add16( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             aregs[ op_reg ] -= 4;
                             aregs[ ea_reg ] -= 4;
@@ -3040,7 +3018,7 @@ uint64_t m68000::run()
                             dregs[ op_reg ].b = add8( dregs[ op_reg ].b, dregs[ ea_reg ].b, true, true, true );
                         else if ( 1 == op_size )
                             dregs[ op_reg ].w = add16( dregs[ op_reg ].w, dregs[ ea_reg ].w, true, true, true );
-                        else if ( 2 == op_size )
+                        else
                             dregs[ op_reg ].l = add32( dregs[ op_reg ].l, dregs[ ea_reg ].l, true, true, true );
                     }
                 }
@@ -3060,7 +3038,7 @@ uint64_t m68000::run()
                             uint16_t val = effective_value16( address );
                             setui16( address, add16( val, dregs[ op_reg ].w, true, true, false ) );
                         }
-                        else if ( 2 == op_size ) // long
+                        else
                         {
                             uint32_t address = effective_address();
                             uint32_t val = effective_value32( address );
@@ -3073,7 +3051,7 @@ uint64_t m68000::run()
                             dregs[ op_reg ].b = add8( dregs[ op_reg ].b, effective_value8( effective_address() ), true, true, false );
                         else if ( 1 == op_size ) // word
                             dregs[ op_reg ].w = add16( dregs[ op_reg ].w, effective_value16( effective_address() ), true, true, false );
-                        else if ( 2 == op_size ) // long
+                        else
                             dregs[ op_reg ].l = add32( dregs[ op_reg ].l, effective_value32( effective_address() ), true, true, false );
                     }
                 }
@@ -3193,7 +3171,7 @@ uint64_t m68000::run()
                             setflag_n( sign16( dregs[ ea_reg ].w ) );
                             setflag_z( 0 == dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
@@ -3239,7 +3217,7 @@ uint64_t m68000::run()
                             setflag_n( sign16( dregs[ ea_reg ].w ) );
                             setflag_z( 0 == dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
@@ -3302,7 +3280,7 @@ uint64_t m68000::run()
                            setflag_n( sign16( dregs[ ea_reg ].w ) );
                            setflag_z( 0 == dregs[ ea_reg ].w );
                        }
-                       else if ( 2 == op_size )
+                       else
                        {
                            for ( uint16_t i = 0; i < shift; i++ )
                            {
@@ -3341,7 +3319,7 @@ uint64_t m68000::run()
                            setflag_n( sign16( dregs[ ea_reg ].w ) );
                            setflag_z( 0 == dregs[ ea_reg ].w );
                        }
-                       else if ( 2 == op_size )
+                       else
                        {
                            for ( uint16_t i = 0; i < shift; i++ )
                            {
@@ -3397,7 +3375,7 @@ uint64_t m68000::run()
                             setflag_n( sign16( dregs[ ea_reg ].w ) );
                             setflag_z( 0 == dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {
@@ -3433,7 +3411,7 @@ uint64_t m68000::run()
                             setflag_n( sign16( dregs[ ea_reg ].w ) );
                             setflag_z( 0 == dregs[ ea_reg ].w );
                         }
-                        else if ( 2 == op_size )
+                        else
                         {
                             for ( uint16_t i = 0; i < shift; i++ )
                             {

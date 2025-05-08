@@ -14,7 +14,7 @@ if "%1" == "rvos" (
 )
 
 rem it appears tmuldiv and fileops fail due to corruption in t C runtime file object. tpi won't link
-set _clist=e sieve ttt tm t_setjmp
+set _clist=e sieve ttt tm t_setjmp mm
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 

@@ -17,7 +17,7 @@ if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )
 
-set _clist=E SIEVE TTT TM TTT68U T_SETJMP TCHK TMOVEP
+set _clist=E SIEVE TTT TM TTT68U T_SETJMP TCHK TMOVEP MM
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
