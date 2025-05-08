@@ -142,17 +142,17 @@ const char * m68000::effective_string()
         }
         case 6: // Address with index (d8, An, Xn)
         {
-            // 16 bits: 15        14-12       11                10-9                8-0
-            //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  signed 8-bit displacement
+            // 16 bits: 15        14-12       11                10-9                8  7-0
+            //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  0  signed 8-bit displacement
             pc += 2;
             uint16_t extension = getui16( pc );
             bool isa = get_bit16( extension, 15 );
             uint16_t Xn = get_bits16( extension, 12, 3 );
             bool isl = get_bit16( extension, 11 );
             uint16_t scale = get_bits16( extension, 9, 2 );
-            if ( 0 != scale )
-                unhandled();
-            int32_t displacement = sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
+            if ( 0 != scale || get_bit16( extension, 8 ) )
+                unhandled(); // > 68000 instruction
+            int32_t displacement = sign_extend( 0xff & extension, 7 );
             snprintf( ea, _countof( ea ), "(%d,a%u,%c%u.%c)", displacement, ea_reg, isa ? 'a' : 'd', Xn, isl ? 'l' : 'w' );
             break;
         }
@@ -243,9 +243,9 @@ int32_t m68000::get_ea_displacement()
     uint16_t Xn = get_bits16( extension, 12, 3 );
     bool isl = get_bit16( extension, 11 );
     uint16_t scale = get_bits16( extension, 9, 2 );
-    if ( 0 != scale )
+    if ( 0 != scale || get_bit16( extension, 8 ) )
         unhandled(); // if not 0, it's a >68000 instruction
-    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 ); // ignoring bit 8 apparently?
+    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 );
     int32_t reg_displacement = isa ? aregs[ Xn ] : dregs[ Xn ].l;
     if ( !isl )
         reg_displacement = sign_extend( reg_displacement, 15 ); // both A and D registers behave like this per experimentation
@@ -1246,7 +1246,8 @@ void m68000::unhandled()
 {
     printf( "unhandled op %x\n", op );
     tracer.Trace( "unhandled op %x\n", op );
-    handle_trap( 4, pc ); // 4 is illegal instruction
+    handle_trap( 4, pc ); // 4 is illegal instruction. 
+    emulator_hard_termination( *this, "opcode not handled:", op ); // there won't be a a handler for gcc apps so terminate
 } //unhandled
 
 template < typename T > inline void do_swap( T & a, T & b ) { T tmp = a; a = b; b = tmp; }
