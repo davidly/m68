@@ -40,21 +40,41 @@ struct m68000
     void reset( vector<uint8_t> & memory, uint32_t base_address, uint32_t start, uint32_t stack_commit, uint32_t top_of_stack )
     {
         memset( this, 0, sizeof( *this ) );
-        pc = start;
         stack_size = stack_commit;                 // remember how much of the top of RAM is allocated to the stack
         stack_top = top_of_stack;                  // where the stack started
-        aregs[ 7 ] = top_of_stack;                 // points at argc with argv, penv, and aux records above it
         base = base_address;                       // lowest valid address in the app's address space, maps to offset 0 in mem. If not 0, can't update trap vectors.
         mem = memory.data();                       // save the pointer, but don't take ownership
         mem_size = (uint32_t) memory.size();       // how much RAM is allocated ror the 68000
         beyond_mem = mem + memory.size();          // addresses beyond and later are illegal
         membase = mem - base;                      // real pointer to the start of the app's memory (prior to offset)
-        setflag_s( false );                        // the 68000 boots in supervisor mode, but we're just running an app here not booting an OS
-        sr |= 0x0700;                              // set irq level
+        sr = 0x2300;                               // set supervisor mode and irq level of 3. all other flags are off
         enforce_pc_sp_constraints = true;          // debug only asserts on values of pc and sp. meaningless after bdos 57
-        isp = 0x2000;                              // above trap vectors, below where apps are loaded
 
-        tracer.Trace( "pc %x, stack_size %x, stack_top %x, base %x, mem_size %x\n", pc, stack_size, stack_top, base, mem_size );
+        if ( 0 == base )                           // if not 0, there's no way to address the vector table
+        {
+            #ifdef TARGET_BIG_ENDIAN
+                isp = * (uint32_t *) mem;          // the first 4 bytes of RAM hold the supervisor stack pointer
+                pc = * (uint32_t *) ( mem + 4 );   // the next 4 byteshave the boot address
+            #else
+                isp = flip_endian32( * (uint32_t *) mem );        // the first 4 bytes of RAM hold the supervisor stack pointer
+                pc = flip_endian32( * (uint32_t *) ( mem + 4 ) ); // the next 4 byteshave the boot address
+            #endif
+    
+            aregs[ 7 ] = isp;                      // start out with the supervisor stack
+        }
+
+        // after this point, if start is specified it's not a standard 68000 boot sequence. flip into user mode for the app to run.
+        // for a standard 68000 boot sequence, pass 0 for start and let the function at vector[1] initialize things.
+
+        if ( 0 != start )
+        {
+            usp = top_of_stack;                        // points at either the linux startup data or the cp/m 64k return address and base page
+            pc = start;                                // app start address
+            setflag_s( false );                        // the 68000 boots in supervisor mode, but we're just running an app here not booting an OS
+            perhaps_restore_usermode_state();
+        }
+
+        tracer.Trace( "pc %x, sr %x, usp %x, isp %x, stack_size %x, base %x, mem_size %x\n", pc, sr, usp, isp, stack_size, base, mem_size );
     } //m68000
 
     void relax_pc_sp_constraints() { enforce_pc_sp_constraints = false; }

@@ -4109,6 +4109,7 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
     if ( 0 != loaderControlFlags )
     {
         tracer.Trace( "ERROR: only loading to lowest address is implemented\n" );
+        printf( "ERROR: only loading to lowest address is implemented\n" );
         return false;
     }
 
@@ -4133,7 +4134,7 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
         return false;
     }
 
-    if ( 0 == lowestAddress )    // ddt loads debugged apps at with this 0. Don't overwrite trap vectors; use a standard address
+    if ( 0 == lowestAddress )    // ddt loads debugged apps at 0. Don't overwrite trap vectors; use a standard address
         lowestAddress = 0x7a00;
 
     uint32_t text_base;
@@ -4238,12 +4239,12 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     uint32_t image_size = head.cb_text + head.cb_data + head.cb_bss;
     uint32_t memory_size = 0x100 + text_base + image_size; // base page + offset from 0 to start of code + total size of image loaded from the executable
 
-    // make it 16-byte aligned for no particular reason
+    // make it 4-byte aligned
 
-    if ( memory_size & 0xf )
+    if ( memory_size & 3 )
     {
-        memory_size += 16;
-        memory_size &= ~0xf;
+        memory_size += 4;
+        memory_size &= ~3;
     }
 
     g_end_of_data = memory_size;
@@ -4256,6 +4257,9 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
 
     memory.resize( memory_size );
     memset( memory.data(), 0, memory.size() );
+
+    // put the supervisor stack pointer in the first 4 bytes of RAM.
+    * (uint32_t *) memory.data() = swap_endian32( 0x2000 ); // arbitrary, but above the vector table and below the typical cp/m 68k base page
 
     g_base_address = 0;
     uint32_t base_page = text_base - 0x100; // where the base page (256 bytes) resides
@@ -4299,7 +4303,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     strcpy( (char *) ( pbasepage->command_tail ), acAppArgs );
     tracer.Trace( "arg_len %u, command tail %s\n", arg_len, acAppArgs );
 
-    // put what look like filenames on the command tail in the two FCBs in the base page. Apps don't much use this.
+    // put what looks like filenames in the command tail in the two FCBs in the base page. Apps don't much use this.
 
     char acCopy[ 128 ];
     strcpy( acCopy, acAppArgs );

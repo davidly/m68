@@ -64,9 +64,13 @@ exit /b 0
 
 :after_ba
 
-echo test m68.elf ttt 1
-echo test m68.elf ttt 1 >>%outputfile%
-%_runcmd% -h:60 c_tests\m68.elf c_tests\ttt 1 >>%outputfile%
+echo test m68.elf ttt.elf 1
+echo test m68.elf ttt.elf 1 >>%outputfile%
+%_runcmd% -h:60 c_tests\m68.elf c_tests\ttt.elf 1 >>%outputfile%
+
+echo test m68.elf ttt.68k 1
+echo test m68.elf ttt.68k 1 >>%outputfile%
+%_runcmd% -h:60 c_tests\m68.elf cpm\ttt.68k 1 >>%outputfile%
 
 goto :alldone
 

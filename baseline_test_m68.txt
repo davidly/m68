@@ -1,4 +1,4 @@
-Wed 05/07/2025 15:20:51.69 
+Fri 05/09/2025 14:26:45.13 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -264,85 +264,85 @@ test tprintf.hex
 test tshift.hex 
 calling into tshift_main!
 asr.b <register>
-  result 14 flags 711
-  result e9 flags 719
-  result 14 flags 711
-  result e9 flags 719
+  result 14 flags 311
+  result e9 flags 319
+  result 14 flags 311
+  result e9 flags 319
 asl.b <register>
-  result 4c flags 713
-  result 9c flags 70a
-  result 4c flags 713
-  result 9c flags 70a
+  result 4c flags 313
+  result 9c flags 30a
+  result 4c flags 313
+  result 9c flags 30a
 lsr.b <register>
-  result 14 flags 711
-  result 29 flags 711
-  result 14 flags 711
-  result 29 flags 711
+  result 14 flags 311
+  result 29 flags 311
+  result 14 flags 311
+  result 29 flags 311
 lsl.b <register>
-  result 4c flags 711
-  result 9c flags 708
-  result 4c flags 711
-  result 9c flags 708
+  result 4c flags 311
+  result 9c flags 308
+  result 4c flags 311
+  result 9c flags 308
 roxr.b <register>
-  result 94 flags 719
-  result a9 flags 719
-  result d4 flags 719
-  result e9 flags 719
+  result 94 flags 319
+  result a9 flags 319
+  result d4 flags 319
+  result e9 flags 319
 roxl.b <register>
-  result 4c flags 711
-  result 9d flags 708
-  result 4e flags 711
-  result 9f flags 708
+  result 4c flags 311
+  result 9d flags 308
+  result 4e flags 311
+  result 9f flags 308
 ror.b <register>
-  result d4 flags 709
-  result e9 flags 709
-  result d4 flags 719
-  result e9 flags 719
+  result d4 flags 309
+  result e9 flags 309
+  result d4 flags 319
+  result e9 flags 319
 rol.b <register>
-  result 4d flags 701
-  result 9e flags 708
-  result 4d flags 711
-  result 9e flags 718
+  result 4d flags 301
+  result 9e flags 308
+  result 4d flags 311
+  result 9e flags 318
 asr.b <memery>
-  result e1b8 flags 718
-  result 39b9 flags 700
-  result e1b8 flags 718
-  result 39b9 flags 700
+  result e1b8 flags 318
+  result 39b9 flags 300
+  result e1b8 flags 318
+  result 39b9 flags 300
 asl.b <memory>
-  result 86e2 flags 718
-  result e6e4 flags 708
-  result 86e2 flags 718
-  result e6e4 flags 708
+  result 86e2 flags 318
+  result e6e4 flags 308
+  result 86e2 flags 318
+  result e6e4 flags 308
 lsr.b <memory>
-  result 61b8 flags 710
-  result 39b9 flags 700
-  result 61b8 flags 710
-  result 39b9 flags 700
+  result 61b8 flags 310
+  result 39b9 flags 300
+  result 61b8 flags 310
+  result 39b9 flags 300
 lsl.b <memory>
-  result 86e2 flags 718
-  result e6e4 flags 708
-  result 86e2 flags 718
-  result e6e4 flags 708
+  result 86e2 flags 318
+  result e6e4 flags 308
+  result 86e2 flags 318
+  result e6e4 flags 308
 roxr.b <memory>
-  result 61b8 flags 710
-  result 39b9 flags 700
-  result e1b8 flags 718
-  result b9b9 flags 708
+  result 61b8 flags 310
+  result 39b9 flags 300
+  result e1b8 flags 318
+  result b9b9 flags 308
 roxl.b <memory>
-  result 86e2 flags 718
-  result e6e4 flags 708
-  result 86e3 flags 718
-  result e6e5 flags 708
+  result 86e2 flags 318
+  result e6e4 flags 308
+  result 86e3 flags 318
+  result e6e5 flags 308
 ror.b <memory>
-  result e1b8 flags 708
-  result 39b9 flags 700
-  result e1b8 flags 718
-  result 39b9 flags 710
+  result e1b8 flags 308
+  result 39b9 flags 300
+  result e1b8 flags 318
+  result 39b9 flags 310
 rol.b <memory>
-  result 86e3 flags 708
-  result e6e4 flags 708
-  result 86e3 flags 718
-  result e6e4 flags 718
+  result 86e3 flags 308
+  result e6e4 flags 308
+  result 86e3 flags 318
+  result e6e4 flags 318
 after tshift_main
 test hidave 
 hi dave
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.839000 milliseconds
+25.393999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 7, hour 22, min 20, sec 57
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 7, hour 17, min 20, sec 57
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 7, hour 14, min 20, sec 57
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 7, hour 14, min 20, sec 57
+before TZ is set: tz: '(null)', year: 2025, month 5, day 9, hour 21, min 26, sec 51
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 9, hour 16, min 26, sec 51
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 9, hour 13, min 26, sec 51
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 9, hour 13, min 26, sec 51
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5734,98 +5734,98 @@ result is 0 flags 0x4
 result is 0x80 flags 0x11
 test tshift 
 asr.b <register>
-  result 14 flags 711
-  result e9 flags 719
-  result 14 flags 711
-  result e9 flags 719
+  result 14 flags 311
+  result e9 flags 319
+  result 14 flags 311
+  result e9 flags 319
 asl.b <register>
-  result 4c flags 713
-  result 9c flags 70a
-  result 4c flags 713
-  result 9c flags 70a
+  result 4c flags 313
+  result 9c flags 30a
+  result 4c flags 313
+  result 9c flags 30a
 lsr.b <register>
-  result 14 flags 711
-  result 29 flags 711
-  result 14 flags 711
-  result 29 flags 711
+  result 14 flags 311
+  result 29 flags 311
+  result 14 flags 311
+  result 29 flags 311
 lsl.b <register>
-  result 4c flags 711
-  result 9c flags 708
-  result 4c flags 711
-  result 9c flags 708
+  result 4c flags 311
+  result 9c flags 308
+  result 4c flags 311
+  result 9c flags 308
 roxr.b <register>
-  result 94 flags 719
-  result a9 flags 719
-  result d4 flags 719
-  result e9 flags 719
+  result 94 flags 319
+  result a9 flags 319
+  result d4 flags 319
+  result e9 flags 319
 roxl.b <register>
-  result 4c flags 711
-  result 9d flags 708
-  result 4e flags 711
-  result 9f flags 708
+  result 4c flags 311
+  result 9d flags 308
+  result 4e flags 311
+  result 9f flags 308
 ror.b <register>
-  result d4 flags 709
-  result e9 flags 709
-  result d4 flags 719
-  result e9 flags 719
+  result d4 flags 309
+  result e9 flags 309
+  result d4 flags 319
+  result e9 flags 319
 rol.b <register>
-  result 4d flags 701
-  result 9e flags 708
-  result 4d flags 711
-  result 9e flags 718
+  result 4d flags 301
+  result 9e flags 308
+  result 4d flags 311
+  result 9e flags 318
 asr.b <memery>
-  result e1b8 flags 718
-  result 39b9 flags 700
-  result e1b8 flags 718
-  result 39b9 flags 700
+  result e1b8 flags 318
+  result 39b9 flags 300
+  result e1b8 flags 318
+  result 39b9 flags 300
 asl.b <memory>
-  result 86e2 flags 718
-  result e6e4 flags 708
-  result 86e2 flags 718
-  result e6e4 flags 708
+  result 86e2 flags 318
+  result e6e4 flags 308
+  result 86e2 flags 318
+  result e6e4 flags 308
 lsr.b <memory>
-  result 61b8 flags 710
-  result 39b9 flags 700
-  result 61b8 flags 710
-  result 39b9 flags 700
+  result 61b8 flags 310
+  result 39b9 flags 300
+  result 61b8 flags 310
+  result 39b9 flags 300
 lsl.b <memory>
-  result 86e2 flags 718
-  result e6e4 flags 708
-  result 86e2 flags 718
-  result e6e4 flags 708
+  result 86e2 flags 318
+  result e6e4 flags 308
+  result 86e2 flags 318
+  result e6e4 flags 308
 roxr.b <memory>
-  result 61b8 flags 710
-  result 39b9 flags 700
-  result e1b8 flags 718
-  result b9b9 flags 708
+  result 61b8 flags 310
+  result 39b9 flags 300
+  result e1b8 flags 318
+  result b9b9 flags 308
 roxl.b <memory>
-  result 86e2 flags 718
-  result e6e4 flags 708
-  result 86e3 flags 718
-  result e6e5 flags 708
+  result 86e2 flags 318
+  result e6e4 flags 308
+  result 86e3 flags 318
+  result e6e5 flags 308
 ror.b <memory>
-  result e1b8 flags 708
-  result 39b9 flags 700
-  result e1b8 flags 718
-  result 39b9 flags 710
+  result e1b8 flags 308
+  result 39b9 flags 300
+  result e1b8 flags 318
+  result 39b9 flags 310
 rol.b <memory>
-  result 86e3 flags 708
-  result e6e4 flags 708
-  result 86e3 flags 718
-  result e6e4 flags 718
+  result 86e3 flags 308
+  result e6e4 flags 308
+  result 86e3 flags 318
+  result e6e4 flags 318
 test taddsubm 
-  result 11 flags 700
-  result 77 flags 700
-  result 10 flags 700
-  result 77 flags 700
-  result 1111 flags 700
-  result 4444 flags 700
-  result 1110 flags 700
-  result 4444 flags 700
-  result 11111111 flags 700
-  result 99999999 flags 70a
-  result 11111110 flags 700
-  result 99999999 flags 70a
+  result 11 flags 300
+  result 77 flags 300
+  result 10 flags 300
+  result 77 flags 300
+  result 1111 flags 300
+  result 4444 flags 300
+  result 1110 flags 300
+  result 4444 flags 300
+  result 11111111 flags 300
+  result 99999999 flags 30a
+  result 11111110 flags 300
+  result 99999999 flags 30a
 test tea 
 result is 103
 result is 98
@@ -6907,8 +6907,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     272
-  dictionary: 268
+total ms:     293
+  dictionary: 289
   generate:   3
   render:     0
 test ba tp.bas 
@@ -6938,9 +6938,12 @@ parsing input file c_tests\tp.bas
 created assembler file: c_tests\tp.s, use registers: yes, expression optimization: yes
 parsing input file c_tests\tp.bas
 created assembler file: c_tests\tp.asm, use registers: yes, expression optimization: yes
-test m68.elf ttt 1 
+test m68.elf ttt.elf 1 
 starting...
 6493 moves
 1 iterations
-1000.000000 milliseconds
-Wed 05/07/2025 15:21:13.02 
+0.000000 milliseconds
+test m68.elf ttt.68k 1 
+move count:      6493
+iteration count: 1
+Fri 05/09/2025 14:27:07.47 
