@@ -55,7 +55,7 @@ $_runcmd -h:60 c_tests/m68.elf c_tests/ttt.elf 1 >>$outputfile
 
 echo test m68.elf ttt.68k 1
 echo test m68.elf ttt.68k 1 >>$outputfile
-$_runcmd -h:60 c_tests/m68.elf cpm/ttt.68k 1 >>$outputfile
+$_runcmd -h:60 c_tests/m68.elf cpm/TTT.68K 1 >>$outputfile
 
 for codegen in 6 8 a d 3 i I m o r x;
 do
