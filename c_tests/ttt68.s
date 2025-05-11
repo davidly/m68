@@ -95,7 +95,7 @@ minmax_max:
     blt _max_no_winner_check
 
     move.l %d6, %d1
-    lsl #2, %d1
+    lsl.l #2, %d1
     move.l (%a5, %d1), %a0
     jsr (%a0)
 
@@ -158,7 +158,7 @@ minmax_min:
     blt _min_no_winner_check
 
     move.l %d6, %d1
-    lsl #2, %d1
+    lsl.l #2, %d1
     move.l (%a5, %d1), %a0
     jsr (%a0)
 

@@ -32,7 +32,7 @@ mm_max:
     blt _max_no_winner_check
 
     move.l r6, r1
-    lsl #2, r1
+    lsl.l #2, r1
     move.l (r13, r1), r8
     jsr (r8)
 
@@ -245,7 +245,7 @@ mm_min:
     blt _min_no_winner_check
 
     move.l r6, r1
-    lsl #2, r1
+    lsl.l #2, r1
     move.l (r13, r1), r8
     jsr (r8)
 
