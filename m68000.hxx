@@ -216,6 +216,8 @@ private:
 
     inline uint16_t opbit( uint32_t bit ) const { return ( 1 & ( op >> bit ) ); }
 
+    // it seems slower to not use an "if ( f )", but multiple assignment with shift is faster on both x64 and 68000
+
     inline void setflag_c( bool f ) { sr &= 0xfffe; sr |= ( 0 != f ); }
     inline void setflag_v( bool f ) { sr &= 0xfffd; sr |= ( ( 0 != f ) << 1 ); }
     inline void setflag_z( bool f ) { sr &= 0xfffb; sr |= ( ( 0 != f ) << 2 ); }
@@ -223,18 +225,19 @@ private:
     inline void setflag_x( bool f ) { sr &= 0xffef; sr |= ( ( 0 != f ) << 4 ); }
     inline void setflag_s( bool f ) { sr &= 0xdfff; sr |= ( ( 0 != f ) << 13 ); }
     inline void setflag_t( bool f ) { sr &= 0x7fff; sr |= ( ( 0 != f ) << 15 ); }
+
     inline void setflags_cx( bool f ) { setflag_c( f ); setflag_x( f ); }
     inline void clearflags_cv() { sr &= 0xfffc; }
 
-    inline bool flag_c() { return ( 0 != ( sr & 1 ) ); }
-    inline bool flag_v() { return ( 0 != ( sr & 2 ) ); }
-    inline bool flag_z() { return ( 0 != ( sr & 4 ) ); }
-    inline bool flag_n() { return ( 0 != ( sr & 8 ) ); }
-    inline bool flag_x() { return ( 0 != ( sr & 16 ) ); }
+    inline bool flag_c() { return ( 0 != ( sr &      1 ) ); }
+    inline bool flag_v() { return ( 0 != ( sr &      2 ) ); }
+    inline bool flag_z() { return ( 0 != ( sr &      4 ) ); }
+    inline bool flag_n() { return ( 0 != ( sr &      8 ) ); }
+    inline bool flag_x() { return ( 0 != ( sr &   0x10 ) ); }
     inline bool flag_s() { return ( 0 != ( sr & 0x2000 ) ); }
     inline bool flag_t() { return ( 0 != ( sr & 0x8000 ) ); } // t1. t0 is always 0 on a 68000
 
-    static int32_t sign_extend( uint32_t x, uint32_t high_bit )
+    inline static int32_t sign_extend( uint32_t x, uint32_t high_bit )
     {
         assert( high_bit < 31 );
         x &= ( 1 << ( high_bit + 1 ) ) - 1; // clear bits above the high bit since they may contain noise
@@ -242,7 +245,7 @@ private:
         return ( x ^ m ) - m;
     } //sign_extend
 
-    static int16_t sign_extend16( uint16_t x, uint16_t high_bit )
+    inline static int16_t sign_extend16( uint16_t x, uint16_t high_bit )
     {
         assert( high_bit < 15 );
         x &= ( 1 << ( high_bit + 1 ) ) - 1; // clear bits above the high bit since they may contain noise

@@ -608,7 +608,6 @@ void m68000::trace_state()
                 tracer.Trace( "bset d%u, %s\n", op_reg, effective_string() );
             else
                 unhandled();
-
             break;
         }
         case 1: // move.b
@@ -912,7 +911,6 @@ void m68000::trace_state()
                     tracer.Trace( "exg a%u, a%u\n", op_reg, ea_reg );
                 else
                     unhandled();
-                break;
             }
             else // and
             {
@@ -1244,7 +1242,7 @@ void m68000::unhandled()
 {
     printf( "unhandled op %x\n", op );
     tracer.Trace( "unhandled op %x\n", op );
-    handle_trap( 4, pc ); // 4 is illegal instruction. 
+    handle_trap( 4, pc ); // 4 is illegal instruction.
     emulator_hard_termination( *this, "opcode not handled:", op ); // there won't be a a handler for gcc apps so terminate
 } //unhandled
 
@@ -1899,7 +1897,7 @@ uint64_t m68000::run()
                         g_State |= stateInstructionTrace;
                         skip_trace = true;
                     }
-                    pc = pop();
+                    pc = pop(); // pop from the supervisor stack
                     perhaps_restore_usermode_state();
                     continue;
                 }
@@ -1907,7 +1905,6 @@ uint64_t m68000::run()
                 {
                     if ( handle_trap( 0x1c, pc + 2 ) )
                         continue;
-                    break;
                 }
                 else if ( 0x4e77 == op ) // rtr
                 {
@@ -1920,8 +1917,20 @@ uint64_t m68000::run()
                 }
                 else if ( 0x4e72 == op ) // stop
                 {
+#if 0
+                    // cp68.68k, the first pass of the C compiler, has a stop instruction but it's not running as supervisor.
+                    // mimic cp/m 68k behavior by pretending there is a handler that allows it.
+
+                    if ( !flag_s() )
+                        if ( handle_trap( 8, pc ) ) // not in supervisor state
+                            continue;
+#endif
+
+                    bool was_super = flag_s();
                     pc += 2;
                     sr = getui16( pc );
+                    if ( was_super )
+                        perhaps_restore_usermode_state();
 
                     // the gnu cc I'm using invokes this instruction in exit(). make a linux standard exit call
                     // it's also used by the cp/m 68k emulator when an app returns from its entrypoint
@@ -1935,7 +1944,6 @@ uint64_t m68000::run()
                 {
                     if ( handle_trap( 4, pc ) ) // likely DDT's breakpoint. Want to return to this location after the interrupt restores the original instruction.
                         continue;
-                    break;
                 }
                 else
                 {
@@ -2798,7 +2806,6 @@ uint64_t m68000::run()
                         sub16( dregs[ op_reg ].w, effective_value16( address ), true, false, false );
                     else
                         sub32( dregs[ op_reg ].l, effective_value32( address ), true, false, false );
-                    break;
                 }
                 else if ( bit8 && 1 == ea_mode ) // cmpm
                 {
@@ -2914,7 +2921,6 @@ uint64_t m68000::run()
                         do_swap( dregs[ op_reg ].l, aregs[ ea_reg ] );
                     else
                         unhandled();
-                    break;
                 }
                 else // and
                 {
@@ -3254,7 +3260,7 @@ uint64_t m68000::run()
                                uint16_t xset = flag_x();
                                setflags_cx( sign16( dregs[ ea_reg ].w ) );
                                dregs[ ea_reg ].w <<= 1;
-                               dregs[ ea_reg ].b |= xset;
+                               dregs[ ea_reg ].w |= xset;
                            }
                            setflag_n( sign16( dregs[ ea_reg ].w ) );
                            setflag_z( 0 == dregs[ ea_reg ].w );
@@ -3266,7 +3272,7 @@ uint64_t m68000::run()
                                uint32_t xset = flag_x();
                                setflags_cx( sign32( dregs[ ea_reg ].l ) );
                                dregs[ ea_reg ].l <<= 1;
-                               dregs[ ea_reg ].b |= xset;
+                               dregs[ ea_reg ].l |= xset;
                            }
                            setflag_n( sign32( dregs[ ea_reg ].l ) );
                            setflag_z( 0 == dregs[ ea_reg ].l );
@@ -3416,5 +3422,5 @@ uint64_t m68000::run()
         cycles++;      // 2.6% of runtime
     } // for
 
-    return cycles;
+    return cycles; // for now, instructions not cycles
 } //run
