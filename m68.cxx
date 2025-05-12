@@ -3896,7 +3896,7 @@ struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory
     uint32_t cb_bss;                    // 1c
     uint32_t cb_after_bss;              // 20
     uint8_t drive;                      // 24 where the app was loaded
-    uint8_t reserved[ 19 ];             // 25 reserved. used for stop instruction when an app returns from _start
+    uint8_t reserved[ 19 ];             // 25 reserved. used for exit trap when an app returns from _start
     FCBCPM68K secondFCB;                // 38
     FCBCPM68K firstFCB;                 // 5c
     uint8_t cb_command_tail;            // 80 also start of default DMA buffer
@@ -4266,8 +4266,12 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     BasePageCPM * pbasepage = (BasePageCPM *) ( memory.data() + base_page );
     g_execution_address = text_base;
     g_top_of_stack = (REG_TYPE) g_bottom_of_stack + g_stack_commit;
-    pbasepage->reserved[ 1 ] = 0x4e; // stop instruction at at offset 0x26 in the base page (not a cp/m standard)
-    pbasepage->reserved[ 2 ] = 0x72;
+    pbasepage->reserved[ 1 ] = 0x22; // move.l d0, d1.  return code. at at offset 0x26 in the base page (not a cp/m standard)
+    pbasepage->reserved[ 2 ] = 0x00;
+    pbasepage->reserved[ 3 ] = 0x70; // moveq #93, d0   linux exit function
+    pbasepage->reserved[ 4 ] = 0x5d;
+    pbasepage->reserved[ 5 ] = 0x4e; // trap 0          invoke linux syscall to exit the app
+    pbasepage->reserved[ 6 ] = 0x40;
 
     // per the cp/m 68k spec there must be two 32-bit values at the top of the stack for base address and return location at app completion
     g_top_of_stack -= 8;

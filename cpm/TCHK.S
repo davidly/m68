@@ -53,6 +53,7 @@ _main:
     jsr (a3)
     adda #4, a7
 
+    clr.l d0         * exit code of 0
     rts
 
 chktrap:

@@ -1917,14 +1917,9 @@ uint64_t m68000::run()
                 }
                 else if ( 0x4e72 == op ) // stop
                 {
-#if 0
-                    // cp68.68k, the first pass of the C compiler, has a stop instruction but it's not running as supervisor.
-                    // mimic cp/m 68k behavior by pretending there is a handler that allows it.
-
                     if ( !flag_s() )
                         if ( handle_trap( 8, pc ) ) // not in supervisor state
                             continue;
-#endif
 
                     bool was_super = flag_s();
                     pc += 2;
@@ -1932,8 +1927,9 @@ uint64_t m68000::run()
                     if ( was_super )
                         perhaps_restore_usermode_state();
 
-                    // the gnu cc I'm using invokes this instruction in exit(). make a linux standard exit call
-                    // it's also used by the cp/m 68k emulator when an app returns from its entrypoint
+                    // At this point. the cpu should wait for a interrupt or reset exception to resume running.
+                    // That won't happen with this emulator, so just exit the app.
+                    // One of the the gnu cc compilers I'm using invokes this instruction in exit(). make a linux standard exit call.
 
                     dregs[ 1 ].l = dregs[ 0 ].l; // exit code. probably not really there but it's worth a try
                     dregs[ 0 ].l = 93; // exit syscall

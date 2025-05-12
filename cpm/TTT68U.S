@@ -744,6 +744,7 @@ _main:
     jsr _printf
     adda #8, sp
 
+    clr.l d0         * exit code of 0
     rts
 
     .end
