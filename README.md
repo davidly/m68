@@ -1,5 +1,5 @@
 # m68
-m68 runs 68000 elf, Motorola hex, and CP/m 68K binaries on Windows, macOS, and Linux.
+m68 runs 68000 elf, Motorola hex, and CP/M 68K binaries on Windows, macOS, and Linux.
 
 m68 loads binaries into memory then emulates the Motorola 68000 and required system calls to execute them. 
 
