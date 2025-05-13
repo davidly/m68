@@ -3,7 +3,7 @@
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
              tcmp ttypes tarray trw an terrno mm_old ttime fileops tpi \
-             t_setjmp ba td tf tap tphi mm ts glob nantst pis tfo
+             t_setjmp ba td tf tap tphi mm ts glob nantst pis tfo sleeptm
 do
     echo $arg
     m.sh $arg

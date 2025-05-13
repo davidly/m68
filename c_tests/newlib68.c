@@ -86,6 +86,18 @@ struct timespec_syscall {
     uint64_t tv_nsec;
 };
 
+extern "C" int clock_gettime( clockid_t id, struct timespec * res )
+{
+    timespec_syscall tsc = { 0 };
+    int result = (int) syscall( SYS_clock_gettime, 0 /*realtime*/, & tsc );
+    if ( 0 == result )
+    {
+        res->tv_sec = tsc.tv_sec;
+        res->tv_nsec = (uint32_t) tsc.tv_nsec;
+    }
+    return result;
+} //clock_gettime
+
 int usleep( useconds_t usec )
 {
     // usleep is obsolete but used by this old GCC compiler. Use nanosleep instead
@@ -93,9 +105,27 @@ int usleep( useconds_t usec )
     timespec_syscall ns = {0};
     ns.tv_sec = usec / 1000000;
     ns.tv_nsec = ( usec % 1000000 ) * 1000;
+    timespec_syscall remaining = {0};
+    return (int) syscall( SYS_clock_nanosleep, 0 /* no clock id */, 0 /* no flags */, & ns, & remaining );
+} //usleep
 
-    return (int) syscall( SYS_clock_nanosleep, 0 /* no clock id */, 0 /* no flags */, & ns );
-}
+extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem )
+{
+    timespec_syscall request; // two 64 bit values for all platforms for this emulator
+    request.tv_sec = duration->tv_sec;
+    request.tv_nsec = duration->tv_nsec;
+    timespec_syscall remaining = {0};
+    // printf( "sleeping for %llu sec", request.tv_sec ); printf( "  ... and %llu nsec\n", request.tv_nsec );
+    int result = (int) syscall( SYS_clock_nanosleep, 0 /* no clock id */, 0 /* no flags */, & request, & remaining );
+
+    if ( rem )
+    {
+        rem->tv_sec = remaining.tv_sec;
+        rem->tv_nsec = remaining.tv_nsec;
+    }
+
+    return result;
+} //nanosleep
 
 int fstatat( int fd, const char * path, struct stat * buf, int flag )
 {
@@ -197,6 +227,14 @@ void * sbrk( intptr_t increment )
 
     return current_brk;
 }
+
+long sysconf( int name )
+{
+    if ( _SC_CLK_TCK == name )
+        return 100;
+
+    return -1;
+} //sysconf
 
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */

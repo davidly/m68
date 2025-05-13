@@ -263,9 +263,36 @@ struct linux_tms_syscall
     uint64_t tms_cstime;
 };
 
+struct linux_tms_syscall32
+{
+    uint32_t tms_utime;
+    uint32_t tms_stime;
+    uint32_t tms_cutime;
+    uint32_t tms_cstime;
+};
+
 struct linux_rusage_syscall {
     struct linux_timeval ru_utime; /* user CPU time used */
     struct linux_timeval ru_stime; /* system CPU time used */
+    long   ru_maxrss;        /* maximum resident set size */
+    long   ru_ixrss;         /* integral shared memory size */
+    long   ru_idrss;         /* integral unshared data size */
+    long   ru_isrss;         /* integral unshared stack size */
+    long   ru_minflt;        /* page reclaims (soft page faults) */
+    long   ru_majflt;        /* page faults (hard page faults) */
+    long   ru_nswap;         /* swaps */
+    long   ru_inblock;       /* block input operations */
+    long   ru_oublock;       /* block output operations */
+    long   ru_msgsnd;        /* IPC messages sent */
+    long   ru_msgrcv;        /* IPC messages received */
+    long   ru_nsignals;      /* signals received */
+    long   ru_nvcsw;         /* voluntary context switches */
+    long   ru_nivcsw;        /* involuntary context switches */
+};
+
+struct linux_rusage_syscall32 {
+    struct linux_timeval32 ru_utime; /* user CPU time used */
+    struct linux_timeval32 ru_stime; /* system CPU time used */
     long   ru_maxrss;        /* maximum resident set size */
     long   ru_ixrss;         /* integral shared memory size */
     long   ru_idrss;         /* integral unshared data size */
@@ -911,20 +938,6 @@ static void usage( char const * perror = 0 )
     exit( 1 );
 } //usage
 
-static int gettimeofday( linux_timeval * tp )
-{
-    // the older GCC chrono implementations are built on time(), which calls this but
-    // has only second resolution. So the microseconds returned here are lost.
-    // All other C++ implementations do the right thing.
-
-    namespace sc = std::chrono;
-    sc::system_clock::duration d = sc::system_clock::now().time_since_epoch();
-    sc::seconds s = sc::duration_cast<sc::seconds>( d );
-    tp->tv_sec = s.count();
-    tp->tv_usec = sc::duration_cast<sc::microseconds>( d - s ).count();
-    return 0;
-} //gettimeofday
-
 static uint64_t rand64()
 {
     uint64_t r = 0;
@@ -1196,6 +1209,40 @@ static int msc_clock_gettime( clockid_t clockid, struct timespec_syscall * tv )
 } //msc_clock_gettime
 
 #endif
+
+#ifdef M68K
+extern "C" int clock_gettime( clockid_t id, struct timespec * res );
+#endif
+
+static int gettimeofday( linux_timeval * tp )
+{
+#if 1
+
+#ifdef _WIN32
+    struct timespec_syscall tv;
+    msc_clock_gettime( CLOCK_REALTIME, &tv );
+    tp->tv_sec = tv.tv_sec;
+    tp->tv_usec = tv.tv_nsec / 1000;
+#else
+    struct timespec local_ts; // this varies in size from platform to platform
+    int result = clock_gettime( CLOCK_REALTIME, & local_ts );
+    tp->tv_sec = local_ts.tv_sec;
+    tp->tv_usec = local_ts.tv_nsec / 1000;
+#endif
+
+#else
+    // the older GCC chrono implementations are built on time(), which this calls but
+    // has only second resolution. So the microseconds returned here are lost.
+    // All other C++ implementations do the right thing.
+
+    namespace sc = std::chrono;
+    sc::system_clock::duration d = sc::system_clock::now().time_since_epoch();
+    sc::seconds s = sc::duration_cast<sc::seconds>( d );
+    tp->tv_sec = s.count();
+    tp->tv_usec = sc::duration_cast<sc::microseconds>( d - s ).count();
+#endif
+    return 0;
+} //gettimeofday
 
 #ifdef M68
 static int linux_translate_flags( int flags )
@@ -1786,9 +1833,16 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 0 != ACCESS_REG( REG_ARG3 ) )
                 remain = (struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
 
-            uint64_t ms = request->tv_sec * 1000 + request->tv_nsec / 1000000;
-            tracer.Trace( "  nanosleep sec %lld, nsec %lld == %lld ms\n", request->tv_sec, request->tv_nsec, ms );
-            sleep_ms( ms );
+            struct timespec_syscall local_request = * request;
+
+#if defined( M68 ) && !defined( M68K )
+            local_request.tv_sec = flip_endian64( local_request.tv_sec );
+            local_request.tv_nsec = flip_endian64( local_request.tv_nsec );
+#endif
+
+            uint64_t ms = local_request.tv_sec * 1000 + local_request.tv_nsec / 1000000;
+            tracer.Trace( "  nanosleep sec %llu, nsec %llu == %llu ms\n", local_request.tv_sec, local_request.tv_nsec, ms );
+            sleep_ms( ms ); // ignore remain argument because there are no signals to wake the thread
             update_result_errno( cpu, 0 );
             break;
         }
@@ -1887,11 +1941,16 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
 #ifdef M68
                     linux_timeval32 * ptimeval32 = (linux_timeval32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-                    ptimeval32->tv_sec = swap_endian64( tv.tv_sec );
-                    ptimeval32->tv_usec = swap_endian32( (uint32_t) tv.tv_usec );
+                    ptimeval32->tv_sec = tv.tv_sec;
+                    ptimeval32->tv_usec = (uint32_t) tv.tv_usec;
+#ifndef M68K
+                    ptimeval32->tv_sec = swap_endian64( ptimeval32->tv_sec );
+                    ptimeval32->tv_usec = swap_endian32( ptimeval32->tv_usec );
+#endif
+
                     tracer.Trace( "    reg_arg0 %#x\n", ACCESS_REG( REG_ARG0 ) );
                     tracer.Trace( "    tv.tv_sec %#llx, swapped %#llx\n", tv.tv_sec, ptimeval32->tv_sec );
-                    tracer.Trace( "    tv_usec %u, swapped %u\n", swap_endian32( ptimeval32->tv_usec ), ptimeval32->tv_usec );
+                    tracer.Trace( "    tv_usec %#lx, swapped %#lx\n", swap_endian32( ptimeval32->tv_usec ), ptimeval32->tv_usec );
 #else
                     ptimeval->tv_sec = tv.tv_sec;
                     ptimeval->tv_usec = tv.tv_usec;
@@ -2633,8 +2692,12 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_getrusage:
         {
             int who = (int) ACCESS_REG( REG_ARG0 );
+#ifdef M68
+            struct linux_rusage_syscall32 *prusage = (struct linux_rusage_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+#else
             struct linux_rusage_syscall *prusage = (struct linux_rusage_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             memset( prusage, 0, sizeof( struct linux_rusage_syscall ) );
+#endif
 
             if ( 0 == who ) // RUSAGE_SELF
             {
@@ -2643,22 +2706,53 @@ void emulator_invoke_svc( CPUClass & cpu )
                 if ( GetProcessTimes( GetCurrentProcess(), &ftCreation, &ftExit, &ftKernel, &ftUser ) )
                 {
                     uint64_t utotal = ( ( (uint64_t) ftUser.dwHighDateTime << 32 ) + ftUser.dwLowDateTime ) / 10; // 100ns to microseconds
+#ifdef M68
+                    prusage->ru_utime.tv_sec = utotal / 1000000;
+                    prusage->ru_utime.tv_usec = (uint32_t) ( utotal % 1000000 );
+#ifndef M68K
+                    prusage->ru_utime.tv_sec = flip_endian64( prusage->ru_utime.tv_sec );
+                    prusage->ru_utime.tv_usec = flip_endian32( prusage->ru_utime.tv_usec );
+#endif
+
+#else
                     prusage->ru_utime.tv_sec = utotal / 1000000;
                     prusage->ru_utime.tv_usec = utotal % 1000000;
+#endif
                     uint64_t stotal = ( ( (uint64_t) ftKernel.dwHighDateTime << 32 ) + ftKernel.dwLowDateTime ) / 10;
+#ifdef M68
+                    prusage->ru_stime.tv_sec = stotal / 1000000;
+                    prusage->ru_stime.tv_usec = (uint32_t) ( stotal % 1000000 );
+#ifndef M68K
+                    prusage->ru_stime.tv_sec = flip_endian64( prusage->ru_stime.tv_sec );
+                    prusage->ru_stime.tv_usec = flip_endian32( prusage->ru_stime.tv_usec );
+#endif
+
+#else
                     prusage->ru_stime.tv_sec = stotal / 1000000;
                     prusage->ru_stime.tv_usec = stotal % 1000000;
+#endif
                 }
                 else
                     tracer.Trace( "  unable to GetProcessTimes, error %d\n", GetLastError() );
 #else
                 struct rusage local_rusage;
                 getrusage( who, &local_rusage ); // on 32-bit systems fields are 32 bit
+#ifdef M68
+                prusage->ru_utime.tv_sec = local_rusage.ru_utime.tv_sec;
+                prusage->ru_utime.tv_usec = (uint32_t) local_rusage.ru_utime.tv_usec;
+                prusage->ru_stime.tv_sec = local_rusage.ru_stime.tv_sec;
+                prusage->ru_stime.tv_usec = (uint32_t) local_rusage.ru_stime.tv_usec;
+#ifndef M68K
+                prusage->ru_utime.tv_sec = flip_endian64( prusage->ru_utime.tv_sec );
+                prusage->ru_utime.tv_usec = flip_endian32( prusage->ru_utime.tv_usec );
+                prusage->ru_stime.tv_sec = flip_endian64( prusage->ru_stime.tv_sec );
+                prusage->ru_stime.tv_usec = flip_endian32( prusage->ru_stime.tv_usec );
+#endif
+#else
                 prusage->ru_utime.tv_sec = local_rusage.ru_utime.tv_sec;
                 prusage->ru_utime.tv_usec = local_rusage.ru_utime.tv_usec;
                 prusage->ru_stime.tv_sec = local_rusage.ru_stime.tv_sec;
                 prusage->ru_stime.tv_usec = local_rusage.ru_stime.tv_usec;
-#ifndef M68K
                 prusage->ru_maxrss = local_rusage.ru_maxrss;
                 prusage->ru_ixrss = local_rusage.ru_ixrss;
                 prusage->ru_idrss = local_rusage.ru_idrss;
@@ -2680,6 +2774,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 tracer.Trace( "  unsupported request for who %u\n", who );
 
             update_result_errno( cpu, 0 );
+            break;
         }
         case SYS_futex:
         {
@@ -2730,7 +2825,6 @@ void emulator_invoke_svc( CPUClass & cpu )
             break;
         }
 #endif
-#ifndef M68K
         case SYS_clock_gettime:
         {
             clockid_t cid = (clockid_t) ACCESS_REG( REG_ARG0 );
@@ -2750,10 +2844,16 @@ void emulator_invoke_svc( CPUClass & cpu )
             ptimespec->tv_sec = local_ts.tv_sec;
             ptimespec->tv_nsec = local_ts.tv_nsec;
 #endif
+
+#if defined(M68) && !defined(M68K)
+            ptimespec->tv_sec = flip_endian64( ptimespec->tv_sec );
+            ptimespec->tv_nsec = flip_endian64( ptimespec->tv_nsec );
+#endif
+
+            tracer.Trace( "  tv_sec %llx, tv_nsec %llx\n", ptimespec->tv_sec, ptimespec->tv_nsec );
             update_result_errno( cpu, result );
             break;
         }
-#endif
         case SYS_fdatasync:
         {
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
@@ -2779,16 +2879,25 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             // this function is long obsolete, but older apps call it and it's still supported on recent Linux builds
 
+#ifdef M68
+            struct linux_tms_syscall32 * ptms = ( 0 != ACCESS_REG( REG_ARG0 ) ) ? (struct linux_tms_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) : 0;
+#else
             struct linux_tms_syscall * ptms = ( 0 != ACCESS_REG( REG_ARG0 ) ) ? (struct linux_tms_syscall *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) : 0;
+#endif
+
             if ( 0 != ptms ) // 0 is legal if callers just want the return value
             {
-                memset( ptms, 0, sizeof ( struct linux_tms_syscall ) );
+                memset( ptms, 0, sizeof ( *ptms ) );
 #ifdef _WIN32
                 FILETIME ftCreation, ftExit, ftKernel, ftUser;
                 if ( GetProcessTimes( GetCurrentProcess(), &ftCreation, &ftExit, &ftKernel, &ftUser ) )
                 {
                     ptms->tms_utime = ( ( (uint64_t) ftUser.dwHighDateTime << 32) + ftUser.dwLowDateTime ) / 100000; // 100ns to hundredths of a second
                     ptms->tms_stime = ( ( (uint64_t) ftKernel.dwHighDateTime << 32 ) + ftKernel.dwLowDateTime ) / 100000;
+#if defined( M68 ) && !defined( M68K )
+                    ptms->tms_utime = flip_endian32( ptms->tms_utime );
+                    ptms->tms_stime = flip_endian32( ptms->tms_stime );
+#endif
                 }
                 else
                     tracer.Trace( "  unable to GetProcessTimes, error %d\n", GetLastError() );
@@ -2799,18 +2908,24 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ptms->tms_stime = local_tms.tms_stime;
                 ptms->tms_cutime = local_tms.tms_cutime;
                 ptms->tms_cstime = local_tms.tms_cstime;
+#if defined( M68 ) && !defined( M68K )
+                ptms->tms_utime = flip_endian32( ptms->tms_utime );
+                ptms->tms_stime = flip_endian32( ptms->tms_stime );
+                ptms->tms_cutime = flip_endian32( ptms->tms_cutime );
+                ptms->tms_cstime = flip_endian32( ptms->tms_cstime );
+#endif
 #endif
             }
 
-            struct linux_timeval tv;
-            gettimeofday( &tv );
-
             // ticks is generally in hundredths of a second per sysconf( _SC_CLK_TCK )
             REG_TYPE sc_clk_tck = (REG_TYPE) 100;
-#if !defined( _WIN32 ) && !defined( M68K )
+#if defined( _WIN32 )
+            REG_TYPE ticks = (REG_TYPE) GetTickCount64();
+            ticks /= 10; // milliseconds to hundredths of a second
+#else
             sc_clk_tck = sysconf( _SC_CLK_TCK );
+            REG_TYPE ticks = times( 0 );
 #endif
-            REG_TYPE ticks = ( (REG_TYPE) tv.tv_sec * sc_clk_tck ) + ( ( (REG_TYPE) tv.tv_usec * sc_clk_tck ) / 1000000ull );
             update_result_errno( cpu, ticks );
             break;
         }
