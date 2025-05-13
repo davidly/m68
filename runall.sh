@@ -64,6 +64,6 @@ done
 
 date_time=$(date)
 echo "$date_time" >>$outputfile
-unix2dos $outputfile
+unix2dos -f $outputfile
 #
 diff --ignore-all-space baseline_$outputfile $outputfile
