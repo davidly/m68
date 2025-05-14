@@ -4624,10 +4624,6 @@ bool ValidCPMFilename( char * pc )
 #else
     #include <dirent.h>
     static DIR * g_FindFirst = 0;
-    struct LINUX_FIND_DATA
-    {
-        char cFileName[ MAX_PATH ];
-    };
 
     void CloseFindFirst()
     {
