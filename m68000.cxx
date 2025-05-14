@@ -1319,6 +1319,8 @@ uint64_t m68000::run()
                 trace_state();
         }
 
+        cycles++;      // 2.6% of runtime
+
         switch ( hi4 )                   // 16% of runtime setting up for the switch
         {
             case 0: // many math and cmp instructions. I coded the below as a switch() on the second highest nibble and that was slower
@@ -3415,7 +3417,6 @@ uint64_t m68000::run()
         }
 
         pc += 2;       // 7.8% of runtime
-        cycles++;      // 2.6% of runtime
     } // for
 
     return cycles; // for now, instructions not cycles
