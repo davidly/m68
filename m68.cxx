@@ -5166,6 +5166,11 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             ACCESS_REG( REG_RESULT ) = 0x2022; // cp/m-68k v1.1
             break;
         }
+        case 13: // reset disks.
+        {
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
         case 14: // select disk. Return 0 in result if OK, or 0xff otherwise.
         {
             uint8_t disk = (uint8_t) ACCESS_REG( REG_ARG0 );
