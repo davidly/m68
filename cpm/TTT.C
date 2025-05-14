@@ -350,7 +350,7 @@ int main( argc, argv ) int argc; char * argv[];
     for ( i = 0; i < 9; i++ )
         g_board[ i ] = PieceBlank;
 
-    winner_functions[ 0 ] = pos0func;
+    winner_functions[ 0 ] = pos0func; /* static initializers not allowed in some early C compilers */
     winner_functions[ 1 ] = pos1func;
     winner_functions[ 2 ] = pos2func;
     winner_functions[ 3 ] = pos3func;

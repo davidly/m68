@@ -22,7 +22,12 @@ int main( int argc, char * argv[] )
 {
     high_resolution_clock::time_point tStart = high_resolution_clock::now();
     struct timespec sts_start;
-    clock_gettime( CLOCK_REALTIME, &sts_start );
+    int result = clock_gettime( CLOCK_REALTIME, &sts_start );
+    if ( -1 == result )
+    {
+        printf( "clock_gettime failed with error %d\n", errno );
+        exit( 1 );
+    }
 
 #ifdef SLEEP_VERBOSE
     printf( "this test should take about 2.5 seconds to complete\n" );
@@ -36,19 +41,27 @@ int main( int argc, char * argv[] )
     struct tms tstart;
     clock_t cstart = times( &tstart );
     struct timespec request = { 1, 500000000 }; // 1.5 seconds
-    int result = nanosleep( &request, 0 );
+    result = nanosleep( &request, 0 );
     if ( -1 == result )
     {
         printf( "nanosleep failed with error %d\n", errno );
         exit( 1 );
     }
 
-    // old C runtime implements implement high_resolution_clock on time(), which has only 1-second resolution!!!
+    // old C runtime implements high_resolution_clock on time(), which has only 1-second resolution!!!
     high_resolution_clock::time_point tAfterSleep = high_resolution_clock::now();
 
     struct tms tend_sleep;
     clock_t cend_sleep = times( &tend_sleep );
     clock_t cduration = cend_sleep - cstart;
+
+    struct timespec sts_sleep_end;
+    result = clock_gettime( CLOCK_REALTIME, &sts_sleep_end );
+    if ( -1 == result )
+    {
+        printf( "clock_gettime failed with error %d\n", errno );
+        exit( 1 );
+    }
 
 #ifdef SLEEP_VERBOSE
     printf( "sleep duration %#lx = end %#lx - start %#lx\n", cduration, cend_sleep, cstart );
@@ -106,22 +119,31 @@ int main( int argc, char * argv[] )
     if ( 0 == user_ms || 0 == system_ms )
         printf( "getrusage user time in ms: %lu, system time %lu\n", user_ms, system_ms );
 
-    // old C runtime implements implement high_resolution_clock on time(), which has only 1-second resolution!!!
+    // old C runtime implements high_resolution_clock on time(), which has only 1-second resolution!!!
     high_resolution_clock::time_point tEnd = high_resolution_clock::now();
     int64_t sleepMS = duration_cast<std::chrono::milliseconds>( tAfterSleep - tStart ).count();
     int64_t totalMS = duration_cast<std::chrono::milliseconds>( tEnd - tStart ).count();
 
     // cut precision some slack, but this will fail with old C runtime implementation with just 1-second resolution
 
-    if ( sleepMS < 1480 || sleepMS > 1520 || totalMS < 2480 || totalMS > 2520 )
+    if ( sleepMS < 1000 || sleepMS > 2000 || totalMS < 2000 || totalMS > 3000 )
         printf( "(chrono only accurate to 1 second) milliseconds sleeping (should be ~1500) %llu, milliseconds total (should be ~2500): %llu\n", sleepMS, totalMS );
 
     struct timespec sts_end;
-    clock_gettime( CLOCK_REALTIME, &sts_end );
+    result = clock_gettime( CLOCK_REALTIME, &sts_end );
+    if ( -1 == result )
+    {
+        printf( "clock_gettime failed with error %d\n", errno );
+        exit( 1 );
+    }
 
+    uint32_t sts_sleep_duration = (uint32_t) ( ( ( sts_sleep_end.tv_sec - sts_start.tv_sec ) * 1000 ) + ( ( sts_sleep_end.tv_nsec - sts_start.tv_nsec ) / 1000000 ) );
     uint32_t sts_duration = (uint32_t) ( ( ( sts_end.tv_sec - sts_start.tv_sec ) * 1000 ) + ( ( sts_end.tv_nsec - sts_start.tv_nsec ) / 1000000 ) );
-    if ( sts_duration < 2480 || sts_duration > 2520 )
+    if ( sts_sleep_duration < 1480 || sts_sleep_duration > 1530 || sts_duration < 2480 || sts_duration > 2540 )
+    {
+        printf( "millisecond sleep duration using clock_gettime (should be about 1500 ms: %lu\n", sts_sleep_duration );
         printf( "millisecond duration using clock_gettime (should be about 2500 ms: %lu\n", sts_duration );
+    }
 
     printf( "sleepy time ended with great success\n" );
     return 0;

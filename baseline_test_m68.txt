@@ -1,4 +1,4 @@
-Tue 05/13/2025 10:53:29.75 
+Wed 05/14/2025  9:47:32.35 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.649999 milliseconds
+23.593999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 13, hour 17, min 53, sec 35
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 13, hour 12, min 53, sec 35
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 13, hour 9, min 53, sec 35
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 13, hour 9, min 53, sec 35
+before TZ is set: tz: '(null)', year: 2025, month 5, day 14, hour 16, min 47, sec 38
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 14, hour 11, min 47, sec 38
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 14, hour 8, min 47, sec 38
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 14, hour 8, min 47, sec 38
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5708,7 +5708,6 @@ test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
-(chrono only accurate to 1 second) milliseconds sleeping (should be ~1500) 2000, milliseconds total (should be ~2500): 3000
 sleepy time ended with great success
 test tbcd 
 result is 0x7 flags 0
@@ -6913,13 +6912,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     266
-  dictionary: 262
+total ms:     270
+  dictionary: 266
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-1,000 ms for 1 iterations
+0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -6948,8 +6947,8 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-339.467987 milliseconds
+339.430999 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
-Tue 05/13/2025 10:53:53.62 
+Wed 05/14/2025  9:47:56.27 
