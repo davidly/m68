@@ -60,7 +60,7 @@ $_runcmd -h:60 c_tests/m68.elf cpm/TTT.68K 1 >>$outputfile
 echo test com cp/m 2.2 emulator
 echo test com cp/m 2.2 emulator >>$outputfile
 pushd com 1>/dev/null
-$_m68runcmd -h:60 COM.68K MBASIC.COM HELLO.BAS >>..\%outputfile%
+$_m68runcmd -h:60 COM.68K MBASIC.COM HELLO.BAS >>../$outputfile
 popd 1>/dev/null
 
 for codegen in 6 8 a d 3 i I m o r x;
