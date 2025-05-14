@@ -1,7 +1,7 @@
 .data
 
-vals: .dc.b 'values: %lx, %x',13,10,0
-buffer: .dc.b 'tmovep completed with great success',13,10,0
+vals: .dc.b 'values: %lx, %x',10,0
+buffer: .dc.b 'tmovep completed with great success',10,0
 
 l_buf:
 dc.b 32

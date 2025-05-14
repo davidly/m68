@@ -6,8 +6,8 @@
 t: .dc.b 0
 
 board: .dc.b 0,0,0,0,0,0,0,0,0
-moves_string: .dc.b 'moves: %lu',13,10,0,'$'
-failure_string: .dc.b 'result isn't a tie',13,10,0,'$'
+moves_string: .dc.b 'moves: %lu',10,0
+failure_string: .dc.b 'result isn't a tie',10,0
 
 .globl winprocs
 .comm winprocs,36
@@ -690,6 +690,7 @@ run_move:
     move.w (sp)+, r0
     clr.b (r14, r0)
     rts
+
 
 .globl _main
 .text

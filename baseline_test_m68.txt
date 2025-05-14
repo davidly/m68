@@ -1,4 +1,4 @@
-Wed 05/14/2025 11:21:16.65 
+Wed 05/14/2025 14:45:20.23 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-44.832000 milliseconds
+34.849998 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 14, hour 18, min 21, sec 24
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 14, hour 13, min 21, sec 24
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 14, hour 10, min 21, sec 24
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 14, hour 10, min 21, sec 24
+before TZ is set: tz: '(null)', year: 2025, month 5, day 14, hour 21, min 45, sec 27
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 14, hour 16, min 45, sec 27
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 14, hour 13, min 45, sec 27
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 14, hour 13, min 45, sec 27
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6117,7 +6117,7 @@ running TCHK
 chk trap invocations (4 expected): 4
 tchk completed with great success
 running TMOVEP
-i t z y I U 
+i t z y I U 
 values: 69747A79, 4955
 tmovep completed with great success
 running MM
@@ -6125,10 +6125,10 @@ summ is: 465880
 parsing input file ..\c_tests\tp.bas
 created assembler file: ..\c_tests\tp.s, use registers: yes, expression optimization: yes
         1 file(s) copied.
-running basic
- for 1 iterations
-final move count 6493
-done running basic
+running basic
+ for 1 iterations
+final move count 6493
+done running basic
 compiler test mtpascal 
 building e
 --------------------------------------------------
@@ -6281,50 +6281,50 @@ running MM
 summ is: 465880
 compiler test cb68 
 building e
---------------------------------------------------
-CB68 CBASIC Compiler                   Version 1.0
-Serial No. 3123-0000-000061    All Rights Reserved
-Copyright (c) 1983          Digital Research, Inc.
---------------------------------------------------
-end of pass 1
-end of pass 2
-    1:     integer digits, a, high, x, n, d
-    2:     100 DIGITS = 200
-    3:     110 DIM A( 200 )
-    4:     120 HIGH = DIGITS
-    5:     130 X = 0
-    6:     140 N = HIGH - 1
-    7:     150 IF N <= 0 then GOTO 200
-    8:     160 A( N ) = 1
-    9:     170 N = N - 1
-   10:     180 GOTO 150
-   11:     200 A( 1 ) = 2
-   12:     210 A( 0 ) = 0
-   13:     220 IF HIGH <= 9 then GOTO 400
-   14:     230 HIGH = HIGH - 1
-   15:     235 N = HIGH
-   16:     240 IF N = 0 then GOTO 300
-   17:     242 D = X / N
-   18:     250 A( N ) = X - ( D * N )
-   19:     260 X = ( 10 * A( N - 1 ) ) + D
-   20:     270 N = N - 1
-   21:     280 GOTO 240
-   22:     300 IF X >= 10 then GOTO 330
-   23:     310 PRINT USING "#"; X;
-   24:     320 GOTO 220
-   25:     330 PRINT USING "##"; X;
-   26:     340 GOTO 220
-   27:     400 PRINT ""
-   28:     410 PRINT "done"
-   29:     420 END
-   30:     
-   31:     
-end of compilation
-no errors detected
-code area size:    472       000001d8h
-data area size:    50        00000032h
-common area size:  0         00000000h
-symbol table space remaining: 49625
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     integer digits, a, high, x, n, d
+    2:     100 DIGITS = 200
+    3:     110 DIM A( 200 )
+    4:     120 HIGH = DIGITS
+    5:     130 X = 0
+    6:     140 N = HIGH - 1
+    7:     150 IF N <= 0 then GOTO 200
+    8:     160 A( N ) = 1
+    9:     170 N = N - 1
+   10:     180 GOTO 150
+   11:     200 A( 1 ) = 2
+   12:     210 A( 0 ) = 0
+   13:     220 IF HIGH <= 9 then GOTO 400
+   14:     230 HIGH = HIGH - 1
+   15:     235 N = HIGH
+   16:     240 IF N = 0 then GOTO 300
+   17:     242 D = X / N
+   18:     250 A( N ) = X - ( D * N )
+   19:     260 X = ( 10 * A( N - 1 ) ) + D
+   20:     270 N = N - 1
+   21:     280 GOTO 240
+   22:     300 IF X >= 10 then GOTO 330
+   23:     310 PRINT USING "#"; X;
+   24:     320 GOTO 220
+   25:     330 PRINT USING "##"; X;
+   26:     340 GOTO 220
+   27:     400 PRINT ""
+   28:     410 PRINT "done"
+   29:     420 END
+   30:     
+   31:     
+end of compilation
+no errors detected
+code area size:    472       000001d8h
+data area size:    50        00000032h
+common area size:  0         00000000h
+symbol table space remaining: 49625
 --------------------------------------------------
 LINK68 Overlay Linker                  Release 0.f
 Serial No. XXXX-0000           All Rights Reserved
@@ -6333,40 +6333,40 @@ Copyright (c) 1983          Digital Research, Inc.
 
 e.o,cb68.l68 
 building sieve
---------------------------------------------------
-CB68 CBASIC Compiler                   Version 1.0
-Serial No. 3123-0000-000061    All Rights Reserved
-Copyright (c) 1983          Digital Research, Inc.
---------------------------------------------------
-end of pass 1
-end of pass 2
-    1:     integer sz, flags, x, c, i, k, prime
-    2:     1 sz = 8190
-    3:     2 DIM FLAGS(8191)
-    4:     3 PRINT "10 iterations"
-    5:     4 FOR X = 1 TO 10
-    6:     5 c = 0
-    7:     6 FOR I = 0 TO sz
-    8:     7 FLAGS(I) = 1
-    9:     8 NEXT I
-   10:     9 FOR I = 0 TO sz
-   11:     10 IF FLAGS(I) = 0 THEN 18
-   12:     11 PRIME = I + I + 3
-   13:     12 K = I + PRIME
-   14:     13 IF K > sz THEN 17
-   15:     14 FLAGS(K) = 0
-   16:     15 K = K + PRIME
-   17:     16 GOTO 13
-   18:     17 c = c + 1
-   19:     18 NEXT I
-   20:     19 NEXT X
-   21:     20 PRINT c," PRIMES"
-end of compilation
-no errors detected
-code area size:    338       00000152h
-data area size:    60        0000003ch
-common area size:  0         00000000h
-symbol table space remaining: 49697
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     integer sz, flags, x, c, i, k, prime
+    2:     1 sz = 8190
+    3:     2 DIM FLAGS(8191)
+    4:     3 PRINT "10 iterations"
+    5:     4 FOR X = 1 TO 10
+    6:     5 c = 0
+    7:     6 FOR I = 0 TO sz
+    8:     7 FLAGS(I) = 1
+    9:     8 NEXT I
+   10:     9 FOR I = 0 TO sz
+   11:     10 IF FLAGS(I) = 0 THEN 18
+   12:     11 PRIME = I + I + 3
+   13:     12 K = I + PRIME
+   14:     13 IF K > sz THEN 17
+   15:     14 FLAGS(K) = 0
+   16:     15 K = K + PRIME
+   17:     16 GOTO 13
+   18:     17 c = c + 1
+   19:     18 NEXT I
+   20:     19 NEXT X
+   21:     20 PRINT c," PRIMES"
+end of compilation
+no errors detected
+code area size:    338       00000152h
+data area size:    60        0000003ch
+common area size:  0         00000000h
+symbol table space remaining: 49697
 --------------------------------------------------
 LINK68 Overlay Linker                  Release 0.f
 Serial No. XXXX-0000           All Rights Reserved
@@ -6375,143 +6375,143 @@ Copyright (c) 1983          Digital Research, Inc.
 
 sieve.o,cb68.l68 
 building ttt
---------------------------------------------------
-CB68 CBASIC Compiler                   Version 1.0
-Serial No. 3123-0000-000061    All Rights Reserved
-Copyright (c) 1983          Digital Research, Inc.
---------------------------------------------------
-end of pass 1
-end of pass 2
-    1:     1  REM Tic Tac Toe solving app that learns what WOPR learned: you can
->'t win
-    2:     2  REM Only three starting positions are examined. Others are just re
->flections of these
-    3:     3  REM b   -- The board
-    4:     4  REM al  -- Alpha, for pruning
-    5:     5  REM be  -- Beta, for pruning
-    6:     6  REM l   -- Top-level loop iteration
-    7:     7  REM wi  -- The winning piece (0 none, 1 X, 2, O )
-    8:     8  REM re  -- Resulting score of 4000/minmax board position. 5 draw, 
->6 X win, 4 Y win
-    9:     9  REM sx  -- Stack array for "recursion" X can be P, V, A, or B for 
->those variables.
-   10:     10 REM v   -- Value of a board position
-   11:     11 REM st  -- Stack Pointer. Even for alpha/beta pruning Minimize ply
->s, Odd for Maximize
-   12:     12 REM p   -- Current position where a new piece is played
-   13:     18 REM mc  -- Move count total for debugging. Should be a multiple of
-> 6493
-   14:     19 REM Note: Can't use real recursion with GOSUB because stack is lim
->ited to roughly 5 deep
-   15:     20 REM       BASIC doesn't support goto/gosub using arrays for target
-> line numbers
-   16:     integer b, al, be, l, wi, re, v, st, p, mc, sp, sv, sa, sb
-   17:     30 DIM b(9)
-   18:     32 DIM sp(10)
-   19:     34 DIM sv(10)
-   20:     36 DIM sa(10)
-   21:     37 DIM sb(10)
-   22:     38 mc = 0
-   23:     40 FOR l = 1 TO 1
-   24:     41 mc = 0
-   25:     42 al = 2
-   26:     43 be = 9
-   27:     44 b(0) = 1
-   28:     45 GOSUB 4000
-   29:     58 al = 2
-   30:     59 be = 9
-   31:     60 b(0) = 0
-   32:     61 b(1) = 1
-   33:     62 GOSUB 4000
-   34:     68 al = 2
-   35:     69 be = 9
-   36:     70 b(1) = 0
-   37:     71 b(4) = 1
-   38:     72 GOSUB 4000
-   39:     73 b(4) = 0
-   40:     74 REM print "mc: "; mc; "  l is "; l
-   41:     80 NEXT l
-   42:     85 print "for "; l - 1; " iterations"
-   43:     87 PRINT "final move count "; mc
-   44:     100 goto 5000
-   45:     
-   46:     2000 wi = b(0)
-   47:     2010 IF 0 = wi then GOTO 2100
-   48:     2020 IF wi = b(1) AND wi = b(2) THEN RETURN
-   49:     2030 IF wi = b(3) AND wi = b(6) THEN RETURN
-   50:     2100 wi = b(3)
-   51:     2110 IF 0 = wi then GOTO 2200
-   52:     2120 IF wi = b(4) AND wi = b(5) THEN RETURN
-   53:     2200 wi = b(6)
-   54:     2210 IF 0 = wi then GOTO 2300
-   55:     2220 IF wi = b(7) AND wi = b(8) THEN RETURN
-   56:     2300 wi = b(1)
-   57:     2310 IF 0 = wi then GOTO 2400
-   58:     2320 IF wi = b(4) AND wi = b(7) THEN RETURN
-   59:     2400 wi = b(2)
-   60:     2410 IF 0 = wi then GOTO 2500
-   61:     2420 IF wi = b(5) AND wi = b(8) THEN RETURN
-   62:     2500 wi = b(4)
-   63:     2510 IF 0 = wi THEN RETURN
-   64:     2520 IF wi = b(0) AND wi = b(8) THEN RETURN
-   65:     2530 IF wi = b(2) AND wi = b(6) THEN RETURN
-   66:     2540 wi = 0
-   67:     2550 RETURN
-   68:     
-   69:     4000 REM minmax function to find score of a board position
-   70:     4010 REM recursion is simulated with gotos
-   71:     4030 st = 0
-   72:     4040 v = 0
-   73:     4060 re = 0
-   74:     4100 mc = mc + 1
-   75:     4102 REM gosub 3000
-   76:     4104 IF st < 4 THEN GOTO 4150
-   77:     4105 GOSUB 2000
-   78:     4106 IF 0 = wi THEN GOTO 4140
-   79:     4110 IF wi = 1 THEN re = 6: GOTO 4280
-   80:     4115 re = 4
-   81:     4116 GOTO 4280
-   82:     4140 IF st = 8 THEN re = 5: GOTO 4280
-   83:     4150 IF st AND 1 THEN v = 2 ELSE v = 9
-   84:     4160 p = 0
-   85:     4180 IF 0 <> b(p) THEN GOTO 4500
-   86:     4200 IF st AND 1 THEN b(p) = 1 ELSE b(p) = 2
-   87:     4210 sp(st) = p
-   88:     4230 sv(st) = v
-   89:     4245 sa(st) = al
-   90:     4246 sb(st) = be
-   91:     4260 st = st + 1
-   92:     4270 GOTO 4100
-   93:     4280 st = st - 1
-   94:     4290 p = sp(st)
-   95:     4310 v = sv(st)
-   96:     4325 al = sa(st)
-   97:     4326 be = sb(st)
-   98:     4328 b(p) = 0
-   99:     4330 IF st AND 1 THEN GOTO 4340
-  100:     4331 IF re = 4 THEN GOTO 4530
-  101:     4332 IF re < v THEN v = re
-  102:     4334 IF v < be THEN be = v
-  103:     4336 IF be <= al THEN GOTO 4520
-  104:     4338 GOTO 4500
-  105:     4340 IF re = 6 THEN GOTO 4530
-  106:     4341 IF re > v THEN v = re
-  107:     4342 IF v > al THEN al = v
-  108:     4344 IF al >= be THEN GOTO 4520
-  109:     4500 p = p + 1
-  110:     4505 IF p < 9 THEN GOTO 4180
-  111:     4520 re = v
-  112:     4530 IF st = 0 THEN RETURN
-  113:     4540 GOTO 4280
-  114:     
-  115:     5000 end
-  116:     
-end of compilation
-no errors detected
-code area size:    1802      0000070ah
-data area size:    104       00000068h
-common area size:  0         00000000h
-symbol table space remaining: 46989
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     1  REM Tic Tac Toe solving app that learns what WOPR learned: you can
+>'t win
+    2:     2  REM Only three starting positions are examined. Others are just re
+>flections of these
+    3:     3  REM b   -- The board
+    4:     4  REM al  -- Alpha, for pruning
+    5:     5  REM be  -- Beta, for pruning
+    6:     6  REM l   -- Top-level loop iteration
+    7:     7  REM wi  -- The winning piece (0 none, 1 X, 2, O )
+    8:     8  REM re  -- Resulting score of 4000/minmax board position. 5 draw, 
+>6 X win, 4 Y win
+    9:     9  REM sx  -- Stack array for "recursion" X can be P, V, A, or B for 
+>those variables.
+   10:     10 REM v   -- Value of a board position
+   11:     11 REM st  -- Stack Pointer. Even for alpha/beta pruning Minimize ply
+>s, Odd for Maximize
+   12:     12 REM p   -- Current position where a new piece is played
+   13:     18 REM mc  -- Move count total for debugging. Should be a multiple of
+> 6493
+   14:     19 REM Note: Can't use real recursion with GOSUB because stack is lim
+>ited to roughly 5 deep
+   15:     20 REM       BASIC doesn't support goto/gosub using arrays for target
+> line numbers
+   16:     integer b, al, be, l, wi, re, v, st, p, mc, sp, sv, sa, sb
+   17:     30 DIM b(9)
+   18:     32 DIM sp(10)
+   19:     34 DIM sv(10)
+   20:     36 DIM sa(10)
+   21:     37 DIM sb(10)
+   22:     38 mc = 0
+   23:     40 FOR l = 1 TO 1
+   24:     41 mc = 0
+   25:     42 al = 2
+   26:     43 be = 9
+   27:     44 b(0) = 1
+   28:     45 GOSUB 4000
+   29:     58 al = 2
+   30:     59 be = 9
+   31:     60 b(0) = 0
+   32:     61 b(1) = 1
+   33:     62 GOSUB 4000
+   34:     68 al = 2
+   35:     69 be = 9
+   36:     70 b(1) = 0
+   37:     71 b(4) = 1
+   38:     72 GOSUB 4000
+   39:     73 b(4) = 0
+   40:     74 REM print "mc: "; mc; "  l is "; l
+   41:     80 NEXT l
+   42:     85 print "for "; l - 1; " iterations"
+   43:     87 PRINT "final move count "; mc
+   44:     100 goto 5000
+   45:     
+   46:     2000 wi = b(0)
+   47:     2010 IF 0 = wi then GOTO 2100
+   48:     2020 IF wi = b(1) AND wi = b(2) THEN RETURN
+   49:     2030 IF wi = b(3) AND wi = b(6) THEN RETURN
+   50:     2100 wi = b(3)
+   51:     2110 IF 0 = wi then GOTO 2200
+   52:     2120 IF wi = b(4) AND wi = b(5) THEN RETURN
+   53:     2200 wi = b(6)
+   54:     2210 IF 0 = wi then GOTO 2300
+   55:     2220 IF wi = b(7) AND wi = b(8) THEN RETURN
+   56:     2300 wi = b(1)
+   57:     2310 IF 0 = wi then GOTO 2400
+   58:     2320 IF wi = b(4) AND wi = b(7) THEN RETURN
+   59:     2400 wi = b(2)
+   60:     2410 IF 0 = wi then GOTO 2500
+   61:     2420 IF wi = b(5) AND wi = b(8) THEN RETURN
+   62:     2500 wi = b(4)
+   63:     2510 IF 0 = wi THEN RETURN
+   64:     2520 IF wi = b(0) AND wi = b(8) THEN RETURN
+   65:     2530 IF wi = b(2) AND wi = b(6) THEN RETURN
+   66:     2540 wi = 0
+   67:     2550 RETURN
+   68:     
+   69:     4000 REM minmax function to find score of a board position
+   70:     4010 REM recursion is simulated with gotos
+   71:     4030 st = 0
+   72:     4040 v = 0
+   73:     4060 re = 0
+   74:     4100 mc = mc + 1
+   75:     4102 REM gosub 3000
+   76:     4104 IF st < 4 THEN GOTO 4150
+   77:     4105 GOSUB 2000
+   78:     4106 IF 0 = wi THEN GOTO 4140
+   79:     4110 IF wi = 1 THEN re = 6: GOTO 4280
+   80:     4115 re = 4
+   81:     4116 GOTO 4280
+   82:     4140 IF st = 8 THEN re = 5: GOTO 4280
+   83:     4150 IF st AND 1 THEN v = 2 ELSE v = 9
+   84:     4160 p = 0
+   85:     4180 IF 0 <> b(p) THEN GOTO 4500
+   86:     4200 IF st AND 1 THEN b(p) = 1 ELSE b(p) = 2
+   87:     4210 sp(st) = p
+   88:     4230 sv(st) = v
+   89:     4245 sa(st) = al
+   90:     4246 sb(st) = be
+   91:     4260 st = st + 1
+   92:     4270 GOTO 4100
+   93:     4280 st = st - 1
+   94:     4290 p = sp(st)
+   95:     4310 v = sv(st)
+   96:     4325 al = sa(st)
+   97:     4326 be = sb(st)
+   98:     4328 b(p) = 0
+   99:     4330 IF st AND 1 THEN GOTO 4340
+  100:     4331 IF re = 4 THEN GOTO 4530
+  101:     4332 IF re < v THEN v = re
+  102:     4334 IF v < be THEN be = v
+  103:     4336 IF be <= al THEN GOTO 4520
+  104:     4338 GOTO 4500
+  105:     4340 IF re = 6 THEN GOTO 4530
+  106:     4341 IF re > v THEN v = re
+  107:     4342 IF v > al THEN al = v
+  108:     4344 IF al >= be THEN GOTO 4520
+  109:     4500 p = p + 1
+  110:     4505 IF p < 9 THEN GOTO 4180
+  111:     4520 re = v
+  112:     4530 IF st = 0 THEN RETURN
+  113:     4540 GOTO 4280
+  114:     
+  115:     5000 end
+  116:     
+end of compilation
+no errors detected
+code area size:    1802      0000070ah
+data area size:    104       00000068h
+common area size:  0         00000000h
+symbol table space remaining: 46989
 --------------------------------------------------
 LINK68 Overlay Linker                  Release 0.f
 Serial No. XXXX-0000           All Rights Reserved
@@ -6520,86 +6520,86 @@ Copyright (c) 1983          Digital Research, Inc.
 
 ttt.o,cb68.l68 
 building mm
---------------------------------------------------
-CB68 CBASIC Compiler                   Version 1.0
-Serial No. 3123-0000-000061    All Rights Reserved
-Copyright (c) 1983          Digital Research, Inc.
---------------------------------------------------
-end of pass 1
-end of pass 2
-    1:     REM A PROGRAM ID MULTIPLY MATRICES. 465880 EXPECTED RESULT
-    2:     rem runs 30x faster with integer than the default floating point
-    3:     rem integer M, N, A, I, J, C, B, K
-    4:     25 M = 20 : N = 20
-    5:     50 SUM = 0
-    6:     60 GOSUB 150
-    7:     65 REM PRINT "DIMENSIONED"
-    8:     70 GOSUB 200
-    9:     75 REM PRINT "A FILLED"
-   10:     80 GOSUB 280
-   11:     85 REM PRINT "B FILLED"
-   12:     90 GOSUB 360
-   13:     95 REM PRINT "C FILLED"
-   14:     100 GOSUB 440
-   15:     105 REM PRINT 1 "MULTIPLIED"
-   16:     110 GOSUB 540
-   17:     120 PRINT "SUM = ";SUM
-   18:     130 PRINT CHR$(7)
-   19:     140 GOTO 9999
-   20:     150 REM DIMENSION
-   21:     160 DIM A(20,20)
-   22:     170 DIM B(20,20)
-   23:     180 DIM C(20,20)
-   24:     190 RETURN
-   25:     200 REM FILL A
-   26:     210 FOR I = 1 TO 20
-   27:     220 FOR J = 1 TO 20
-   28:     230 A(I,J) = I + J
-   29:     240 NEXT
-   30:     250 NEXT
-   31:     260 RETURN
-   32:     270 REM *************
-   33:     280 REM FILL B
-   34:     290 FOR I = 1 TO 20
-   35:     300 FOR J = 1 TO 20
-   36:     310 B(I,J) = INT((I+J)/J)
-   37:     320 NEXT
-   38:     330 NEXT
-   39:     340 RETURN
-   40:     350 REM **********
-   41:     360 REM FILL C
-   42:     370 FOR I = 1 TO 20
-   43:     380 FOR J = 1 TO 20
-   44:     390 C(I,J) = 0
-   45:     400 NEXT
-   46:     410 NEXT
-   47:     420 RETURN
-   48:     430 REM **************
-   49:     440 REM ************ MULTIPLY
-   50:     450 FOR I = 1 TO 20
-   51:     460 FOR J = 1 TO 20
-   52:     470 FOR K = 1 TO 20
-   53:     480 C(I,J) = C(I,J) + A(I,K)*B(K,J)
-   54:     490 NEXT
-   55:     500 NEXT
-   56:     510 NEXT
-   57:     520 RETURN
-   58:     530 REM **************
-   59:     540 REM *************** SUMMIT
-   60:     550 FOR I = 1 TO 20
-   61:     560 FOR J = 1 TO 20
-   62:     570 SUM = SUM + C(I,J)
-   63:     580 NEXT
-   64:     590 NEXT
-   65:     600 RETURN
-   66:     610 REM ************************(
-   67:     9999 end
-end of compilation
-no errors detected
-code area size:    1822      0000071eh
-data area size:    72        00000048h
-common area size:  0         00000000h
-symbol table space remaining: 48461
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     REM A PROGRAM ID MULTIPLY MATRICES. 465880 EXPECTED RESULT
+    2:     rem runs 30x faster with integer than the default floating point
+    3:     rem integer M, N, A, I, J, C, B, K
+    4:     25 M = 20 : N = 20
+    5:     50 SUM = 0
+    6:     60 GOSUB 150
+    7:     65 REM PRINT "DIMENSIONED"
+    8:     70 GOSUB 200
+    9:     75 REM PRINT "A FILLED"
+   10:     80 GOSUB 280
+   11:     85 REM PRINT "B FILLED"
+   12:     90 GOSUB 360
+   13:     95 REM PRINT "C FILLED"
+   14:     100 GOSUB 440
+   15:     105 REM PRINT 1 "MULTIPLIED"
+   16:     110 GOSUB 540
+   17:     120 PRINT "SUM = ";SUM
+   18:     130 PRINT CHR$(7)
+   19:     140 GOTO 9999
+   20:     150 REM DIMENSION
+   21:     160 DIM A(20,20)
+   22:     170 DIM B(20,20)
+   23:     180 DIM C(20,20)
+   24:     190 RETURN
+   25:     200 REM FILL A
+   26:     210 FOR I = 1 TO 20
+   27:     220 FOR J = 1 TO 20
+   28:     230 A(I,J) = I + J
+   29:     240 NEXT
+   30:     250 NEXT
+   31:     260 RETURN
+   32:     270 REM *************
+   33:     280 REM FILL B
+   34:     290 FOR I = 1 TO 20
+   35:     300 FOR J = 1 TO 20
+   36:     310 B(I,J) = INT((I+J)/J)
+   37:     320 NEXT
+   38:     330 NEXT
+   39:     340 RETURN
+   40:     350 REM **********
+   41:     360 REM FILL C
+   42:     370 FOR I = 1 TO 20
+   43:     380 FOR J = 1 TO 20
+   44:     390 C(I,J) = 0
+   45:     400 NEXT
+   46:     410 NEXT
+   47:     420 RETURN
+   48:     430 REM **************
+   49:     440 REM ************ MULTIPLY
+   50:     450 FOR I = 1 TO 20
+   51:     460 FOR J = 1 TO 20
+   52:     470 FOR K = 1 TO 20
+   53:     480 C(I,J) = C(I,J) + A(I,K)*B(K,J)
+   54:     490 NEXT
+   55:     500 NEXT
+   56:     510 NEXT
+   57:     520 RETURN
+   58:     530 REM **************
+   59:     540 REM *************** SUMMIT
+   60:     550 FOR I = 1 TO 20
+   61:     560 FOR J = 1 TO 20
+   62:     570 SUM = SUM + C(I,J)
+   63:     580 NEXT
+   64:     590 NEXT
+   65:     600 RETURN
+   66:     610 REM ************************(
+   67:     9999 end
+end of compilation
+no errors detected
+code area size:    1822      0000071eh
+data area size:    72        00000048h
+common area size:  0         00000000h
+symbol table space remaining: 48461
 --------------------------------------------------
 LINK68 Overlay Linker                  Release 0.f
 Serial No. XXXX-0000           All Rights Reserved
@@ -6640,18 +6640,18 @@ iteration count: 10
 running TM
 test malloc completed with great success
 running TTT68U
-moves: 64930
+moves: 64930
 running T_SETJMP
 second
 back in main
 falling out of main
 running TCHK
-chk trap invocations (4 expected): 4
-tchk completed with great success
+chk trap invocations (4 expected): 4
+tchk completed with great success
 running TMOVEP
-i t z y I U 
-values: 69747A79, 4955
-tmovep completed with great success
+i t z y I U 
+values: 69747A79, 4955
+tmovep completed with great success
 running MM
 summ is: 465880
 compiler test cpmcv12 
@@ -6733,7 +6733,7 @@ result of read at offset 0: 512
 running TPI
 314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
 running TTT68U
-moves: 64930
+moves: 64930
 running T_SETJMP
 second
 back in main
@@ -6862,12 +6862,12 @@ i32 -280000 % -4: 0
 i32 -280000 / -4: 70000
 tmuldiv ended with great success
 running TCHK
-chk trap invocations (4 expected): 4
-tchk completed with great success
+chk trap invocations (4 expected): 4
+tchk completed with great success
 running TMOVEP
-i t z y I U 
-values: 69747A79, 4955
-tmovep completed with great success
+i t z y I U 
+values: 69747A79, 4955
+tmovep completed with great success
 test an -t david lee 
 a delve id
 a delved i
@@ -6912,13 +6912,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     386
-  dictionary: 381
+total ms:     367
+  dictionary: 362
   generate:   4
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-1,000 ms for 1 iterations
+0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -6947,10 +6947,10 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-496.295013 milliseconds
+462.493011 milliseconds
 test m68.elf ttt.68k 1 
-move count:      6493
-iteration count: 1
+move count:      6493
+iteration count: 1
 test com cp/m 2.2 emulator 
 BASIC Rev. 5.03
 [CP/M Version]
@@ -6958,4 +6958,4 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Wed 05/14/2025 11:21:47.27 
+Wed 05/14/2025 14:45:49.72 

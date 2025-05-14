@@ -1685,6 +1685,27 @@ static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
     }
 } //update_result_errno
 
+void send_character( uint8_t c )
+{
+    #if defined( _WIN32 ) || defined( WATCOM )
+        if ( 10 == c )
+        {
+            fflush( stdout );
+            _setmode( _fileno( stdout ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
+        }
+    #endif
+
+    printf( "%c", c );
+
+    #if defined( _WIN32 ) || defined( WATCOM )
+        if ( 10 == c )
+        {
+            fflush( stdout );
+            _setmode( _fileno( stdout ), _O_TEXT ); // back in text mode
+        }
+    #endif
+} //send_character
+
 #ifdef M68K
 extern "C" long syscall( long number, ... );
 #endif
@@ -1752,7 +1773,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             if ( 12 != ACCESS_REG( REG_ARG0 ) )
             {
-                printf( "%c", (uint8_t) ACCESS_REG( REG_ARG0 ) );
+                send_character( (uint8_t) ACCESS_REG( REG_ARG0 ) );
                 fflush( stdout );
             }
             update_result_errno( cpu, 0 );
@@ -4134,7 +4155,7 @@ bool cpm_read_console( char * buf, size_t bufsize, uint8_t & out_len )
         }
         else
         {
-            printf( "%c", ch );
+            send_character( ch );
             fflush( stdout );
             buf[ out_len++ ] = ch;
         }
@@ -5005,10 +5026,10 @@ void emulator_invoke_68k_trap3( m68000 & cpu ) // bios
         case 4: // write console character
         {
             uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
-            if ( 0x0d != ch && 0 != ch )  // skip carriage return because line feed turns into cr+lf. Also, cp/m 68k as.68k v1 outputs a null character; ignore it.
+            if ( 0 != ch )  // cp/m 68k assembler as.68k v1 outputs a null character; ignore it.
             {
                 tracer.Trace( "  bios write console: %02x == '%c'\n", ch, printable( ch ) );
-                printf( "%c", ch );
+                send_character( ch );
                 fflush( stdout );
             }
         }
@@ -5053,7 +5074,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             uint8_t ch = (uint8_t) get_next_kbd_char();
             ACCESS_REG( REG_RESULT ) = map_input( ch );
             tracer.Trace( "  bdos console in: %02x == '%c'\n", ch, printable( ch ) );
-            printf( "%c", ch );
+            send_character( ch );
             fflush( stdout );
             break;
         }
@@ -5064,10 +5085,10 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             // a subsequent ^c terminates the application. ^q resumes output then ^c has no effect.
 
             uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
-            if ( 0x0d != ch && 0 != ch )  // skip carriage return because line feed turns into cr+lf. Also, cp/m 68k as.68k v1 outputs a null character; ignore it.
+            if ( 0 != ch )  // cp/m 68k assembler as.68k v1 outputs a null character; ignore it.
             {
                 tracer.Trace( "  bdos console out: %02x == '%c'\n", ch, printable( ch ) );
-                printf( "%c", ch );
+                send_character( ch );
                 fflush( stdout );
             }
 
@@ -5093,12 +5114,9 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             else // output
             {
                 uint8_t ch = ( 0xff & ACCESS_REG( REG_ARG0 ) );
-                if ( 0x0d != ch )             // skip carriage return because line feed turns into cr+lf
-                {
-                    tracer.Trace( "  bdos console i/o output: %02x == '%c'\n", ch, printable( ch ) );
-                    printf( "%c", ch );
-                    fflush( stdout );
-                }
+                tracer.Trace( "  bdos console i/o output: %02x == '%c'\n", ch, printable( ch ) );
+                send_character( ch );
+                fflush( stdout );
             }
             break;
         }
@@ -5107,7 +5125,10 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             char * str = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             char * pdollar = strchr( str, '$' );
             if ( pdollar )
+            {
                 tracer.Trace( "   string: %.*s\n", pdollar - str, str );
+                tracer.TraceBinaryData( (uint8_t *) str, (uint32_t) ( pdollar - str ), 4 );
+            }
             uint32_t count = 0;
             while ( '$' != *str )
             {
@@ -5118,8 +5139,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 }
 
                 uint8_t ch = *str++;
-                if ( 0x0d != ch )              // skip carriage return because line feed turns into cr+lf
-                    printf( "%c", ch );
+                send_character( ch );
             }
             fflush( stdout );
             break;

@@ -1,7 +1,7 @@
 .data
 
-str_failures: .dc.b 'chk trap invocations (4 expected): %lu',13,10,0,$
-buffer: .dc.b 'tchk completed with great success',13,10,0,$
+str_failures: .dc.b 'chk trap invocations (4 expected): %lu',10,0,$
+buffer: .dc.b 'tchk completed with great success',10,0,$
 
 ex_vector: .dc.w 6
 ex_new: .dc.l 0
