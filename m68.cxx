@@ -4574,6 +4574,8 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     return true;
 } //load_cpm68k
 
+#ifndef M68K
+
 bool IsAFolder( const char * pc )
 {
     struct stat file_stat;
@@ -4781,6 +4783,8 @@ void ParseFoundFile( char * pfile )
                     g_DMA[1], g_DMA[2], g_DMA[3], g_DMA[4], g_DMA[5], g_DMA[6], g_DMA[7], g_DMA[8],
                     g_DMA[9], g_DMA[10],  g_DMA[11] );
 } //ParseFoundFile
+
+#endif //M68K
 
 bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
 {
@@ -5252,6 +5256,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 tracer.Trace( "ERROR: can't parse filename in close call\n" );
             break;
         }
+#ifndef M68K
         case 17: // search for first. 
         {
             // Use the FCB and write directory entries to the DMA address, then point to
@@ -5383,6 +5388,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 tracer.Trace( "ERROR: can't parse filename for search for first\n" );
             break;
         }
+#endif
         case 19: // delete file. return 255 if file not found and 0..3 directory code otherwise
         {
             FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
