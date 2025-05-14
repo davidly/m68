@@ -72,6 +72,12 @@ echo test m68.elf ttt.68k 1
 echo test m68.elf ttt.68k 1 >>%outputfile%
 %_runcmd% -h:60 c_tests\m68.elf cpm\ttt.68k 1 >>%outputfile%
 
+echo test com cp/m 2.2 emulator
+echo test com cp/m 2.2 emulator >>%outputfile%
+pushd com
+%_M68runcmd% -h:60 COM.68K MBASIC.COM HELLO.BAS >>..\%outputfile%
+popd
+
 goto :alldone
 
 :appRun
