@@ -59,7 +59,7 @@ struct m68000
                 isp = flip_endian32( * (uint32_t *) mem );        // the first 4 bytes of RAM hold the supervisor stack pointer
                 pc = flip_endian32( * (uint32_t *) ( mem + 4 ) ); // the next 4 byteshave the boot address
             #endif
-    
+
             aregs[ 7 ] = isp;                      // start out with the supervisor stack
         }
 
@@ -271,7 +271,7 @@ private:
     uint16_t add16( uint16_t a, uint16_t b, bool setflags, bool setx, bool addx );
     uint8_t add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx );
     bool check_condition( uint16_t c );
-    template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior );
+    template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior, bool addition );
     uint8_t bcd_add( uint8_t a, uint8_t b );
     uint8_t bcd_sub( uint8_t a, uint8_t b );
     bool handle_trap( uint16_t vector, uint32_t pc_return );

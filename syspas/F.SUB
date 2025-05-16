@@ -1,0 +1,13 @@
+fortran $1.for
+code $1.i
+ulinker -l $1.o $1.obj ftnlib.obj paslib.obj
+era $1.obj
+lo68 -r -o $1.68k s.o $1.o clib
+era $1.o
+
+tran $1.for
+code $1.i
+ulinker -l $1.o $1.obj ftnlib.obj paslib.obj
+era $1.obj
+lo68 -r -o $1.68k s.o $1.o clib
+era $1.o

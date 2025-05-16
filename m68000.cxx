@@ -574,7 +574,7 @@ void m68000::trace_state()
             else if ( 4 == op_mode ) // btst using register
             {
                 op_size = 2; // always 32-bit
-                tracer.Trace( "btst d%u, %s\n", effective_string() );
+                tracer.Trace( "btst d%u, %s\n", op_reg, effective_string() );
             }
             else if ( 0x22 == bits11_6 ) // bclr using address
             {
@@ -1013,6 +1013,8 @@ void m68000::trace_state()
             unhandled();
     }
 
+    //tracer.Trace( "1412fa: " ); tracer.TraceBinaryData( getmem( 0x1412fa ), 0x20, 4 );
+    //tracer.Trace( "14128a: " ); tracer.TraceBinaryData( getmem( 0x14128a ), 0x20, 4 );
     //tracer.Trace( "b224: %#x\n", getui32( 0xb224 ) );
     //tracer.Trace( "80a28964: " ); tracer.TraceBinaryData( getmem( 0x80a28964 ), 4, 4 );
 
@@ -1020,7 +1022,7 @@ void m68000::trace_state()
     op_size = save_op_size;
 } //trace_state
 
-template < typename T, typename W > inline void m68000::set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior )
+template < typename T, typename W > inline void m68000::set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior, bool addition )
 {
     assert( sizeof( W ) == ( 2 * sizeof( T ) ) );
     T signbit = (T) ( 1 << ( sizeof( T ) * 8 - 1 ) );
@@ -1036,8 +1038,14 @@ template < typename T, typename W > inline void m68000::set_flags( T a, T b, T r
     }
     else
         setflag_z( 0 == result );
+
     setflag_c( 0 != ( result_wide & ( ( (W) signbit ) << 1 ) ) );
-    setflag_v( ( b_neg == r_neg ) && ( a_neg != b_neg ) );
+
+    if ( addition )
+        setflag_v( ( b_neg != r_neg ) && ( a_neg == b_neg ) );
+    else
+        setflag_v( ( b_neg == r_neg ) && ( a_neg != b_neg ) );
+
     if ( setx )
         setflag_x( flag_c() );
 } //set_flags
@@ -1048,7 +1056,7 @@ uint32_t m68000::sub32( uint32_t a, uint32_t b, bool setflags, bool setx, bool s
     uint32_t result = (uint32_t) result_wide;
 
     if ( setflags )
-        set_flags( a, b, result, result_wide, setx, subx );
+        set_flags( a, b, result, result_wide, setx, subx, false );
 
     return result;
 } //sub32
@@ -1059,7 +1067,7 @@ uint16_t m68000::sub16( uint16_t a, uint16_t b, bool setflags, bool setx, bool s
     uint16_t result = (uint16_t) result_wide;
 
     if ( setflags )
-        set_flags( a, b, result, result_wide, setx, subx );
+        set_flags( a, b, result, result_wide, setx, subx, false );
 
     return result;
 } //sub16
@@ -1070,7 +1078,7 @@ uint8_t m68000::sub8( uint8_t a, uint8_t b, bool setflags, bool setx, bool subx 
     uint8_t result = (uint8_t) result_wide;
 
     if ( setflags )
-        set_flags( a, b, result, result_wide, setx, subx );
+        set_flags( a, b, result, result_wide, setx, subx, false );
 
     return result;
 } //sub8
@@ -1081,7 +1089,7 @@ uint32_t m68000::add32( uint32_t a, uint32_t b, bool setflags, bool setx, bool a
     uint32_t result = (uint32_t) result_wide;
 
     if ( setflags )
-        set_flags( a, b, result, result_wide, setx, addx );
+        set_flags( a, b, result, result_wide, setx, addx, true );
 
     return result;
 } //add32
@@ -1092,7 +1100,7 @@ uint16_t m68000::add16( uint16_t a, uint16_t b, bool setflags, bool setx, bool a
     uint16_t result = (uint16_t) result_wide;
 
     if ( setflags )
-        set_flags( a, b, result, result_wide, setx, addx );
+        set_flags( a, b, result, result_wide, setx, addx, true );
 
     return result;
 } //add16
@@ -1103,7 +1111,7 @@ uint8_t m68000::add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx 
     uint8_t result = (uint8_t) result_wide;
 
     if ( setflags )
-        set_flags( a, b, result, result_wide, setx, addx );
+        set_flags( a, b, result, result_wide, setx, addx, true );
 
     return result;
 } //add8
@@ -2030,17 +2038,18 @@ uint64_t m68000::run()
                     }
                     else if ( 0x11 == bits11_7 && 0 == ea_mode ) // ext
                     {
-                        bool is_long = opbit( 6 );
-                        if ( is_long )
+                        if ( 3 == op_mode )
                         {
                             dregs[ ea_reg ].l = sign_extend( dregs[ ea_reg ].l, 15 );
                             set_nzcv32( dregs[ ea_reg ].l );
                         }
-                        else
+                        else if ( 2 == op_mode )
                         {
                             dregs[ ea_reg ].w = sign_extend16( dregs[ ea_reg ].w, 7 );
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
+                        else
+                            unhandled();
                     }
                     else if ( 0xa == bits11_8 ) // tst
                     {

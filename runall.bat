@@ -38,7 +38,7 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 
-set _compList=cpm mtpascal cb68 cpmcv11 cpmcv12
+set _compList=cpm mtpascal cb68 cpmcv11 cpmcv12 syspas sysfor
 
 ( for %%a in (%_compList%) do ( call :compRun %%a ) )
 

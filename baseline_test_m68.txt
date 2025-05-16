@@ -1,4 +1,4 @@
-Wed 05/14/2025 14:45:20.23 
+Fri 05/16/2025 10:21:23.14 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-34.849998 milliseconds
+27.055999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 14, hour 21, min 45, sec 27
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 14, hour 16, min 45, sec 27
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 14, hour 13, min 45, sec 27
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 14, hour 13, min 45, sec 27
+before TZ is set: tz: '(null)', year: 2025, month 5, day 16, hour 17, min 21, sec 28
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 16, hour 12, min 21, sec 28
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 16, hour 9, min 21, sec 28
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 16, hour 9, min 21, sec 28
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5828,9 +5828,9 @@ test taddsubm
   result 1110 flags 300
   result 4444 flags 300
   result 11111111 flags 300
-  result 99999999 flags 30a
+  result 99999999 flags 308
   result 11111110 flags 300
-  result 99999999 flags 30a
+  result 99999999 flags 308
 test tea 
 result is 103
 result is 98
@@ -6868,6 +6868,373 @@ running TMOVEP
 i t z y I U 
 values: 69747A79, 4955
 tmovep completed with great success
+compiler test syspas 
+building e
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+ E        [1166952 bytes]
+          {1166018 bytes}
+
+0 errors.  41 lines.  File e.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+E        - E           Code size = 196
+Total code size = 196
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+building sieve
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+ SIEVE    [1166894 bytes]
+          {1166160 bytes}
+
+0 errors.  31 lines.  File sieve.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+SIEVE    - SIEVE       Code size = 172
+Total code size = 172
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+building ttt
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+    WINNER2  [1166358 bytes]
+             {1162636 bytes}
+    LOOKFORW [1166264 bytes]
+             {1164744 bytes}
+    MINMAX   [1166004 bytes]
+             {1164374 bytes}
+    RUNIT    [1166036 bytes]
+             {1165784 bytes}
+ TTT      [1166150 bytes]
+          {1165456 bytes}
+
+0 errors.  252 lines.  File ttt.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+WINNER2  - WINNER2     Code size = 426
+LOOKFORW - LOOKFORW    Code size = 172
+MINMAX   - MINMAX      Code size = 278
+RUNIT    - RUNIT       Code size = 82
+TTT      - TTT         Code size = 222
+Total code size = 1180
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+building mm
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+    FILLA    [1166548 bytes]
+             {1166334 bytes}
+    FILLB    [1166502 bytes]
+             {1166276 bytes}
+    FILLC    [1166456 bytes]
+             {1166248 bytes}
+    MATMULT  [1166376 bytes]
+             {1165948 bytes}
+    SUMMIT   [1166364 bytes]
+             {1166158 bytes}
+ MATRIX   [1166512 bytes]
+          {1166284 bytes}
+
+0 errors.  77 lines.  File mm.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+FILLA    - FILLA       Code size = 90
+FILLB    - FILLB       Code size = 94
+FILLC    - FILLC       Code size = 84
+MATMULT  - MATMULT     Code size = 202
+SUMMIT   - SUMMIT      Code size = 88
+MATRIX   - MATRIX      Code size = 76
+Total code size = 634
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+running E
+271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
+done
+running SIEVE
+count of primes: 1899
+running TTT
+begin, loops 1
+moves evaluated:        6493
+iterations:             1
+running MM
+summ is: 465880
+compiler test sysfor 
+building e
+MC68000 Fortran77 Compiler  V2.1               01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+E      [1165300 bytes]
+       {1163560 bytes}
+
+
+0 errors.  36 lines.  File e.for
+Smallest available space: 1165300 bytes.
+MC68000 Code Generator  V2.1                   01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+E        - E           Code size = 302
+Total code size = 302
+MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+building sieve
+MC68000 Fortran77 Compiler  V2.1               01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+SIEVE  [1165172 bytes]
+       {1163952 bytes}
+
+
+0 errors.  28 lines.  File sieve.for
+Smallest available space: 1165172 bytes.
+MC68000 Code Generator  V2.1                   01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+SIEVE    - SIEVE       Code size = 242
+Total code size = 242
+MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+building ttt
+MC68000 Fortran77 Compiler  V2.1               01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+TTT    [1164212 bytes]
+       {1163512 bytes}
+RUNMM  [1164158 bytes]
+       {1163956 bytes}
+WINNER [1164062 bytes]
+       {1162220 bytes}
+MINMAX [1164008 bytes]
+       {1157010 bytes}
+
+
+0 errors.  207 lines.  File ttt.for
+Smallest available space: 1164008 bytes.
+MC68000 Code Generator  V2.1                   01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+TTT      - TTT         Code size = 256
+RUNMM    - RUNMM       Code size = 72
+WINNER   - WINNER      Code size = 272
+MINMAX   - MINMAX      Code size = 1202
+Total code size = 1802
+MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+running E
+ 27
+ 1
+ 8
+ 2
+ 8
+ 1
+ 8
+ 2
+ 8
+ 4
+ 5
+ 9
+ 0
+ 4
+ 5
+ 2
+ 3
+ 5
+ 3
+ 6
+ 0
+ 2
+ 8
+ 7
+ 4
+ 7
+ 1
+ 3
+ 5
+ 2
+ 6
+ 6
+ 2
+ 4
+ 9
+ 7
+ 7
+ 5
+ 7
+ 2
+ 4
+ 7
+ 0
+ 9
+ 3
+ 6
+ 9
+ 9
+ 9
+ 5
+ 9
+ 5
+ 7
+ 4
+ 9
+ 6
+ 6
+ 9
+ 6
+ 7
+ 6
+ 2
+ 7
+ 7
+ 2
+ 4
+ 0
+ 7
+ 6
+ 6
+ 3
+ 0
+ 3
+ 5
+ 3
+ 5
+ 4
+ 7
+ 5
+ 9
+ 4
+ 5
+ 7
+ 1
+ 3
+ 8
+ 2
+ 1
+ 7
+ 8
+ 5
+ 2
+ 5
+ 1
+ 6
+ 6
+ 4
+ 2
+ 7
+ 4
+ 2
+ 7
+ 4
+ 6
+ 6
+ 3
+ 9
+ 1
+ 9
+ 3
+ 2
+ 0
+ 0
+ 3
+ 0
+ 5
+ 9
+ 9
+ 2
+ 1
+ 8
+ 1
+ 7
+ 4
+ 1
+ 3
+ 5
+ 9
+ 6
+ 6
+ 2
+ 9
+ 0
+ 4
+ 3
+ 5
+ 7
+ 2
+ 9
+ 0
+ 0
+ 3
+ 3
+ 4
+ 2
+ 9
+ 5
+ 2
+ 6
+ 0
+ 5
+ 9
+ 5
+ 6
+ 3
+ 0
+ 7
+ 3
+ 8
+ 1
+ 3
+ 2
+ 3
+ 2
+ 8
+ 6
+ 2
+ 7
+ 9
+ 4
+ 3
+ 4
+ 9
+ 0
+ 7
+ 6
+ 3
+ 2
+ 3
+ 3
+ 8
+ 2
+ 9
+ 8
+ 8
+ 0
+ 7
+ 5
+ 3
+ 1
+ 9
+  done
+running SIEVE
+ 10 iterations
+   1899 primes
+
+Programmed STOP 
+running TTT
+  moves:   6493
 test an -t david lee 
 a delve id
 a delved i
@@ -6912,13 +7279,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     367
-  dictionary: 362
-  generate:   4
+total ms:     270
+  dictionary: 266
+  generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-0 ms for 1 iterations
+1,000 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -6947,7 +7314,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-462.493011 milliseconds
+357.264007 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -6958,4 +7325,4 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Wed 05/14/2025 14:45:49.72 
+Fri 05/16/2025 10:21:48.71 
