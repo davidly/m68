@@ -100,6 +100,13 @@ cb68 folder:
     * m.bat/m.sh: builds BASIC apps
     * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
 
+com folder:
+
+    * COM.68K: CP/M v2.2 + 8080 emulator for CP/M 68K. I don't know its origins. I've tested it running in m68 using a variety of CP/M v2.2 tools in my cpm_compilers repo.
+    * MBASIC.COM: Microsoft BASIC interpreter
+    * TTT.BAS/E.BAS/ASCIIART.BAS/SIEVE.BAS/HELLO.BAS: various test programs for mbasic.
+    * TTTCPM.COM: cp/m 2.2 app to prove you can't win at tic-tac-toe  
+    
 notes/bugs:
 
     * C++ exceptions don't work due to _start not initializing them for newlib
