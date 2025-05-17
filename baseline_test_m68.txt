@@ -1,4 +1,4 @@
-Fri 05/16/2025 10:21:23.14 
+Sat 05/17/2025  8:59:56.85 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-27.055999 milliseconds
+25.297000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 16, hour 17, min 21, sec 28
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 16, hour 12, min 21, sec 28
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 16, hour 9, min 21, sec 28
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 16, hour 9, min 21, sec 28
+before TZ is set: tz: '(null)', year: 2025, month 5, day 17, hour 16, min 0, sec 2
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 17, hour 11, min 0, sec 2
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 17, hour 8, min 0, sec 2
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 17, hour 8, min 0, sec 2
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -7022,7 +7022,7 @@ MINMAX [1164008 bytes]
        {1157010 bytes}
 
 
-0 errors.  207 lines.  File ttt.for
+0 errors.  206 lines.  File ttt.for
 Smallest available space: 1164008 bytes.
 MC68000 Code Generator  V2.1                   01-Dec-83
 (C) Copyright 1983 Silicon Valley Software, Inc.
@@ -7036,198 +7036,7 @@ MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
 running E
- 27
- 1
- 8
- 2
- 8
- 1
- 8
- 2
- 8
- 4
- 5
- 9
- 0
- 4
- 5
- 2
- 3
- 5
- 3
- 6
- 0
- 2
- 8
- 7
- 4
- 7
- 1
- 3
- 5
- 2
- 6
- 6
- 2
- 4
- 9
- 7
- 7
- 5
- 7
- 2
- 4
- 7
- 0
- 9
- 3
- 6
- 9
- 9
- 9
- 5
- 9
- 5
- 7
- 4
- 9
- 6
- 6
- 9
- 6
- 7
- 6
- 2
- 7
- 7
- 2
- 4
- 0
- 7
- 6
- 6
- 3
- 0
- 3
- 5
- 3
- 5
- 4
- 7
- 5
- 9
- 4
- 5
- 7
- 1
- 3
- 8
- 2
- 1
- 7
- 8
- 5
- 2
- 5
- 1
- 6
- 6
- 4
- 2
- 7
- 4
- 2
- 7
- 4
- 6
- 6
- 3
- 9
- 1
- 9
- 3
- 2
- 0
- 0
- 3
- 0
- 5
- 9
- 9
- 2
- 1
- 8
- 1
- 7
- 4
- 1
- 3
- 5
- 9
- 6
- 6
- 2
- 9
- 0
- 4
- 3
- 5
- 7
- 2
- 9
- 0
- 0
- 3
- 3
- 4
- 2
- 9
- 5
- 2
- 6
- 0
- 5
- 9
- 5
- 6
- 3
- 0
- 7
- 3
- 8
- 1
- 3
- 2
- 3
- 2
- 8
- 6
- 2
- 7
- 9
- 4
- 3
- 4
- 9
- 0
- 7
- 6
- 3
- 2
- 3
- 3
- 8
- 2
- 9
- 8
- 8
- 0
- 7
- 5
- 3
- 1
- 9
-  done
+271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319  done
 running SIEVE
  10 iterations
    1899 primes
@@ -7279,13 +7088,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     270
-  dictionary: 266
+total ms:     272
+  dictionary: 267
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-1,000 ms for 1 iterations
+0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -7314,7 +7123,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-357.264007 milliseconds
+358.842010 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7325,4 +7134,4 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Fri 05/16/2025 10:21:48.71 
+Sat 05/17/2025  9:00:22.35 
