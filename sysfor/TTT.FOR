@@ -20,7 +20,6 @@ C    piece blank: 0
           b( l ) = 0
  6    continue
 
-
 C      do 10 l = 1, 100, 1
       do 10 l = 1, 1, 1
           mc = 0

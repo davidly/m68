@@ -27,8 +27,8 @@
   320 write( *, 2001 ) x
       goto 220
   400 write( *, 2010 )
- 2000 format( 1X, I1 )
- 2001 format( 1X, I2 )
+ 2000 format( $, I1 )
+ 2001 format( $, I2 )
  2010 format( '  done' )
       end
 

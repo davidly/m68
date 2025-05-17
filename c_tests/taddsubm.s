@@ -114,7 +114,6 @@ main:
     jsr (%a3)
     adda #12, %a7
 
-
 # addx/subx long
     move #0, %ccr
     lea along + 4, %a0
