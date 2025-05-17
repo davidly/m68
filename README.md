@@ -106,6 +106,13 @@ com folder:
     * MBASIC.COM: Microsoft BASIC interpreter
     * TTT.BAS/E.BAS/ASCIIART.BAS/SIEVE.BAS/HELLO.BAS: various test programs for mbasic.
     * TTTCPM.COM: cp/m 2.2 app to prove you can't win at tic-tac-toe  
+    * com.68k running in m68 was tested with Wordstar as well.
+
+sysfor and syspas folders:
+
+    * Silicon Valley Software FORTRAN and Pascal compilers
+    * *.sh and *.bat: scripts to build and run test apps
+    * e.pas, ttt.pas, sieve.pas, mm.pas, e.for, ttt.for, sieve.for: test apps
     
 notes/bugs:
 
