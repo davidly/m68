@@ -75,6 +75,7 @@ cpm folder:
     * standard distribution of the Digital Research C compiler, assembler, and linker with support files
     * e.c, sieve.c, tm.c, ttt.c: apps that can be built with the C compiler running in m68
     * ttt68u.s: a 68000 assembly version of ttt with loops unrolled for performance.
+    * e68.s and sieve68.s: 68000 assembly versions of these benchmarks
     * tchk.s: validates the chk instruction since I can't get the compilers to generate code using it
     * m.bat/m.sh: builds C apps
     * ma.bat/ma.sh: builds .s assembly apps
@@ -112,11 +113,28 @@ sysfor and syspas folders:
 
     * Silicon Valley Software FORTRAN and Pascal compilers
     * *.sh and *.bat: scripts to build and run test apps
-    * e.pas, ttt.pas, sieve.pas, mm.pas, e.for, ttt.for, sieve.for: test apps
+    * e.pas, ttt.pas, sieve.pas, mm.pas, e.for, ttt.for, sieve.for, mm.for: test apps
     
 notes/bugs:
 
     * C++ exceptions don't work due to _start not initializing them for newlib
-    * Only the subset of CP/M 68K BDOS and BIOS functions required to run the compilers, assembler, and linker along with some test apps have been implemented.
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
+
+compiler and assembler benchmark performance:
+
+    * source code, tools, and build scripts for all benchmarks are in this repo
+    * DR = Digital Research
+    * SVS = Silicon Valley Software
+    * g++ = GNU C++ cross compiler m68k-elf-gcc (GCC) 8.2.0
+    * ms = milliseconds
+    * DR C v1.3 has text in cp68.68k that indicates v1.2, but it ships with CP/M 68K v1.3
+    * times on the 68008 are with CP/M 68K and include significant relocatable binary load times
+    * I haven't figured out how to use the modern g++ compiler to produce CP/M 68K binaries
+    * much of the g++ e instruction count is consumed by division calculations
+    * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance
+    * assembly code always wins
+
+![table](https://github.com/user-attachments/assets/d63bf5f3-a464-4ff1-8b08-d14e13e44ac4)
+
+
     
