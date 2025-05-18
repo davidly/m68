@@ -30,7 +30,7 @@ _start:
 
         jsr main
 
-                  jsr __libc_fini_array
+        jsr __libc_fini_array
         bra exit_emulator
 
   .global _init

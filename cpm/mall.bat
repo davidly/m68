@@ -31,12 +31,22 @@ set _asmlist=ttt68u tchk tmovep
 
 ( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
 
+set _justasmlist=e68 sieve68
+
+( for %%a in (%_justasmlist%) do ( call :justasmRun %%a ) )
+
 goto :alldone
 
 :asmRun
 
 echo building %~1
 call ma.bat %~1
+exit /b 0
+
+:justasmRun
+
+echo building %~1
+call maa.bat %~1
 exit /b 0
 
 :alldone

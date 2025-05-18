@@ -13,7 +13,7 @@ if "%1" == "rvos" (
   set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
-set _forlist=e sieve ttt
+set _forlist=e sieve ttt mm
 
 ( for %%a in (%_forlist%) do ( call :forrun %%a ) )
 

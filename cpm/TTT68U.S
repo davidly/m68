@@ -10,7 +10,8 @@ moves_string: .dc.b 'moves: %lu',10,0
 failure_string: .dc.b 'result isn't a tie',10,0
 
 .globl winprocs
-.comm winprocs,36
+winprocs:
+.ds 36
 
 piecex equ 1
 pieceo equ 2

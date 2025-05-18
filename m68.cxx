@@ -5120,7 +5120,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             }
             break;
         }
-        case 9: // send $-terminated string to stdout
+        case 9: // print string. send $-terminated string to stdout
         {
             char * str = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             char * pdollar = strchr( str, '$' );

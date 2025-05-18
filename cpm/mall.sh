@@ -31,4 +31,10 @@ do
     ma.sh $arg
 done
 
+for arg in e68 sieve68
+do
+    echo building $arg
+    maa.sh $arg
+done
+
 

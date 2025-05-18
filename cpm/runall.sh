@@ -16,7 +16,7 @@ if [ "$_m68runcmd" = "" ]; then
     _m68runcmd="../m68"
 fi
 
-for arg in E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK TMOVEP MM
+for arg in E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK TMOVEP MM E68 SIEVE68
 do
   echo running $arg
   $_m68runcmd -h:1 $arg.68K

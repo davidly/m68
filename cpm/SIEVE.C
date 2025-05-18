@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 #define SIZE 8190
-typedef int bool;
 
 char flags[SIZE+1];
 
