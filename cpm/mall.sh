@@ -25,13 +25,13 @@ do
     m.sh $arg
 done
 
-for arg in ttt68u tchk tmovep
+for arg in tchk tmovep
 do
     echo building $arg
     ma.sh $arg
 done
 
-for arg in e68 sieve68
+for arg in ttt68u e68 sieve68
 do
     echo building $arg
     maa.sh $arg

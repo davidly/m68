@@ -1,4 +1,4 @@
-Sun 05/18/2025  6:39:56.13 
+Sun 05/18/2025 11:54:13.52 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-28.158000 milliseconds
+25.645999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: '(null)', year: 2025, month 5, day 18, hour 13, min 40, sec 2
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 18, hour 8, min 40, sec 2
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 18, hour 5, min 40, sec 2
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 18, hour 5, min 40, sec 2
+before TZ is set: tz: '(null)', year: 2025, month 5, day 18, hour 18, min 54, sec 19
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 18, hour 13, min 54, sec 19
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 18, hour 10, min 54, sec 19
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 18, hour 10, min 54, sec 19
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5708,6 +5708,7 @@ test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
+getrusage user time in ms: 1000, system time 0
 sleepy time ended with great success
 test tbcd 
 result is 0x7 flags 0
@@ -5855,9 +5856,9 @@ building tpi
 building t_setjmp
 building tmuldiv
 building mm
-building ttt68u
 building tchk
 building tmovep
+building ttt68u
 building e68
 building sieve68
 running E
@@ -5927,7 +5928,8 @@ result of read at offset 0: 512
 running TPI
 314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
 running TTT68U
-moves: 64930
+6493 moves
+1 iterations
 running T_SETJMP
 second
 back in main
@@ -7116,13 +7118,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     271
-  dictionary: 267
+total ms:     276
+  dictionary: 272
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-0 ms for 1 iterations
+1,000 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -7151,7 +7153,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-348.171997 milliseconds
+357.178985 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7162,4 +7164,4 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Sun 05/18/2025  6:40:22.37 
+Sun 05/18/2025 11:54:39.79 

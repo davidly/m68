@@ -27,11 +27,11 @@ exit /b 0
 
 :makeasm
 
-set _asmlist=ttt68u tchk tmovep
+set _asmlist=tchk tmovep
 
 ( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
 
-set _justasmlist=e68 sieve68
+set _justasmlist=ttt68u e68 sieve68
 
 ( for %%a in (%_justasmlist%) do ( call :justasmRun %%a ) )
 
