@@ -122,6 +122,7 @@ notes/bugs:
 
 compiler and assembler benchmark performance:
 
+    * source code, tools, and build scripts for all benchmarks are in this repo
     * DR = Digital Research
     * SVS = Silicon Valley Software
     * g++ = GNU C++ cross compiler m68k-elf-gcc (GCC) 8.2.0
