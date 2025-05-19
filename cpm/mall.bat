@@ -27,7 +27,7 @@ exit /b 0
 
 :makeasm
 
-set _asmlist=tchk tmovep
+set _asmlist=tchk tmovep tea tbcd taddsubm tshift
 
 ( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
 

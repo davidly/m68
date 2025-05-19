@@ -25,7 +25,7 @@ do
     m.sh $arg
 done
 
-for arg in tchk tmovep
+for arg in tchk tmovep tea tbcd taddsubm tshift
 do
     echo building $arg
     ma.sh $arg

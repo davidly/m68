@@ -19,7 +19,7 @@ if %errorlevel% neq 0 (
   goto eof
 )
 
-%_M68runcmd% lo68.68k -r -u_nofloat -o %1.68k s.o %1.o clib
+%_M68runcmd% lo68.68k -x -r -u_nofloat -o %1.68k s.o %1.o clib
 
 if %errorlevel% neq 0 (
   echo linker lo68 exit code: %errorlevel%

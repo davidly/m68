@@ -958,6 +958,37 @@ static void backslash_to_slash( char * p )
     }
 } //backslash_to_slash
 
+class Win32BinaryMode
+{
+    int prevmode;
+    bool modeset;
+
+    public:
+        Win32BinaryMode( bool set ) : modeset( false ), prevmode( 0 )
+        {
+            #if defined( _WIN32 )
+                if ( set )
+                {
+                    fflush( stdout );
+                    prevmode = _setmode( _fileno( stdout ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
+                    modeset = true;
+                    tracer.Trace( "set to binary mode\n" );
+                }
+            #endif
+        }
+    
+        ~Win32BinaryMode()
+        {
+            #if defined( _WIN32 )
+                if ( modeset )
+                {
+                    fflush( stdout );
+                    _setmode( _fileno( stdout ), prevmode ); // likely back in text mode
+                }
+            #endif
+        }
+};
+
 #ifdef _WIN32
 
 static void slash_to_backslash( char * p )
@@ -1687,23 +1718,8 @@ static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
 
 void send_character( uint8_t c )
 {
-    #if defined( _WIN32 ) || defined( WATCOM )
-        if ( 10 == c )
-        {
-            fflush( stdout );
-            _setmode( _fileno( stdout ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
-        }
-    #endif
-
+    Win32BinaryMode bm( 10 == c );
     printf( "%c", c );
-
-    #if defined( _WIN32 ) || defined( WATCOM )
-        if ( 10 == c )
-        {
-            fflush( stdout );
-            _setmode( _fileno( stdout ), _O_TEXT ); // back in text mode
-        }
-    #endif
 } //send_character
 
 #ifdef M68K
@@ -2054,6 +2070,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tracer.Trace( "  writing '%.*s'\n", (int) count, p );
 
                 tracer.TraceBinaryData( p, (uint32_t) count, 4 );
+                Win32BinaryMode bm( descriptor <= 2 );
                 size_t written = write( descriptor, p, (int) count );
                 update_result_errno( cpu, (REG_TYPE) written );
             }
@@ -2834,6 +2851,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( (REG_TYPE) pvec->iov_base ) );
 
 #ifdef _WIN32
+            Win32BinaryMode bm( descriptor <= 2 );
             int64_t result = write( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
 #else
             struct iovec vec_local;
@@ -3283,7 +3301,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 void emulator_invoke_68k_trap15( m68000 & cpu )
 {
     uint16_t svc = cpu.getui16( cpu.pc + 2 ); // two bytes that are two bytes past the trap instruction
-    tracer.Trace( "68k trap 16: svc %u, reg0 %x\n", svc, ACCESS_REG( 0 ) );
+    tracer.Trace( "68k trap 15: svc %u, reg0 %x\n", svc, ACCESS_REG( 0 ) );
 
     switch( svc )
     {
@@ -3298,11 +3316,9 @@ void emulator_invoke_68k_trap15( m68000 & cpu )
         case 1: // putch
         {
             uint8_t val = (uint8_t) ACCESS_REG( 0 );
-            if ( 0xd != val )
-            {
-                size_t written = write( 1, &val, 1 );
-                update_result_errno( cpu, (REG_TYPE) written );
-            }
+            Win32BinaryMode bm( 10 == val );
+            size_t written = write( 1, &val, 1 );
+            update_result_errno( cpu, (REG_TYPE) written );
             break;
         }
         default:

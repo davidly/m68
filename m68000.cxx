@@ -1116,7 +1116,7 @@ uint8_t m68000::add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx 
     return result;
 } //add8
 
-uint8_t m68000::bcd_add( uint8_t a, uint8_t b )
+uint8_t m68000::bcd_add( uint8_t a, uint8_t b ) // N and V are undefined, but the 68008 sets them
 {
     uint8_t carry_lo = 0;
     uint8_t sum_lo = ( a & 0xf ) + ( b & 0xf ) + (uint8_t) flag_x();
@@ -1142,7 +1142,7 @@ uint8_t m68000::bcd_add( uint8_t a, uint8_t b )
     return result;
 } //bcd_add
 
-uint8_t m68000::bcd_sub( uint8_t a, uint8_t b )
+uint8_t m68000::bcd_sub( uint8_t a, uint8_t b ) // N and V are undefined, but the 68008 sets them
 {
     uint8_t borrow_lo = 0;
     uint8_t diff_lo = ( a & 0xf ) - ( b & 0xf ) - (uint8_t) flag_x();

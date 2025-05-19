@@ -1,6 +1,3 @@
-#define true 1
-#define false 0
-
 #define ScoreWin 6
 #define ScoreTie 5
 #define ScoreLose  4
@@ -150,7 +147,7 @@ ttype LookForWinner()
 
 ttype pos0func()
 {
-    char x;
+    register char x;
     x = g_board[0];
     
     if ( ( x == g_board[1] && x == g_board[2] ) ||
@@ -162,7 +159,7 @@ ttype pos0func()
 
 ttype pos1func()
 {
-    char x;
+    register char x;
     x = g_board[1];
     
     if ( ( x == g_board[0] && x == g_board[2] ) ||
@@ -173,7 +170,7 @@ ttype pos1func()
 
 ttype pos2func()
 {
-    char x;
+    register char x;
     x = g_board[2];
     
     if ( ( x == g_board[0] && x == g_board[1] ) ||
@@ -185,7 +182,7 @@ ttype pos2func()
 
 ttype pos3func()
 {
-    char x;
+    register char x;
     x = g_board[3];
     
     if ( ( x == g_board[4] && x == g_board[5] ) ||
@@ -196,7 +193,7 @@ ttype pos3func()
 
 ttype pos4func()
 {
-    char x;
+    register char x;
     x = g_board[4];
     
     if ( ( x == g_board[0] && x == g_board[8] ) ||
@@ -209,7 +206,7 @@ ttype pos4func()
 
 ttype pos5func()
 {
-    char x;
+    register char x;
     x = g_board[5];
     
     if ( ( x == g_board[3] && x == g_board[4] ) ||
@@ -220,7 +217,7 @@ ttype pos5func()
 
 ttype pos6func()
 {
-    char x;
+    register char x;
     x = g_board[6];
     
     if ( ( x == g_board[7] && x == g_board[8] ) ||
@@ -232,7 +229,7 @@ ttype pos6func()
 
 ttype pos7func()
 {
-    char x;
+    register char x;
     x = g_board[7];
     
     if ( ( x == g_board[6] && x == g_board[8] ) ||
@@ -243,7 +240,7 @@ ttype pos7func()
 
 ttype pos8func()
 {
-    char x;
+    register char x;
     x = g_board[8];
     
     if ( ( x == g_board[6] && x == g_board[7] ) ||
@@ -258,7 +255,7 @@ int * winner_functions[9];
 ttype MinMax( alpha, beta, depth, move ) ttype alpha; ttype beta; ttype depth; ttype move;
 {
     ttype pieceMove, score;   /* better perf with char than int. out of registers so use stack */
-    int p, value;    /* better perf with these as an int on Z80, 8080, and 8086 */
+    register int p, value;    /* better perf with these as an int on Z80, 8080, and 8086 */
     ttype (*winfunc)();
 
     g_moves++;

@@ -1,23 +1,25 @@
 @echo off
 setlocal
 
-set _runcmd=m68
-set _M68runcmd=..\%_runcmd%
-
+if "%1" == "" (
+  set _runcmd=m68
+  set _M68runcmd=..\m68
+) else (
 if "%1" == "nested" (
   set _runcmd=m68 -h:80 c_tests\m68.elf
-  set _M68runcmd=..\%_runcmd%
-)
-
+  set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
+) else (
 if "%1" == "armos" (
   set _runcmd=..\armos\armos -h:80 ..\armos\bin\m68
-  set _M68runcmd=..\%_runcmd%
-)
-
+  set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+) else (
 if "%1" == "rvos" (
   set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
-  set _M68runcmd=..\%_runcmd%
-)
+  set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+) else (
+  echo invalid argument
+  goto :eof
+))))
 
 set outputfile=test_m68.txt
 echo %date% %time% >%outputfile%
