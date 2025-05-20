@@ -1590,6 +1590,7 @@ static const SysCall syscalls[] =
     { "SYS_readlinkat", SYS_readlinkat },
     { "SYS_newfstatat", SYS_newfstatat },
     { "SYS_newfstat", SYS_newfstat },
+    { "SYS_fsync", SYS_fsync },
     { "SYS_fdatasync", SYS_fdatasync },
     { "SYS_exit", SYS_exit },
     { "SYS_exit_group", SYS_exit_group },
@@ -2947,6 +2948,18 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif
 
             tracer.Trace( "  tv_sec %llx, tv_nsec %llx\n", ptimespec->tv_sec, ptimespec->tv_nsec );
+            update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_fsync:
+        {
+            int descriptor = (int) ACCESS_REG( REG_ARG0 );
+
+#ifdef _WIN32
+            int result = _commit( descriptor );
+#else
+            int result = fsync( descriptor );
+#endif
             update_result_errno( cpu, result );
             break;
         }

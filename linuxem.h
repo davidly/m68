@@ -36,6 +36,7 @@
 #define SYS_readlinkat 78
 #define SYS_newfstatat 79
 #define SYS_newfstat 80
+#define SYS_fsync 82
 #define SYS_fdatasync 83
 #define SYS_exit 93
 #define SYS_exit_group 94

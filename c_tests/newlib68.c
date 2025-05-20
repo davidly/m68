@@ -218,7 +218,7 @@ off_t lseek( int fd, off_t offset, int whence )
 void * sbrk( intptr_t increment )
 {
     char * current_brk = (char *) syscall( 214, 0 );
-    long result = syscall( 214, (intptr_t) ( current_brk + increment ) );
+    long result = syscall( SYS_brk, (intptr_t) ( current_brk + increment ) );
     if ( -1 == result )
     {
         errno = ENOMEM;
@@ -235,6 +235,11 @@ long sysconf( int name )
 
     return -1;
 } //sysconf
+
+int fsync( int fd )
+{
+    return syscall( SYS_fsync, fd );
+} //fsync
 
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
