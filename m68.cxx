@@ -960,21 +960,26 @@ static void backslash_to_slash( char * p )
 
 class Win32BinaryMode
 {
-    int prevmode;
+    int prevmodeout, prevmodeerr;
     bool modeset;
 
     public:
-        Win32BinaryMode( bool set ) : modeset( false ), prevmode( 0 )
+        Win32BinaryMode( bool set ) : modeset( false ), prevmodeout( 0 ), prevmodeerr( 0 )
         {
+#if 1
             #if defined( _WIN32 )
                 if ( set )
                 {
                     fflush( stdout );
-                    prevmode = _setmode( _fileno( stdout ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
+                    fflush( stderr );
+                    _flushall();
+                    prevmodeout = _setmode( _fileno( stdout ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
+                    prevmodeerr = _setmode( _fileno( stderr ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
                     modeset = true;
-                    tracer.Trace( "set to binary mode\n" );
+                    tracer.Trace( "set to binary mode, prevmode %#x, _O_BINARY %#x, _O_TEXT %#x\n", prevmodeout, _O_BINARY, _O_TEXT );
                 }
             #endif
+#endif
         }
     
         ~Win32BinaryMode()
@@ -983,13 +988,56 @@ class Win32BinaryMode
                 if ( modeset )
                 {
                     fflush( stdout );
-                    _setmode( _fileno( stdout ), prevmode ); // likely back in text mode
+                    fflush( stderr );
+                    _flushall();
+                    tracer.Trace( "flipping back to text mode\n" );
+                    _setmode( _fileno( stdout ), prevmodeout ); // likely back in text mode
+                    _setmode( _fileno( stderr ), prevmodeerr ); // likely back in text mode
                 }
             #endif
         }
 };
 
 #ifdef _WIN32
+
+size_t WinWrite( int descriptor, uint8_t * p, int count )
+{
+    // When in text mode, Windows converts 10 to 13 10 (CR + LF). In binary mode, it doesn't.
+    // When in text mode, Windows handles UTF-8 characters properly. In binary mode, it doesn't.
+    // We don't want it to add the CR here because well-behaved DOS and CP/M apps will already have done that and Linux and Apple I apps don't need it.
+    // We can't stay in Binary mode because UTF-8 characters require Text mode to work and update the screen properly for apps like the
+    // NTVDM DOS emulator.
+    // So stay in Text mode for UTF-8 characters to work but flip to Binary mode just for the LF characters. I see SQLite does something similar.
+
+    size_t written = 0;
+    int start = 0;
+    int towrite = 0;
+
+    for ( int i = 0; i < count; i++ )
+    {
+        if ( 10 == p[ i ] )
+        {
+            if ( 0 != towrite )
+            {
+                tracer.Trace( "from loop writing from start %d, %d characters\n", start, towrite );
+                written += write( descriptor, & p[ start ], towrite );
+            }
+            Win32BinaryMode binmode( true );
+            tracer.Trace( "writing the 10 in binary mode\n" );
+            written += write( descriptor, & p[ i ], 1 );
+            towrite = 0;
+            start = i + 1;
+        }
+        else
+            towrite++;
+    }
+    if ( 0 != towrite )
+    {
+        tracer.Trace( "at end writing from start %d, %d characters\n", start, towrite );
+        written += write( descriptor, & p[ start ], towrite );
+    }
+    return written;
+} //WinWrite
 
 static void slash_to_backslash( char * p )
 {
@@ -2070,8 +2118,13 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tracer.Trace( "  writing '%.*s'\n", (int) count, p );
 
                 tracer.TraceBinaryData( p, (uint32_t) count, 4 );
-                Win32BinaryMode bm( descriptor <= 2 );
-                size_t written = write( descriptor, p, (int) count );
+                size_t written;
+#ifdef _WIN32
+                if ( 1 == descriptor || 2 == descriptor ) // stdout / stderr
+                    written = WinWrite( descriptor, p, (int) count );
+                else
+#endif
+                written = write( descriptor, p, (int) count );
                 update_result_errno( cpu, (REG_TYPE) written );
             }
             break;
@@ -2850,15 +2903,19 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 1 == descriptor || 2 == descriptor )
                 tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( (REG_TYPE) pvec->iov_base ) );
 
+            REG_TYPE result = 0;
+
 #ifdef _WIN32
-            Win32BinaryMode bm( descriptor <= 2 );
-            int64_t result = write( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
+            if ( descriptor <= 2 )
+                result = WinWrite( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
+            else
+                result = write( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
 #else
             struct iovec vec_local;
             vec_local.iov_base = cpu.getmem( (uint64_t) pvec->iov_base );
             vec_local.iov_len = pvec->iov_len;
             tracer.Trace( "  write length: %u to descriptor %d at addr %p\n", pvec->iov_len, descriptor, vec_local.iov_base );
-            int64_t result = writev( descriptor, &vec_local, ACCESS_REG( REG_ARG2 ) );
+            result = writev( descriptor, &vec_local, ACCESS_REG( REG_ARG2 ) );
 #endif
             update_result_errno( cpu, result );
             break;
