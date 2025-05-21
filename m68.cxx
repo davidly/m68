@@ -220,6 +220,7 @@ REG_TYPE g_bottom_of_stack = 0;                // just beyond where brk might mo
 REG_TYPE g_top_of_stack = 0;                   // argc, argv, penv, aux records sit above this
 CMMap g_mmap;                                  // for mmap and munmap system calls
 bool g_hostIsLittleEndian = true;              // is the host little endian?
+bool g_addCRBeforeLF = false;                  // on Windows, a command-line argument can make this true
 
 // fake descriptors.
 // /etc/timezone is not implemented, so apps running in the emulator on Windows assume UTC
@@ -930,6 +931,9 @@ static void usage( char const * perror = 0 )
 #endif
     printf( "                 -h:X   # of meg for the heap (brk space). 0..1024 are valid. default is 40\n" );
     printf( "                 -i     if -t is set, also enables instruction tracing with symbols\n" );
+#ifdef _WIN32
+    printf( "                 -l     when a LF (10) is output, allow Windows to add a CR (13) beforehand\n" );
+#endif
     printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40. 0 for CP/M\n" );
     printf( "                 -p     shows performance information at app exit\n" );
     printf( "                 -t     enable debug tracing to %ls\n", LOGFILE_NAME );
@@ -968,7 +972,7 @@ class Win32BinaryMode
         {
 #if 1
             #if defined( _WIN32 )
-                if ( set )
+                if ( set && !g_addCRBeforeLF )
                 {
                     fflush( stdout );
                     fflush( stderr );
@@ -7457,6 +7461,10 @@ int main( int argc, char * argv[] )
 
                     g_brk_commit = heap * 1024 * 1024;
                 }
+#ifdef _WIN32
+                else if ( 'l' == ca )
+                    g_addCRBeforeLF = true;
+#endif
                 else if ( 'm' == ca )
                 {
                     if ( ':' != parg[2] )
