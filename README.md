@@ -35,6 +35,7 @@ usage: M68 <M68 arguments> <executable> <app arguments>
        arguments:    -e     just show information about the elf executable; don't actually run it
                      -h:X   # of meg for the heap (brk space). 0..1024 are valid. default is 40
                      -i     if -t is set, also enables instruction tracing with symbols.
+                     -l     when a LF (10) is output, allow Windows to add a CR (13) beforehand
                      -m:X   # of meg for mmap space. 0..1024 are valid. default is 40. 0 for CP/M.
                      -p     shows performance information at app exit
                      -t     enable debug tracing to m68.log
