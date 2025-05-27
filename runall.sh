@@ -24,6 +24,7 @@ done
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw terrno mm_old ttime fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm \
+           fopentst lenum \
            tbcd tshift taddsubm tea ttt68 ttt68u;
 do
     echo $arg

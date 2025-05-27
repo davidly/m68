@@ -12,7 +12,9 @@ path=%gccpath%\bin;%path%
 set inc1=%gccpath%\lib\gcc\m68k-elf\8.2.0\include
 set inc2=%gccpath%\m68k-elf\include
 set inc3=..\
-set includes=-I%inc1% -I%inc2% -I%inc3%
+set inc4=.
+set inc5=.\bits
+set includes=-I%inc4% -I%inc5% -I%inc1% -I%inc2% -I%inc3%
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 

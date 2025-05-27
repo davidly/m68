@@ -46,6 +46,8 @@ int main()
             show_error( "unable to write to file" );
     }
 
+    fdatasync( fd );
+    fsync( fd );
     close( fd );
 
     fd = open( "trw.dat", O_RDONLY );
@@ -62,11 +64,13 @@ int main()
         }
 
         for ( j = 0; j < BUF_ELEMENTS; j++ )
+        {
             if ( buf[ j ] != i )
             {
                 printf( "j %d, buf[j] %04x, i %d\n", j, buf[j], i );
                 show_error( "data read from file isn't what was expected at point A" );
             }
+        }
     }
 
     close( fd );

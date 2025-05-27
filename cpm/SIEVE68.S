@@ -41,7 +41,7 @@ _start:
     movea.l #flags, a2
     movea.l a2, a3
     add.l #size, a3
-    add.l #2, a3
+    addq.l #2, a3
     move.l #$01010101, d0
 
   finit:                    * initialize flags to true, 4 bytes at a time

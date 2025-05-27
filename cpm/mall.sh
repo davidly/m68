@@ -19,7 +19,7 @@ fi
 
 export _m68runcmd
 
-for arg in e sieve ttt tm fileops tpi t_setjmp tmuldiv mm
+for arg in e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst
 do
     echo building $arg
     m.sh $arg

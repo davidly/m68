@@ -66,15 +66,17 @@
             #include <time.h>
         #else
             #include <sys/uio.h>
-            #include <dirent.h>
         #endif
+        #include <dirent.h>
         #include <sys/times.h>
         #include <sys/resource.h>
         #if !defined( __APPLE__ ) && !defined( M68K )
             #include <sys/sysinfo.h>
         #endif
 
-        #ifndef M68K
+        #ifdef M68K
+            DIR * fdopendir( int fd );
+        #else
             // this structure is smaller than the usermode version. I don't know of a cross-platform header with it.
 
             #define local_KERNEL_NCCS 19
@@ -229,6 +231,27 @@ const uint64_t findFirstDescriptor = 3000;
 const uint64_t timebaseFrequencyDescriptor = 3001;
 const uint64_t osreleaseDescriptor = 3002;
 
+uint64_t swap_endian64( uint64_t x )
+{
+    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
+        return flip_endian64( x );
+    return x;
+} //swap_endian64
+
+uint32_t swap_endian32( uint32_t x )
+{
+    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
+        return flip_endian32( x );
+    return x;
+} //swap_endian32
+
+uint16_t swap_endian16( uint16_t x )
+{
+    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
+        return flip_endian16( x );
+    return x;
+} //swap_endian16
+
 #pragma warning(disable: 4200) // 0-sized array
 struct linux_dirent64_syscall {
     uint64_t d_ino;     /* Inode number */
@@ -240,6 +263,13 @@ struct linux_dirent64_syscall {
     char pad
     char d_type
     */
+
+    void swap_endianness()
+    {
+        d_ino = swap_endian64( d_ino );
+        d_off = swap_endian64( d_off );
+        d_reclen = swap_endian16( d_reclen );
+    }
 };
 
 struct linux_timeval
@@ -319,6 +349,12 @@ struct pollfd_syscall {
 struct timespec_syscall {
     uint64_t tv_sec;
     uint64_t tv_nsec;
+
+    void swap_endianness()
+    {
+        tv_sec = swap_endian64( tv_sec );
+        tv_nsec = swap_endian64( tv_nsec );
+    }
 };
 
 #define SYS_NMLN 65 // appears to be true for Arm64.
@@ -374,16 +410,16 @@ struct stat_linux_syscall {
     uint64_t   st_rdev;     /* Device ID (if special file) */
     uint64_t   st_mystery_spot;
     uint64_t   st_size;     /* Total size, in bytes */
-    uint32_t   st_blksize;  /* Block size for filesystem I/O */
-    uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
+    uint64_t   st_blksize;  /* Block size for filesystem I/O */
+    uint64_t   st_blocks;   /* Number of 512 Byte blocks allocated */
 
     /* Since POSIX.1-2008, this structure supports nanosecond
        precision for the following timestamp fields.
        For the details before POSIX.1-2008, see VERSIONS. */
 
-    struct timespec  st_atim;  /* Time of last access */
-    struct timespec  st_mtim;  /* Time of last modification */
-    struct timespec  st_ctim;  /* Time of last status change */
+    struct timespec_syscall  st_atim;  /* Time of last access */
+    struct timespec_syscall  st_mtim;  /* Time of last modification */
+    struct timespec_syscall  st_ctim;  /* Time of last status change */
 
 #ifndef st_atime
 #if !defined( OLDGCC ) && !defined( M68K )
@@ -394,28 +430,25 @@ struct stat_linux_syscall {
 #endif
 
     uint64_t   st_mystery_spot_2;
+
+    void swap_endianness()
+    {
+        st_dev = swap_endian64( st_dev );
+        st_ino = swap_endian64( st_ino );
+        st_mode = swap_endian32( st_mode );
+        st_nlink = swap_endian32( st_nlink );
+        st_uid = swap_endian32( st_uid );
+        st_gid = swap_endian32( st_gid );
+        st_rdev = swap_endian64( st_rdev );
+        st_mystery_spot = swap_endian64( st_mystery_spot );
+        st_size = swap_endian64( st_size );
+        st_blksize = swap_endian64( st_blksize );
+        st_blocks = swap_endian64( st_blocks );
+        st_atim.swap_endianness();
+        st_mtim.swap_endianness();
+        st_ctim.swap_endianness();
+    }
 };
-
-uint64_t swap_endian64( uint64_t x )
-{
-    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
-        return flip_endian64( x );
-    return x;
-} //swap_endian64
-
-uint32_t swap_endian32( uint32_t x )
-{
-    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
-        return flip_endian32( x );
-    return x;
-} //swap_endian32
-
-uint16_t swap_endian16( uint16_t x )
-{
-    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
-        return flip_endian16( x );
-    return x;
-} //swap_endian16
 
 #pragma pack( push, 1 )
 
@@ -980,7 +1013,6 @@ class Win32BinaryMode
                     prevmodeout = _setmode( _fileno( stdout ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
                     prevmodeerr = _setmode( _fileno( stderr ), _O_BINARY ); // don't convert LF (10) to CR LF (13 10)
                     modeset = true;
-                    tracer.Trace( "set to binary mode, prevmode %#x, _O_BINARY %#x, _O_TEXT %#x\n", prevmodeout, _O_BINARY, _O_TEXT );
                 }
             #endif
 #endif
@@ -994,7 +1026,6 @@ class Win32BinaryMode
                     fflush( stdout );
                     fflush( stderr );
                     _flushall();
-                    tracer.Trace( "flipping back to text mode\n" );
                     _setmode( _fileno( stdout ), prevmodeout ); // likely back in text mode
                     _setmode( _fileno( stderr ), prevmodeerr ); // likely back in text mode
                 }
@@ -1022,12 +1053,9 @@ size_t WinWrite( int descriptor, uint8_t * p, int count )
         if ( 10 == p[ i ] )
         {
             if ( 0 != towrite )
-            {
-                tracer.Trace( "from loop writing from start %d, %d characters\n", start, towrite );
                 written += write( descriptor, & p[ start ], towrite );
-            }
+
             Win32BinaryMode binmode( true );
-            tracer.Trace( "writing the 10 in binary mode\n" );
             written += write( descriptor, & p[ i ], 1 );
             towrite = 0;
             start = i + 1;
@@ -1036,10 +1064,7 @@ size_t WinWrite( int descriptor, uint8_t * p, int count )
             towrite++;
     }
     if ( 0 != towrite )
-    {
-        tracer.Trace( "at end writing from start %d, %d characters\n", start, towrite );
         written += write( descriptor, & p[ start ], towrite );
-    }
     return written;
 } //WinWrite
 
@@ -1075,6 +1100,7 @@ static int windows_translate_flags( int flags )
     // 0x4000      O_TEXT             n/a                                        O_NONBLOCK
     // 0x8000      O_BINARY           n/a
     // 0x10100     n/a                O_FSYNC, O_SYNC
+    // 0x200000                                                                  O_DIRECTORY
 
     int f = flags & 3; // copy rd/wr/rdrw
 
@@ -1153,7 +1179,7 @@ static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat
     pstat->st_nlink = 1;
     pstat->st_uid = 1000;
     pstat->st_gid = 5;
-    pstat->st_rdev = 1024; // this is st_blksize on linux
+    pstat->st_rdev = 1024; // this is st_blksize on linux. larger than Blair's Disk Block
     pstat->st_size = 0;
 
     if ( descriptor >= 0 && descriptor <= 2 ) // stdin / stdout / stderr
@@ -1791,7 +1817,7 @@ void emulator_invoke_svc( CPUClass & cpu )
     static char g_acFindFirstPattern[ MAX_PATH ];
     char acPath[ MAX_PATH ];
 #else
-    #if !defined( OLDGCC ) && !defined( M68K )
+    #if !defined( OLDGCC )
         static DIR * g_FindFirst = 0;
         static uint64_t g_FindFirstDescriptor = -1;
     #endif
@@ -1967,10 +1993,11 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 0 == result )
             {
                 size_t cbStat = sizeof( struct stat_linux_syscall );
-                tracer.Trace( "  sizeof stat_linux_syscall: %zd\n", cbStat );
+                tracer.Trace( "  sizeof stat_linux_syscall: %d\n", (int) cbStat );
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
+                local_stat.swap_endianness();
                 memcpy( cpu.getmem( ACCESS_REG( REG_ARG1 ) ), & local_stat, cbStat );
-                tracer.Trace( "  file size in bytes: %zd, offsetof st_size: %zd\n", local_stat.st_size, offsetof( struct stat_linux_syscall, st_size ) );
+                tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
             }
             else
             {
@@ -1978,7 +2005,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 tracer.Trace( "  fill_pstat_windows failed\n" );
             }
 #else
-            tracer.Trace( "  sizeof struct stat: %zd\n", sizeof( struct stat ) );
+            tracer.Trace( "  sizeof struct stat: %d\n", (int) sizeof( struct stat ) );
             struct stat local_stat = {0};
             struct stat_linux_syscall local_stat_syscall = {0};
             result = fstat( descriptor, & local_stat );
@@ -2004,11 +2031,14 @@ void emulator_invoke_svc( CPUClass & cpu )
 #elif defined( OLDGCC ) || defined( M68K )
                 // no time on old gcc intended for embedded systems
 #else
-                pout->st_atim = local_stat.st_atim;
-                pout->st_mtim = local_stat.st_mtim;
-                pout->st_ctim = local_stat.st_ctim;
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
 #endif
-                tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+                tracer.Trace( "  file size %d, isdir %s\n", (int) local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
             }
             else
                 tracer.Trace( "  fstat failed, error %d\n", errno );
@@ -2191,7 +2221,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 }
                 else
 #else
-    #if !defined( OLDGCC ) && !defined( M68K )
+    #if !defined( OLDGCC )
                 if ( g_FindFirstDescriptor == descriptor )
                 {
                     if ( 0 != g_FindFirst )
@@ -2258,6 +2288,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                             pcur->d_type = 8;
                         tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off );
                         result = pcur->d_reclen;
+                        pcur->swap_endianness();
                     }
                 }
                 else
@@ -2306,7 +2337,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 }
             }
 #else
-        #if !defined( OLDGCC ) && !defined( M68K )
+        #if !defined( OLDGCC )
             tracer.Trace( "  g_FindFirstDescriptor: %d, g_FindFirst: %p\n", g_FindFirstDescriptor, g_FindFirst );
 
             if ( -1 == g_FindFirstDescriptor )
@@ -2336,10 +2367,11 @@ void emulator_invoke_svc( CPUClass & cpu )
                 else
                 {
                     pcur->d_ino = 100; // fake
-                    tracer.Trace( "  len: %zd, sizeof struct %zd\n", len, sizeof( struct linux_dirent64_syscall ) );
+                    tracer.Trace( "  len: %d, sizeof struct %d\n", (int) len, (int) sizeof( struct linux_dirent64_syscall ) );
                     size_t dname_off = offsetof( struct linux_dirent64_syscall, d_name );
-                    tracer.Trace( "  d_name offset in the struct: %zd\n", dname_off );
+                    tracer.Trace( "  d_name offset in the struct: %d\n", (int) dname_off );
                     pcur->d_reclen = dname_off + len + 1;
+                    tracer.Trace( "  reclen in the struct: %d\n", (int) pcur->d_reclen );
                     pcur->d_off = pcur->d_reclen;
                     strcpy( pcur->d_name, pent->d_name );
 
@@ -2351,8 +2383,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                     else
                         pcur->d_type = 8;
 
-                    tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off );
+                    tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d\n", pcur->d_name, (int) pcur->d_reclen, (int) pcur->d_off );
                     result = pcur->d_reclen;
+                    pcur->swap_endianness();
                 }
             }
             else
@@ -2556,6 +2589,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
 
 #ifdef _WIN32
+            int original_flags = flags;
             flags = windows_translate_flags( flags );
 
             // bugbug: directory ignored and assumed to be local (-100)
@@ -2563,8 +2597,17 @@ void emulator_invoke_svc( CPUClass & cpu )
             strcpy( acPath, pname );
             slash_to_backslash( acPath );
 
+            bool opendir = false;
+#if defined( M68 )
+            opendir = ( 0 != ( 0x200000 & original_flags ) );
+#elif defined( __riscv )
+            opendir = ( 0 != ( 0x10000 & original_flags ) );
+#else
+            opendir = ( 0 != ( 0x4000 & original_flags ) );
+#endif
+
             DWORD attr = GetFileAttributesA( acPath );
-            if ( ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
+            if ( opendir && ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
             {
                 if ( INVALID_HANDLE_VALUE != g_hFindFirst )
                 {
@@ -2583,7 +2626,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif
                 descriptor = _open( pname, flags, mode );
             }
-#else
+#else // _WIN32
 
 // if it's rvos running on Arm or armos running on risc-v, swap O_DIRECT and O_DIRECTORY
 
@@ -2599,7 +2642,7 @@ void emulator_invoke_svc( CPUClass & cpu )
     #endif // __riscv
 #endif
 
-#endif
+#endif // ifndef __APPLE__
 
 #if defined(M68) && !defined(__APPLE__) && !defined(M68K)  // macOS and 68000 share the same open flags and are different than generic linux
             flags = linux_translate_flags( flags );
@@ -2638,8 +2681,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 size_t cbStat = sizeof( struct stat_linux_syscall );
                 tracer.Trace( "  sizeof stat_linux_syscall: %zd\n", cbStat );
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
+                tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
+                local_stat.swap_endianness();
                 memcpy( cpu.getmem( ACCESS_REG( REG_ARG2 ) ), & local_stat, cbStat );
-                tracer.Trace( "  file size in bytes: %zd, offsetof st_size: %zd\n", local_stat.st_size, offsetof( struct stat_linux_syscall, st_size ) );
             }
             else
                 tracer.Trace( "  fill_pstat_windows failed\n" );
@@ -2685,9 +2729,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_ctim = local_stat.st_ctimespec;
 #else
 #ifndef M68K
-                pout->st_atim = local_stat.st_atim;
-                pout->st_mtim = local_stat.st_mtim;
-                pout->st_ctim = local_stat.st_ctim;
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
 #endif
 #endif
                 tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );

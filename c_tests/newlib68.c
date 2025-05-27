@@ -10,11 +10,12 @@
 #include <errno.h>
 #include <signal.h>
 #include <math.h>
+#include <dirent.h>
+#include <fcntl.h>
 
 #include <linuxem.h>
 
-#define O_CREAT 0x200
-#define AT_FDCWD -100
+#define LINUX_AT_FDCWD -100
 
 extern "C" void __attribute__((noreturn)) exit_emulator( int status );
 extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
@@ -63,7 +64,7 @@ extern "C" int open( const char * pathname, int flags, ... )
         va_end( ap );
     }
 
-    return (int) syscall( SYS_openat, AT_FDCWD, pathname, flags, mode ); // openat
+    return (int) syscall( SYS_openat, LINUX_AT_FDCWD, pathname, flags, mode ); // openat
 } //open
 
 extern "C" int openat( int dirfd, const char * pathname, int flags, ... )
@@ -127,10 +128,72 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
     return result;
 } //nanosleep
 
-int fstatat( int fd, const char * path, struct stat * buf, int flag )
+struct stat_linux_syscall {
+    /*
+        struct stat info run on a 64-bit RISC-V system
+      sizeof s: 128
+      offset      size field
+           0         8 st_dev
+           8         8 st_ino
+          16         4 st_mode
+          20         4 st_nlink
+          24         4 st_uid
+          28         4 st_gid
+          32         8 st_rdev
+          48         8 st_size
+          56         4 st_blksize
+          64         8 st_blocks
+          72        16 st_atim
+          88        16 st_mtim
+         104        16 st_ctim
+         120         8 st_mystery_spot_2
+    */
+
+    uint64_t   st_dev;      /* ID of device containing file */
+    uint64_t   st_ino;      /* Inode number */
+    uint32_t   st_mode;     /* File type and mode */
+    uint32_t   st_nlink;    /* Number of hard links */
+    uint32_t   st_uid;      /* User ID of owner */
+    uint32_t   st_gid;      /* Group ID of owner */
+    uint64_t   st_rdev;     /* Device ID (if special file) */
+    uint64_t   st_mystery_spot;
+    uint64_t   st_size;     /* Total size, in bytes */
+    uint64_t   st_blksize;  /* Block size for filesystem I/O */
+    uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
+
+    /* Since POSIX.1-2008, this structure supports nanosecond
+       precision for the following timestamp fields.
+       For the details before POSIX.1-2008, see VERSIONS. */
+
+    struct timespec_syscall st_atim;  /* Time of last access */
+    struct timespec_syscall st_mtim;  /* Time of last modification */
+    struct timespec_syscall st_ctim;  /* Time of last status change */
+
+    uint64_t   st_mystery_spot_2;
+};
+
+int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
 {
-    return (int) syscall( SYS_newfstatat, fd, path, buf, flag );
-}
+    struct stat_linux_syscall sls = {0};
+    int result = (int) syscall( SYS_newfstatat, fd, path, &sls, flag );
+    if ( -1 == result )
+        return result;
+
+    statbuf->st_dev = sls.st_dev;
+    statbuf->st_ino = sls.st_ino;
+    statbuf->st_mode = sls.st_mode;
+    statbuf->st_nlink = sls.st_nlink;
+    statbuf->st_uid = sls.st_uid;
+    statbuf->st_gid = sls.st_gid;
+    statbuf->st_rdev = sls.st_rdev;
+    statbuf->st_size = sls.st_size;
+    statbuf->st_blksize = sls.st_blksize;
+    statbuf->st_blocks = sls.st_blocks;
+    statbuf->st_atime = sls.st_atim.tv_sec;
+    statbuf->st_mtime = sls.st_mtim.tv_sec;
+    statbuf->st_ctime = sls.st_ctim.tv_sec;
+    return result;
+} //fstatat
 
 int getrusage( int who, struct rusage *usage )
 {
@@ -144,7 +207,7 @@ extern "C" clock_t times( struct tms * buf )
 
 int rename( const char * oldpath, const char * newpath )
 {
-    return (int) syscall( SYS_renameat, AT_FDCWD, oldpath, newpath );
+    return (int) syscall( SYS_renameat, LINUX_AT_FDCWD, oldpath, newpath );
 }
 
 int chdir( const char * path )
@@ -180,13 +243,31 @@ int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, s
 
 int unlink( const char * path )
 {
-    return (int) syscall( SYS_unlinkat, AT_FDCWD, path, 0 );
+    return (int) syscall( SYS_unlinkat, LINUX_AT_FDCWD, path, 0 );
 }
 
-int fstat( int fd, struct stat * buf )
+int fstat( int fd, struct stat * statbuf )
 {
-    return -1;
-}
+    struct stat_linux_syscall sls = {0};
+    int result = (int) syscall( SYS_newfstat, fd, &sls );
+    if ( -1 == result )
+        return result;
+
+    statbuf->st_dev = sls.st_dev;
+    statbuf->st_ino = sls.st_ino;
+    statbuf->st_mode = sls.st_mode;
+    statbuf->st_nlink = sls.st_nlink;
+    statbuf->st_uid = sls.st_uid;
+    statbuf->st_gid = sls.st_gid;
+    statbuf->st_rdev = sls.st_rdev;
+    statbuf->st_size = sls.st_size;
+    statbuf->st_blksize = sls.st_blksize;
+    statbuf->st_blocks = sls.st_blocks;
+    statbuf->st_atime = sls.st_atim.tv_sec;
+    statbuf->st_mtime = sls.st_mtim.tv_sec;
+    statbuf->st_ctime = sls.st_ctim.tv_sec;
+    return result;
+} //fstat
 
 int gettimeofday( struct timeval *tv, void *tz )
 {
@@ -240,6 +321,82 @@ int fsync( int fd )
 {
     return syscall( SYS_fsync, fd );
 } //fsync
+
+int stat( const char * pathname, struct stat * statbuf )
+{
+    return fstatat( LINUX_AT_FDCWD, pathname, statbuf, 0 );
+} //stat
+
+DIR * fdopendir( int fd )
+{
+    DIR * pd = (DIR *) malloc( sizeof( DIR ) );
+    pd->dd_fd = fd;
+    pd->dd_loc = 0;
+    pd->dd_seek = 0;
+    pd->dd_buf = (char *) malloc( 256 );
+    pd->dd_len = 256;
+    pd->dd_size = 0;
+
+    return pd;
+} //fdopendir
+
+DIR * opendir( const char * name )
+{
+    int fd = open( name, O_DIRECTORY );
+    if ( -1 == fd )
+        return 0;
+
+    return fdopendir( fd );
+} //opendir
+
+#pragma warning(disable: 4200) // 0-sized array
+struct linux_dirent64_syscall {
+    uint64_t d_ino;     /* Inode number */
+    uint64_t d_off;     /* Offset to next linux_dirent */
+    uint16_t d_reclen;  /* Length of this linux_dirent */
+    uint8_t  d_type;    /* DT_DIR (4) if a dir, DT_REG (8) if a regular file */
+    char     d_name[];
+    /* optional and not implemented. must be 0-filled
+    char pad
+    char d_type
+    */
+};
+
+struct dirent * readdir( DIR * dir )
+{
+    if ( 0 == dir )
+        return 0;
+
+    // m68 returns one file at a time as a simplification.
+
+    static uint8_t buf[ 300 ];
+    struct linux_dirent64_syscall * pdesc = (struct linux_dirent64_syscall *) &buf;
+
+    int result = syscall( SYS_getdents64, dir->dd_fd, pdesc, 1 );
+    if ( 0 == result || -1 == result )
+        return 0;
+
+    static struct dirent de = { 0 };
+    de.d_ino = pdesc->d_ino;
+    de.d_off = pdesc->d_off;
+    de.d_reclen = pdesc->d_reclen;
+    de.d_type = pdesc->d_type;
+    strcpy( de.d_name, pdesc->d_name );
+
+    return &de;
+} //readdir
+
+int closedir( DIR * dir )
+{
+    if ( 0 == dir )
+        return -1;
+
+    close( dir->dd_fd );
+    free( dir->dd_buf );
+    free( dir );
+    return 0;
+} //closedir
+
 
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */

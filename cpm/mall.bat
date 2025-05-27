@@ -13,7 +13,7 @@ if "%1" == "rvos" (
   set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
-set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm
+set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 

@@ -5,7 +5,8 @@ if "%1" == "" (set _optflag=2) else (set _optflag=%1)
 
 set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              tcmp ttypes tarray trw an terrno mm_old ttime fileops tpi ^
-             t_setjmp ba td tf tap tphi mm ts glob nantst pis tfo sleeptm
+             t_setjmp ba td tf tap tphi mm ts glob nantst pis tfo sleeptm ^
+             fopentst lenum
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 
