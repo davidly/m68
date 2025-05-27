@@ -2604,12 +2604,13 @@ void emulator_invoke_svc( CPUClass & cpu )
             bool opendir = false;
 #if defined( M68 )
             opendir = ( 0 != ( 0x200000 & original_flags ) );
-#elif defined( __riscv )
+#elif defined( RVOS )
             opendir = ( 0 != ( 0x10000 & original_flags ) );
 #else
             opendir = ( 0 != ( 0x4000 & original_flags ) );
 #endif
 
+            tracer.Trace( "  opendir: %u\n", opendir );
             DWORD attr = GetFileAttributesA( acPath );
             if ( opendir && ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
             {
