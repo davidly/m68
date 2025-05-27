@@ -23,6 +23,7 @@ _start:
     addi.l #1, %d3              /* +1 to get past the null final entry in argv */
     lsl #2, %d3                 /* multiply by 4 bytes each */
     add.l %d3, %d2              /* d2 now points to the env array */
+    move.l %d2, environ         /* update C global environment pointer */
 
     move.l %d2, -(%a7)          /* push the 3 arguments on the stack */
     move.l %d1, -(%a7)

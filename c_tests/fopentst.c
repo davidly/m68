@@ -22,6 +22,26 @@
 #define DOSTIME
 #endif
 
+void show_local_time( time_t tt, const char * ptz )
+{
+    if ( 0 != ptz )
+    {
+        char * penv = (char *) malloc( strlen( ptz ) + 4 );
+        strcpy( penv, "TZ=" );
+        strcat( penv, ptz );
+        putenv( penv );
+    }
+
+    const char * timezoneval = getenv( "TZ" );
+    if ( 0 == timezoneval )
+        timezoneval = "(null)";
+
+    struct tm * t = localtime( &tt );
+
+    printf( "tz: '%s', year: %d, month %d, day %d, hour %d, min %d, sec %d\n",
+            timezoneval, t->tm_year + 1900, 1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec );
+} //show_local_time
+
 #ifdef DOSTIME
 long portable_filelen( fp ) FILE * fp;
 #else
@@ -109,8 +129,6 @@ int main( int argc, char * argv[] )
     printf( "O_DIRECT: %#x\n", O_DIRECT );
 #endif
 
-
-
 #ifdef DOSTIME
     unlink( TEST_FILE ); /* in case it's still there. */
 #else
@@ -142,6 +160,8 @@ int main( int argc, char * argv[] )
     fstat( fd, &statbuf );
     printf( "length from fstat: %d\n", (int) statbuf.st_size );
     close( fd );
+
+    show_local_time( statbuf.st_mtime, "PST+8" );
 
     fp = fopen( TEST_FILE, "w+t" );
     if ( !fp )
