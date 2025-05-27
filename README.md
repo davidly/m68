@@ -110,6 +110,11 @@ com folder:
     * TTTCPM.COM: cp/m 2.2 app to prove you can't win at tic-tac-toe  
     * com.68k running in m68 was tested with Wordstar as well.
 
+ntvcm folder:
+
+    * mntvcm.bat: Windows build script for my ntvcm repo. ntvcm gives full Z80 + CP/M 2.2 emulation running inside of m68.
+    * tested with a variety of cp/m 2.2 apps including Turbo Pascal v3 and Wordstar.
+
 sysfor and syspas folders:
 
     * Silicon Valley Software FORTRAN and Pascal compilers
