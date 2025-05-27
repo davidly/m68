@@ -207,7 +207,7 @@ extern "C" clock_t times( struct tms * buf )
 
 int rename( const char * oldpath, const char * newpath )
 {
-    return (int) syscall( SYS_renameat, LINUX_AT_FDCWD, oldpath, newpath );
+    return (int) syscall( SYS_renameat, LINUX_AT_FDCWD, oldpath, LINUX_AT_FDCWD, newpath, 0 );
 }
 
 int chdir( const char * path )
