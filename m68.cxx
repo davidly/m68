@@ -2025,9 +2025,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_blksize = local_stat.st_blksize;
                 pout->st_blocks = local_stat.st_blocks;
 #ifdef __APPLE__
-                pout->st_atim = local_stat.st_atimespec;
-                pout->st_mtim = local_stat.st_mtimespec;
-                pout->st_ctim = local_stat.st_ctimespec;
+                pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
 #elif defined( OLDGCC ) || defined( M68K )
                 // no time on old gcc intended for embedded systems
 #else
@@ -2039,6 +2042,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
 #endif
                 tracer.Trace( "  file size %d, isdir %s\n", (int) local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+                pout->swap_endianness();
             }
             else
                 tracer.Trace( "  fstat failed, error %d\n", errno );
@@ -2724,9 +2728,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_blksize = local_stat.st_blksize;
                 pout->st_blocks = local_stat.st_blocks;
 #ifdef __APPLE__
-                pout->st_atim = local_stat.st_atimespec;
-                pout->st_mtim = local_stat.st_mtimespec;
-                pout->st_ctim = local_stat.st_ctimespec;
+                pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
 #else
 #ifndef M68K
                 pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
@@ -2738,6 +2745,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif
 #endif
                 tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+                pout->swap_endianness();
             }
 #endif
             update_result_errno( cpu, result );
