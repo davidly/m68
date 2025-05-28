@@ -9,7 +9,7 @@ gcccmd=$gccpath/bin/m68k-elf-gcc
 inc1=$gccpath/lib/gcc/m68k-elf/8.2.0/include
 inc2=$gccpath/m68k-elf/include
 inc3=..
-incpaths="-I$inc1 -I$inc2 -I$inc3"
+incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
 # M68 means we're building the m68.elf binary (vs another emulator). M68K means we're using the M68K GCC compiler to target 68000
 defines="-DTARGET_BIG_ENDIAN -DM68 -DM68K -DNDEBUG"

@@ -203,7 +203,7 @@ const REG_TYPE g_stack_commit = 128 * 1024;    // RAM to allocate for the fixed 
 
 #ifdef M68
 REG_TYPE g_brk_commit = 10 * 1024 * 1024;      // RAM to reserve if the app calls brk to allocate space. 10 meg default
-REG_TYPE g_mmap_commit = 10 * 1024 * 1024;     // RAM to reserve if the app mmap to allocate space. 10 meg default
+REG_TYPE g_mmap_commit = 0 * 1024 * 1024;      // RAM to reserve if the app mmap to allocate space. 10 meg default
 #else
 REG_TYPE g_brk_commit = 40 * 1024 * 1024;      // RAM to reserve if the app calls brk to allocate space. 40 meg default
 REG_TYPE g_mmap_commit = 40 * 1024 * 1024;     // RAM to reserve if the app mmap to allocate space. 40 meg default
@@ -4262,7 +4262,15 @@ bool write_fcb_arg( FCBCPM68K * arg, char * pc )
 
 char get_next_kbd_char()
 {
-    return (char) ConsoleConfiguration::portable_getch();
+    char c = (char) ConsoleConfiguration::portable_getch();
+    //tracer.Trace( "get_next_kbd_char got %d from portable_getch\n", c );
+    if ( 10 == c ) // linux and windows will return LF, not CR, which is what CP/M apps require
+    {
+        // many cp/m apps require CR, not LF to terminate a line
+        tracer.Trace( "  get_next_kbd_char translated LF 10 to CR 13\n" );
+        c = 13;
+    }
+    return c;
 } //get_next_kbd_char
 
 bool is_kbd_char_available()

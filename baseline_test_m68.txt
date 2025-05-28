@@ -1,4 +1,4 @@
-Tue 05/27/2025  8:12:50.12 
+Wed 05/28/2025  7:46:36.24 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.180999 milliseconds
+24.985000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4047,10 +4047,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 5, day 27, hour 15, min 12, sec 56
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 27, hour 10, min 12, sec 56
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 27, hour 7, min 12, sec 56
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 27, hour 7, min 12, sec 56
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 5, day 28, hour 14, min 46, sec 42
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 28, hour 9, min 46, sec 42
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 28, hour 6, min 46, sec 42
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 28, hour 6, min 46, sec 42
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5724,7 +5724,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 5, day 27, hour 7, min 13, sec 3
+tz: 'PST+8', year: 2025, month 5, day 28, hour 6, min 46, sec 49
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -7235,6 +7235,268 @@ running TTT
 running MM
     465880
 mm completed with great success
+compiler test forth83 
+running E
+
+68000 Forth 83 Model 
+Version 2.1.0
+Modified 03Jun84 
+200 CONSTANT DIGITS  ok
+VARIABLE ARRAY DIGITS ALLOT  ok
+VARIABLE X  ok
+  ok
+: E 
+    0 X ! 
+    ARRAY DIGITS 1 FILL 
+    0 ARRAY C! 
+    2 1 ARRAY + C! 
+ 
+    DIGITS 
+    BEGIN DUP 9 > WHILE 
+        1 - 
+        DUP 
+        BEGIN DUP 0 <> WHILE 
+            X @ OVER /MOD 
+            ROT 
+            ROT 
+            OVER ARRAY + C! 
+ 
+            SWAP 
+            OVER 1 - ARRAY + C@ 
+            10 * + 
+            X ! 
+            1 - 
+        REPEAT 
+        DROP 
+        X ? 
+    REPEAT 
+    CR 
+    ." done" CR 
+    ;  ok
+  ok
+E 27 1 8 2 8 1 8 2 8 4 5 9 0 4 5 2 3 5 3 6 0 2 8 7 4 7 1 3 5 2 6 6 2 4 9 7 7 5 7 2 4 7 0 9 3 6 9 9 9 5 9 5 7 4 9 6 6 9 6 7 6 2 7 7 2 4 0 7 6 6 3 0 3 5 3 5 4 7 5 9 4 5 7 1 3 8 2 1 7 8 5 2 5 1 6 6 4 2 7 4 2 7 4 6 6 3 9 1 9 3 2 0 0 3 0 5 9 9 2 1 8 1 7 4 1 3 5 9 6 6 2 9 0 4 3 5 7 2 9 0 0 3 3 4 2 9 5 2 6 0 5 9 5 6 3 0 7 3 8 1 3 2 3 2 8 6 2 7 9 4 3 4 9 0 7 6 3 2 3 3 8 2 9 8 8 0 7 5 3 1 9 
+done
+ ok
+  ok
+BYE 
+115 Pages
+running SIEVE
+
+68000 Forth 83 Model 
+Version 2.1.0
+Modified 03Jun84 
+8190 CONSTANT SIZE  ok
+VARIABLE FLAGS SIZE ALLOT  ok
+  ok
+: SIEVE 
+    10 0 DO 
+        FLAGS SIZE -1 FILL 
+        0 
+        SIZE 0 DO 
+            I FLAGS + C@ IF 
+                I I + 3 + 
+                DUP I + 
+                BEGIN DUP SIZE < WHILE 
+                    DUP FLAGS + 0 SWAP C! 
+                    OVER + 
+                REPEAT 
+                DROP DROP 
+                1 + 
+                THEN 
+        LOOP 
+    LOOP 
+    ." count of primes: " . 
+    ;  ok
+  ok
+SIEVE count of primes: 1899  ok
+  ok
+BYE 
+146 Pages
+running TTT
+
+68000 Forth 83 Model 
+Version 2.1.0
+Modified 03Jun84 
+( Prove you can't win at tic-tac-toe if the opponent is competent. )  ok
+( Expected visited board positions: 6493 )  ok
+  ok
+(  board: 0 1 2 )  ok
+(         3 4 5 )  ok
+(         6 7 8 )  ok
+  ok
+( true global variables )  ok
+VARIABLE board 9 ALLOT  ok
+VARIABLE moves  ok
+VARIABLE recursionDepth  ok
+  ok
+( effectively locals in MINMAX )  ok
+VARIABLE alpha  ok
+VARIABLE beta  ok
+VARIABLE pieceMove  ok
+VARIABLE val  ok
+VARIABLE boardIndex  ok
+VARIABLE score  ok
+  ok
+6 CONSTANT scoreWin  ok
+5 CONSTANT scoreTie  ok
+4 CONSTANT scoreLose  ok
+9 CONSTANT scoreMax  ok
+2 CONSTANT scoreMin  ok
+0 CONSTANT scoreInvalid  ok
+  ok
+0 CONSTANT pieceBlank  ok
+1 CONSTANT pieceX  ok
+2 CONSTANT pieceO  ok
+  ok
+board 0 + CONSTANT B0  ok
+board 1 + CONSTANT B1  ok
+board 2 + CONSTANT B2  ok
+board 3 + CONSTANT B3  ok
+board 4 + CONSTANT B4  ok
+board 5 + CONSTANT B5  ok
+board 6 + CONSTANT B6  ok
+board 7 + CONSTANT B7  ok
+board 8 + CONSTANT B8  ok
+  ok
+: LOOKFORWINNER 
+    B4 C@ 
+    DUP pieceBlank <> IF 
+        DUP B0 C@ = IF DUP B8 C@ = IF EXIT THEN THEN 
+        DUP B1 C@ = IF DUP B7 C@ = IF EXIT THEN THEN 
+        DUP B2 C@ = IF DUP B6 C@ = IF EXIT THEN THEN 
+        DUP B3 C@ = IF DUP B5 C@ = IF EXIT THEN THEN 
+    THEN 
+    DROP 
+ 
+    B0 C@ 
+    DUP pieceBlank <> IF 
+        DUP B1 C@ = IF DUP B2 C@ = IF EXIT THEN THEN 
+        DUP B3 C@ = IF DUP B6 C@ = IF EXIT THEN THEN 
+    THEN 
+    DROP 
+ 
+    B8 C@ 
+    DUP pieceBlank <> IF 
+        DUP B2 C@ = IF DUP B5 C@ = IF EXIT THEN THEN 
+        DUP B6 C@ = IF DUP B7 C@ = IF EXIT THEN THEN 
+    THEN 
+    DROP 
+ 
+    pieceBlank 
+    ;  ok
+  ok
+: dumpboard 
+    ." board: " 
+    9 0 DO 
+        I board + C@ . 
+    LOOP 
+    CR 
+    ;  ok
+  ok
+: MINMAX ( stack: alpha beta ) 
+    1 moves +! 
+    0 val ! 
+ 
+    recursionDepth @ 3 > IF 
+        LOOKFORWINNER 
+        DUP pieceBlank <> IF 
+            pieceX = IF scoreWin ELSE scoreLose THEN 
+            val ! 
+        ELSE 
+            DROP 
+            recursionDepth @ 8 = IF scoreTie val ! THEN 
+        THEN 
+    THEN 
+ 
+    0 val @ = IF 
+        recursionDepth @ 1 AND IF 
+            scoreMin val ! 
+            pieceX pieceMove ! 
+        ELSE 
+            scoreMax val ! 
+            pieceO pieceMove ! 
+        THEN 
+ 
+        beta ! 
+        alpha ! 
+        alpha @ 
+        beta @ 
+        0 boardIndex ! 
+ 
+        BEGIN boardIndex @ 9 < WHILE 
+            boardIndex @ board + C@ 0 = IF 
+                pieceMove @ board boardIndex @ + C! 
+                boardIndex @ pieceMove @ val @ 
+                1 recursionDepth +! 
+ 
+                alpha @ beta @ RECURSE 
+ 
+                -1 recursionDepth +! 
+                score ! 
+                beta ! alpha ! val ! pieceMove ! boardIndex ! 
+                pieceBlank boardIndex @ board + C! 
+ 
+                pieceX pieceMove @ = IF 
+                    score @ val @ > IF 
+                        score @ val ! 
+                        scoreWin val @ = val @ beta @ >= OR IF 
+                            10 boardIndex ! 
+                        ELSE 
+                            val @ alpha @ > IF val @ alpha ! THEN 
+                        THEN 
+                    THEN 
+                ELSE 
+                    score @ val @ < IF 
+                        score @ val ! 
+                        scoreLose val @ = val @ alpha @ <= OR IF 
+                            10 boardIndex ! 
+                        ELSE 
+                            val @ beta @ < IF val @ beta ! THEN 
+                        THEN 
+                    THEN 
+                THEN 
+            THEN 
+            1 boardIndex +! 
+        REPEAT 
+    THEN 
+ 
+    val @ 
+    ;  ok
+  ok
+: RUNIT  ( move -- ) 
+    pieceX 
+    OVER board + C!       ( make the move ) 
+    0 recursionDepth ! 
+    scoreMin scoreMax MINMAX 
+ 
+    scoreTie <> IF ." there's a bug somewhere" THEN 
+    DROP DROP             ( remove alpha and beta ) 
+ 
+    pieceBlank 
+    SWAP board + C!       ( restore the board to the original state ) 
+    ;  ok
+  ok
+: TTT 
+    board 9 pieceBlank FILL 
+ 
+    ( all other first moves are reflections of these 3 ) 
+    1 0 DO 
+        0 moves ! 
+        0 RUNIT 
+        1 RUNIT 
+        4 RUNIT 
+    LOOP 
+ 
+    ." 1 iteration" CR 
+    ." moves evaluated: " moves @ . CR 
+;  ok
+  ok
+TTT 1 iteration
+moves evaluated: 6493 
+ ok
+  ok
+BYE 
+119 Pages
 test an -t david lee 
 a delve id
 a delved i
@@ -7279,8 +7541,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     266
-  dictionary: 262
+total ms:     277
+  dictionary: 273
   generate:   3
   render:     0
 test ba tp.bas 
@@ -7314,7 +7576,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-358.878997 milliseconds
+357.821990 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7325,4 +7587,4 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Tue 05/27/2025  8:13:16.98 
+Wed 05/28/2025  7:47:03.63 

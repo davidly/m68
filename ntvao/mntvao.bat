@@ -28,8 +28,8 @@ rem generate .s files for debugging
 %gcc% %defines% %includes% %gccflags% -O%_optflag% ntvao.cxx -S -fverbose-asm -o ntvao.s
 %gcc% %defines% %includes% %gccflags% -O%_optflag% mos6502.cxx -S -fverbose-asm -o mos6502.s
 
-rem build the assembly portion with _start and syscalls
-%gcc% %includes% %gccflags% -O%_optflag% newlib68.c -S -o newlib68.s
+rem build the C runtime stubs .s file
+%gcc% %defines% %includes% %gccflags% -O%_optflag% newlib68.c -S -o newlib68.s
 
 rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
