@@ -3093,7 +3093,8 @@ void emulator_invoke_svc( CPUClass & cpu )
             ticks /= 10; // milliseconds to hundredths of a second
 #else
             sc_clk_tck = sysconf( _SC_CLK_TCK );
-            REG_TYPE ticks = times( 0 );
+            struct tms unused;
+            REG_TYPE ticks = times( &unused );
 #endif
             update_result_errno( cpu, ticks );
             break;
