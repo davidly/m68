@@ -125,6 +125,13 @@ sysfor and syspas folders:
     * Silicon Valley Software FORTRAN and Pascal compilers
     * *.sh and *.bat: scripts to build and run test apps
     * e.pas, ttt.pas, sieve.pas, mm.pas, e.for, ttt.for, sieve.for, mm.for: test apps
+
+forth83 folder:
+
+    * 68000 Forth 83 version 2.1.0
+    * m.bat/m.sh: invokes the interpreter for a Forth file
+    * e.f, sieve.f, ttt.f: sample Forth apps
+    * runall.bat/runall.sh: runs all of the sample Forth apps
     
 notes/bugs:
 
