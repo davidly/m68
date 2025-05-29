@@ -1370,6 +1370,14 @@ static int linux_translate_flags( int flags )
     if ( 0x8 & flags )
         f |= 0x400; // O_APPEND
 
+#if defined( __riscv )
+    if ( 0x200000 & flags )
+        f |= 0x10000; // O_DIRECTORY
+#else
+    if ( 0x200000 & flags )
+        f |= 0x4000; // O_DIRECTORY
+#endif
+
     tracer.Trace( "  flags translated from 68000 %x to linux %x\n", flags, f );
     return f;
 } //linux_translate_flags
@@ -3242,20 +3250,18 @@ void emulator_invoke_svc( CPUClass & cpu )
 #if defined( _WIN32 ) || defined( M68K )
                 if ( 0x5401 == request ) // TCGETS
                 {
+                    memset( pt, 0, sizeof( *pt ) );
                     if ( isatty( fd ) )
                     {
                         // populate with arbitrary but reasonable values
 
-                        memset( pt, 0, sizeof( *pt ) );
                         pt->c_iflag = 0;
                         pt->c_oflag = 5;
                         pt->c_cflag = 0xbf;
                         pt->c_lflag = 0xa30;
-                        update_result_errno( cpu, 0 );
                     }
-                    else
-                        update_result_errno( cpu, -1 );
 
+                    update_result_errno( cpu, 0 );
                     break;
                 }
                 else if ( 0x5402 == request )
@@ -3271,6 +3277,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     int result = tcgetattr( fd, &val );
                     if ( -1 == result )
                     {
+                        tracer.Trace( "  tcgetattr on fd %d failed, errno %d\n", fd, errno );
                         update_result_errno( cpu, -1 );
                         break;
                     }
