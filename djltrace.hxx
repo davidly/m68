@@ -302,10 +302,10 @@ class CDJLTrace
             ShowBinaryData( pData, length, indent, false );
         } //PrintBinaryData
 
-        static char * RenderNumberWithCommas( long long n, char * pc )
+        static char * RenderNumberWithCommas( int64_t n, char * pc )
         {
             char actmp[ 32 ];
-            long long orig = n;
+            int64_t orig = n;
 
             if ( 0 == n )
             {
