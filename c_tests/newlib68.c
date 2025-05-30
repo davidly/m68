@@ -442,9 +442,14 @@ double set_d_sign( double d, bool sign )
     return * (double *) &val;
 } //set_d_sign
 
+bool get_d_sign( double d )
+{
+    return ( 0ull != ( ( * (uint64_t *) &d ) & 0x8000000000000000 ) );
+} //get_d_sign
+
 void printdouble( double d, int precision, void (*putc)(char) )
 {
-    if ( signbit( d ) )
+    if ( get_d_sign( d ) )
     {
         (*putc)( '-' );
         d = set_d_sign( d, false );
@@ -869,14 +874,14 @@ static void _doprnt(
 } //_doprnt
 
 // override the default implementations of printf and sprintf in newlib because those
-// versions don't support 64-bit integers and floating point
+// versions don't support 64-bit integers, %z for size_t, and floating point
 
 extern int printf( const char *fmt, ... )
 {
     va_list listp;
     va_start( listp, fmt );
     _doprnt( fmt, &listp, printf_putc, 16 );
-    va_end(listp);
+    va_end( listp );
     return 0;
 } //printf
 
@@ -895,7 +900,21 @@ extern int sprintf( char *buf, const char *fmt, ... )
     copybyte_str = buf;
     _doprnt( fmt, &listp, copybyte, 16 );
     va_end( listp );
-    return strlen(buf);
+    return strlen( buf );
+} //sprintf
+
+extern int snprintf( char *buf, size_t n, const char *fmt, ... )
+{
+    static char sbuf[ 4096 ]; // pretty massive hack/bug here
+    if ( n >= sizeof( sbuf ) )
+        return 0;
+    va_list listp;
+    va_start( listp, fmt );
+    copybyte_str = sbuf;
+    _doprnt( fmt, &listp, copybyte, 16 );
+    va_end( listp );
+    strcpy( buf, sbuf );
+    return strlen( buf );
 } //sprintf
 
 extern int fprintf( FILE * fp, const char *fmt, ... )
@@ -907,6 +926,13 @@ extern int fprintf( FILE * fp, const char *fmt, ... )
     va_end( listp );
     return 0;
 } //fprintf
+
+extern int vfprintf( FILE * fp, const char * fmt, va_list args )
+{
+    g_fprintf_FILE = fp;
+    _doprnt( fmt, &args, fprintf_putc, 16 );
+    return 0;
+} //vfprintf
 
 extern char * floattoa( char * buffer, float f, int precision )
 {

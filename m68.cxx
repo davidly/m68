@@ -508,6 +508,23 @@ struct ElfHeader64
     uint16_t section_header_table_size;
     uint16_t section_header_table_entries;
     uint16_t section_with_section_names;
+
+    void swap_endianness()
+    {
+        type = swap_endian16( type );
+        machine = swap_endian16( machine );
+        version = swap_endian32( version );
+        entry_point = swap_endian64( entry_point );
+        program_header_table = swap_endian64( program_header_table );
+        section_header_table = swap_endian64( section_header_table );
+        flags = swap_endian32( flags );
+        header_size = swap_endian16( header_size );
+        program_header_table_size = swap_endian16( program_header_table_size );
+        program_header_table_entries = swap_endian16( program_header_table_entries );
+        section_header_table_size = swap_endian16( section_header_table_size );
+        section_header_table_entries = swap_endian16( section_header_table_entries );
+        section_with_section_names = swap_endian16( section_with_section_names );
+    }
 };
 
 struct ElfHeader32
@@ -596,6 +613,14 @@ struct ElfSymbol64
         return "unknown";
     } //show_info
 
+    void swap_endianness()
+    {
+        name = swap_endian32( name );
+        shndx = swap_endian16( shndx );
+        value = swap_endian64( value );
+        size = swap_endian64( size );
+    } //swap_endianness
+
     const char * show_other() const
     {
         if ( 0 == other )
@@ -680,6 +705,18 @@ struct ElfProgramHeader64
     uint64_t file_size;
     uint64_t memory_size;
     uint64_t alignment;
+
+    void swap_endianness()
+    {
+        type = swap_endian32( type );
+        flags = swap_endian32( flags );
+        offset_in_image = swap_endian64( offset_in_image );
+        virtual_address = swap_endian64( virtual_address );
+        physical_address = swap_endian64( physical_address );
+        file_size = swap_endian64( file_size );
+        memory_size = swap_endian64( memory_size );
+        alignment = swap_endian64( alignment );
+    } //swap_endianness
 
     const char * show_type() const
     {
@@ -808,6 +845,20 @@ struct ElfSectionHeader64
     uint32_t info;
     uint64_t address_alignment;
     uint64_t entry_size;
+
+    void swap_endianness()
+    {
+        name_offset = swap_endian32( name_offset );
+        type = swap_endian32( type );
+        flags = swap_endian64( flags );
+        address = swap_endian64( address );
+        offset = swap_endian64( offset );
+        size = swap_endian64( size );
+        link = swap_endian32( link );
+        info = swap_endian32( info );
+        address_alignment = swap_endian64( address_alignment );
+        entry_size = swap_endian64( entry_size );
+    } //swap_endianness
 
     const char * show_type() const
     {
@@ -1102,6 +1153,10 @@ static int windows_translate_flags( int flags )
     // 0x10100     n/a                O_FSYNC, O_SYNC
     // 0x200000                                                                  O_DIRECTORY
 
+   //               riscv64      arm32 and arm64
+   // O_DIRECT      0x4000       0x10000
+   // O_DIRECTORY   0x10000      0x4000
+
     int f = flags & 3; // copy rd/wr/rdrw
 
     f |= O_BINARY; // this is assumed on Linux systems
@@ -1381,7 +1436,37 @@ static int linux_translate_flags( int flags )
     tracer.Trace( "  flags translated from 68000 %x to linux %x\n", flags, f );
     return f;
 } //linux_translate_flags
+#endif //M68
+
+#ifdef M68K
+static int translate_open_flags_to_68k( int flags )
+{
+    int f = flags & 3; // copy rd/wr/rdrw
+
+    if ( 0x40 & flags )
+        f |= 0x200; // O_CREAT
+
+    if ( 0x80 & flags )
+        f |= 0x800; // O_EXCL
+
+    if ( 0x200 & flags )
+        f |= 0x400; // O_TRUNC
+
+    if ( 0x400 & flags )
+        f |= 0x8; // O_APPEND
+
+#if defined( RVOS )
+    if ( 0x10000 & flags )
+        f |= 0x200000; // O_DIRECTORY
+#else // ARMOS, etc.
+    if ( 0x4000 & flags )
+        f |= 0x200000; // O_DIRECTORY
 #endif
+
+    tracer.Trace( "  flags translated from 68000 %x to linux %x\n", flags, f );
+    return f;
+} //translate_open_flags_to_68k
+#endif //M68K
 
 #ifdef __APPLE__
 
@@ -1959,10 +2044,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             struct timespec_syscall local_request = * request;
 
-#if defined( M68 ) && !defined( M68K )
-            local_request.tv_sec = flip_endian64( local_request.tv_sec );
-            local_request.tv_nsec = flip_endian64( local_request.tv_nsec );
-#endif
+            local_request.tv_sec = swap_endian64( local_request.tv_sec );
+            local_request.tv_nsec = swap_endian64( local_request.tv_nsec );
 
             uint64_t ms = local_request.tv_sec * 1000 + local_request.tv_nsec / 1000000;
             tracer.Trace( "  nanosleep sec %llu, nsec %llu == %llu ms\n", local_request.tv_sec, local_request.tv_nsec, ms );
@@ -2109,8 +2192,8 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
             void * buffer = cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-            unsigned buffer_size = (unsigned) ACCESS_REG( REG_ARG2 );
-            tracer.Trace( "  syscall command SYS_read. descriptor %d, buffer %llx, buffer_size %u\n", descriptor, ACCESS_REG( REG_ARG1 ), buffer_size );
+            uint32_t buffer_size = (uint32_t) ACCESS_REG( REG_ARG2 );
+            tracer.Trace( "  syscall command SYS_read. descriptor %d, buffer_size %u, buffer %llx\n", descriptor, buffer_size, ACCESS_REG( REG_ARG1 ) );
 
             if ( 0 == descriptor ) //&& 1 == buffer_size )
             {
@@ -2577,7 +2660,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #ifdef __APPLE__
             if ( -100 == directory )
                 directory = -2; // Linux vs. MacOS
-#endif
+#endif //__APPLE__
             const char * pname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int flags = (int) ACCESS_REG( REG_ARG2 );
             int mode = (int) ACCESS_REG( REG_ARG3 );
@@ -2614,9 +2697,9 @@ void emulator_invoke_svc( CPUClass & cpu )
             opendir = ( 0 != ( 0x200000 & original_flags ) );
 #elif defined( RVOS )
             opendir = ( 0 != ( 0x10000 & original_flags ) );
-#else
+#else //RVOS
             opendir = ( 0 != ( 0x4000 & original_flags ) );
-#endif
+#endif //M68
 
             tracer.Trace( "  opendir: %u\n", opendir );
             DWORD attr = GetFileAttributesA( acPath );
@@ -2636,7 +2719,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #ifdef M68
                 if ( O_CREAT & flags )
                     mode = _S_IREAD | _S_IWRITE; // m68k passes user-related flags that conflict with these flags
-#endif
+#endif //M68
                 descriptor = _open( pname, flags, mode );
             }
 #else // _WIN32
@@ -2661,9 +2744,13 @@ void emulator_invoke_svc( CPUClass & cpu )
             flags = linux_translate_flags( flags );
 #endif
 
+#if defined( M68K ) && !defined( M68 )
+            flags = translate_open_flags_to_68k( flags );
+#endif
+
             tracer.Trace( "  final directory %d, flags %#llx, mode %x passed to openat\n", directory, flags, mode );
             descriptor = openat( directory, pname, flags, mode );
-#endif
+#endif // _WIN32
             update_result_errno( cpu, (int) descriptor );
             break;
         }
@@ -2675,7 +2762,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             int result = sysinfo( (struct sysinfo *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) );
             update_result_errno( cpu, result );
-#endif
+#endif // defined(_WIN32) || defined(__APPLE__) || defined( M68K )
             break;
         }
         case SYS_newfstatat:
@@ -2700,7 +2787,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
             else
                 tracer.Trace( "  fill_pstat_windows failed\n" );
-#else
+#else //_WIN32
             tracer.Trace( "  sizeof struct stat: %zd\n", sizeof( struct stat ) );
             struct stat local_stat = {0};
             struct stat_linux_syscall local_stat_syscall = {0};
@@ -2718,9 +2805,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 result = fstat( descriptor, & local_stat );
             else
                 result = fstatat( descriptor, path, & local_stat, flags );
-#else
+#else //__APPLE__
             result = fstatat( descriptor, path, & local_stat, flags );
-#endif
+#endif //__APPLE__
             if ( 0 == result )
             {
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
@@ -2751,12 +2838,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
                 pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
-#endif
-#endif
+#endif // M68K
+#endif //__APPLE__
                 tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
                 pout->swap_endianness();
             }
-#endif
+#endif //_WIN32
             update_result_errno( cpu, result );
             break;
         }
@@ -2854,10 +2941,10 @@ void emulator_invoke_svc( CPUClass & cpu )
             int who = (int) ACCESS_REG( REG_ARG0 );
 #ifdef M68
             struct linux_rusage_syscall32 *prusage = (struct linux_rusage_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-#else
+#else //M68
             struct linux_rusage_syscall *prusage = (struct linux_rusage_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             memset( prusage, 0, sizeof( struct linux_rusage_syscall ) );
-#endif
+#endif //M68
 
             if ( 0 == who ) // RUSAGE_SELF
             {
@@ -2869,32 +2956,30 @@ void emulator_invoke_svc( CPUClass & cpu )
 #ifdef M68
                     prusage->ru_utime.tv_sec = utotal / 1000000;
                     prusage->ru_utime.tv_usec = (uint32_t) ( utotal % 1000000 );
-#ifndef M68K
-                    prusage->ru_utime.tv_sec = flip_endian64( prusage->ru_utime.tv_sec );
-                    prusage->ru_utime.tv_usec = flip_endian32( prusage->ru_utime.tv_usec );
-#endif
-
-#else
+                    prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
+                    prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
+#else //M68
                     prusage->ru_utime.tv_sec = utotal / 1000000;
                     prusage->ru_utime.tv_usec = utotal % 1000000;
-#endif
+                    prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
+                    prusage->ru_utime.tv_usec = swap_endian64( prusage->ru_utime.tv_usec );
+#endif //M68
                     uint64_t stotal = ( ( (uint64_t) ftKernel.dwHighDateTime << 32 ) + ftKernel.dwLowDateTime ) / 10;
 #ifdef M68
                     prusage->ru_stime.tv_sec = stotal / 1000000;
                     prusage->ru_stime.tv_usec = (uint32_t) ( stotal % 1000000 );
-#ifndef M68K
-                    prusage->ru_stime.tv_sec = flip_endian64( prusage->ru_stime.tv_sec );
-                    prusage->ru_stime.tv_usec = flip_endian32( prusage->ru_stime.tv_usec );
-#endif
-
-#else
+                    prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
+                    prusage->ru_stime.tv_usec = swap_endian32( prusage->ru_stime.tv_usec );
+#else //M68
                     prusage->ru_stime.tv_sec = stotal / 1000000;
                     prusage->ru_stime.tv_usec = stotal % 1000000;
-#endif
+                    prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
+                    prusage->ru_stime.tv_usec = swap_endian64( prusage->ru_stime.tv_usec );
+#endif //M68
                 }
                 else
                     tracer.Trace( "  unable to GetProcessTimes, error %d\n", GetLastError() );
-#else
+#else //_WIN32
                 struct rusage local_rusage;
                 getrusage( who, &local_rusage ); // on 32-bit systems fields are 32 bit
 #ifdef M68
@@ -2902,17 +2987,22 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_utime.tv_usec = (uint32_t) local_rusage.ru_utime.tv_usec;
                 prusage->ru_stime.tv_sec = local_rusage.ru_stime.tv_sec;
                 prusage->ru_stime.tv_usec = (uint32_t) local_rusage.ru_stime.tv_usec;
-#ifndef M68K
-                prusage->ru_utime.tv_sec = flip_endian64( prusage->ru_utime.tv_sec );
-                prusage->ru_utime.tv_usec = flip_endian32( prusage->ru_utime.tv_usec );
-                prusage->ru_stime.tv_sec = flip_endian64( prusage->ru_stime.tv_sec );
-                prusage->ru_stime.tv_usec = flip_endian32( prusage->ru_stime.tv_usec );
-#endif
-#else
+                prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
+                prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
+                prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
+                prusage->ru_stime.tv_usec = swap_endian32( prusage->ru_stime.tv_usec );
+#else //M68
                 prusage->ru_utime.tv_sec = local_rusage.ru_utime.tv_sec;
                 prusage->ru_utime.tv_usec = local_rusage.ru_utime.tv_usec;
                 prusage->ru_stime.tv_sec = local_rusage.ru_stime.tv_sec;
                 prusage->ru_stime.tv_usec = local_rusage.ru_stime.tv_usec;
+                prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
+                prusage->ru_utime.tv_usec = swap_endian64( prusage->ru_utime.tv_usec );
+                prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
+                prusage->ru_stime.tv_usec = swap_endian64( prusage->ru_stime.tv_usec );
+#endif //M68
+
+#ifndef M68K
                 prusage->ru_maxrss = local_rusage.ru_maxrss;
                 prusage->ru_ixrss = local_rusage.ru_ixrss;
                 prusage->ru_idrss = local_rusage.ru_idrss;
@@ -2927,8 +3017,8 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_nsignals = local_rusage.ru_nsignals;
                 prusage->ru_nvcsw = local_rusage.ru_nvcsw;
                 prusage->ru_nivcsw = local_rusage.ru_nivcsw;
-#endif
-#endif
+#endif //M68K
+#endif //_WIN32
             }
             else
                 tracer.Trace( "  unsupported request for who %u\n", who );
@@ -2964,13 +3054,17 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ACCESS_REG( REG_RESULT ) = (REG_TYPE) -1; // fail this until/unless there is a real-world use
             break;
         }
-#ifndef M68 // lots of 64/32 interop issues with this
+#if !defined(M68) // lots of 64/32 interop issues with this
         case SYS_writev:
         {
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
             const struct iovec * pvec = (const struct iovec *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             if ( 1 == descriptor || 2 == descriptor )
-                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( (REG_TYPE) pvec->iov_base ) );
+#ifdef M68
+                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( 0xffffffff & (uint64_t) pvec->iov_base ) );
+#else
+                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( (uint64_t) pvec->iov_base ) );
+#endif
 
             REG_TYPE result = 0;
 
@@ -2979,17 +3073,17 @@ void emulator_invoke_svc( CPUClass & cpu )
                 result = WinWrite( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
             else
                 result = write( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
-#else
+#else //_WIN32
             struct iovec vec_local;
             vec_local.iov_base = cpu.getmem( (uint64_t) pvec->iov_base );
             vec_local.iov_len = pvec->iov_len;
             tracer.Trace( "  write length: %u to descriptor %d at addr %p\n", pvec->iov_len, descriptor, vec_local.iov_base );
             result = writev( descriptor, &vec_local, ACCESS_REG( REG_ARG2 ) );
-#endif
+#endif //_WIN32
             update_result_errno( cpu, result );
             break;
         }
-#endif
+#endif //M68
         case SYS_clock_gettime:
         {
             clockid_t cid = (clockid_t) ACCESS_REG( REG_ARG0 );
@@ -3010,10 +3104,8 @@ void emulator_invoke_svc( CPUClass & cpu )
             ptimespec->tv_nsec = local_ts.tv_nsec;
 #endif
 
-#if defined(M68) && !defined(M68K)
-            ptimespec->tv_sec = flip_endian64( ptimespec->tv_sec );
-            ptimespec->tv_nsec = flip_endian64( ptimespec->tv_nsec );
-#endif
+            ptimespec->tv_sec = swap_endian64( ptimespec->tv_sec );
+            ptimespec->tv_nsec = swap_endian64( ptimespec->tv_nsec );
 
             tracer.Trace( "  tv_sec %llx, tv_nsec %llx\n", ptimespec->tv_sec, ptimespec->tv_nsec );
             update_result_errno( cpu, result );
@@ -3071,27 +3163,35 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     ptms->tms_utime = ( ( (uint64_t) ftUser.dwHighDateTime << 32) + ftUser.dwLowDateTime ) / 100000; // 100ns to hundredths of a second
                     ptms->tms_stime = ( ( (uint64_t) ftKernel.dwHighDateTime << 32 ) + ftKernel.dwLowDateTime ) / 100000;
-#if defined( M68 ) && !defined( M68K )
-                    ptms->tms_utime = flip_endian32( ptms->tms_utime );
-                    ptms->tms_stime = flip_endian32( ptms->tms_stime );
+#if defined( M68 )
+                    ptms->tms_utime = swap_endian32( ptms->tms_utime );
+                    ptms->tms_stime = swap_endian32( ptms->tms_stime );
+#else
+                    ptms->tms_utime = swap_endian64( ptms->tms_utime );
+                    ptms->tms_stime = swap_endian64( ptms->tms_stime );
 #endif
                 }
                 else
                     tracer.Trace( "  unable to GetProcessTimes, error %d\n", GetLastError() );
-#else
+#else //_WIN32
                 struct tms local_tms; // on 32-bit systems the members are 32 bit.
                 times( &local_tms );
                 ptms->tms_utime = local_tms.tms_utime;
                 ptms->tms_stime = local_tms.tms_stime;
                 ptms->tms_cutime = local_tms.tms_cutime;
                 ptms->tms_cstime = local_tms.tms_cstime;
-#if defined( M68 ) && !defined( M68K )
-                ptms->tms_utime = flip_endian32( ptms->tms_utime );
-                ptms->tms_stime = flip_endian32( ptms->tms_stime );
-                ptms->tms_cutime = flip_endian32( ptms->tms_cutime );
-                ptms->tms_cstime = flip_endian32( ptms->tms_cstime );
-#endif
-#endif
+#if defined( M68 )
+                ptms->tms_utime = swap_endian32( ptms->tms_utime );
+                ptms->tms_stime = swap_endian32( ptms->tms_stime );
+                ptms->tms_cutime = swap_endian32( ptms->tms_cutime );
+                ptms->tms_cstime = swap_endian32( ptms->tms_cstime );
+#else
+                ptms->tms_utime = swap_endian64( ptms->tms_utime );
+                ptms->tms_stime = swap_endian64( ptms->tms_stime );
+                ptms->tms_cutime = swap_endian64( ptms->tms_cutime );
+                ptms->tms_cstime = swap_endian64( ptms->tms_cstime );
+#endif //M68
+#endif //_WIN32
             }
 
             // ticks is generally in hundredths of a second per sysconf( _SC_CLK_TCK )
@@ -3268,7 +3368,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     // kbhit() works without all this fuss on Windows
                 }
-#else
+#else //defined( _WIN32 ) || defined( M68K )
                 // likely a TCGETS or TCSETS on stdin to check or enable non-blocking reads for a keystroke
 
                 if ( 0x5401 == request ) // TCGETS
@@ -3292,10 +3392,10 @@ void emulator_invoke_svc( CPUClass & cpu )
                     pt->c_cflag = map_termios_cflag_macos_to_linux( pt->c_cflag );
                     pt->c_lflag = map_termios_lflag_macos_to_linux( pt->c_lflag );
                     tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
-#else
+#else //__APPLE__
                     pt->c_line = val.c_line;
                     memcpy( & pt->c_cc, & val.c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
-#endif
+#endif //__APPLE__
                     tracer.Trace( "  ioctl queried termios on stdin, sizeof local_kernel_termios %zd, sizeof val %zd\n",
                                 sizeof( struct local_kernel_termios ), sizeof( val ) );
                 }
@@ -3324,15 +3424,15 @@ void emulator_invoke_svc( CPUClass & cpu )
                     val.c_cflag = map_termios_cflag_linux_to_macos( val.c_cflag );
                     val.c_lflag = map_termios_lflag_linux_to_macos( val.c_lflag );
                     tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
-#else
+#else //__APPLE__
                     val.c_line = pt->c_line;
                     memcpy( & val.c_cc, & pt->c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
-#endif
+#endif //__APPLE__
                     tracer.TraceBinaryData( (uint8_t *) &val, sizeof( struct termios ), 4 );
                     tcsetattr( 0, TCSANOW, &val );
                     tracer.Trace( "  ioctl set termios on stdin\n" );
                 }
-#endif // _WIN32 || M68K
+#endif //defined( _WIN32 ) || defined( M68K )
             }
             else if ( 1 == fd ) // stdout
             {
@@ -3345,7 +3445,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                         update_result_errno( cpu, -1 );
 
                     break;
-#else
+#else //defined( _WIN32 ) || defined( M68K )
                     struct termios val;
                     int result = tcgetattr( fd, &val );
                     tracer.Trace( "  result: %d, iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", result, val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
@@ -3364,13 +3464,13 @@ void emulator_invoke_svc( CPUClass & cpu )
                     pt->c_cflag = map_termios_cflag_macos_to_linux( pt->c_cflag );
                     pt->c_lflag = map_termios_lflag_macos_to_linux( pt->c_lflag );
                     tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
-#else
+#else //__APPLE__
                     pt->c_line = val.c_line;
                     memcpy( & pt->c_cc, & val.c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
-#endif
+#endif //__APPLE__
                     tracer.Trace( "  ioctl queried termios on stdout, sizeof local_kernel_termios %zd, sizeof val %zd\n",
                                 sizeof( struct local_kernel_termios ), sizeof( val ) );
-#endif // _WIN32 || M68K
+#endif //defined( _WIN32 ) || defined( M68K )
                 }
 
             }
@@ -6066,7 +6166,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     for ( uint16_t ph = 0; ph < ehead.program_header_table_entries; ph++ )
     {
         size_t o = ehead.program_header_table + ( ph * ehead.program_header_table_size );
-        tracer.Trace( "program header %u at offset %zu\n", ph, o );
+        tracer.Trace( "program header %u at offset %u\n", ph, (unsigned int) o );
 
         ElfProgramHeader32 head = {0};
         fseek( fp, (long) o, SEEK_SET );
@@ -6074,8 +6174,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         if ( 1 != read )
             usage( "can't read program header" );
 
-        if ( big_endian )
-            head.swap_endianness();
+        head.swap_endianness();
 
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
         tracer.Trace( "  offset in image: %llx\n", head.offset_in_image );
@@ -6114,9 +6213,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         if ( 0 == read )
             usage( "can't read section header" );
 
-        if ( big_endian )
-            head.swap_endianness();
-
+        head.swap_endianness();
         if ( 3 == head.type )
         {
             g_string_table.resize( head.size );
@@ -6134,7 +6231,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
         size_t o = ehead.section_header_table + ( sh * ehead.section_header_table_size );
-        tracer.Trace( "section header %u at offset %zu == %zx\n", sh, o, o );
+        tracer.Trace( "section header %u at offset %u == %x\n", sh, o, o );
 
         ElfSectionHeader32 head = {0};
 
@@ -6143,8 +6240,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         if ( 0 == read )
             usage( "can't read section header" );
 
-        if ( big_endian )
-            head.swap_endianness();
+        head.swap_endianness();
 
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
         tracer.Trace( "  flags: %x / %s\n", head.flags, head.show_flags() );
@@ -6166,8 +6262,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     for ( size_t se = 0; se < g_symbols32.size(); se++ )
     {
-        if ( big_endian )
-            g_symbols32[se].swap_endianness();
+        g_symbols32[se].swap_endianness();
 
         if ( ( 0 == g_symbols32[se].name ) || ( '$' == g_string_table[ g_symbols32[se].name ] ) )
             g_symbols32[se].value = 0;
@@ -6204,7 +6299,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         }
     }
 
-    tracer.Trace( "elf image has %zu usable symbols:\n", g_symbols32.size() );
+    tracer.Trace( "elf image has %u usable symbols:\n", (unsigned) g_symbols32.size() );
     tracer.Trace( "     address      size  name\n" );
 
     for ( size_t se = 0; se < g_symbols32.size(); se++ )
@@ -6647,7 +6742,11 @@ static bool load_image( const char * pimage, const char * app_args )
         return load_image32( fp, pimage, app_args );
 #endif
 
+    bool big_endian = ( 2 == ehead.endianness );
+    tracer.Trace( "image is %s endian\n", big_endian ? "big" : "little" );
+
 #ifndef M68
+    ehead.swap_endianness();
 
     if ( 2 != ehead.type )
     {
@@ -6680,13 +6779,15 @@ static bool load_image( const char * pimage, const char * app_args )
     for ( uint16_t ph = 0; ph < ehead.program_header_table_entries; ph++ )
     {
         size_t o = ehead.program_header_table + ( ph * ehead.program_header_table_size );
-        tracer.Trace( "program header %u at offset %zu\n", ph, o );
+        tracer.Trace( "program header %u at offset %u\n", ph, (unsigned) o );
 
         ElfProgramHeader64 head = {0};
         fseek( fp, (long) o, SEEK_SET );
         read = fread( &head, get_min( sizeof( head ), (size_t) ehead.program_header_table_size ), 1, fp );
         if ( 1 != read )
             usage( "can't read program header" );
+
+        head.swap_endianness();
 
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
         tracer.Trace( "  offset in image: %llx\n", head.offset_in_image );
@@ -6728,6 +6829,7 @@ static bool load_image( const char * pimage, const char * app_args )
         if ( 0 == read )
             usage( "can't read section header" );
 
+        head.swap_endianness();
         if ( 3 == head.type )
         {
             g_string_table.resize( head.size );
@@ -6745,7 +6847,7 @@ static bool load_image( const char * pimage, const char * app_args )
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
         size_t o = ehead.section_header_table + ( sh * ehead.section_header_table_size );
-        tracer.Trace( "section header %u at offset %zu == %zx\n", sh, o, o );
+        tracer.Trace( "section header %zu at offset %zu == %zx\n", sh, o, o );
 
         ElfSectionHeader64 head = {0};
 
@@ -6754,6 +6856,7 @@ static bool load_image( const char * pimage, const char * app_args )
         if ( 0 == read )
             usage( "can't read section header" );
 
+        head.swap_endianness();
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
         tracer.Trace( "  flags: %llx / %s\n", head.flags, head.show_flags() );
         tracer.Trace( "  address: %llx\n", head.address );
@@ -6773,8 +6876,12 @@ static bool load_image( const char * pimage, const char * app_args )
     // void out the entries that don't have symbol names or have mangled names that start with $
 
     for ( size_t se = 0; se < g_symbols.size(); se++ )
+    {
+        g_symbols[se].swap_endianness();
+
         if ( ( 0 == g_symbols[se].name ) || ( '$' == g_string_table[ g_symbols[se].name ] ) )
             g_symbols[se].value = 0;
+    }
 
     // use known qsort so traces are consistent across platforms because qsort implementations for ties differ
     my_qsort( g_symbols.data(), g_symbols.size(), sizeof( ElfSymbol64 ), symbol_compare );
@@ -6806,7 +6913,7 @@ static bool load_image( const char * pimage, const char * app_args )
         }
     }
 
-    tracer.Trace( "elf image has %zu usable symbols:\n", g_symbols.size() );
+    tracer.Trace( "elf image has %u usable symbols:\n", (unsigned) g_symbols.size() );
     tracer.Trace( "             address              size  name\n" );
 
     for ( size_t se = 0; se < g_symbols.size(); se++ )
@@ -6867,6 +6974,7 @@ static bool load_image( const char * pimage, const char * app_args )
         ElfProgramHeader64 head = {0};
         fseek( fp, (long) o, SEEK_SET );
         read = fread( &head, 1, get_min( sizeof( head ), (size_t) ehead.program_header_table_size ), fp );
+        head.swap_endianness();
 
         // head.type 1 == load. Other entries will overlap and even have physical addresses, but they are redundant
 
@@ -6914,7 +7022,7 @@ static bool load_image( const char * pimage, const char * app_args )
 
         uint64_t offset = pargs - buffer_args;
         aargs[ app_argc ] = offset + g_base_address + arg_data_offset;
-        tracer.Trace( "  argument %d is '%s', at vm address %llx\n", app_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
+        tracer.Trace( "  argument %llu is '%s', at vm address %llx\n", app_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
 
         app_argc++;
         pargs += strlen( pargs );
@@ -7008,30 +7116,38 @@ static bool load_image( const char * pimage, const char * app_args )
     AuxProcessStart * paux = (AuxProcessStart *) pstack;
     paux[0].a_type = 25; // AT_RANDOM
     paux[0].a_un.a_val = prandom;
+    paux[0].swap_endianness();
     paux[1].a_type = 6; // AT_PAGESZ
     paux[1].a_un.a_val = 4096;
+    paux[1].swap_endianness();
     paux[2].a_type = 16; // AT_HWCAP
     paux[2].a_un.a_val = 0xa01; // ARM64 bits for fp(0), atomics(8), cpuid(11)
+    paux[2].swap_endianness();
     paux[3].a_type = 26; // AT_HWCAP2
     paux[3].a_un.a_val = 0;
+    paux[3].swap_endianness();
     paux[4].a_type = 11; // AT_UID
     paux[4].a_un.a_val = 0x595a5449; // "ITZY" they are each my bias.
+    paux[4].swap_endianness();
     paux[5].a_type = 22; // AT_EUID;
     paux[5].a_un.a_val = 0x595a5449;
+    paux[5].swap_endianness();
     paux[6].a_type = 13; // AT_GID
     paux[6].a_un.a_val = 0x595a5449;
+    paux[6].swap_endianness();
     paux[7].a_type = 14; // AT_EGID
     paux[7].a_un.a_val = 0x595a5449;
+    paux[7].swap_endianness();
 
     pstack--; // end of environment data is 0
     pstack--; // move to where the OS environment variable is set OS=RVOS or OS=ARMOS
-    *pstack = env_os_address; // (uint64_t) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( uint64_t ) );
+    *pstack = swap_endian64( env_os_address ); // (uint64_t) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( uint64_t ) );
     tracer.Trace( "the OS environment argument is at VM address %llx\n", *pstack );
 
     if ( 0 != env_tz_address )
     {
         pstack--; // move to where the TZ environment variable is set TZ=xxx
-        *pstack = env_tz_address;
+        *pstack = swap_endian64( env_tz_address );
         tracer.Trace( "the TZ environment argument is at VM address %llx\n", env_tz_address );
     }
 
@@ -7040,11 +7156,11 @@ static bool load_image( const char * pimage, const char * app_args )
     for ( int iarg = (int) app_argc - 1; iarg >= 0; iarg-- )
     {
         pstack--;
-        *pstack = aargs[ iarg ];
+        *pstack = swap_endian64( aargs[ iarg ] );
     }
 
     pstack--;
-    *pstack = app_argc;
+    *pstack = swap_endian64( app_argc );
 
     g_top_of_stack = (uint64_t) ( ( (uint8_t *) pstack - memory.data() ) + g_base_address );
     uint64_t aux_data_size = top_of_aux - (uint64_t) ( (uint8_t *) pstack - memory.data() );
@@ -7081,7 +7197,7 @@ static bool load_image( const char * pimage, const char * app_args )
     tracer.Trace( "memory_size:                     %#llx == %lld\n", memory_size, memory_size );
     tracer.Trace( "risc-v compressed instructions:  %s\n", g_compressed_rvc ? "yes" : "no" );
 
-#endif
+#endif //M68
 
     return true;
 } //load_image
@@ -7101,9 +7217,7 @@ static void elf_info32( FILE * fp, bool verbose )
     bool big_endian = ( 2 == ehead.endianness );
     printf( "image is %s endian\n", big_endian ? "big" : "little" );
 
-    if ( big_endian)
-        ehead.swap_endianness();
-
+    ehead.swap_endianness();
     if ( ELF_MACHINE_ISA != ehead.machine )
         printf( "image machine ISA isn't a match for %s; continuing anyway. machine type is %x\n", APP_NAME, ehead.machine );
 
@@ -7135,8 +7249,7 @@ static void elf_info32( FILE * fp, bool verbose )
         if ( 0 == read )
             usage( "can't read program header" );
 
-        if ( big_endian)
-            head.swap_endianness();
+        head.swap_endianness();
 
         printf( "  %2u", ph );
         printf( " %-10s", head.show_type() );
@@ -7176,8 +7289,7 @@ static void elf_info32( FILE * fp, bool verbose )
         if ( 0 == read )
             usage( "can't read section header" );
 
-        if ( big_endian)
-            head.swap_endianness();
+        head.swap_endianness();
 
         if ( 3 == head.type )
         {
@@ -7206,7 +7318,7 @@ static void elf_info32( FILE * fp, bool verbose )
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
         size_t o = ehead.section_header_table + ( sh * ehead.section_header_table_size );
-        //printf( "section header %u at offset %zu == %zx\n", sh, o, o );
+        //printf( "section header %u at offset %u == %x\n", sh, (unsigned) o, (unsigned) o );
 
         ElfSectionHeader32 head = {0};
 
@@ -7215,8 +7327,7 @@ static void elf_info32( FILE * fp, bool verbose )
         if ( 0 == read )
             usage( "can't read section header" );
 
-        if ( big_endian)
-            head.swap_endianness();
+        head.swap_endianness();
 
         printf( "  %2u", sh );
         printf( " %-20s", & shstr_table[ head.name_offset ] );
@@ -7243,8 +7354,7 @@ static void elf_info32( FILE * fp, bool verbose )
                 {
                     printf( "    symbol # %zd\n", sym );
                     ElfSymbol32 & sym_entry = symbols[ sym ];
-                    if ( big_endian)
-                        sym_entry.swap_endianness();
+                    sym_entry.swap_endianness();
 
                     printf( "     name:  %x == %s\n",   sym_entry.name, ( 0 == sym_entry.name ) ? "" : & string_table[ sym_entry.name ] );
                     printf( "     info:  %x == %s\n",   sym_entry.info, sym_entry.show_info() );
@@ -7311,6 +7421,8 @@ static void elf_info( const char * pimage, bool verbose )
         return;
     }
 
+    ehead.swap_endianness();
+
     if ( ELF_MACHINE_ISA != ehead.machine )
         printf( "image machine ISA isn't a match for %s; continuing anyway. machine type is %x\n", APP_NAME, ehead.machine );
 
@@ -7342,6 +7454,8 @@ static void elf_info( const char * pimage, bool verbose )
         read = fread( &head, 1, get_min( sizeof( head ), (size_t) ehead.program_header_table_size ), fp );
         if ( 0 == read )
             usage( "can't read program header" );
+
+        head.swap_endianness();
 
         printf( "  %2u", ph );
         printf( " %-10s", head.show_type() );
@@ -7381,6 +7495,7 @@ static void elf_info( const char * pimage, bool verbose )
         if ( 0 == read )
             usage( "can't read section header" );
 
+        head.swap_endianness();
         if ( 3 == head.type )
         {
             if ( 0 == string_table.size() )
@@ -7417,6 +7532,7 @@ static void elf_info( const char * pimage, bool verbose )
         if ( 0 == read )
             usage( "can't read section header" );
 
+        head.swap_endianness();
         printf( "  %2u", sh );
         printf( " %-20s", & shstr_table[ head.name_offset ] );
         printf( " %-32s", head.show_type() );
@@ -7574,6 +7690,7 @@ int main( int argc, char * argv[] )
 
         tracer.Enable( trace, LOGFILE_NAME, true );
         tracer.SetQuiet( true );
+        tracer.Trace( "host is little endian: %d, emulated cpu is little endian: %d\n", g_hostIsLittleEndian, CPU_IS_LITTLE_ENDIAN );
 
         g_consoleConfig.EstablishConsoleOutput( 0, 0 );
 
