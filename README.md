@@ -132,6 +132,9 @@ forth83 folder:
     * m.bat/m.sh: invokes the interpreter for a Forth file
     * e.f, sieve.f, ttt.f: sample Forth apps
     * runall.bat/runall.sh: runs all of the sample Forth apps
+    * this does not run on physical CP/M 68K machines that don't make address 0x500 available. F83.68K is non-relocatable and must load there.
+   
+   [relocatable f86](https://www.forth.org/fd/FD-V09N6.pdf) describes how to hack f83.68k to run on such hardware, but this impacts performance of the interpreter.
     
 notes/bugs:
 
@@ -149,10 +152,12 @@ compiler and assembler benchmark performance:
     * times on the 68008 are with CP/M 68K and include significant relocatable binary load times
     * I haven't figured out how to use the modern g++ compiler to produce CP/M 68K binaries
     * much of the g++ e instruction count is consumed by division calculations
+    * Forth is interpreted, not compiled.
+    * f83.68k won't load on my CP/M 68K device. The start address is 0x500, which is reserved on that machine. There is a documented hack available, but it changes performance.
     * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance
     * assembly code always wins
 
-![table](https://github.com/user-attachments/assets/b3b85adf-5571-4707-9657-891b91aca117)
+![table](https://github.com/user-attachments/assets/193172e2-918d-4988-acf6-d56d2e70a078)
 
 
 
