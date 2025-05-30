@@ -20,6 +20,10 @@
 #include <cstring>
 #include <djl_os.hxx>
 
+#if defined( __GNUC__ ) && !defined( __APPLE__) && !defined( __clang__ )
+#pragma GCC diagnostic ignored "-Wformat="
+#endif
+
 #ifdef _WIN32
 #include <process.h>
 #endif
