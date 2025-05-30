@@ -3054,7 +3054,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ACCESS_REG( REG_RESULT ) = (REG_TYPE) -1; // fail this until/unless there is a real-world use
             break;
         }
-#if !defined(M68) // lots of 64/32 interop issues with this
+#if !defined(M68) && !defined(M68K)// lots of 64/32 interop issues with this
         case SYS_writev:
         {
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
