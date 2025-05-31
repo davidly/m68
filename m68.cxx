@@ -3359,9 +3359,11 @@ void emulator_invoke_svc( CPUClass & cpu )
                         pt->c_oflag = 5;
                         pt->c_cflag = 0xbf;
                         pt->c_lflag = 0xa30;
+                        update_result_errno( cpu, 0 );
+                        break;
                     }
 
-                    update_result_errno( cpu, 0 );
+                    update_result_errno( cpu, -1 );
                     break;
                 }
                 else if ( 0x5402 == request )
