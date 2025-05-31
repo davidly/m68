@@ -3000,8 +3000,6 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_utime.tv_usec = swap_endian64( prusage->ru_utime.tv_usec );
                 prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
                 prusage->ru_stime.tv_usec = swap_endian64( prusage->ru_stime.tv_usec );
-#endif //M68
-
 #ifndef M68K
                 prusage->ru_maxrss = local_rusage.ru_maxrss;
                 prusage->ru_ixrss = local_rusage.ru_ixrss;
@@ -3018,6 +3016,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_nvcsw = local_rusage.ru_nvcsw;
                 prusage->ru_nivcsw = local_rusage.ru_nivcsw;
 #endif //M68K
+#endif //M68
 #endif //_WIN32
             }
             else
