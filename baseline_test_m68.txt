@@ -1,4 +1,4 @@
-Wed 05/28/2025  7:46:36.24 
+Sun 06/01/2025  8:59:36.14 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.985000 milliseconds
+24.652999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -651,6 +651,9 @@ testing printf
  2 ( 2): pq
 43 (43): lmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzab
 25 (25): xyzabcdefghijklmnopqrstuv
+testing wcslen
+testing wcschr and wcsrchr
+testing wcsstr
 tstr completed with great success
 test targs 
 argc: 1
@@ -4047,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 5, day 28, hour 14, min 46, sec 42
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 5, day 28, hour 9, min 46, sec 42
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 5, day 28, hour 6, min 46, sec 42
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 5, day 28, hour 6, min 46, sec 42
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 1, hour 15, min 59, sec 42
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 1, hour 10, min 59, sec 42
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 1, hour 7, min 59, sec 42
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 1, hour 7, min 59, sec 42
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5724,7 +5727,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 5, day 28, hour 6, min 46, sec 49
+tz: 'PST+8', year: 2025, month 6, day 1, hour 7, min 59, sec 49
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -7541,13 +7544,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     277
-  dictionary: 273
+total ms:     271
+  dictionary: 267
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-0 ms for 1 iterations
+1,000 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -7576,7 +7579,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-357.821990 milliseconds
+359.063995 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7587,4 +7590,4 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Wed 05/28/2025  7:47:03.63 
+Sun 06/01/2025  9:00:02.72 

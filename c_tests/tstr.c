@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <wchar.h>
 
 char ac[ 4096 ];
 char other[ 4096 ];
@@ -13,7 +14,7 @@ wchar_t wc_zeroes[ 4096 ] = {0};
 
 #define _countof( X ) ( sizeof( X ) / sizeof( X[0] ) )
 
-#if 0 // these are much slower but are interesting emulator test cases
+#if 0 // these are much slower (on newer platforms) but are interesting emulator test cases
 
 #define memcmp fake_memcmp
 #define memcpy fake_memcpy
@@ -181,7 +182,6 @@ size_t fake_wcslen(const wchar_t *str)
 
 #endif
 
-#if 0
 void test_wide()
 {
     for ( int i = 0; i < _countof( wc ); i++ )
@@ -265,8 +265,6 @@ void test_wide()
         }
     }
 } //test_wide
-
-#endif
 
 int main( int argc, char * argv[] )
 {
@@ -398,7 +396,7 @@ int main( int argc, char * argv[] )
             ac[ end ] = orig;
         }
 
-        //test_wide();
+        test_wide();
     }
 
     printf( "tstr completed with great success\n" );

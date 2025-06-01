@@ -87,4 +87,213 @@
 #define SYS_lstat 1039
 #define SYS_time 1062
 
+// structs passed to syscalls.
+
+extern uint64_t swap_endian64( uint64_t x );
+extern uint32_t swap_endian32( uint32_t x );
+extern uint16_t swap_endian16( uint16_t x );
+
+struct linux_timeval
+{
+    uint64_t tv_sec;       // time_t
+    uint64_t tv_usec;      // suseconds_t
+};
+
+#pragma pack( push, 1 )
+struct linux_timeval32
+{
+    uint64_t tv_sec;       // time_t
+    uint32_t tv_usec;
+};
+#pragma pack(pop)
+
+struct timespec_syscall
+{
+    uint64_t tv_sec;
+    uint64_t tv_nsec;
+
+    void swap_endianness()
+    {
+        tv_sec = swap_endian64( tv_sec );
+        tv_nsec = swap_endian64( tv_nsec );
+    }
+};
+
+struct linux_timeval_syscall
+{
+    uint64_t tv_sec;       // time_t
+    uint64_t tv_usec;      // suseconds_t
+};
+
+struct linux_tms_syscall
+{
+    uint64_t tms_utime;
+    uint64_t tms_stime;
+    uint64_t tms_cutime;
+    uint64_t tms_cstime;
+};
+
+struct linux_tms_syscall32
+{
+    uint32_t tms_utime;
+    uint32_t tms_stime;
+    uint32_t tms_cutime;
+    uint32_t tms_cstime;
+};
+
+struct stat_linux_syscall
+{
+    /*
+        struct stat info run on a 64-bit RISC-V system
+      sizeof s: 128
+      offset      size field
+           0         8 st_dev
+           8         8 st_ino
+          16         4 st_mode
+          20         4 st_nlink
+          24         4 st_uid
+          28         4 st_gid
+          32         8 st_rdev
+          48         8 st_size
+          56         4 st_blksize
+          64         8 st_blocks
+          72        16 st_atim
+          88        16 st_mtim
+         104        16 st_ctim
+         120         8 st_mystery_spot_2
+    */
+
+    uint64_t   st_dev;      /* ID of device containing file */
+    uint64_t   st_ino;      /* Inode number */
+    uint32_t   st_mode;     /* File type and mode */
+    uint32_t   st_nlink;    /* Number of hard links */
+    uint32_t   st_uid;      /* User ID of owner */
+    uint32_t   st_gid;      /* Group ID of owner */
+    uint64_t   st_rdev;     /* Device ID (if special file) */
+    uint64_t   st_mystery_spot;
+    uint64_t   st_size;     /* Total size, in bytes */
+    uint64_t   st_blksize;  /* Block size for filesystem I/O */
+    uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
+
+    /* Since POSIX.1-2008, this structure supports nanosecond
+       precision for the following timestamp fields.
+       For the details before POSIX.1-2008, see VERSIONS. */
+
+    struct timespec_syscall st_atim;  /* Time of last access */
+    struct timespec_syscall st_mtim;  /* Time of last modification */
+    struct timespec_syscall st_ctim;  /* Time of last status change */
+
+    uint64_t   st_mystery_spot_2;
+
+    void swap_endianness()
+    {
+        st_dev = swap_endian64( st_dev );
+        st_ino = swap_endian64( st_ino );
+        st_mode = swap_endian32( st_mode );
+        st_nlink = swap_endian32( st_nlink );
+        st_uid = swap_endian32( st_uid );
+        st_gid = swap_endian32( st_gid );
+        st_rdev = swap_endian64( st_rdev );
+        st_mystery_spot = swap_endian64( st_mystery_spot );
+        st_size = swap_endian64( st_size );
+        st_blksize = swap_endian64( st_blksize );
+        st_blocks = swap_endian64( st_blocks );
+        st_atim.swap_endianness();
+        st_mtim.swap_endianness();
+        st_ctim.swap_endianness();
+    }
+};
+
+#pragma warning(disable: 4200) // 0-sized array
+struct linux_dirent64_syscall
+{
+    uint64_t d_ino;     /* Inode number */
+    uint64_t d_off;     /* Offset to next linux_dirent */
+    uint16_t d_reclen;  /* Length of this linux_dirent */
+    uint8_t  d_type;    /* DT_DIR (4) if a dir, DT_REG (8) if a regular file */
+    char     d_name[];
+    /* optional and not implemented. must be 0-filled
+    char pad
+    char d_type
+    */
+
+    void swap_endianness()
+    {
+        d_ino = swap_endian64( d_ino );
+        d_off = swap_endian64( d_off );
+        d_reclen = swap_endian16( d_reclen );
+    }
+};
+
+struct linux_rusage_syscall
+{
+    struct linux_timeval ru_utime; /* user CPU time used */
+    struct linux_timeval ru_stime; /* system CPU time used */
+    long   ru_maxrss;        /* maximum resident set size */
+    long   ru_ixrss;         /* integral shared memory size */
+    long   ru_idrss;         /* integral unshared data size */
+    long   ru_isrss;         /* integral unshared stack size */
+    long   ru_minflt;        /* page reclaims (soft page faults) */
+    long   ru_majflt;        /* page faults (hard page faults) */
+    long   ru_nswap;         /* swaps */
+    long   ru_inblock;       /* block input operations */
+    long   ru_oublock;       /* block output operations */
+    long   ru_msgsnd;        /* IPC messages sent */
+    long   ru_msgrcv;        /* IPC messages received */
+    long   ru_nsignals;      /* signals received */
+    long   ru_nvcsw;         /* voluntary context switches */
+    long   ru_nivcsw;        /* involuntary context switches */
+};
+
+struct linux_rusage_syscall32
+{
+    struct linux_timeval32 ru_utime; /* user CPU time used */
+    struct linux_timeval32 ru_stime; /* system CPU time used */
+    long   ru_maxrss;        /* maximum resident set size */
+    long   ru_ixrss;         /* integral shared memory size */
+    long   ru_idrss;         /* integral unshared data size */
+    long   ru_isrss;         /* integral unshared stack size */
+    long   ru_minflt;        /* page reclaims (soft page faults) */
+    long   ru_majflt;        /* page faults (hard page faults) */
+    long   ru_nswap;         /* swaps */
+    long   ru_inblock;       /* block input operations */
+    long   ru_oublock;       /* block output operations */
+    long   ru_msgsnd;        /* IPC messages sent */
+    long   ru_msgrcv;        /* IPC messages received */
+    long   ru_nsignals;      /* signals received */
+    long   ru_nvcsw;         /* voluntary context switches */
+    long   ru_nivcsw;        /* involuntary context switches */
+};
+
+struct pollfd_syscall
+{
+    int fd;
+    short events;
+    short revents;
+};
+
+#define SYS_NMLN 65 // appears to be true for Arm64.
+
+struct utsname_syscall
+{
+    /** The information returned by uname(). */
+    /** The OS name. "Linux" on Android. */
+    char sysname[SYS_NMLN];
+
+    /** The name on the network. Typically "localhost" on Android. */
+    char nodename[SYS_NMLN];
+
+    /** The OS release. Typically something like "4.4.115-g442ad7fba0d" on Android. */
+    char release[SYS_NMLN];
+
+    /** The OS version. Typically something like "#1 SMP PREEMPT" on Android. */
+    char version[SYS_NMLN];
+
+    /** The hardware architecture. Typically "aarch64" on Android. */
+    char machine[SYS_NMLN];
+
+    /** The domain name set by setdomainname(). Typically "localdomain" on Android. */
+    char domainname[SYS_NMLN];
+};
+
 

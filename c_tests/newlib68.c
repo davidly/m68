@@ -82,11 +82,6 @@ extern "C" int openat( int dirfd, const char * pathname, int flags, ... )
     return (int) syscall( SYS_openat, dirfd, pathname, flags, mode ); // openat
 } //openat
 
-struct timespec_syscall {
-    uint64_t tv_sec;
-    uint64_t tv_nsec;
-};
-
 extern "C" int clock_gettime( clockid_t id, struct timespec * res )
 {
     timespec_syscall tsc = { 0 };
@@ -127,50 +122,6 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
 
     return result;
 } //nanosleep
-
-struct stat_linux_syscall {
-    /*
-        struct stat info run on a 64-bit RISC-V system
-      sizeof s: 128
-      offset      size field
-           0         8 st_dev
-           8         8 st_ino
-          16         4 st_mode
-          20         4 st_nlink
-          24         4 st_uid
-          28         4 st_gid
-          32         8 st_rdev
-          48         8 st_size
-          56         4 st_blksize
-          64         8 st_blocks
-          72        16 st_atim
-          88        16 st_mtim
-         104        16 st_ctim
-         120         8 st_mystery_spot_2
-    */
-
-    uint64_t   st_dev;      /* ID of device containing file */
-    uint64_t   st_ino;      /* Inode number */
-    uint32_t   st_mode;     /* File type and mode */
-    uint32_t   st_nlink;    /* Number of hard links */
-    uint32_t   st_uid;      /* User ID of owner */
-    uint32_t   st_gid;      /* Group ID of owner */
-    uint64_t   st_rdev;     /* Device ID (if special file) */
-    uint64_t   st_mystery_spot;
-    uint64_t   st_size;     /* Total size, in bytes */
-    uint64_t   st_blksize;  /* Block size for filesystem I/O */
-    uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
-
-    /* Since POSIX.1-2008, this structure supports nanosecond
-       precision for the following timestamp fields.
-       For the details before POSIX.1-2008, see VERSIONS. */
-
-    struct timespec_syscall st_atim;  /* Time of last access */
-    struct timespec_syscall st_mtim;  /* Time of last modification */
-    struct timespec_syscall st_ctim;  /* Time of last status change */
-
-    uint64_t   st_mystery_spot_2;
-};
 
 int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
 {
@@ -271,8 +222,16 @@ int fstat( int fd, struct stat * statbuf )
 
 int gettimeofday( struct timeval *tv, void *tz )
 {
-    return (int) syscall( SYS_gettimeofday, tv, tz );
-}
+    struct linux_timeval_syscall ltsc = {0};
+    int result = (int) syscall( SYS_gettimeofday, &ltsc, tz );
+    //printf( "gettimeofday result %d, sec %llx, usec %llx\n", result, ltsc.tv_sec, ltsc.tv_usec );
+    if ( -1 != result )
+    {
+        tv->tv_sec = ltsc.tv_sec;
+        tv->tv_usec = (uint32_t) ltsc.tv_usec;
+    }
+    return result;
+} //gettimeofday
 
 int isatty( int fd ) { return -1; }
 
@@ -349,19 +308,6 @@ DIR * opendir( const char * name )
     return fdopendir( fd );
 } //opendir
 
-#pragma warning(disable: 4200) // 0-sized array
-struct linux_dirent64_syscall {
-    uint64_t d_ino;     /* Inode number */
-    uint64_t d_off;     /* Offset to next linux_dirent */
-    uint16_t d_reclen;  /* Length of this linux_dirent */
-    uint8_t  d_type;    /* DT_DIR (4) if a dir, DT_REG (8) if a regular file */
-    char     d_name[];
-    /* optional and not implemented. must be 0-filled
-    char pad
-    char d_type
-    */
-};
-
 struct dirent * readdir( DIR * dir )
 {
     if ( 0 == dir )
@@ -404,50 +350,54 @@ int closedir( DIR * dir )
 /* so this ancient code from Apple is used instead                                 */
 
 static FILE * g_fprintf_FILE = 0;
+static int printf_full_len = 0;
+static int fprintf_full_len = 0;
 
 static void printf_putc( char c )
 {
+    printf_full_len++;
     write( 1, &c, 1 );
 }
 
 static void fprintf_putc( char c )
 {
+    fprintf_full_len++;
     fwrite( &c, 1, 1, g_fprintf_FILE );
 }
 
-#define isdigit(d) ((d) >= '0' && (d) <= '9')
-#define Ctod(c) ((c) - '0')
+#define isdigit(d) ( (d) >= '0' && (d) <= '9' )
+#define Ctod(c) ( (c) - '0' )
 
 #define MAXBUF ( sizeof( uint64_t ) * 8 )  // enough for binary
 
 static void printnum( uint64_t u, int base, void (*putc)(char) )
 {
-    char buf[MAXBUF];
-    char * p = &buf[MAXBUF-1];
+    char buf[ MAXBUF ];
+    char * p = & buf[ MAXBUF - 1 ];
     static char digs[] = "0123456789abcdef";
 
     do
     {
-        *p-- = digs[u % base];
+        *p-- = digs[ u % base ];
         u /= base;
-    } while (u != 0);
+    } while ( 0 != u );
 
-    while (++p != &buf[MAXBUF])
-        (*putc)(*p);
+    while ( ++p != & buf[ MAXBUF ] )
+        (*putc)( *p );
 } //printnum
 
-double set_d_sign( double d, bool sign )
+static double set_d_sign( double d, bool sign )
 {
     uint64_t val = sign ? ( ( * (uint64_t *) &d ) | 0x8000000000000000 ) : ( ( * (uint64_t *) &d ) & 0x7fffffffffffffff );
     return * (double *) &val;
 } //set_d_sign
 
-bool get_d_sign( double d )
+static bool get_d_sign( double d )
 {
     return ( 0ull != ( ( * (uint64_t *) &d ) & 0x8000000000000000 ) );
 } //get_d_sign
 
-void printdouble( double d, int precision, void (*putc)(char) )
+static void printdouble( double d, int precision, void (*putc)(char) )
 {
     if ( get_d_sign( d ) )
     {
@@ -880,41 +830,49 @@ extern int printf( const char *fmt, ... )
 {
     va_list listp;
     va_start( listp, fmt );
+    printf_full_len = 0;
     _doprnt( fmt, &listp, printf_putc, 16 );
     va_end( listp );
-    return 0;
+    return printf_full_len;
 } //printf
 
+static int copybyte_buf_len = 0;
+static int copybyte_full_len = 0;
 static char *copybyte_str;
 
 static void copybyte( char byte )
 {
-    *copybyte_str++ = byte;
-    *copybyte_str = '\0';
+    copybyte_full_len++;
+
+    if ( 0 == copybyte_buf_len || copybyte_full_len < copybyte_buf_len )
+    {
+        *copybyte_str++ = byte;
+        *copybyte_str = 0;
+    }
 } //copybyte
 
 extern int sprintf( char *buf, const char *fmt, ... )
 {
     va_list listp;
     va_start( listp, fmt );
+    copybyte_buf_len = 0;
+    copybyte_full_len = 0;
     copybyte_str = buf;
     _doprnt( fmt, &listp, copybyte, 16 );
     va_end( listp );
-    return strlen( buf );
+    return copybyte_full_len;
 } //sprintf
 
 extern int snprintf( char *buf, size_t n, const char *fmt, ... )
 {
-    static char sbuf[ 4096 ]; // pretty massive hack/bug here
-    if ( n >= sizeof( sbuf ) )
-        return 0;
     va_list listp;
     va_start( listp, fmt );
-    copybyte_str = sbuf;
+    copybyte_buf_len = (int) n;
+    copybyte_full_len = 0;
+    copybyte_str = buf;
     _doprnt( fmt, &listp, copybyte, 16 );
     va_end( listp );
-    strcpy( buf, sbuf );
-    return strlen( buf );
+    return copybyte_full_len;
 } //sprintf
 
 extern int fprintf( FILE * fp, const char *fmt, ... )
@@ -922,21 +880,25 @@ extern int fprintf( FILE * fp, const char *fmt, ... )
     g_fprintf_FILE = fp;
     va_list listp;
     va_start( listp, fmt );
+    fprintf_full_len = 0;
     _doprnt( fmt, &listp, fprintf_putc, 16 );
     va_end( listp );
-    return 0;
+    return fprintf_full_len;
 } //fprintf
 
 extern int vfprintf( FILE * fp, const char * fmt, va_list args )
 {
     g_fprintf_FILE = fp;
+    fprintf_full_len = 0;
     _doprnt( fmt, &args, fprintf_putc, 16 );
-    return 0;
+    return fprintf_full_len;
 } //vfprintf
 
 extern char * floattoa( char * buffer, float f, int precision )
 {
     copybyte_str = buffer;
+    copybyte_buf_len = 0;
+    copybyte_full_len = 0;
     printfloat( f, 6, copybyte );
     return buffer;
 } //floattoa

@@ -252,204 +252,6 @@ uint16_t swap_endian16( uint16_t x )
     return x;
 } //swap_endian16
 
-#pragma warning(disable: 4200) // 0-sized array
-struct linux_dirent64_syscall {
-    uint64_t d_ino;     /* Inode number */
-    uint64_t d_off;     /* Offset to next linux_dirent */
-    uint16_t d_reclen;  /* Length of this linux_dirent */
-    uint8_t  d_type;    /* DT_DIR (4) if a dir, DT_REG (8) if a regular file */
-    char     d_name[];
-    /* optional and not implemented. must be 0-filled
-    char pad
-    char d_type
-    */
-
-    void swap_endianness()
-    {
-        d_ino = swap_endian64( d_ino );
-        d_off = swap_endian64( d_off );
-        d_reclen = swap_endian16( d_reclen );
-    }
-};
-
-struct linux_timeval
-{
-    uint64_t tv_sec;       // time_t
-    uint64_t tv_usec;      // suseconds_t
-};
-
-#pragma pack( push, 1 )
-struct linux_timeval32
-{
-    uint64_t tv_sec;       // time_t
-    uint32_t tv_usec;
-};
-#pragma pack(pop)
-
-struct linux_tms_syscall
-{
-    uint64_t tms_utime;
-    uint64_t tms_stime;
-    uint64_t tms_cutime;
-    uint64_t tms_cstime;
-};
-
-struct linux_tms_syscall32
-{
-    uint32_t tms_utime;
-    uint32_t tms_stime;
-    uint32_t tms_cutime;
-    uint32_t tms_cstime;
-};
-
-struct linux_rusage_syscall {
-    struct linux_timeval ru_utime; /* user CPU time used */
-    struct linux_timeval ru_stime; /* system CPU time used */
-    long   ru_maxrss;        /* maximum resident set size */
-    long   ru_ixrss;         /* integral shared memory size */
-    long   ru_idrss;         /* integral unshared data size */
-    long   ru_isrss;         /* integral unshared stack size */
-    long   ru_minflt;        /* page reclaims (soft page faults) */
-    long   ru_majflt;        /* page faults (hard page faults) */
-    long   ru_nswap;         /* swaps */
-    long   ru_inblock;       /* block input operations */
-    long   ru_oublock;       /* block output operations */
-    long   ru_msgsnd;        /* IPC messages sent */
-    long   ru_msgrcv;        /* IPC messages received */
-    long   ru_nsignals;      /* signals received */
-    long   ru_nvcsw;         /* voluntary context switches */
-    long   ru_nivcsw;        /* involuntary context switches */
-};
-
-struct linux_rusage_syscall32 {
-    struct linux_timeval32 ru_utime; /* user CPU time used */
-    struct linux_timeval32 ru_stime; /* system CPU time used */
-    long   ru_maxrss;        /* maximum resident set size */
-    long   ru_ixrss;         /* integral shared memory size */
-    long   ru_idrss;         /* integral unshared data size */
-    long   ru_isrss;         /* integral unshared stack size */
-    long   ru_minflt;        /* page reclaims (soft page faults) */
-    long   ru_majflt;        /* page faults (hard page faults) */
-    long   ru_nswap;         /* swaps */
-    long   ru_inblock;       /* block input operations */
-    long   ru_oublock;       /* block output operations */
-    long   ru_msgsnd;        /* IPC messages sent */
-    long   ru_msgrcv;        /* IPC messages received */
-    long   ru_nsignals;      /* signals received */
-    long   ru_nvcsw;         /* voluntary context switches */
-    long   ru_nivcsw;        /* involuntary context switches */
-};
-
-struct pollfd_syscall {
-    int fd;
-    short events;
-    short revents;
-};
-
-struct timespec_syscall {
-    uint64_t tv_sec;
-    uint64_t tv_nsec;
-
-    void swap_endianness()
-    {
-        tv_sec = swap_endian64( tv_sec );
-        tv_nsec = swap_endian64( tv_nsec );
-    }
-};
-
-#define SYS_NMLN 65 // appears to be true for Arm64.
-
-struct utsname_syscall {
-
-    /** The information returned by uname(). */
-    /** The OS name. "Linux" on Android. */
-    char sysname[SYS_NMLN];
-
-    /** The name on the network. Typically "localhost" on Android. */
-    char nodename[SYS_NMLN];
-
-    /** The OS release. Typically something like "4.4.115-g442ad7fba0d" on Android. */
-    char release[SYS_NMLN];
-
-    /** The OS version. Typically something like "#1 SMP PREEMPT" on Android. */
-    char version[SYS_NMLN];
-
-    /** The hardware architecture. Typically "aarch64" on Android. */
-    char machine[SYS_NMLN];
-
-    /** The domain name set by setdomainname(). Typically "localdomain" on Android. */
-    char domainname[SYS_NMLN];
-};
-
-struct stat_linux_syscall {
-    /*
-        struct stat info run on a 64-bit RISC-V system
-      sizeof s: 128
-      offset      size field
-           0         8 st_dev
-           8         8 st_ino
-          16         4 st_mode
-          20         4 st_nlink
-          24         4 st_uid
-          28         4 st_gid
-          32         8 st_rdev
-          48         8 st_size
-          56         4 st_blksize
-          64         8 st_blocks
-          72        16 st_atim
-          88        16 st_mtim
-         104        16 st_ctim
-    */
-
-    uint64_t   st_dev;      /* ID of device containing file */
-    uint64_t   st_ino;      /* Inode number */
-    uint32_t   st_mode;     /* File type and mode */
-    uint32_t   st_nlink;    /* Number of hard links */
-    uint32_t   st_uid;      /* User ID of owner */
-    uint32_t   st_gid;      /* Group ID of owner */
-    uint64_t   st_rdev;     /* Device ID (if special file) */
-    uint64_t   st_mystery_spot;
-    uint64_t   st_size;     /* Total size, in bytes */
-    uint64_t   st_blksize;  /* Block size for filesystem I/O */
-    uint64_t   st_blocks;   /* Number of 512 Byte blocks allocated */
-
-    /* Since POSIX.1-2008, this structure supports nanosecond
-       precision for the following timestamp fields.
-       For the details before POSIX.1-2008, see VERSIONS. */
-
-    struct timespec_syscall  st_atim;  /* Time of last access */
-    struct timespec_syscall  st_mtim;  /* Time of last modification */
-    struct timespec_syscall  st_ctim;  /* Time of last status change */
-
-#ifndef st_atime
-#if !defined( OLDGCC ) && !defined( M68K )
-    #define st_atime  st_atim.tv_sec  /* Backward compatibility */
-    #define st_mtine  st_mtim.tv_sec
-    #define st_ctime  st_ctim.tv_sec
-#endif
-#endif
-
-    uint64_t   st_mystery_spot_2;
-
-    void swap_endianness()
-    {
-        st_dev = swap_endian64( st_dev );
-        st_ino = swap_endian64( st_ino );
-        st_mode = swap_endian32( st_mode );
-        st_nlink = swap_endian32( st_nlink );
-        st_uid = swap_endian32( st_uid );
-        st_gid = swap_endian32( st_gid );
-        st_rdev = swap_endian64( st_rdev );
-        st_mystery_spot = swap_endian64( st_mystery_spot );
-        st_size = swap_endian64( st_size );
-        st_blksize = swap_endian64( st_blksize );
-        st_blocks = swap_endian64( st_blocks );
-        st_atim.swap_endianness();
-        st_mtim.swap_endianness();
-        st_ctim.swap_endianness();
-    }
-};
-
 #pragma pack( push, 1 )
 
 struct AuxProcessStart
@@ -2154,22 +1956,14 @@ void emulator_invoke_svc( CPUClass & cpu )
 
                 if ( 0 == result )
                 {
-#ifdef M68
-                    linux_timeval32 * ptimeval32 = (linux_timeval32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-                    ptimeval32->tv_sec = tv.tv_sec;
-                    ptimeval32->tv_usec = (uint32_t) tv.tv_usec;
-#ifndef M68K
-                    ptimeval32->tv_sec = swap_endian64( ptimeval32->tv_sec );
-                    ptimeval32->tv_usec = swap_endian32( ptimeval32->tv_usec );
-#endif
-
-                    tracer.Trace( "    reg_arg0 %#x\n", ACCESS_REG( REG_ARG0 ) );
-                    tracer.Trace( "    tv.tv_sec %#llx, swapped %#llx\n", tv.tv_sec, ptimeval32->tv_sec );
-                    tracer.Trace( "    tv_usec %#lx, swapped %#lx\n", swap_endian32( ptimeval32->tv_usec ), ptimeval32->tv_usec );
-#else
                     ptimeval->tv_sec = tv.tv_sec;
                     ptimeval->tv_usec = tv.tv_usec;
-#endif
+
+                    ptimeval->tv_sec = swap_endian64( ptimeval->tv_sec );
+                    ptimeval->tv_usec = swap_endian64( ptimeval->tv_usec );
+
+                    tracer.Trace( "    tv.tv_sec %#llx, swapped %#llx\n", tv.tv_sec, ptimeval->tv_sec );
+                    tracer.Trace( "    tv_usec %#llx, swapped %#llx\n", swap_endian64( ptimeval->tv_usec ), ptimeval->tv_usec );
                 }
             }
 
@@ -6375,7 +6169,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
             first_uninitialized_data = get_max( head.physical_address + head.file_size, first_uninitialized_data );
 
-            tracer.Trace( "  read type %s: %x bytes into physical address %x - %x then uninitialized to %llx \n", head.show_type(), head.file_size,
+            tracer.Trace( "  read type %s: %x bytes into physical address %x - %x then uninitialized to %x \n", head.show_type(), head.file_size,
                           head.physical_address, head.physical_address + head.file_size - 1, head.physical_address + head.memory_size - 1 );
             tracer.TraceBinaryData( memory.data() + head.physical_address - g_base_address, get_min( (uint32_t) head.file_size, (uint32_t) 128 ), 4 );
         }
