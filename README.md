@@ -113,12 +113,17 @@ com folder:
 ntvcm folder:
 
     * mntvcm.bat: Windows build script for my ntvcm repo. ntvcm gives full Z80 + CP/M 2.2 emulation running inside of m68.
-    * tested with a Z80 validation app and a variety of cp/m 2.2 apps including Turbo Pascal v3 and Wordstar.
+    * tested with a Z80 validation app and a variety of cp/m 2.2 apps including Wordstar. Plus 77 CP/M compilers and interpreters.
 
 ntvao folder:
 
     * mntvao.bat: Windows build script for my ntvao repo. ntvao is an Apple 1 emulator with WozMon and WozBasic
     * validated with assembly, C, and BASIC apps along with a 6502 instruction validation app.
+
+rvos folder:
+
+    * mrvos.bat: Windows build script for my rvos repo. rvos is a RISC-V 64 + Linux emulator.
+    * validated running the rvos test suite in that repo with rvos running in m68.
 
 sysfor and syspas folders:
 
