@@ -54,10 +54,10 @@ struct m68000
         {
             #ifdef TARGET_BIG_ENDIAN
                 isp = * (uint32_t *) mem;          // the first 4 bytes of RAM hold the supervisor stack pointer
-                pc = * (uint32_t *) ( mem + 4 );   // the next 4 byteshave the boot address
+                pc = * (uint32_t *) ( mem + 4 );   // the next 4 bytes have the boot address
             #else
                 isp = flip_endian32( * (uint32_t *) mem );        // the first 4 bytes of RAM hold the supervisor stack pointer
-                pc = flip_endian32( * (uint32_t *) ( mem + 4 ) ); // the next 4 byteshave the boot address
+                pc = flip_endian32( * (uint32_t *) ( mem + 4 ) ); // the next 4 bytes have the boot address
             #endif
 
             aregs[ 7 ] = isp;                      // start out with the supervisor stack

@@ -315,10 +315,10 @@ struct dirent * readdir( DIR * dir )
 
     // m68 returns one file at a time as a simplification.
 
-    static uint8_t buf[ 300 ];
-    struct linux_dirent64_syscall * pdesc = (struct linux_dirent64_syscall *) &buf;
+    static uint8_t ui8_buf[ 300 ];
+    struct linux_dirent64_syscall * pdesc = (struct linux_dirent64_syscall *) & ui8_buf;
 
-    int result = syscall( SYS_getdents64, dir->dd_fd, pdesc, 1 );
+    int result = syscall( SYS_getdents64, dir->dd_fd, pdesc, sizeof( ui8_buf ) );
     if ( 0 == result || -1 == result )
         return 0;
 

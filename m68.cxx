@@ -870,7 +870,7 @@ class Win32BinaryMode
             #endif
 #endif
         }
-    
+
         ~Win32BinaryMode()
         {
             #if defined( _WIN32 )
@@ -1680,12 +1680,12 @@ static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
 {
     if ( result >= 0 || result <= -4096 ) // syscalls like write() return positive values to indicate success.
     {
-        tracer.Trace( "  syscall success, returning %lld = %#llx\n", result, result );
+        tracer.Trace( "  syscall success, returning %lld = %#llx\n", (uint64_t) result, (uint64_t) result );
         ACCESS_REG( REG_RESULT ) = (REG_TYPE) result;
     }
     else
     {
-        tracer.Trace( "  returning negative errno: %d\n", -errno );
+        tracer.Trace( "  returning negative errno: %d\n", (int) -errno );
         ACCESS_REG( REG_RESULT ) = (REG_TYPE) -errno; // it looks like the g++ runtime copies the - of this value to errno
     }
 } //update_result_errno
@@ -2135,7 +2135,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             REG_TYPE descriptor = ACCESS_REG( REG_ARG0 );
             uint8_t * pentries = (uint8_t *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             REG_TYPE count = ACCESS_REG( REG_ARG2 );
-            tracer.Trace( "  pentries: %p, count %llu\n", pentries, count );
+            tracer.Trace( "  pentries: %p, count %u\n", pentries, (uint32_t) count );
             struct linux_dirent64_syscall * pcur = (struct linux_dirent64_syscall *) pentries;
             memset( pentries, 0, count );
 
@@ -2158,9 +2158,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tracer.Trace( "  successfully opened FindFirst for pattern '%s'\n", g_acFindFirstPattern );
 
                     size_t len = strlen( fd.cFileName );
-                    if ( len > ( count - sizeof( struct linux_dirent64_syscall ) ) )
+                    if ( ( count < sizeof( struct linux_dirent64_syscall ) ) || ( len > ( count - sizeof( struct linux_dirent64_syscall ) ) ) )
                     {
-                        errno = ENOENT;
+                        errno = EINVAL;
                         result = -1;
                     }
                     else
@@ -2182,7 +2182,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 }
                 else
                 {
-                    errno = ENOENT;
+                    errno = EINVAL;
                     result = -1;
                 }
             }
@@ -2194,7 +2194,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 if ( found )
                 {
                     size_t len = strlen( fd.cFileName );
-                    if ( len > ( count - sizeof( struct linux_dirent64_syscall ) ) )
+                    if ( ( count < sizeof( struct linux_dirent64_syscall ) ) || ( len > ( count - sizeof( struct linux_dirent64_syscall ) ) ) )
                     {
                         errno = ENOENT;
                         result = -1;
@@ -2248,9 +2248,9 @@ void emulator_invoke_svc( CPUClass & cpu )
             {
                 tracer.Trace( "  readdir returned '%s'\n", pent->d_name );
                 size_t len = strlen( pent->d_name );
-                if ( len > ( count - sizeof( struct linux_dirent64_syscall ) ) )
+                if ( ( count < sizeof( struct linux_dirent64_syscall ) ) || ( len > ( count - sizeof( struct linux_dirent64_syscall ) ) ) )
                 {
-                    errno = ENOENT;
+                    errno = EINVAL;
                     result = -1;
                 }
                 else
@@ -2279,7 +2279,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
             else
             {
-                tracer.Trace( "  readdir return 0, so there are no more files in the enumeration\n" );
+                tracer.Trace( "  readdir returned 0, so there are no more files in the enumeration\n" );
                 result = 0;
             }
     #endif
@@ -2562,7 +2562,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_newfstatat:
         {
             const char * path = (char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-            tracer.Trace( "  syscall command SYS_newfstatat, id %lld, path '%s', flags %llx\n", ACCESS_REG( REG_ARG0 ), path, ACCESS_REG( REG_ARG3 ) );
+            tracer.Trace( "  syscall command SYS_newfstatat, id %lld, path '%s', flags %llx\n", (uint64_t) ACCESS_REG( REG_ARG0 ), path, (uint64_t) ACCESS_REG( REG_ARG3 ) );
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
             int result = 0;
 
@@ -4165,15 +4165,7 @@ bool write_fcb_arg( FCBCPM68K * arg, char * pc )
 
 char get_next_kbd_char()
 {
-    char c = (char) ConsoleConfiguration::portable_getch();
-    //tracer.Trace( "get_next_kbd_char got %d from portable_getch\n", c );
-    if ( 10 == c ) // linux and windows will return LF, not CR, which is what CP/M apps require
-    {
-        // many cp/m apps require CR, not LF to terminate a line
-        tracer.Trace( "  get_next_kbd_char translated LF 10 to CR 13\n" );
-        c = 13;
-    }
-    return c;
+    return (char) ConsoleConfiguration::portable_getch();
 } //get_next_kbd_char
 
 bool is_kbd_char_available()
@@ -5339,7 +5331,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             break;
         }
 #ifndef M68K
-        case 17: // search for first. 
+        case 17: // search for first.
         {
             // Use the FCB and write directory entries to the DMA address, then point to
             // which of those entries is the actual one (0-3) or 0xff for not found in result.
@@ -5402,7 +5394,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 tracer.Trace( "ERROR: can't parse filename for search for first\n" );
             break;
         }
-        case 18: // search for next. 
+        case 18: // search for next.
         {
             // Use the FCB and write directory entries to the DMA address, then point to
             // which of those entries is the actual one (0-3) or 0xff for not found in result.
