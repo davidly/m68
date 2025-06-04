@@ -233,7 +233,12 @@ int gettimeofday( struct timeval *tv, void *tz )
     return result;
 } //gettimeofday
 
-int isatty( int fd ) { return -1; }
+int isatty( int fd )
+{
+    local_kernel_termios term;
+    int result = (int) syscall( SYS_ioctl, fd, 0x5401 /* TCGETS */, & term );
+    return ( 0 == result );
+} //isatty
 
 _READ_WRITE_RETURN_TYPE read( int fd, void * buf, size_t count )
 {

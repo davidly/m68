@@ -1,4 +1,4 @@
-Sun 06/01/2025  8:59:36.14 
+Tue 06/03/2025 13:52:31.12 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.652999 milliseconds
+24.339000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 1, hour 15, min 59, sec 42
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 1, hour 10, min 59, sec 42
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 1, hour 7, min 59, sec 42
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 1, hour 7, min 59, sec 42
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 3, hour 20, min 52, sec 37
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 3, hour 15, min 52, sec 37
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 3, hour 12, min 52, sec 37
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 3, hour 12, min 52, sec 37
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5727,7 +5727,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 1, hour 7, min 59, sec 49
+tz: 'PST+8', year: 2025, month 6, day 3, hour 12, min 52, sec 44
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6302,6 +6302,18 @@ running basic
  for 1 iterations
 final move count 6493
 done running basic
+running tgets with redirected stdin
+file data
+read: 'f' == 102 == 66
+read: 'i' == 105 == 69
+read: 'l' == 108 == 6C
+read: 'e' == 101 == 65
+read: ' ' == 32 == 20
+read: 'd' == 100 == 64
+read: 'a' == 97 == 61
+read: 't' == 116 == 74
+read: 'a' == 97 == 61
+tgets completed with great success
 compiler test mtpascal 
 building e
 --------------------------------------------------
@@ -7544,13 +7556,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     271
-  dictionary: 267
+total ms:     269
+  dictionary: 265
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-1,000 ms for 1 iterations
+0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -7579,7 +7591,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-359.063995 milliseconds
+362.675994 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7590,4 +7602,15 @@ Copyright 1977, 78, 79 (C) by Microsoft
 Created: 21-Aug-79
 40465 Bytes free
 hello from MBASIC for 8080
-Sun 06/01/2025  9:00:02.72 
+running tgets with redirected stdin 
+read: 'f' == 102 == 0x66
+read: 'i' == 105 == 0x69
+read: 'l' == 108 == 0x6c
+read: 'e' == 101 == 0x65
+read: ' ' == 32 == 0x20
+read: 'd' == 100 == 0x64
+read: 'a' == 97 == 0x61
+read: 't' == 116 == 0x74
+read: 'a' == 97 == 0x61
+tgets completed with great success
+Tue 06/03/2025 13:52:58.15 

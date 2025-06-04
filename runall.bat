@@ -81,6 +81,10 @@ pushd com
 %_M68runcmd% -h:60 COM.68K MBASIC.COM HELLO.BAS >>..\%outputfile%
 popd
 
+echo running tgets with redirected stdin
+echo running tgets with redirected stdin >>%outputfile%
+%_runcmd% c_tests\tgets <c_tests\tgets.txt >>%outputfile%
+
 goto :alldone
 
 :appRun

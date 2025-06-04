@@ -69,6 +69,11 @@ do
     $_runcmd c_tests/ba.elf -a:$codegen -x c_tests/tp.bas >>$outputfile
 done
 
+# run app with redirected input
+echo running tgets with redirected stdin
+echo running tgets with redirected stdin >>$outputfile
+$_runcmd c_tests/tgets <c_tests/tgets.txt >>$outputfile
+
 date_time=$(date)
 echo "$date_time" >>$outputfile
 unix2dos -f $outputfile

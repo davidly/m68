@@ -27,6 +27,10 @@ copy ..\c_tests\tp.s
 call ma.bat tp
 %_M68runcmd% tp.68k
 
+rem run app with redirected input
+echo running tgets with redirected stdin
+%_M68runcmd% tgets.68k <tgets.txt
+
 goto :alldone
 
 :crun

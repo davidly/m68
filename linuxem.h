@@ -296,4 +296,22 @@ struct utsname_syscall
     char domainname[SYS_NMLN];
 };
 
+#define local_KERNEL_NCCS 19
+struct local_kernel_termios
+{
+    uint32_t c_iflag;     /* input mode flags */
+    uint32_t c_oflag;     /* output mode flags */
+    uint32_t c_cflag;     /* control mode flags */
+    uint32_t c_lflag;     /* local mode flags */
+    uint8_t c_line;       /* line discipline */
+    uint8_t c_cc[local_KERNEL_NCCS]; /* control characters */
+
+    void swap_endianness()
+    {
+        c_iflag = swap_endian32( c_iflag );
+        c_oflag = swap_endian32( c_oflag );
+        c_cflag = swap_endian32( c_cflag );
+        c_lflag = swap_endian32( c_lflag );
+    }
+};
 

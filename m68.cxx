@@ -76,38 +76,12 @@
 
         #ifdef M68K
             DIR * fdopendir( int fd );
-        #else
-            // this structure is smaller than the usermode version. I don't know of a cross-platform header with it.
-
-            #define local_KERNEL_NCCS 19
-            struct local_kernel_termios
-            {
-                tcflag_t c_iflag;     /* input mode flags */
-                tcflag_t c_oflag;     /* output mode flags */
-                tcflag_t c_cflag;     /* control mode flags */
-                tcflag_t c_lflag;     /* local mode flags */
-                cc_t c_line;          /* line discipline */
-                cc_t c_cc[local_KERNEL_NCCS]; /* control characters */
-            };
         #endif
     #endif
 
     struct LINUX_FIND_DATA
     {
         char cFileName[ MAX_PATH ];
-    };
-#endif
-
-#if defined( _WIN32) || defined( M68K )
-    #define local_KERNEL_NCCS 19
-    struct local_kernel_termios
-    {
-        uint32_t c_iflag;     /* input mode flags */
-        uint32_t c_oflag;     /* output mode flags */
-        uint32_t c_cflag;     /* control mode flags */
-        uint32_t c_lflag;     /* local mode flags */
-        uint8_t c_line;       /* line discipline */
-        uint8_t c_cc[local_KERNEL_NCCS]; /* control characters */
     };
 #endif
 
@@ -1996,9 +1970,17 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
                 int r = g_consoleConfig.portable_getch();
 #endif
-                * (char *) buffer = (char) r;
-                ACCESS_REG( REG_RESULT ) = 1;
-                tracer.Trace( "  getch read character %u == '%c'\n", r, printable( (uint8_t) r ) );
+                if ( EOF == r )
+                {
+                    ACCESS_REG( REG_RESULT ) = 0;
+                    tracer.Trace( "  getch reached the end of file on stdin\n" );
+                }
+                else
+                {
+                    * (char *) buffer = (char) r;
+                    ACCESS_REG( REG_RESULT ) = 1;
+                    tracer.Trace( "  getch read character %u == '%c'\n", (uint8_t) r, printable( (uint8_t) r ) );
+                }
                 break;
             }
             else if ( timebaseFrequencyDescriptor == descriptor && buffer_size >= 8 )
@@ -3152,10 +3134,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                         pt->c_oflag = 5;
                         pt->c_cflag = 0xbf;
                         pt->c_lflag = 0xa30;
+                        pt->swap_endianness();
                         update_result_errno( cpu, 0 );
                         break;
                     }
 
+                    errno = ENOTTY;
                     update_result_errno( cpu, -1 );
                     break;
                 }
@@ -4179,7 +4163,7 @@ bool cpm_read_console( char * buf, size_t bufsize, uint8_t & out_len )
     out_len = 0;
     while ( out_len < (uint8_t) bufsize )
     {
-        ch = get_next_kbd_char();
+        ch = (char) get_next_kbd_char();
         tracer.Trace( "  get_next_kbd_char read character %02x -- '%c'\n", ch, printable( ch ) );
 
         // CP/M read console buffer treats these control characters as special: c, e, h, j, m, r, u, x
@@ -4423,6 +4407,9 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
 bool load_cpm68k( const char * acApp, const char * acAppArgs )
 {
     assert( 256 == sizeof( BasePageCPM ) ); // make sure the structure was defined correctly
+
+    // CP/M apps including Forth83 expect LF characters in files redirected to stdin are converted to CR
+    ConsoleConfiguration::ConvertRedirectedLFToCR( true );
 
     // if this is being called from the bdos chain call, reset global data structures.
     memory.resize( 0 );
@@ -5063,6 +5050,7 @@ void emulator_invoke_68k_trap3( m68000 & cpu ) // bios
                 ACCESS_REG( REG_RESULT ) = 0xff;
             else
                 ACCESS_REG( REG_RESULT ) = 0;
+            tracer.Trace( "  status is returing %x\n", (uint8_t) ACCESS_REG( REG_RESULT ) );
             break;
         }
         case 3: // read console character in

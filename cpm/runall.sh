@@ -28,3 +28,9 @@ cp ../c_tests/tp.s TP.S
 unix2dos TP.S
 ma.sh TP
 $_m68runcmd -h:1 TP.68K
+
+# run app with redirected input
+echo running tgets with redirected stdin
+$_m68runcmd TGETS.68K <TGETS.TXT
+
+
