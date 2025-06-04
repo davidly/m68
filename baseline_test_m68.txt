@@ -1,4 +1,4 @@
-Tue 06/03/2025 13:52:31.12 
+Wed 06/04/2025 15:59:17.90 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.339000 milliseconds
+25.218000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 3, hour 20, min 52, sec 37
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 3, hour 15, min 52, sec 37
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 3, hour 12, min 52, sec 37
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 3, hour 12, min 52, sec 37
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 4, hour 22, min 59, sec 23
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 4, hour 17, min 59, sec 23
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 4, hour 14, min 59, sec 23
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 4, hour 14, min 59, sec 23
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5727,7 +5727,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 3, hour 12, min 52, sec 44
+tz: 'PST+8', year: 2025, month 6, day 4, hour 14, min 59, sec 31
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -5879,6 +5879,8 @@ building t_setjmp
 building tmuldiv
 building mm
 building fopentst
+building tgets
+building cpmenumd
 building tchk
 building tmovep
 building tea
@@ -6295,6 +6297,52 @@ len in pfl: 80
 length of file before initial close: 80
 len in pfl: 0
 exiting fopentst with great success
+running CPMENUMD
+finding 68K files
+  found this executable! CPMENUMD.68K
+  result from find first: 255
+  file   0: AR68.68K
+  file   1: AS68.68K
+  file   2: C068.68K
+  file   3: C168.68K
+  file   4: CP68.68K
+  file   5: CPMENUMD.68K
+  file   6: DDT.68K
+  file   7: DDT68000.68K
+  file   8: E.68K
+  file   9: E68.68K
+  file  10: FILEOPS.68K
+  file  11: FOPENTST.68K
+  file  12: LINK68.68K
+  file  13: LO68.68K
+  file  14: MM.68K
+  file  15: MORE.68K
+  file  16: NM68.68K
+  file  17: SENDC68.68K
+  file  18: SIEVE.68K
+  file  19: SIEVE68.68K
+  file  20: SIZE68.68K
+  file  21: TADDSUBM.68K
+  file  22: TBCD.68K
+  file  23: TCHK.68K
+  file  24: TEA.68K
+  file  25: TGETS.68K
+  file  26: TM.68K
+  file  27: TMOVEP.68K
+  file  28: TMULDIV.68K
+  file  29: TP.68K
+  file  30: TPI.68K
+  file  31: TSHIFT.68K
+  file  32: TTT.68K
+  file  33: TTT68U.68K
+  file  34: T_SETJMP.68K
+finding XYZ files
+  result from find first: 255
+finding TXT files
+  result from find first: 255
+  file   0: FOPENTST.TXT
+  file   1: TGETS.TXT
+cp/m enumerate directory completed with great success
 parsing input file ..\c_tests\tp.bas
 created assembler file: ..\c_tests\tp.s, use registers: yes, expression optimization: yes
         1 file(s) copied.
@@ -7556,8 +7604,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     269
-  dictionary: 265
+total ms:     263
+  dictionary: 259
   generate:   3
   render:     0
 test ba tp.bas 
@@ -7591,7 +7639,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-362.675994 milliseconds
+355.285003 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7613,4 +7661,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Tue 06/03/2025 13:52:58.15 
+Wed 06/04/2025 15:59:45.25 

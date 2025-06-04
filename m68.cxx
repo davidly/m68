@@ -1552,7 +1552,7 @@ const void * my_bsearch( const void * key, const void * vbase, size_t num, unsig
     do
     {
         int k = ( j + i ) / 2;
-        const char * here = base + width*k;
+        const char * here = base + width * k;
         int cmp = ( *compare )( key, here );
         if ( 0 == cmp )
         {
@@ -4631,8 +4631,6 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     return true;
 } //load_cpm68k
 
-#ifndef M68K
-
 bool IsAFolder( const char * pc )
 {
     struct stat file_stat;
@@ -4669,7 +4667,7 @@ bool ValidCPMFilename( char * pc )
     return true;
 } //ValidCPMFilename
 
-#ifdef _MSC_VER
+#ifdef _WIN32
     static HANDLE g_hFindFirst = INVALID_HANDLE_VALUE;
 
     void CloseFindFirst()
@@ -4680,7 +4678,7 @@ bool ValidCPMFilename( char * pc )
             g_hFindFirst = INVALID_HANDLE_VALUE;
         }
     } //CloseFindFirst
-#else
+#else //_WIN2
     #include <dirent.h>
     static DIR * g_FindFirst = 0;
 
@@ -4806,7 +4804,7 @@ bool ValidCPMFilename( char * pc )
         return pdir;
     } //FindFirstFileLinux
 
-#endif
+#endif //_WIN32
 
 void ParseFoundFile( char * pfile )
 {
@@ -4840,8 +4838,6 @@ void ParseFoundFile( char * pfile )
                     g_DMA[1], g_DMA[2], g_DMA[3], g_DMA[4], g_DMA[5], g_DMA[6], g_DMA[7], g_DMA[8],
                     g_DMA[9], g_DMA[10],  g_DMA[11] );
 } //ParseFoundFile
-
-#endif //M68K
 
 bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
 {
@@ -5318,7 +5314,6 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 tracer.Trace( "ERROR: can't parse filename in close call\n" );
             break;
         }
-#ifndef M68K
         case 17: // search for first.
         {
             // Use the FCB and write directory entries to the DMA address, then point to
@@ -5366,7 +5361,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                     CloseFindFirst();
                     tracer.Trace( "WARNING: find first file couldn't find a single match\n" );
                 }
-#else
+#else //_MSC_VER
                 LINUX_FIND_DATA fd = {0};
                 g_FindFirst = FindFirstFileLinux( acFilename, fd );
                 if ( 0 != g_FindFirst )
@@ -5376,7 +5371,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 }
                 else
                     tracer.Trace( "WARNING: find first file failed, error %d = %s\n", errno, strerror( errno ) );
-#endif
+#endif //_MSC_VER
             }
             else
                 tracer.Trace( "ERROR: can't parse filename for search for first\n" );
@@ -5426,7 +5421,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 }
                 else
                     tracer.Trace( "ERROR: search for next without a prior successful search for first\n" );
-#else
+#else //_MSC_VER
                 if ( 0 != g_FindFirst )
                 {
                     LINUX_FIND_DATA fd = {0};
@@ -5444,13 +5439,12 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                 }
                 else
                     tracer.Trace( "ERROR: search for next without a prior successful search for first\n" );
-#endif
+#endif //_MSC_VER
             }
             else
                 tracer.Trace( "ERROR: can't parse filename for search for first\n" );
             break;
         }
-#endif
         case 19: // delete file. return 255 if file not found and 0..3 directory code otherwise
         {
             FCBCPM68K * pfcb = (FCBCPM68K *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
