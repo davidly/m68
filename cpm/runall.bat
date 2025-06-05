@@ -17,15 +17,15 @@ if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )
 
-set _clist=E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK TMOVEP MM E68 SIEVE68 TEA TBCD TADDSUBM TSHIFT FOPENTST CPMENUMD
-
-( for %%a in (%_clist%) do ( call :crun %%a ) )
-
 rem compile and run a basic app
 %_M68runcmd% ..\c_tests\ba -x -a:c ..\c_tests\tp.bas
 copy ..\c_tests\tp.s
 call ma.bat tp
 %_M68runcmd% tp.68k
+
+set _clist=E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK TMOVEP MM E68 SIEVE68 TEA TBCD TADDSUBM TSHIFT FOPENTST CPMENUMD
+
+( for %%a in (%_clist%) do ( call :crun %%a ) )
 
 rem run app with redirected input
 echo running tgets with redirected stdin
