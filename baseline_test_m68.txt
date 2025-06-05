@@ -1,4 +1,4 @@
-Wed 06/04/2025 15:59:17.90 
+Thu 06/05/2025 15:24:55.60 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.218000 milliseconds
+25.587999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 4, hour 22, min 59, sec 23
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 4, hour 17, min 59, sec 23
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 4, hour 14, min 59, sec 23
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 4, hour 14, min 59, sec 23
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 5, hour 22, min 25, sec 1
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 5, hour 17, min 25, sec 1
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 5, hour 14, min 25, sec 1
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 5, hour 14, min 25, sec 1
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5727,7 +5727,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 4, hour 14, min 59, sec 31
+tz: 'PST+8', year: 2025, month 6, day 5, hour 14, min 25, sec 9
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6298,50 +6298,49 @@ length of file before initial close: 80
 len in pfl: 0
 exiting fopentst with great success
 running CPMENUMD
+finding COM files
 finding 68K files
   found this executable! CPMENUMD.68K
-  result from find first: 255
-  file   0: AR68.68K
-  file   1: AS68.68K
-  file   2: C068.68K
-  file   3: C168.68K
-  file   4: CP68.68K
-  file   5: CPMENUMD.68K
-  file   6: DDT.68K
-  file   7: DDT68000.68K
-  file   8: E.68K
-  file   9: E68.68K
-  file  10: FILEOPS.68K
-  file  11: FOPENTST.68K
-  file  12: LINK68.68K
-  file  13: LO68.68K
-  file  14: MM.68K
-  file  15: MORE.68K
-  file  16: NM68.68K
-  file  17: SENDC68.68K
-  file  18: SIEVE.68K
-  file  19: SIEVE68.68K
-  file  20: SIZE68.68K
-  file  21: TADDSUBM.68K
-  file  22: TBCD.68K
-  file  23: TCHK.68K
-  file  24: TEA.68K
-  file  25: TGETS.68K
-  file  26: TM.68K
-  file  27: TMOVEP.68K
-  file  28: TMULDIV.68K
-  file  29: TP.68K
-  file  30: TPI.68K
-  file  31: TSHIFT.68K
-  file  32: TTT.68K
-  file  33: TTT68U.68K
-  file  34: T_SETJMP.68K
+  file   0:      AR68.68K     19712
+  file   1:      AS68.68K     54656
+  file   2:      C068.68K     59648
+  file   3:      C168.68K     56064
+  file   4:      CP68.68K     26496
+  file   5:  CPMENUMD.68K     31104
+  file   6:       DDT.68K      1792
+  file   7:  DDT68000.68K     55168
+  file   8:         E.68K     26880
+  file   9:       E68.68K      2304
+  file  10:   FILEOPS.68K     36480
+  file  11:  FOPENTST.68K     29568
+  file  12:    LINK68.68K     37888
+  file  13:      LO68.68K     23424
+  file  14:        MM.68K     28416
+  file  15:      MORE.68K     31872
+  file  16:      NM68.68K     16000
+  file  17:   SENDC68.68K     16384
+  file  18:     SIEVE.68K     26880
+  file  19:   SIEVE68.68K     33536
+  file  20:    SIZE68.68K     14592
+  file  21:  TADDSUBM.68K     34688
+  file  22:      TBCD.68K     35712
+  file  23:      TCHK.68K     33792
+  file  24:       TEA.68K     83328
+  file  25:     TGETS.68K     30464
+  file  26:        TM.68K     29824
+  file  27:    TMOVEP.68K     33792
+  file  28:   TMULDIV.68K     32128
+  file  29:        TP.68K     38400
+  file  30:       TPI.68K     27904
+  file  31:    TSHIFT.68K     39168
+  file  32:       TTT.68K     39680
+  file  33:    TTT68U.68K      5120
+  file  34:  T_SETJMP.68K     27008
 finding XYZ files
-  result from find first: 255
 finding TXT files
-  result from find first: 255
-  file   0: FOPENTST.TXT
-  file   1: TGETS.TXT
+  file   0:       FOO.TXT   6186368
+  file   1:  FOPENTST.TXT       128
+  file   2:     TGETS.TXT       128
 cp/m enumerate directory completed with great success
 parsing input file ..\c_tests\tp.bas
 created assembler file: ..\c_tests\tp.s, use registers: yes, expression optimization: yes
@@ -7604,8 +7603,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     263
-  dictionary: 259
+total ms:     264
+  dictionary: 260
   generate:   3
   render:     0
 test ba tp.bas 
@@ -7639,7 +7638,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-355.285003 milliseconds
+358.384002 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7661,4 +7660,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Wed 06/04/2025 15:59:45.25 
+Thu 06/05/2025 15:25:22.83 
