@@ -15,7 +15,7 @@ str=$(tr '[a-z]' '[A-Z]' <<< $1)
 rm $str.68K 2>/dev/null
 $_m68runcmd AS68.68K -l -u $str.S
             
-$_m68runcmd LO68.68K -r -o $str.68K $str.O
+$_m68runcmd LO68.68K -x -r -o $str.68K $str.O
 rm $str.O
 
 
