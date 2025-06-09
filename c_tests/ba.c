@@ -5766,13 +5766,13 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
             fprintf( fp, "elapString: .dc.b 'seconds',0\n" );
         if ( !g_Quiet )
         {
-            fprintf( fp, "startString: .dc.b 'running basic',13,10,0\n" );
-            fprintf( fp, "stopString: .dc.b 'done running basic',13,10,0\n" );
+            fprintf( fp, "startString: .dc.b 'running basic',10,0\n" );
+            fprintf( fp, "stopString: .dc.b 'done running basic',10,0\n" );
         }
-        fprintf( fp, "errorString: .dc.b 'internal error',13,10,0\n" );
+        fprintf( fp, "errorString: .dc.b 'internal error',10,0\n" );
         fprintf( fp, "strString:   .dc.b '%%s',0\n" );
         fprintf( fp, "intString:   .dc.b '%%ld',0\n" );
-        fprintf( fp, "newlineString: .dc.b 13,10,0\n" );
+        fprintf( fp, "newlineString: .dc.b 10,0\n" );
 
         fprintf( fp, ".globl _main\n" );
         fprintf( fp, ".text\n" );

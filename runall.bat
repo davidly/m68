@@ -78,7 +78,7 @@ echo test m68.elf ttt.68k 1 >>%outputfile%
 echo test com cp/m 2.2 emulator
 echo test com cp/m 2.2 emulator >>%outputfile%
 pushd com
-%_M68runcmd% -h:60 COM.68K MBASIC.COM HELLO.BAS >>..\%outputfile%
+%_M68runcmd% -h:1 COM.68K MBASIC.COM HELLO.BAS >>..\%outputfile%
 popd
 
 echo running tgets with redirected stdin

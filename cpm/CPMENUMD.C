@@ -40,7 +40,9 @@ struct FCBCPM
     uint8_t cr;      
     uint8_t r0;      
     uint8_t r1;      
+#ifndef CPM80
     uint8_t r2;   /* CP/M 68K and >= CP/M 80 v3 */
+#endif
 };
 
 char * x_strchr( str, c ) char * str; char c;
@@ -48,7 +50,7 @@ char * x_strchr( str, c ) char * str; char c;
     while ( *str )
     {
         if ( *str == c )
-            return (char *) str; 
+            return str; 
         str++;
     }
 
@@ -128,8 +130,7 @@ uint32_t file_size( pfilename ) char * pfilename;
 #endif
     }
 
-    size <<= 7;   /* 128 bytes per record */
-
+    size <<= 7;   /* 128 bytes per record; CP/M file sizes are in multiples of the record size, not an exact byte count */
     return size;
 }
 
@@ -173,9 +174,9 @@ char ** x_bsearch( key, vbase, num, width, compare ) char ** key; char ** vbase;
             j = k - 1;
         else
             i = k + 1;
-      } while ( j >= i );
+    } while ( j >= i );
 
-   return 0;
+    return 0;
 } 
 
 int enumerate( pfile ) char * pfile;
@@ -235,7 +236,7 @@ int enumerate( pfile ) char * pfile;
 
     if ( 255 != result )
     {
-        printf( "unexpected result from find first: %d\n", result );
+        printf( "unexpected result from find first/next: %d\n", result );
         return false;
     }
 
