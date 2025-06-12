@@ -1851,7 +1851,6 @@ uint64_t m68000::run()
                             uint8_t src = effective_value8( address );
                             uint32_t dst = effective_address2( op_mode, op_reg );
                             setui8( dst, src );
-                            //tracer.Trace( "wrote byte %#x to address %#x\n", src, dst );
                             set_nzcv8( src );
 
 #if 0
@@ -2257,24 +2256,8 @@ uint64_t m68000::run()
                                     continue;
                             }
                         }
-                        else // long. The documentation is ambiguous, but apparently only .w is supported
-                        {
-                            op_size = 2;
-                            int32_t val = (int32_t) effective_value32( effective_address() );
-                            int32_t dval = (int32_t) dregs[ op_reg ].l;
-                            if ( dval < 0 )
-                            {
-                                setflag_n( true );
-                                if ( handle_trap( 6, pc ) )
-                                    continue;
-                            }
-                            else if ( dval > val )
-                            {
-                                setflag_n( false );
-                                if ( handle_trap( 6, pc ) )
-                                    continue;
-                            }
-                        }
+                        else
+                            unhandled(); // long. The documentation is ambiguous, but apparently only .w is supported
                     }
                     else if ( 2 == bits11_8 ) // clr
                     {
@@ -3057,6 +3040,7 @@ uint64_t m68000::run()
                 {
                     bool is_asd = ( 0 == op_reg );
                     bool is_left = opbit( 8 );
+                    op_size = 1; // AS and LS operations on memory are always Word
                     uint32_t address = effective_address();
                     uint16_t value = effective_value16( address );
                     bool original_signed = sign16( value );
@@ -3086,6 +3070,7 @@ uint64_t m68000::run()
                 {
                     bool is_rox = ( 2 == op_reg );
                     bool is_left = opbit( 8 );
+                    op_size = 1; // RO and ROX operations on memory are always Word
                     uint32_t address = effective_address();
                     uint16_t value = effective_value16( address );
                     bool original_x = flag_x();

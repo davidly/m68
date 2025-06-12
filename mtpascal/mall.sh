@@ -24,3 +24,10 @@ do
     echo building $arg
     m.sh $arg
 done
+
+for arg in tphi
+do
+    echo building $arg
+    mf.sh $arg
+done
+

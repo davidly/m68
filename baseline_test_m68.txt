@@ -1,4 +1,4 @@
-Wed 06/11/2025 16:07:46.40 
+Thu 06/12/2025  9:34:23.67 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.246000 milliseconds
+24.562999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 11, hour 23, min 7, sec 52
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 11, hour 18, min 7, sec 52
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 11, hour 15, min 7, sec 52
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 11, hour 15, min 7, sec 52
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 12, hour 16, min 34, sec 30
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 12, hour 11, min 34, sec 30
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 12, hour 8, min 34, sec 30
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 12, hour 8, min 34, sec 30
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5727,7 +5727,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 11, hour 15, min 8, sec 0
+tz: 'PST+8', year: 2025, month 6, day 12, hour 8, min 34, sec 37
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6573,6 +6573,38 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 mm,paslib.l68 
+building tphi
+--------------------------------------------------
+Pascal MT+68                           Version 3.3
+Serial  No. 3170-0000-000088   All Rights Reserved
+Copyright (c) 1984          Digital Research, Inc.
+--------------------------------------------------
+PASTEMP.TOK ROUTED TO DISK: @
++
+SYNTAX SCAN COMPLETE
+SYMBOL TABLE INITIALIZATION
+AVAILABLE MEMORY: 1048421
+USER TABLE SPACE: 1047745
+RELEASE 3.3 -- PHASE 1
+
+REMAINING MEMORY: 1047710
+RELEASE 3.3 -- PHASE 2
+MT+68K
+TPHI            4    SIZE:   336
+
+LINES :      19
+ERRORS:       0
+CODE  :     340
+BSS   :      18
+
+PASCAL/MT+68K COMPILATION COMPLETE
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+[symbols] tphi,fpreals.l68,paslib.l68 
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -6584,6 +6616,29 @@ moves evaluated:        6493
 iterations:             1
 running MM
 summ is: 465880
+running TPHI
+should tend towards 1.618033988749...
+  at 1 iterations:  2.000000000000E+000
+  at 2 iterations:  1.500000000000E+000
+  at 3 iterations:  1.666666666666E+000
+  at 4 iterations:  1.600000000000E+000
+  at 5 iterations:  1.625000000000E+000
+  at 6 iterations:  1.615384615384E+000
+  at 7 iterations:  1.619047619047E+000
+  at 8 iterations:  1.617647058823E+000
+  at 9 iterations:  1.618181818181E+000
+  at 10 iterations:  1.617977528089E+000
+  at 11 iterations:  1.618055555555E+000
+  at 12 iterations:  1.618025751073E+000
+  at 13 iterations:  1.618037135278E+000
+  at 14 iterations:  1.618032786885E+000
+  at 15 iterations:  1.618034447821E+000
+  at 16 iterations:  1.618033813400E+000
+  at 17 iterations:  1.618034055727E+000
+  at 18 iterations:  1.618033963166E+000
+  at 19 iterations:  1.618033998521E+000
+  at 20 iterations:  1.618033985017E+000
+  at 21 iterations:  1.618033990175E+000
 compiler test cb68 
 building e
 --------------------------------------------------
@@ -7767,8 +7822,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     275
-  dictionary: 271
+total ms:     276
+  dictionary: 272
   generate:   3
   render:     0
 test ba tp.bas 
@@ -7802,7 +7857,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-362.834991 milliseconds
+361.772003 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7824,4 +7879,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Wed 06/11/2025 16:08:14.96 
+Thu 06/12/2025  9:34:52.29 
