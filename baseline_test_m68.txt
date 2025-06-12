@@ -1,4 +1,4 @@
-Sun 06/08/2025 20:41:37.93 
+Wed 06/11/2025 16:07:46.40 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.111000 milliseconds
+25.246000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 9, hour 3, min 41, sec 44
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 8, hour 22, min 41, sec 44
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 8, hour 19, min 41, sec 44
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 8, hour 19, min 41, sec 44
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 11, hour 23, min 7, sec 52
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 11, hour 18, min 7, sec 52
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 11, hour 15, min 7, sec 52
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 11, hour 15, min 7, sec 52
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5727,7 +5727,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 8, hour 19, min 41, sec 51
+tz: 'PST+8', year: 2025, month 6, day 11, hour 15, min 8, sec 0
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -5881,6 +5881,8 @@ building mm
 building fopentst
 building tgets
 building cpmenumd
+building floating point app floata
+building floating point app mandle
 building tchk
 building tmovep
 building tea
@@ -6319,35 +6321,107 @@ finding 68K files
   file   8:         E.68K     26880
   file   9:       E68.68K      2304
   file  10:   FILEOPS.68K     36480
-  file  11:  FOPENTST.68K     29568
-  file  12:    LINK68.68K     37888
-  file  13:      LO68.68K     23424
-  file  14:        MM.68K     28416
-  file  15:      MORE.68K     31872
-  file  16:      NM68.68K     16000
-  file  17:   SENDC68.68K     16384
-  file  18:     SIEVE.68K     26880
-  file  19:   SIEVE68.68K     33536
-  file  20:    SIZE68.68K     14592
-  file  21:  TADDSUBM.68K     34688
-  file  22:      TBCD.68K     35712
-  file  23:      TCHK.68K     33792
-  file  24:       TEA.68K     83328
-  file  25:     TGETS.68K     30464
-  file  26:        TM.68K     29824
-  file  27:    TMOVEP.68K     33792
-  file  28:   TMULDIV.68K     32128
-  file  29:        TP.68K     38400
-  file  30:       TPI.68K     27904
-  file  31:    TSHIFT.68K     39168
-  file  32:       TTT.68K     39680
-  file  33:    TTT68U.68K      5120
-  file  34:  T_SETJMP.68K     27008
+  file  11:    FLOATA.68K     43136
+  file  12:  FOPENTST.68K     29568
+  file  13:    LINK68.68K     37888
+  file  14:      LO68.68K     23424
+  file  15:    MANDLE.68K     34176
+  file  16:        MM.68K     28416
+  file  17:      MORE.68K     31872
+  file  18:      NM68.68K     16000
+  file  19:   SENDC68.68K     16384
+  file  20:     SIEVE.68K     26880
+  file  21:   SIEVE68.68K     33536
+  file  22:    SIZE68.68K     14592
+  file  23:  TADDSUBM.68K     34688
+  file  24:      TBCD.68K     35712
+  file  25:      TCHK.68K     33792
+  file  26:       TEA.68K     83328
+  file  27:     TGETS.68K     30464
+  file  28:        TM.68K     29824
+  file  29:    TMOVEP.68K     33792
+  file  30:   TMULDIV.68K     32128
+  file  31:        TP.68K     38400
+  file  32:       TPI.68K     27904
+  file  33:    TSHIFT.68K     39168
+  file  34:       TTT.68K     39680
+  file  35:    TTT68U.68K      5120
+  file  36:  T_SETJMP.68K     27008
 finding XYZ files
 finding TXT files
   file   0:  FOPENTST.TXT       128
   file   1:     TGETS.TXT       128
 cp/m enumerate directory completed with great success
+running FLOATA
+sizeof int 2
+sizeof long 4
+sizeof float 4
+sizeof double 4
+
+float constants: fail
+0x000074C0 -0.0000692E-01
+0x000076C0 -0.0000704E-01
+0x000078C0 -0.0000718E-01
+0x00000000   0.0000000E00
+0x00007440  0.0000692E-01
+0x00007640  0.0000704E-01
+0x00007840  0.0000718E-01
+0x27260884 -1.3264052E-19
+0x36DD1EFB  -1.2354214E17
+0x27260804  1.3264052E-19
+0x36DD1E7B   1.2354214E17
+
+string constants used as float constants: okay
+ -9.9999999E-01 0xFFFFFEC0 -9.9999990E-01
+ -1.00000011E00 0x800000C1  -1.0000000E00
+  -1.0000002E00 0x800001C1  -1.0000001E00
+              0 0x00000000   0.0000000E00
+  9.9999999E-01 0xFFFFFE40  9.9999990E-01
+  1.00000011E00 0x80000041   1.0000000E00
+   1.0000002E00 0x80000141   1.0000001E00
+         -1e-19 0xEC1E4A81 -1.0000000E-19
+          -7e18 0xC249FFFF  -7.0000014E18
+          1e-19 0xEC1E4A01  1.0000000E-19
+           7e18 0xC249FF7F   7.0000014E18
+
+long constants used as float constants: okay
+0xFFFFFFC0 -9.9999990E-01
+0x800000C1  -1.0000000E00
+0x800001C1  -1.0000001E00
+0x00000000   0.0000000E00
+0xFFFFFF40  9.9999990E-01
+0x80000041   1.0000000E00
+0x80000141   1.0000001E00
+0x80000081 -5.4210114E-20
+0xFFFFFFFF  -9.2233715E18
+0x80000001  5.4210114E-20
+0xFFFFFF7F   9.2233715E18
+running MANDLE
+000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
+000001111111111111111122222222333557BF75433222211111000000000000000000000000000
+000111111111111111112222222233445C      643332222111110000000000000000000000000
+011111111111111111222222233444556C      654433332211111100000000000000000000000
+11111111111111112222233346 D978 BCF    DF9 6556F4221111110000000000000000000000
+111111111111122223333334469                 D   6322111111000000000000000000000
+1111111111222333333334457DB                    85332111111100000000000000000000
+11111122234B744444455556A                      96532211111110000000000000000000
+122222233347BAA7AB776679                         A32211111110000000000000000000
+2222233334567        9A                         A532221111111000000000000000000
+222333346679                                    9432221111111000000000000000000
+234445568  F                                   B5432221111111000000000000000000
+                                              864332221111111000000000000000000
+234445568  F                                   B5432221111111000000000000000000
+222333346679                                    9432221111111000000000000000000
+2222233334567        9A                         A532221111111000000000000000000
+122222233347BAA7AB776679                         A32211111110000000000000000000
+11111122234B744444455556A                      96532211111110000000000000000000
+1111111111222333333334457DB                    85332111111100000000000000000000
+111111111111122223333334469                 D   6322111111000000000000000000000
+11111111111111112222233346 D978 BCF    DF9 6556F4221111110000000000000000000000
+011111111111111111222222233444556C      654433332211111100000000000000000000000
+000111111111111111112222222233445C      643332222111110000000000000000000000000
+000001111111111111111122222222333557BF75433222211111000000000000000000000000000
+000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
 running tgets with redirected stdin
 file data
 read: 'f' == 102 == 66
@@ -6760,6 +6834,94 @@ end of pass 1
 end of pass 2
     1:     REM A PROGRAM ID MULTIPLY MATRICES. 465880 EXPECTED RESULT
     2:     rem runs 30x faster with integer than the default floating point
+    3:     integer M, N, A, I, J, C, B, K
+    4:     25 M = 20 : N = 20
+    5:     50 SUM = 0
+    6:     60 GOSUB 150
+    7:     65 REM PRINT "DIMENSIONED"
+    8:     70 GOSUB 200
+    9:     75 REM PRINT "A FILLED"
+   10:     80 GOSUB 280
+   11:     85 REM PRINT "B FILLED"
+   12:     90 GOSUB 360
+   13:     95 REM PRINT "C FILLED"
+   14:     100 GOSUB 440
+   15:     105 REM PRINT 1 "MULTIPLIED"
+   16:     110 GOSUB 540
+   17:     120 PRINT "SUM = ";SUM
+   18:     130 PRINT CHR$(7)
+   19:     140 GOTO 9999
+   20:     150 REM DIMENSION
+   21:     160 DIM A(20,20)
+   22:     170 DIM B(20,20)
+   23:     180 DIM C(20,20)
+   24:     190 RETURN
+   25:     200 REM FILL A
+   26:     210 FOR I = 1 TO 20
+   27:     220 FOR J = 1 TO 20
+   28:     230 A(I,J) = I + J
+   29:     240 NEXT
+   30:     250 NEXT
+   31:     260 RETURN
+   32:     270 REM *************
+   33:     280 REM FILL B
+   34:     290 FOR I = 1 TO 20
+   35:     300 FOR J = 1 TO 20
+   36:     310 B(I,J) = INT((I+J)/J)
+   37:     320 NEXT
+   38:     330 NEXT
+   39:     340 RETURN
+   40:     350 REM **********
+   41:     360 REM FILL C
+   42:     370 FOR I = 1 TO 20
+   43:     380 FOR J = 1 TO 20
+   44:     390 C(I,J) = 0
+   45:     400 NEXT
+   46:     410 NEXT
+   47:     420 RETURN
+   48:     430 REM **************
+   49:     440 REM ************ MULTIPLY
+   50:     450 FOR I = 1 TO 20
+   51:     460 FOR J = 1 TO 20
+   52:     470 FOR K = 1 TO 20
+   53:     480 C(I,J) = C(I,J) + A(I,K)*B(K,J)
+   54:     490 NEXT
+   55:     500 NEXT
+   56:     510 NEXT
+   57:     520 RETURN
+   58:     530 REM **************
+   59:     540 REM *************** SUMMIT
+   60:     550 FOR I = 1 TO 20
+   61:     560 FOR J = 1 TO 20
+   62:     570 SUM = SUM + C(I,J)
+   63:     580 NEXT
+   64:     590 NEXT
+   65:     600 RETURN
+   66:     610 REM ************************(
+   67:     9999 end
+end of compilation
+no errors detected
+code area size:    932       000003a4h
+data area size:    52        00000034h
+common area size:  0         00000000h
+symbol table space remaining: 48461
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+mm.o,cb68.l68 
+building mmf
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     REM A PROGRAM ID MULTIPLY MATRICES. 465880 EXPECTED RESULT
+    2:     rem runs 30x faster with integer than the default floating point
     3:     rem integer M, N, A, I, J, C, B, K
     4:     25 M = 20 : N = 20
     5:     50 SUM = 0
@@ -6837,7 +6999,7 @@ Serial No. XXXX-0000           All Rights Reserved
 Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
-mm.o,cb68.l68 
+mmf.o,cb68.l68 
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -6848,6 +7010,9 @@ running TTT
 for  1  iterations
 final move count  6493
 running MM
+SUM =  465880
+
+running MMF
 SUM =  465880
 
 compiler test cpmcv11 
@@ -7602,8 +7767,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     266
-  dictionary: 262
+total ms:     275
+  dictionary: 271
   generate:   3
   render:     0
 test ba tp.bas 
@@ -7637,7 +7802,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-356.968994 milliseconds
+362.834991 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -7659,4 +7824,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Sun 06/08/2025 20:42:05.98 
+Wed 06/11/2025 16:08:14.96 

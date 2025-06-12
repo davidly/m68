@@ -6485,7 +6485,7 @@ static bool load_image( const char * pimage, const char * app_args )
     if ( ends_with( pimage, ".hex" ) ) // Motorola 68000 hex file special-case
         return load_68000_hex( pimage ); // app args are lost with hex files
 
-    if ( ends_with( pimage, ".68k" ) ) // Digital Research CP/M 68K executable file
+    if ( ends_with( pimage, ".68k" ) || ends_with( pimage, ".rel" ) ) // Digital Research CP/M 68K executable file
         return load_cpm68k( pimage, app_args );
 #endif
 
@@ -7494,8 +7494,30 @@ int main( int argc, char * argv[] )
             }
         }
 
+#ifdef M68
         if ( !appExists )
-            usage( "input .elf executable file not found" );
+        {
+            strcpy( acApp, pcApp );
+            if ( !ends_with( acApp, ".elf" ) && !ends_with( acApp, ".68K" ) )
+            {
+                strcat( acApp, ".68K" );
+                appExists = file_exists( acApp );
+            }
+        }
+
+        if ( !appExists )
+        {
+            strcpy( acApp, pcApp );
+            if ( !ends_with( acApp, ".elf" ) && !ends_with( acApp, ".REL" ) )
+            {
+                strcat( acApp, ".REL" );
+                appExists = file_exists( acApp );
+            }
+        }
+#endif
+
+        if ( !appExists )
+            usage( "input executable file not found" );
 
         if ( elfInfo )
         {

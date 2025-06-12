@@ -1002,10 +1002,10 @@ void m68000::trace_state()
                 if ( is_imm )
                 {
                     uint16_t shift = ( 0 == op_reg ) ? 8 : op_reg;
-                    tracer.Trace( "ror%c.%c #%u, d%u\n", is_left ? 'l' : 'r', get_size(), shift, ea_reg );
+                    tracer.Trace( "ro%c.%c #%u, d%u\n", is_left ? 'l' : 'r', get_size(), shift, ea_reg );
                 }
                 else
-                    tracer.Trace( "ror%c.%c d%u, d%u\n", is_left ? 'l' : 'r', get_size(), op_reg, ea_reg );
+                    tracer.Trace( "ro%c.%c d%u, d%u\n", is_left ? 'l' : 'r', get_size(), op_reg, ea_reg );
             }
             break;
         }
@@ -2079,6 +2079,7 @@ uint64_t m68000::run()
                     {
                         uint16_t highpart = dregs[ ea_reg ].l >> 16;
                         dregs[ ea_reg ].l = ( dregs[ ea_reg ].l << 16 ) | highpart;
+                        set_nzcv32( dregs[ ea_reg ].l );
                     }
                     else if ( 0x21 == bits11_6 ) // pea
                         push( effective_address() );

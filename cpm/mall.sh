@@ -25,6 +25,12 @@ do
     m.sh $arg
 done
 
+for arg in floata mandle
+do
+    echo building floating point app $arg
+    mf.sh $arg
+done
+
 for arg in tchk tmovep tea tbcd taddsubm tshift
 do
     echo building $arg

@@ -1,6 +1,6 @@
 REM A PROGRAM ID MULTIPLY MATRICES. 465880 EXPECTED RESULT
 rem runs 30x faster with integer than the default floating point
-integer M, N, A, I, J, C, B, K
+rem integer M, N, A, I, J, C, B, K
 25 M = 20 : N = 20
 50 SUM = 0
 60 GOSUB 150

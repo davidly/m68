@@ -17,12 +17,22 @@ set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets cpmenum
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
+set _cflist=floata mandle
+
+( for %%a in (%_cflist%) do ( call :cfrun %%a ) )
+
 goto :makeasm
 
 :crun
 
 echo building %~1
 call m.bat %~1
+exit /b 0
+
+:cfrun
+
+echo building floating point app %~1
+call mf.bat %~1
 exit /b 0
 
 :makeasm
