@@ -4023,7 +4023,8 @@ struct FCBCPM68K // file control block for cp/m
         }
         *p++ = 0;
     }
-    // r0 and r1 are a 16-bit count of 128 byte records
+
+    // r0 and r1 are a 16-bit count of 128 byte records in CP/M 2.2. For CP/M 68K, reverse the byte ordering and add r2
 
     uint32_t GetRandomIOOffset() { return ( (uint32_t) this->r0 << 16 ) | ( (uint32_t) this->r1 << 8 ) | this->r2; }
 
@@ -4311,6 +4312,8 @@ bool handle_relocations_cpm( FILE * fp, HeaderCPM68K & head, uint32_t text_base,
     return true;
 } //handle_relocations_cpm
 
+// bdos 59 is invoked by apps including DDT
+
 bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, uint16_t loaderControlFlags, uint32_t & basePage, uint32_t & stackPointer )
 {
     if ( 0 != loaderControlFlags )
@@ -4362,6 +4365,8 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
         printf( "can't read text and data segments of cp/m 68k image file\n" );
         return false;
     }
+
+    tracer.Trace( "  read %x bytes of text and data at offset %x\n", head.cb_text + head.cb_data, text_base );
 
     // malloc / brk in the C runtime for DR C use some of these values
 
@@ -4499,6 +4504,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
         printf( "can't read text and data segments of cp/m 68k image file: %s\n", acApp );
         return false;
     }
+    tracer.Trace( "  read %x bytes of text and data from file offset %x to memory offset %x\n", head.cb_text + head.cb_data, (int) sizeof( head ), text_base );
 
     while ( ' ' == *acAppArgs )
         acAppArgs++;
@@ -5065,6 +5071,7 @@ void emulator_invoke_68k_trap3( m68000 & cpu ) // bios
                 send_character( ch );
                 fflush( stdout );
             }
+            break;
         }
         case 22: // set exception handler address
         {

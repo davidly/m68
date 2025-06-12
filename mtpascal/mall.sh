@@ -25,7 +25,7 @@ do
     m.sh $arg
 done
 
-for arg in tphi
+for arg in tphi tap
 do
     echo building $arg
     mf.sh $arg

@@ -16,7 +16,7 @@ if "%1" == "rvos" (
 set _intlist=e sieve ttt mm
 ( for %%a in (%_intlist%) do ( call :intrun %%a ) )
 
-set _floatlist=tphi
+set _floatlist=tphi tap
 ( for %%a in (%_floatlist%) do ( call :floatrun %%a ) )
 
 goto :alldone

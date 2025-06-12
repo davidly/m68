@@ -54,7 +54,7 @@ begin { tap }
     writeln( 'first implementation...' );
     first_implementation;
 
-{ no Random
+{ no Random() is available
     writeln( 'second implementation...' );
     loops := 10000;
     total := 0;
