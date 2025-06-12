@@ -23,5 +23,5 @@ rm $str.2 2>/dev/null
 $_m68runcmd AS68.68K -l -u $str.S
 rm $str.S 2>/dev/null
 
-$_m68runcmd LO68.68K -r -u_nofloat -o $str.68K S.O $str.O CLIB LIBF12.A
+$_m68runcmd LO68.68K -r -u__optoff  -o $str.68K S.O $str.O CLIB LIBF12.A
 rm $str.O 2>/dev/null
