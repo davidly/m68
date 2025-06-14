@@ -17,7 +17,7 @@ set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets cpmenum
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
-set _cflist=floata mandle
+set _cflist=floata mandle tap tphi ts
 
 ( for %%a in (%_cflist%) do ( call :cfrun %%a ) )
 

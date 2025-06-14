@@ -25,7 +25,7 @@ do
     m.sh $arg
 done
 
-for arg in floata mandle
+for arg in floata mandle tap tphi ts
 do
     echo building floating point app $arg
     mf.sh $arg
