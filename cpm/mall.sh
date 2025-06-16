@@ -19,13 +19,14 @@ fi
 
 export _m68runcmd
 
-for arg in e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets cpmenumd
+for arg in e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets \
+                cpmenumd primes
 do
     echo building $arg
     m.sh $arg
 done
 
-for arg in floata mandle tap tphi ts
+for arg in floata mandle tap tphi ts tf
 do
     echo building floating point app $arg
     mf.sh $arg

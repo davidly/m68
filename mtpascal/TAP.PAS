@@ -1,8 +1,10 @@
 program tap;
 
 var
-    loops, i, rsf, prev, total, greatest, a, b, c : integer;
+    rsf, greatest, a, b, c : integer;
+    loops, prev, i, total : integer;
     v, ri, rtotal : real;
+    randSeed : integer;
 
 function gcd( m : integer; n : integer ) : integer;
 var
@@ -48,22 +50,35 @@ begin
     end;
 end;
 
+function Random : integer;
+begin
+    randSeed := SHR( randSeed, 2 );
+    randSeed := randSeed * 3079 + 73;
+    Random := ABS( randSeed );
+end;
+
 begin { tap }
     writeln( 'tap starting, should tend towards 1.2020569031595942854...' );
 
     writeln( 'first implementation...' );
     first_implementation;
 
-{ no Random() is available
+    {
+      this implementation doesn't work well because Random() isn't very good and because
+      it uses integer, not longint for the values. I can't figure out how to convert
+      from longint to real. And MOD doesn't work correctly with longint in gcd().
+    }
+
     writeln( 'second implementation...' );
+    randSeed := 13;
     loops := 10000;
     total := 0;
     prev := 1;
 
     for i := 1 to loops do begin
-        a := Random( 32767 );
-        b := Random( 32767 );
-        c := Random( 32767 );
+        a := Random;
+        b := Random;
+        c := Random;
 
         greatest := gcd( a, gcd( b, c ) );
         if ( 1 = greatest ) then total := total + 1;
@@ -75,7 +90,6 @@ begin { tap }
             writeln( '  at ', i, ' iterations: ', v );
         end;
     end;
-}
 
     writeln( 'tap completed with great success' );
 end. { tap }

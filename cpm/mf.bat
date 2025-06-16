@@ -24,9 +24,11 @@ del %1.1 2>nul
 del %1.2 2>nul
 %_runit% as68.68k -l -u %1.s
 
-del %1.s 2>nul
+rem del %1.s 2>nul
 
-%_runit% lo68.68k -r -u__optoff -o %1.68k s.o %1.o clib libf12.a 
+rem libf12.a is from v1.2 of the compiler and it works well but is missing some functions in v1.3's libf.a
+rem %_runit% lo68.68k -r -u__optoff -o %1.68k s.o %1.o clib libf12.a
+%_runit% lo68.68k -r -u__optoff -o %1.68k s.o %1.o clib libf12.a libf.a
 
 del %1.o 2>nul
 
