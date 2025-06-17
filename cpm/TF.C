@@ -3,6 +3,7 @@
 // But add the v1.3 version afterwards because it has some working functions not implemented in v1.2.
 // Like this: m68 lo68.68k -r -u__optoff -o %1.68k s.o %1.o clib libf12.a libf.a
 // Floating point constants don't work with this compiler, so atof() is used throughout
+// note: I validated the broken behaviors on a physical 68008 machine.
 
 #include <stdio.h>
 
@@ -50,12 +51,14 @@ char * floattoa( buffer, f, precision ) char *buffer; float f; int precision;
     float fraction;
     char * pbuf = buffer;
     float ften = atof( "10" );
+    float fzero = atof( "0" );
+    float fmone = atof( "-1" );
 
-    if ( f < 0 )
+    if ( f < fzero )
     {
         *pbuf++ = '-';
         *pbuf = 0;
-        f *= -1;
+        f *= fmone;
     }
 
     whole = (int32_t) f;
