@@ -1,3 +1,9 @@
+// This test app is heavily-tailored to the DR CP/M 68K v1.3 C compiler and runtime.
+// Note that the v1.2 libf.a must be used because the v1.3 version has many bugs.
+// But add the v1.3 version afterwards because it has some working functions not implemented in v1.2.
+// Like this: m68 lo68.68k -r -u__optoff -o %1.68k s.o %1.o clib libf12.a libf.a
+// Floating point constants don't work with this compiler, so atof() is used throughout
+
 #include <stdio.h>
 
 typedef unsigned char uint8_t;
@@ -27,6 +33,7 @@ float log10();
 float frexp();
 float fabs();
 
+float TRIG_FLT_EPSILON;
 float M_PI;
 
 char * floattoa( buffer, f, precision ) char *buffer; float f; int precision;
@@ -68,10 +75,6 @@ char * floattoa( buffer, f, precision ) char *buffer; float f; int precision;
 
     return buffer;
 } //floattoa
-
-// less than full precision because libc only provides this much precision in trig functions
-
-float TRIG_FLT_EPSILON;
 
 int check_same_f( operation, a, b ) char * operation; float a; float b;
 {
@@ -167,9 +170,12 @@ float my_acos( x ) float x;
     if ( x < fmone || x > fone )
         return fzero;
 
-    if ( x == fmone ) return M_PI;
-    if ( x == fzero ) return M_PI / ftwo;
-    if ( x == fone ) return fzero;
+    if ( x == fmone )
+        return M_PI;
+    if ( x == fzero )
+        return M_PI / ftwo;
+    if ( x == fone )
+        return fzero;
 
     for ( ;; )
     {
@@ -196,8 +202,12 @@ float my_atan2f( y, x ) float y; float x;
 
     if ( x == fzero )
     {
-        if ( y > fzero ) return M_PI / ftwo;
-        if ( y < fzero ) return -M_PI / ftwo;
+        if ( y > fzero )
+            return M_PI / ftwo;
+
+        if ( y < fzero )
+            return -M_PI / ftwo;
+
         return fzero;
     }
 
@@ -205,13 +215,11 @@ float my_atan2f( y, x ) float y; float x;
 
     if ( x > fzero )
         return atan( ratio );
-    else
-    {
-        if ( y >= fzero )
-            return atan( ratio ) + M_PI;
-        else
-            return atan( ratio ) - M_PI;
-    }
+
+    if ( y >= fzero )
+        return atan( ratio ) + M_PI;
+
+    return atan( ratio ) - M_PI;
 } //my_atan2f
 
 void many_trigonometrics()
@@ -277,7 +285,7 @@ float my_frexp( x, exp ) float x; int * exp;
         exponent++;
     }
     
-    while (abs_x < fhalf )
+    while ( abs_x < fhalf )
     {
         abs_x *= ftwo;
         exponent--;
@@ -295,7 +303,8 @@ int main()
     float pi, radians, s, c, t, f, at, mantissa, b, fpointone, fthree, fonehundred, fonepoint38, a;
     float fone = atof( "1" );
 
-    TRIG_FLT_EPSILON = atof( "0.00002" );  /* 0.00000011920928955078 */
+    TRIG_FLT_EPSILON = atof( "0.00002" );  /* 0.00000011920928955078 would be better, but trig functions don't have that precision */
+    M_PI = atof( "3.14159265" ); // this atof trashes stack if this string is long
     
     floattoa( ac, atof( "-1.234567" ), 8 );
     printf( "float converted by floattoa: %s\n", ac );
@@ -320,8 +329,7 @@ int main()
 
     printf( "result of 20.2 * -1.342: %f\n", fr );
 
-    pi = atof( "3.14159265" );
-    M_PI = pi;
+    pi = M_PI;
     radians = pi / atof( "180.0" ) * atof( "30.0" );
     printf( "pi in radians: %f\n", radians );
 
