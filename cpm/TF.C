@@ -4,6 +4,42 @@
 // Like this: m68 lo68.68k -r -u__optoff -o %1.68k s.o %1.o clib libf12.a libf.a
 // Floating point constants don't work with this compiler, so atof() is used throughout
 // note: I validated the broken behaviors on a physical 68008 machine.
+// functions linked from v1.2's libf12.a:
+//    _atof
+//    _ceil
+//    _cos
+//    _fabs
+//    _floor
+//    _ftoa
+//    _log
+//    _sin
+//    _sqrt
+// helper functions linked from v1.2's libf12.a:
+//    _fpadd
+//    _fpcmp
+//    _fpdiv
+//    _fpftol
+//    _fpltof
+//    _fpmult
+//    _fpneg
+//    _fpsub
+// functions linked from v1.3's libf.a:
+//    _atan
+//    _atan2
+//    _cosh
+//    _log10
+//    _modf
+//    _sinh
+//    _tan
+//    _tanh
+// functions that don't exist and need private versions:
+//    _acos
+//    _asin
+// functions that don't work correctly and need private versions:
+//    _pow      returns positive results for calls like pow( -2, 3 )
+//    _frexp    incorrect results for calls like frexp( 3.14159, & exponent )
+//              returns mantissa:       1.570801, exponent 1
+//              should return mantissa: 0.785398, exponent 2
 
 #include <stdio.h>
 
@@ -17,7 +53,7 @@ typedef int bool;
 #define true 1
 #define false 0
 
-// this old compiler doesn't support the syntax that converts x into a string
+// this old compiler doesn't support the syntax that converts x into a string. so flt is unused.
 
 #define flt( x ) ( atof( #x ) )
 
@@ -26,21 +62,28 @@ typedef int bool;
 // some don't work correctly (pow, frexp) so alternative my_* versions are below.
 // prototypes must exist because the default return type is a 2-byte int.
 
-float atof();
-float pow();
-float log();
-float tan();
+float acos();
+float asin();
 float atan();
 float atan2();
-float sin();
-float asin();
+float atof();
+float ceil();
 float cos();
-float acos();
-float sqrt();
-float tanh();
-float log10();
-float frexp();
+float cosh();
 float fabs();
+float floor();
+float frexp();
+char * ftoa();
+float ldexp();
+float log();
+float log10();
+float modf();
+float pow();
+float sin();
+float sinh();
+float sqrt();
+float tan();
+float tanh();
 
 float TRIG_FLT_EPSILON;
 float M_PI;
@@ -96,6 +139,16 @@ int check_same_f( operation, a, b ) char * operation; float a; float b;
         printf( "operation %s: float %.20f is not the same as float %.20f\n", operation, a, b );
     return eq;
 } //check_same_f
+
+int relaxed_same_f( operation, a, b ) char * operation; float a; float b;
+{
+    float diff = a - b;
+    float abs_diff = fabs( diff );
+    bool eq = ( abs_diff <= ( 10 * TRIG_FLT_EPSILON ) );
+    if ( !eq )
+        printf( "operation %s: float %.20f is not the same as float %.20f\n", operation, a, b );
+    return eq;
+} //relaxed_same_f
 
 int32_t factorial( n ) int32_t n;
 {
@@ -249,6 +302,12 @@ float my_atan2f( y, x ) float y; float x;
     return atan( ratio ) - M_PI;
 } //my_atan2f
 
+float my_cotan( f ) float f;
+{
+    float fone = atof( "1" );
+    return fone / tan( f );
+}
+
 void many_trigonometrics()
 {
     float fresult, fback;
@@ -256,6 +315,7 @@ void many_trigonometrics()
     float fincr = atof( "0.071" );
     float ftwo = atof( "2" );
     float flimit = M_PI / ftwo;
+    float f_cos, f_sin, f_cot, fake_cot;
 
     while ( f < flimit )
     {
@@ -272,6 +332,12 @@ void many_trigonometrics()
         fback = my_asin( fresult );
         if ( !check_same_f( "my_sin", f, fback ) )
             printf( "  my_sin result: %f\n", fresult );
+
+        f_cos = cos( f );
+        f_sin = sin( f );
+        fake_cot = f_cos / f_sin;
+        f_cot = my_cotan( f );
+        relaxed_same_f( "my_cotan", fake_cot, f_cot );
 
         f += fincr;
     }
@@ -326,6 +392,69 @@ float my_frexp( x, exp ) float x; int * exp;
     return ( x >= fzero ) ? abs_x : -abs_x;
 } //my_frexp
 
+int fl_cl_test()
+{
+    float f1_1 = atof( "1.1" );
+    float f1_8 = atof( "1.8" );
+    float f;
+    int32_t x;
+
+    f = floor( f1_1 );
+    x = (int32_t) f;
+    printf( "floor of 1.1: %f == %ld\n", f, x );
+
+    f = ceil( f1_1 );
+    x = (int32_t) f;
+    printf( "ceil of 1.1: %f == %ld\n", f, x );
+
+    f = floor( -f1_8 );
+    x = (int32_t) f;
+    printf( "floor of -1.8: %f == %ld\n", f, x );
+
+    f = ceil( -f1_8 );
+    x = (int32_t) f;
+    printf( "ceil of -1.8: %f == %ld\n", f, x );
+
+    return 0;
+} //fl_cl_test
+
+int modftest()
+{
+    float val = atof( "3.14159" );
+    float fracpart, intpart;
+
+    fracpart = modf( val, & intpart );
+    printf( "val %f, intpart %f, fracpart %f\n", val, intpart, fracpart );
+    return 0;
+} //modftest
+
+int ldexptest()
+{
+    float x = atof( "1.5" );
+    int power = 5;
+    float result = ldexp( x, power );
+    printf( "ldexp( %f, %d ) = %f\n", x, power, result );
+
+    return 0;
+} //ldexptest
+
+int ftoatest()
+{
+    float val = atof( "3.14159" );
+    char buf[ 20 ], buf2[ 20 ];
+    int precision = 8;
+
+    // note that ftoa and floattoa arguments are different
+
+    ftoa( val, buf, precision, 'f' );
+    printf( "ftoa result:     '%s'\n", buf );
+
+    floattoa( buf, val, precision );
+    printf( "floattoa result: '%s'\n", buf );
+
+    return 0;
+} //ftoatest
+
 int main()
 {
     char ac[ 100 ];
@@ -370,8 +499,14 @@ int main()
     s = my_sin( radians );
     printf( "my_sin of 30 degress is %f\n", s );
 
+    s = sinh( atof( "0.5" ) );
+    printf( "sinh of 0.5 degress is %f\n", s );
+
     c = cos( radians );
     printf( "cos of 30 degrees is %f\n", c );
+
+    c = cosh( atof( "0.5" ) );
+    printf( "cosh of 0.5 degrees is %f\n", c );
 
     t = tan( radians );
     printf( "tan of 30 degrees is %f\n", t );
@@ -403,6 +538,14 @@ int main()
     // frexp in the C runtime produces incorrect results
     mantissa = my_frexp( pi, &exponent );
     printf( "pi has mantissa: %f, exponent %d\n", mantissa, exponent );
+
+    fl_cl_test();
+
+    modftest();
+
+    ldexptest();
+
+    ftoatest();
 
     b = atof( "2.7" );
     fpointone = atof( "0.1" );

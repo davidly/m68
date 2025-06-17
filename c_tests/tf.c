@@ -186,6 +186,32 @@ long double square_root_ld( long double num )
 
 #pragma GCC optimize ("O0")
 
+int fl_cl_test()
+{
+    float f1_1 = 1.1;
+    float f1_8 = 1.8;
+    float f;
+    int32_t x;
+
+    f = floor( f1_1 );
+    x = (int32_t) f;
+    printf( "floor of 1.1: %f == %ld\n", f, x );
+
+    f = ceil( f1_1 );
+    x = (int32_t) f;
+    printf( "ceil of 1.1: %f == %ld\n", f, x );
+
+    f = floor( -f1_8 );
+    x = (int32_t) f;
+    printf( "floor of -1.8: %f == %ld\n", f, x );
+
+    f = ceil( -f1_8 );
+    x = (int32_t) f;
+    printf( "ceil of -1.8: %f == %ld\n", f, x );
+
+    return 0;
+}
+
 extern "C" int main()
 {
     char ac[ 100 ];
@@ -223,8 +249,14 @@ extern "C" int main()
     float s = sinf( radians );
     printf( "sinf of 30 degress is %lf\n", s );
 
+    float sh = sinhf( 0.5 );
+    printf( "sinhf of 0.5 is %f\n", sh );
+
     float c = cosf( radians );
     printf( "cosf of 30 degrees is %lf\n", c );
+
+    float ch = cosh( 0.5 );
+    printf( "cosh of 0.5 (in radians) is %f\n", ch );
 
     float t = tanf( radians );
     printf( "tanf of 30 degrees is %lf\n", t );
@@ -254,6 +286,8 @@ extern "C" int main()
     int exponent;
     float mantissa = frexpf( pi, &exponent );
     printf( "pi has mantissa: %lf, exponent %d\n", mantissa, exponent );
+
+    fl_cl_test();
 
     float b = 2.7;
     for ( float a = 2.0; a < 3.0; a += 0.1 )
