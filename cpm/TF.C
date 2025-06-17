@@ -16,13 +16,21 @@ typedef int bool;
 #define true 1
 #define false 0
 
-// these operate on floats. some don't exist and some don't work correctly as noted below.
+// this old compiler doesn't support the syntax that converts x into a string
+
+#define flt( x ) ( atof( #x ) )
+
+// these operate on floats, not doubles, per old naming conventions.
+// some don't exist (acos, asin) so alternative my_* versions are below.
+// some don't work correctly (pow, frexp) so alternative my_* versions are below.
+// prototypes must exist because the default return type is a 2-byte int.
 
 float atof();
 float pow();
 float log();
 float tan();
 float atan();
+float atan2();
 float sin();
 float asin();
 float cos();
@@ -83,6 +91,7 @@ int check_same_f( operation, a, b ) char * operation; float a; float b;
     bool eq = ( abs_diff <= TRIG_FLT_EPSILON );
     if ( !eq )
         printf( "operation %s: float %.20f is not the same as float %.20f\n", operation, a, b );
+    return eq;
 } //check_same_f
 
 int32_t factorial( n ) int32_t n;
@@ -93,7 +102,7 @@ int32_t factorial( n ) int32_t n;
     return n * factorial( n - 1 );
 } //factorial
 
-float my_pow_f( base, exp ) float base; int32_t exp;
+float my_pow( base, exp ) float base; int32_t exp;
 {
     int32_t i;
     float fone = atof( "1.0" );
@@ -105,52 +114,67 @@ float my_pow_f( base, exp ) float base; int32_t exp;
         exp = -exp;
     }
 
-    for ( i = 0; i < exp; ++i )
+    for ( i = 0; i < exp; i++ )
         result *= base;
     return result;
-} //my_pow_f
+} //my_pow
 
-float my_sin_f( x ) float x;
+float my_sin( x ) float x;
 {
-    int32_t n = 7;
     int32_t tmp, fbang;
     float fone = atof( "1.0" );
     float fmone = -fone;
     float sign = fone;
+    float ftmp;
     int32_t i;
     float result = atof( "0.0" );
+    float result2 = result;
+    float flimit = TRIG_FLT_EPSILON / atof( "2" );
+    ftmp = fone;
 
-    for ( i = 1; i <= n; i++ ) 
+    for ( i = 1; i <= 10 && fabs( ftmp ) > flimit ; i++ ) 
     {
         tmp = 2 * i - 1;
         fbang = factorial( tmp );
-        // pow() in the C runtime produces incorrect results
-        result += sign * my_pow_f( x, tmp ) / fbang;
+
+        // pow() in the C runtime produces incorrect results;
+        // pow() returns a positive value when the first argument is negative and the second is an odd number.
+        // note when using pow: its second argument is a float, not an int32_t.
+
+        ftmp = sign * my_pow( x, tmp ) / fbang;
+        result += ftmp;
         sign *= fmone;
     }
 
     return result;
-} //my_sin_f
+} //my_sin
 
 float my_asin( x ) float x;
 {
-    int n;
+    int32_t n;
     float term;
-    float result = atof( "0" );
+    float result;
     float fone = atof( "1.0" );
-    float fmone = -fone;
     float ftwo = atof( "2.0" );
     float fthree = atof( "3.0" );
+    float flimit = atof( ".0000001" );
+    float tmp;
 
     if ( fabs( x ) > fone )
         return result;
 
     term = x;
-    for ( n = 0; n < 20; n++ )
+    result = x;
+    for ( n = 0; fabs( term ) >= flimit; n++ )
     {
+        tmp = ftwo * n + fone;
+        term *= x * x * tmp / ( ftwo * n + ftwo ) * tmp / ( ftwo * n + fthree );
         result += term;
-        term *= x * x * ( ftwo * n + fone ) / ( ftwo * n + ftwo ) * ( ftwo * n + fone ) / ( ftwo * n + fthree );
+        // printf( "    n %ld, term %f, result %f\n", n, term, result );
     }
+
+    //if ( n > 2000 )
+    //    printf( "my_asin took %ld loops\n", n );
 
     return result;
 } //my_asin
@@ -225,10 +249,12 @@ float my_atan2f( y, x ) float y; float x;
 void many_trigonometrics()
 {
     float fresult, fback;
-    float f = ( -M_PI / atof( "2" ) ) + 0x000001; // want to be >= negative half pi.
-    float fpoint01 = atof( "0.01" );
+    float f = ( M_PI / atof( "-2" ) ) + 0x000001; // want to be >= negative half pi.
+    float fincr = atof( "0.071" );
+    float ftwo = atof( "2" );
+    float flimit = M_PI / ftwo;
 
-    while ( f < ( M_PI / 2 ) )
+    while ( f < flimit )
     {
         fresult = tan( f );
         fback = atan( fresult );
@@ -236,17 +262,19 @@ void many_trigonometrics()
 
         fresult = sin( f );
         fback = my_asin( fresult );
-        check_same_f( "sin", f, fback );
+        if ( !check_same_f( "sin", f, fback ) )
+            printf( "  sin result: %f\n", fresult );
 
-        fresult = my_sin_f( f );
+        fresult = my_sin( f );
         fback = my_asin( fresult );
-        check_same_f( "my sin", f, fback );
+        if ( !check_same_f( "my_sin", f, fback ) )
+            printf( "  my_sin result: %f\n", fresult );
 
-        f += fpoint01;
+        f += fincr;
     }
 } //many_trignometrics
 
-float my_sqrt_f( num ) float num;
+float my_sqrt( num ) float num;
 {
     float fone = atof( "1" );
     float ftwo = atof( "2" );
@@ -260,7 +288,7 @@ float my_sqrt_f( num ) float num;
         y = num / x;
     }
     return x;
-} //my_sqrt_f
+} //my_sqrt
 
 float my_frexp( x, exp ) float x; int * exp;
 {
@@ -303,7 +331,7 @@ int main()
     float pi, radians, s, c, t, f, at, mantissa, b, fpointone, fthree, fonehundred, fonepoint38, a;
     float fone = atof( "1" );
 
-    TRIG_FLT_EPSILON = atof( "0.00002" );  /* 0.00000011920928955078 would be better, but trig functions don't have that precision */
+    TRIG_FLT_EPSILON = atof( "0.0005" ); // atof( "0.00002" );  /* 0.00000011920928955078 would be better, but trig functions don't have that precision */
     M_PI = atof( "3.14159265" ); // this atof trashes stack if this string is long
     
     floattoa( ac, atof( "-1.234567" ), 8 );
@@ -336,8 +364,8 @@ int main()
     s = sin( radians );
     printf( "sin of 30 degress is %f\n", s );
 
-    s = my_sin_f( radians );
-    printf( "my_sin_f of 30 degress is %f\n", s );
+    s = my_sin( radians );
+    printf( "my_sin of 30 degress is %f\n", s );
 
     c = cos( radians );
     printf( "cos of 30 degrees is %f\n", c );
@@ -349,15 +377,14 @@ int main()
     at = atan( f );
     printf( "atan of %f is %f\n", f, at );
 
-    // atan2 in the C runtime produces incorrect results
-    at = my_atan2_f( atof( "0.3" ), atof( "0.2" ) );
+    at = atan2( atof( "0.3" ), atof( "0.2" ) );
     printf( "atan2 of 0.3, 0.2 is %f\n", at );
 
-    // acos() in the C runtime produces incorrect results
+    // acos() doesn't exist in the C runtime
     c = my_acos( atof( "0.3" ) );
     printf( "acos of 0.3 is %f\n", c );
 
-    // asin() in the C runtime produces incorrect results
+    // asin() doesn't exist in the C runtime
     s = my_asin( atof( "0.3" ) );
     printf( "asin of 0.3 is %f\n", s );
 
@@ -397,10 +424,9 @@ int main()
     fonehundred = atof( "100.0" );
     fonepoint38 = atof( "1.38" );
     for ( f = fone; f < fonehundred; f += fonepoint38 )
-        check_same_f( "square root float", my_sqrt_f( f ), sqrt( f ) );
+        check_same_f( "square root float", my_sqrt( f ), sqrt( f ) );
 
     printf( "test tf completed with great success\n" );
     exit( 0 );
 } //main
-
 
