@@ -1915,6 +1915,7 @@ uint64_t m68000::run()
                 {
                     sr = ( ( sr & 0xff00 ) | ( pop16() & 0xff ) );
                     pc = pop();
+                    continue;
                 }
                 else if ( 0x4e70 == op ) // reset
                 {
