@@ -40,7 +40,7 @@ using namespace std::chrono;
 
 #else // likely G++ / Clang++
 
-    //#define __forceinline __attribute__((always_inline))     // this generates useless warnings in g++ that I can't turn off. 
+    //#define __forceinline __attribute__((always_inline))     // this generates useless warnings in g++ that I can't turn off.
     #define __forceinline
 
     #ifndef __min
@@ -310,16 +310,16 @@ class CBinaryTree
                     count++;
                     return true;
                 }
-    
+
                 CBTEntry * e = root;
-    
+
                 do
                 {
                     int c = Compare( s, lens, & e->words );
-    
+
                     if ( 0 == c )
                         return false;
-    
+
                     if ( c < 0 )
                     {
                         if ( NULL == e->left )
@@ -328,7 +328,7 @@ class CBinaryTree
                             count++;
                             return true;
                         }
-    
+
                         e = e->left;
                     }
                     else
@@ -339,7 +339,7 @@ class CBinaryTree
                             count++;
                             return true;
                         }
-    
+
                         e = e->right;
                     }
                 } while ( true );
@@ -381,13 +381,13 @@ class CAnagramSet
         CAnagramSet( int c = 7 )
         {
             treeCount = c;
-    
+
             pTrees = new CBinaryTree * [ c ];
             memset( pTrees, 0, c * sizeof ( CBinaryTree * ) );
-    
+
             Clear();
         }
-    
+
         ~CAnagramSet()
         {
             for ( int i = 0; i < treeCount; i++ )
@@ -398,29 +398,29 @@ class CAnagramSet
                     pTrees[ i ] = 0;
                 }
             }
-    
+
             delete [] pTrees;
             pTrees = NULL;
         }
-    
+
         int Count()
         {
             int count = 0;
             for ( int i = 0; i < treeCount; i++ )
                 count += pTrees[ i ]->Count();
-    
+
             return count;
         }
-    
+
         bool IsEmpty()
         {
             for ( int i = 0; i < treeCount; i++ )
                 if ( 0 != pTrees[ i ]->Count() )
                     return false;
-    
+
             return true;
         }
-    
+
         bool Add( char * s, int lens )
         {
             CBinaryTree * p;
@@ -434,23 +434,23 @@ class CAnagramSet
                 unsigned long hcode = GetHashCode( s, lens );
                 p = pTrees[ hcode % treeCount ];
             }
-    
+
             return p->Add( s, lens );
         }
-    
+
         unsigned long GetHashCode( char * s, int lens )
         {
             unsigned long h = (unsigned long) lens;
-    
+
             for ( int i = 0; i < lens; i++ )
             {
                 h ^= 3u * s[ i ];
                 h <<= 3;
             }
-    
+
             return h;
         } //GetHashCode
-    
+
         void Clear()
         {
             for ( int i = 0; i < treeCount; i++ )
@@ -460,15 +460,15 @@ class CAnagramSet
                     delete pTrees[ i ];
                     pTrees[ i ] = 0;
                 }
-    
+
                 pTrees[ i ] = new CBinaryTree();
             }
         }
-    
+
         void GetAnagrams( CAnString ** array, int count )
         {
             int sofar = 0;
-    
+
             for ( int i = 0; i < treeCount; i++ )
                 pTrees[ i ]->Fill( &sofar, array );
 
@@ -492,7 +492,7 @@ class CWordEntry
 
 class CDictionaryEntry
 {
-    public: 
+    public:
         CAnString sortedWord;
         CWordEntry * entries;
         CDictionaryEntry * next;
@@ -523,7 +523,7 @@ class CRealDictionary
                 h ^= 3u * x;
                 h <<= 4;
             } while ( i < len );
-    
+
             return h;
         } //GetHashCode
 
@@ -676,7 +676,7 @@ class Combo
                 {
                     int n = num[ i ] = num[ i ] + 1;
                     output[ i ] = input[ n ];
-    
+
                     if ( i < kminus1 )
                     {
                         for ( int j = i + 1; j < k; j++ )
@@ -685,13 +685,13 @@ class Combo
                             output[ j ] = input[ n ];
                         }
                     }
-    
+
                     return true;
                 }
 
                 i--;
             }
-    
+
             return false;
         } //Next
 }; //Combo
@@ -865,15 +865,15 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
     CAnString right( rightlen );
 
     //printf( "top, left %s, prev %s, right %s\n", left.buf, leftPrevious.buf, right.buf );
-    
+
     unique_ptr<CStringBuilder> sb;
     unique_ptr<CAnagramSet> rightSet;
-    
+
     // for each unique combination of characters in the input string at the specified length, written to left
     // note: when there are duplicate characters there will be duplicate combinations.
-    
+
     Combo combo( input, &left, len );
-    
+
     do
     {
         CWordEntry * listL;
@@ -881,12 +881,12 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
         if ( ( g_SortedWords->TryGetValue( &left, &listL ) ) && ( !Same( &left, &leftPrevious ) ) )
         {
             leftPrevious.Set( &left );
-    
+
             // Put input letters not in left into right. Take advantage of the fact that all arrays are sorted.
-    
+
             int r = 0;
             int leftStart = 0;
-    
+
             for ( int j = 0; j < input->len; j++ )
             {
                 char c = input->buf[ j ];
@@ -904,7 +904,7 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
                             l++;
                             continue;
                         }
-    
+
                         if ( lc == c )
                         {
                             c = (char) 0;
@@ -920,17 +920,17 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
 
                     if ( l == len )
                         leftStart = l;
-    
+
                     if ( 0 != c )
                         right.buf[ r++ ] = c;
                 }
                 else
                     right.buf[ r++ ] = c;
             }
-    
+
             CWordEntry * listR;
 
-            if ( g_SortedWords->TryGetValue( &right, &listR ) ) 
+            if ( g_SortedWords->TryGetValue( &right, &listR ) )
             {
                 if ( nullptr == sb )
                     sb.reset( new CStringBuilder() );
@@ -973,7 +973,7 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
                     sL = sL->next;
                 } while ( NULL != sL );
             }
-    
+
             if ( ( anagramWords > 2 ) && ( right.len > 1 ) )
             {
                 if ( nullptr == rightSet.get() )
@@ -1003,7 +1003,7 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
                             sb->Reset();
                             int wordsRight = 1 + spaces;
                             int offset = 0;
-    
+
                             do
                             {
                                 int sp = FindSpace( anagram, offset );
@@ -1011,21 +1011,21 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
                                     sp = anagram->len;
 
                                 int comp = Compare( sL->word, len, anagram->buf, offset, sp - offset );
-    
+
                                 if ( comp < 0 )
                                 {
                                     sb->Append( anagram, 0, offset );
                                     sb->Append( sL->word, len );
                                     sb->Append( ' ' );
                                     sb->Append( anagram, offset, anagram->len - offset );
-    
+
                                     break;
                                 }
-    
+
                                 wordsRight--;
                                 offset = sp + 1;
                             } while ( wordsRight > 0 );
-    
+
                             if ( 0 == sb->Length() )
                             {
                                 sb->Append( anagram );
@@ -1040,7 +1040,7 @@ void InsidePhraseAnagrams( CAnagramSet * set, CAnString * input, int anagramWord
                             sL = sL->next;
                         } while ( NULL != sL );
                     }
-    
+
                     rightSet->Clear();
                 }
             }
@@ -1227,7 +1227,7 @@ void PrintNumberWithCommas( long long n )
         PrintNumberWithCommas( -n );
         return;
     }
-   
+
     if ( n < 1000 )
     {
         printf( "%lld", n );
@@ -1272,7 +1272,7 @@ void SortChars( char * p, int len )
     {
         int j = i;
 
-        do 
+        do
         {
             if ( p[ j - 1 ] < p[ j ] )
                 break;
@@ -1432,7 +1432,7 @@ extern "C" int main( int argc, char * argv[] )
                     if ( len > g_LongestWord )
                         g_LongestWord = len;
 
-                    uniqueWords++;                    
+                    uniqueWords++;
                     CAnString wordSorted( line, len );
 
                     // SortChars runs in about 16ms and qsort in 19ms

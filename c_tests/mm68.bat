@@ -28,6 +28,6 @@ rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 rem actually build the app
-%gcc% %defines% %includes% %gccflags% -O%_optflag% ..\m68.cxx ..\m68000.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o m68.elf
+%gcc% %defines% %includes% %gccflags% -O%_optflag% ..\m68.cxx ..\m68000.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -static -o m68.elf
 
 

@@ -127,7 +127,7 @@ void chkmem( char * p, int v, int c )
 #ifdef CPMTIME
             printf( "memory isn't as expected! p %u, v %d, c %d, *pc %d\n",p, v, c, *pc );
 #else
-            printf( "memory isn't as expected! p %p i %d, of count %d, val expected %#x, val found %#x\n", 
+            printf( "memory isn't as expected! p %p i %d, of count %d, val expected %#x, val found %#x\n",
                     p, i, c, (unsigned char) v, (unsigned char) *pc );
             ShowBinaryData( (uint8_t *) p, c, 4 );
 #endif
@@ -150,7 +150,7 @@ int main( int argc, char * argv[] )
     {
         if ( logging )
             printf( "in alloc mode pass %d\n", j );
-    
+
         for ( i = 0; i < allocs; i++ )
         {
             cb = 8 + ( i * 10 );
@@ -161,55 +161,55 @@ int main( int argc, char * argv[] )
             pc = (char *) calloc( cb_calloc, 1 );
             chkmem( pc, 0, cb_calloc );
             memset_x( pc, 0xcc, cb_calloc );
-    
+
             ap[ i ] = (char *) malloc( cb );
             memset_x( ap[ i ], 0xaa, cb );
-    
+
             chkmem( pc, 0xcc, cb_calloc );
             free( pc );
         }
-    
+
         if ( logging )
             printf( "in free mode, even first\n" );
-    
+
         for ( i = 0; i < allocs; i += 2 )
         {
             cb = 8 + ( i * 10 );
             int cb_calloc = cb + 3;
             if ( logging )
                 printf( "  i, cb, cb_calloc: %d %d %d\n", i, cb, cb_calloc );
-    
+
             pc = (char *) calloc( cb_calloc, 1 );
             chkmem( pc, 0, cb_calloc );
             memset_x( pc, 0xcc, cb_calloc );
-    
+
             chkmem( ap[ i ], 0xaa, cb );
             memset_x( ap[ i ], 0xff, cb );
             free( ap[ i ] );
-    
+
             chkmem( pc, 0xcc, cb_calloc );
             free( pc );
         }
-    
+
         if ( logging )
             printf( "in free mode, now odd\n" );
-    
+
         for ( i = 1; i < allocs; i += 2 )
         {
             cb = 8 + ( i * 10 );
             int cb_calloc = cb + 7;
             if ( logging )
                 printf( "  i, cb, cb_calloc: %d %d %d\n", i, cb, cb_calloc );
-    
+
             pc = (char *) calloc( cb_calloc, 1 );
             if ( logging )
                 printf( "  calloc'ed memory at %p\n", pc );
             chkmem( pc, 0, cb_calloc );
-    
+
             chkmem( ap[ i ], 0xaa, cb );
             memset_x( ap[ i ], 0xff, cb );
             free( ap[ i ] );
-    
+
             chkmem( pc, 0, cb_calloc );
             free( pc );
         }

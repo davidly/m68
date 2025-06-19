@@ -492,9 +492,9 @@ int main( int argc, char * argv[] )
         run_tests( uint32_t );
         run_tests( int64_t );
         run_tests( uint64_t );
-#else    
-        run_this_test( int32_t );    
-#endif    
+#else
+        run_this_test( int32_t );
+#endif
     }
 
     printf( "array operations test completed with great success\n" );

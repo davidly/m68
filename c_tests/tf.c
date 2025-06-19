@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#define _USE_MATH_DEFINES 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <float.h>
 #include <stdint.h>
@@ -81,7 +81,7 @@ double my_sin_d( double x, int n = 18 )
     double result = 0;
     int64_t sign = 1;
 
-    for ( int64_t i = 1; i <= n; i++ ) 
+    for ( int64_t i = 1; i <= n; i++ )
     {
         result += sign * pow( x, ( 2 * i - 1 ) ) / factorial( 2 * i - 1 );
         sign *= -1;
@@ -95,7 +95,7 @@ float my_sin_f( float x, int n = 18 )
     float result = 0;
     int64_t sign = 1;
 
-    for ( int64_t i = 1; i <= n; i++ ) 
+    for ( int64_t i = 1; i <= n; i++ )
     {
         result += sign * powf( x, ( 2 * i - 1 ) ) / factorial( 2 * i - 1 );
         sign *= -1;
@@ -142,13 +142,13 @@ void many_trigonometrics()
     }
 } //many_trignometrics
 
-float square_root_f( float num ) 
+float square_root_f( float num )
 {
-    float x = num; 
+    float x = num;
     float y = 1;
     const float e =  10.0f * FLT_EPSILON;
 
-    while ( ( x - y ) > e ) 
+    while ( ( x - y ) > e )
     {
         x = ( x + y ) / 2;
         y = num / x;
@@ -156,13 +156,13 @@ float square_root_f( float num )
     return x;
 } //square_root_f
 
-double square_root_d( double num ) 
+double square_root_d( double num )
 {
-    double x = num; 
+    double x = num;
     double y = 1;
     const double e =  10.0f * DBL_EPSILON;
 
-    while ( ( x - y ) > e ) 
+    while ( ( x - y ) > e )
     {
         x = ( x + y ) / 2;
         y = num / x;
@@ -170,13 +170,13 @@ double square_root_d( double num )
     return x;
 } //square_root_d
 
-long double square_root_ld( long double num ) 
+long double square_root_ld( long double num )
 {
-    long double x = num; 
+    long double x = num;
     long double y = 1;
     const long double e =  10.0f * LDBL_EPSILON;
 
-    while ( ( x - y ) > e ) 
+    while ( ( x - y ) > e )
     {
         x = ( x + y ) / 2;
         y = num / x;
@@ -215,7 +215,7 @@ int fl_cl_test()
 extern "C" int main()
 {
     char ac[ 100 ];
-    
+
     floattoa( ac, -1.234567, 8 );
     printf( "float converted by floattoa: %s\n", ac );
     floattoa( ac, 1.234567, 8 );
@@ -276,13 +276,13 @@ extern "C" int main()
 
     f = tanhf( 2.2 );
     printf( "tanhf of 2.2 is %lf\n", s );
-    
+
     f = logf( 0.3 );
     printf( "logf of 0.3: %lf\n", f );
 
     f = log10f( 300.0 );
     printf( "log10f of 300: %lf\n", f );
-    
+
     int exponent;
     float mantissa = frexpf( pi, &exponent );
     printf( "pi has mantissa: %lf, exponent %d\n", mantissa, exponent );

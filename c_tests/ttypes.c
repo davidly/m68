@@ -16,9 +16,9 @@ typedef long double ldouble_t;
 
 #define _countof( X ) ( sizeof( X ) / sizeof( X[0] ) )
 
-bool IS_FP( float x ) { return true; }    
-bool IS_FP( double x ) { return true; }    
-bool IS_FP( ldouble_t x ) { return true; }    
+bool IS_FP( float x ) { return true; }
+bool IS_FP( double x ) { return true; }
+bool IS_FP( ldouble_t x ) { return true; }
 bool IS_FP( int8_t x ) { return false; }
 bool IS_FP( uint8_t x ) { return false; }
 bool IS_FP( int16_t x ) { return false; }
@@ -165,11 +165,11 @@ template <class T, class U, size_t size> T tstCasts( T t, U u )
         //printBytes( "array a:", a, size );
     }
 
-    //syscall( 0x2002, 1 );        
+    //syscall( 0x2002, 1 );
     for ( int i = 0; i < _countof( a ); i++ )
     {
         //if ( 16 == sizeof( U ) && 16 == sizeof( T ) )
-        //    syscall( 0x2002, 1 );        
+        //    syscall( 0x2002, 1 );
 
         T absolute = do_abs( a[ i ] );
         b[ i ] = do_cast<U,T>( absolute * (T) 2.2 );
@@ -177,25 +177,25 @@ template <class T, class U, size_t size> T tstCasts( T t, U u )
         //printf( "b[%d] = %.12g, a = %.12g, absolute = %.12g\n", i, (double) b[i], (double) a[i], (double) absolute );
         //printf( "c[%d] = %.12g, a = %.12g, absolute = %.12g\n", i, (double) c[i], (double) a[i], (double) absolute );
     }
-    //syscall( 0x2002, 0 );        
-    
+    //syscall( 0x2002, 0 );
+
     T sumA = do_sum( a, _countof( a ) );
-    //syscall( 0x2002, 1 );        
+    //syscall( 0x2002, 1 );
     U sumB = do_sum( b, _countof( b ) );
     T sumC = do_sum( c, _countof( c ) );
     //printf( "sumC: %f = %#x\n", sumC, * (uint32_t *) &sumC );
-    
+
     x = sumA / 128;
-    
+
     // use 6 digits of precision for float and 12 for everything else
 
     int t_precision = std::is_same<T,float>::value ? 6 : 12;
     int u_precision = std::is_same<U,float>::value ? 6 : 12;
-    printf( "cast:     types %7s + %7s, size %d, sumA %.*lf, sumB %.*lf, sumC %.*lf\n", 
-            maptype( typeid(T).name() ), maptype( typeid(U).name() ), 
+    printf( "cast:     types %7s + %7s, size %d, sumA %.*lf, sumB %.*lf, sumC %.*lf\n",
+            maptype( typeid(T).name() ), maptype( typeid(U).name() ),
             size, t_precision, (double) sumA, u_precision, (double) sumB, t_precision, (double) sumC );
-    
-    //syscall( 0x2002, 0 );        
+
+    //syscall( 0x2002, 0 );
 #if 0
     for ( int i = 0; i < _countof( a ); i++ )
     {
@@ -203,8 +203,8 @@ template <class T, class U, size_t size> T tstCasts( T t, U u )
         printf( "b[%d] = %.12g %d\n", i, (double) b[i], (int) b[i] );
         //printf( "c[%d] = %.12g %d\n", i, (double) c[i], (int) c[i] );
     }
-#endif     
-        
+#endif
+
     return x;
 } //tstCasts
 
@@ -231,7 +231,7 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
         //printf( "bottom of loop, a[%d] is %.12g, u %.12g, x %.12g\n", i, (double) a[ i ], (double) u, (double) x );
     }
 
-    //syscall( 0x2002, 1 );        
+    //syscall( 0x2002, 1 );
     for ( int i = 0; i < _countof( a ); i++ )
     {
         T absolute = do_abs( a[ i ] );
@@ -243,23 +243,23 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
         //printf( "b[%d] = %.12g, a = %.12g\n", i, (double) b[i], (double) a[i] );
     }
     //syscall( 0x2002, 0 );
-    
+
     T sumA = do_sum( a, _countof( a ) );
-    //syscall( 0x2002, 1 );        
+    //syscall( 0x2002, 1 );
     U sumB = do_sum( b, _countof( b ) );
     T sumC = do_sum( c, _countof( c ) );
-    
+
     x = sumA / 128;
-    
+
     // use 6 digits of precision for float and 12 for everything else
 
     int t_precision = std::is_same<T,float>::value ? 6 : 12;
     int u_precision = std::is_same<U,float>::value ? 6 : 12;
-    printf( "overflow: types %7s + %7s, size %d, sumA %.*lf, sumB %.*lf, sumC %.*lf\n", 
-            maptype( typeid(T).name() ), maptype( typeid(U).name() ), 
+    printf( "overflow: types %7s + %7s, size %d, sumA %.*lf, sumB %.*lf, sumC %.*lf\n",
+            maptype( typeid(T).name() ), maptype( typeid(U).name() ),
             size, t_precision, (double) sumA, u_precision, (double) sumB, t_precision, (double) sumC );
-    
-    //syscall( 0x2002, 0 );        
+
+    //syscall( 0x2002, 0 );
 #if 0
     for ( int i = 0; i < _countof( a ); i++ )
     {
@@ -267,8 +267,8 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
         printf( "b[%d] = %.12g %d\n", i, (double) b[i], (int) b[i] );
         //printf( "c[%d] = %.12g %d\n", i, (double) c[i], (int) c[i] );
     }
-#endif     
-        
+#endif
+
     return x;
 } //tstOverflows
 
@@ -294,19 +294,19 @@ template <class T, class U, size_t size> T tstAssignments( T t, U u )
     T sumA = do_sum( a, _countof( a ) );
     U sumB = do_sum( b, _countof( b ) );
     U sumC = do_sum( c, _countof( c ) );
-    
+
     T x = sumA / 128;
-    
+
     // use 6 digits of precision for float and 12 for everything else
 
     int t_precision = std::is_same<T,float>::value ? 6 : 12;
     int u_precision = std::is_same<U,float>::value ? 6 : 12;
-    printf( "assignment: types %7s + %7s, size %d, sumA %.*g, sumB %.*g, sumC %.*g\n", 
-        maptype( typeid(T).name() ), maptype( typeid(U).name() ), 
+    printf( "assignment: types %7s + %7s, size %d, sumA %.*g, sumB %.*g, sumC %.*g\n",
+        maptype( typeid(T).name() ), maptype( typeid(U).name() ),
         size, t_precision, (double) sumA, u_precision, (double) sumB, u_precision, (double) sumC );
 
 
-    return x;            
+    return x;
 } //tstAssignments
 
 #endif
@@ -331,7 +331,7 @@ template <class T, class U, size_t size> T tst( T t, U u )
   tst<ftype,uint64_t,dim>( 0, 0 ); \
   tst<ftype,float,dim>( 0, 0 ); \
   tst<ftype,double,dim>( 0, 0 ); \
-  tst<ftype,ldouble_t,dim>( 0, 0 ); 
+  tst<ftype,ldouble_t,dim>( 0, 0 );
 
 #define run_testsz( ftype, dim ) \
   tst<ftype,int16_t,dim>( 0, 0 ); \
@@ -365,28 +365,28 @@ template <class T, class U, size_t size> T tst( T t, U u )
 
 int main( int argc, char * argv[], char * env[] )
 {
-#if 0    
+#if 0
     printf( "types: i8 %s, ui8 %s, i16 %s, ui16 %s, i32 %s, ui32 %s, i64 %s, ui64 %s, f %s, d %s, ld %s\n",
             typeid(int8_t).name(), typeid(uint8_t).name(), typeid(int16_t).name(), typeid(uint16_t).name(),
             typeid(int32_t).name(), typeid(uint32_t).name(), typeid(int64_t).name(), typeid(uint64_t).name(),
             typeid(float).name(), typeid(double).name(), typeid(ldouble_t).name() );
-#endif            
+#endif
 
 #if 1
-    run_dimension( 2 );    
-    run_dimension( 3 );    
-    run_dimension( 4 );    
-    run_dimension( 5 );    
-    run_dimension( 6 );    
-    run_dimension( 15 );    
-    run_dimension( 16 );    
-    run_dimension( 17 );    
-    run_dimension( 31 );    
-    run_dimension( 32 );    
-    run_dimension( 33 );    
+    run_dimension( 2 );
+    run_dimension( 3 );
+    run_dimension( 4 );
+    run_dimension( 5 );
+    run_dimension( 6 );
+    run_dimension( 15 );
+    run_dimension( 16 );
+    run_dimension( 17 );
+    run_dimension( 31 );
+    run_dimension( 32 );
+    run_dimension( 33 );
     run_dimension( 128 );
-#else    
-    //run_dimensionz( 3 );    
+#else
+    //run_dimensionz( 3 );
     tst<float,uint32_t,2>( 0, 0 );
     //tst<int128_t,int128_t,3>( 0, 0 );
 #endif

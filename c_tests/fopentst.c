@@ -56,7 +56,7 @@ long portable_filelen( FILE * fp )
 
     printf( "len in pfl: %ld\n", len );
     return len;
-} 
+}
 
 #ifdef DOSTIME
 int main( argc, argv ) int argc; char *argv[];
@@ -71,10 +71,10 @@ int main( int argc, char * argv[] )
 #ifdef O_CREAT
     printf( "O_CREAT: %#x\n", O_CREAT );
 #endif
-#ifdef O_TRUNC    
+#ifdef O_TRUNC
     printf( "O_TRUNC: %#x\n", O_TRUNC );
 #endif
-#ifdef O_ASYNC 
+#ifdef O_ASYNC
     printf( "O_ASYNC: %#x\n", O_ASYNC );
 #endif
 #ifdef O_BINARY

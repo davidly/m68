@@ -27,7 +27,7 @@ char g_board[ 9 ];
 char pos0func()
 {
     char x = g_board[0];
-    
+
     if ( ( x == g_board[1] && x == g_board[2] ) ||
          ( x == g_board[3] && x == g_board[6] ) ||
          ( x == g_board[4] && x == g_board[8] ) )
@@ -38,87 +38,87 @@ char pos0func()
 char pos1func()
 {
     char x = g_board[1];
-    
+
     if ( ( x == g_board[0] && x == g_board[2] ) ||
          ( x == g_board[4] && x == g_board[7] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos2func()
 {
     char x = g_board[2];
-    
+
     if ( ( x == g_board[0] && x == g_board[1] ) ||
          ( x == g_board[5] && x == g_board[8] ) ||
          ( x == g_board[4] && x == g_board[6] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos3func()
 {
     char x = g_board[3];
-    
+
     if ( ( x == g_board[4] && x == g_board[5] ) ||
          ( x == g_board[0] && x == g_board[6] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos4func()
 {
     char x = g_board[4];
-    
+
     if ( ( x == g_board[0] && x == g_board[8] ) ||
          ( x == g_board[2] && x == g_board[6] ) ||
          ( x == g_board[1] && x == g_board[7] ) ||
          ( x == g_board[3] && x == g_board[5] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos5func()
 {
     char x = g_board[5];
-    
+
     if ( ( x == g_board[3] && x == g_board[4] ) ||
          ( x == g_board[2] && x == g_board[8] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos6func()
 {
     char x = g_board[6];
-    
+
     if ( ( x == g_board[7] && x == g_board[8] ) ||
          ( x == g_board[0] && x == g_board[3] ) ||
          ( x == g_board[4] && x == g_board[2] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos7func()
 {
     char x = g_board[7];
-    
+
     if ( ( x == g_board[6] && x == g_board[8] ) ||
          ( x == g_board[1] && x == g_board[4] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 char pos8func()
 {
     char x = g_board[8];
-    
+
     if ( ( x == g_board[6] && x == g_board[7] ) ||
          ( x == g_board[2] && x == g_board[5] ) ||
          ( x == g_board[0] && x == g_board[4] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 typedef char pfunc_t( void );
 
@@ -214,7 +214,7 @@ int MinMax( int alpha, int beta, int depth, int move )
             return SCORE_TIE;
     }
 
-    if ( depth & 1 ) 
+    if ( depth & 1 )
     {
         value = SCORE_MIN;
         pieceMove = PieceX;
@@ -233,7 +233,7 @@ int MinMax( int alpha, int beta, int depth, int move )
             score = MinMax( alpha, beta, depth + 1, p );
             g_board[p] = PieceBlank;
 
-            if ( depth & 1 ) 
+            if ( depth & 1 )
             {
                 if ( WinLosePrune && SCORE_WIN == score )
                     return SCORE_WIN;
@@ -323,7 +323,7 @@ extern int main( int argc, char * argv[] )
 
     printf( "%ld moves\n", g_Moves );
     printf( "%d iterations\n", g_Iterations );
-    printf( "%f milliseconds\n", elap ); 
+    printf( "%f milliseconds\n", elap );
     fflush( stdout );
 } //main
 

@@ -181,14 +181,12 @@ float my_sin( x ) float x;
     float fone = atof( "1.0" );
     float fmone = -fone;
     float sign = fone;
-    float ftmp;
     int32_t i;
     float result = atof( "0.0" );
-    float result2 = result;
     float flimit = TRIG_FLT_EPSILON / atof( "2" );
-    ftmp = fone;
+    float ftmp = fone;
 
-    for ( i = 1; i <= 10 && fabs( ftmp ) > flimit ; i++ ) 
+    for ( i = 1; i <= 10 && fabs( ftmp ) > flimit; i++ ) 
     {
         tmp = 2 * i - 1;
         fbang = factorial( tmp );
@@ -208,13 +206,11 @@ float my_sin( x ) float x;
 float my_asin( x ) float x;
 {
     int32_t n;
-    float term;
-    float result;
+    float term, result, tmp;
     float fone = atof( "1.0" );
     float ftwo = atof( "2.0" );
     float fthree = atof( "3.0" );
     float flimit = atof( ".0000001" );
-    float tmp;
 
     if ( fabs( x ) > fone )
         return result;
@@ -243,9 +239,8 @@ float my_acos( x ) float x;
     float fmone = atof( "-1" );
     float low = fzero;
     float high = M_PI;
-    float mid;
-    float cos_mid;
-    float closeEnough = atof( "1e-6" );
+    float mid, cos_mid;
+    float flimit = atof( "1e-6" );
 
     if ( x < fmone || x > fone )
         return fzero;
@@ -262,7 +257,7 @@ float my_acos( x ) float x;
         mid = ( low + high ) / ftwo;
         cos_mid = cos( mid );
 
-        if ( fabs( x - cos_mid ) <= closeEnough )
+        if ( fabs( x - cos_mid ) <= flimit )
             return mid;
 
         if ( cos_mid > x ) 
@@ -392,28 +387,35 @@ float my_frexp( x, exp ) float x; int * exp;
     return ( x >= fzero ) ? abs_x : -abs_x;
 } //my_frexp
 
+float round( f ) float f;
+{
+    if ( f >= 0 )
+        return (float) (int32_t) ( f + atof( "0.5" ) );
+
+    return (float) (int32_t) ( f + atof( "-0.5" ) );
+} //round
+
 int fl_cl_test()
 {
-    float f1_1 = atof( "1.1" );
-    float f1_8 = atof( "1.8" );
-    float f;
-    int32_t x;
+    float cur = atof( "-1.75" );
+    float inc = atof( "0.25" );
+    float f, c, r;
+    int32_t i, x, ifloor, iceil, iround;
 
-    f = floor( f1_1 );
-    x = (int32_t) f;
-    printf( "floor of 1.1: %f == %ld\n", f, x );
+    printf( "  value         floor                 ceil                  round\n" );
+    printf( "  ---------     -----------------     -----------------     -----------------\n" );
 
-    f = ceil( f1_1 );
-    x = (int32_t) f;
-    printf( "ceil of 1.1: %f == %ld\n", f, x );
-
-    f = floor( -f1_8 );
-    x = (int32_t) f;
-    printf( "floor of -1.8: %f == %ld\n", f, x );
-
-    f = ceil( -f1_8 );
-    x = (int32_t) f;
-    printf( "ceil of -1.8: %f == %ld\n", f, x );
+    for ( i = 0; i < 15; i++ )
+    {
+        f = floor( cur );
+        ifloor = (int32_t) f;
+        c = ceil( cur );
+        iceil = (int32_t) c;
+        r = round( cur );
+        iround = (int32_t) r;
+        printf( "  %9f  |  %9f = %5ld  |  %9f = %5ld  |  %9f = %5ld\n", cur, f, ifloor, c, iceil, r, iround );
+        cur += inc;
+    }
 
     return 0;
 } //fl_cl_test
@@ -444,7 +446,7 @@ int ftoatest()
     char buf[ 20 ], buf2[ 20 ];
     int precision = 8;
 
-    // note that ftoa and floattoa arguments are different
+    // note that ftoa and floattoa arguments are different. Looking at disassembly I think ftoa doesn't use the last format argument.
 
     ftoa( val, buf, precision, 'f' );
     printf( "ftoa result:     '%s'\n", buf );
@@ -498,7 +500,7 @@ int main()
 
     s = my_sin( radians );
     printf( "my_sin of 30 degress is %f\n", s );
-
+                                        
     s = sinh( atof( "0.5" ) );
     printf( "sinh of 0.5 degress is %f\n", s );
 

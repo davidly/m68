@@ -28,11 +28,11 @@ wchar_t wc_zeroes[ 4096 ] = {0};
 #define wcsstr fake_wcsstr
 #define wcslen fake_wcslen
 
-int fake_memcmp(const void *s1, const void *s2, size_t n) 
+int fake_memcmp(const void *s1, const void *s2, size_t n)
 {
     const unsigned char *p1 = (const unsigned char *) s1;
     const unsigned char *p2 = (const unsigned char *) s2;
-    while (n-- > 0) 
+    while (n-- > 0)
     {
         if (*p1 != *p2)
             return (*p1 < *p2) ? -1 : 1;
@@ -43,16 +43,16 @@ int fake_memcmp(const void *s1, const void *s2, size_t n)
     return 0;
 }
 
-void * fake_memcpy(void *dest, const void *src, size_t n) 
+void * fake_memcpy(void *dest, const void *src, size_t n)
 {
     char *d = (char *)dest;
     const char *s = (const char *)src;
     for (size_t i = 0; i < n; i++)
         d[i] = s[i];
     return dest;
-}    
+}
 
-void * fake_memset(void *s, int c, size_t n) 
+void * fake_memset(void *s, int c, size_t n)
 {
     unsigned char *p = (unsigned char *)s;
     while (n--)
@@ -60,34 +60,34 @@ void * fake_memset(void *s, int c, size_t n)
     return s;
 }
 
-char * fake_strchr(const char *str, int c) 
+char * fake_strchr(const char *str, int c)
 {
-    while (*str != '\0') 
+    while (*str != '\0')
     {
         if (*str == c)
-            return (char *)str; 
+            return (char *)str;
         str++;
     }
 
     return NULL;
 }
 
-wchar_t * fake_wcschr(const wchar_t *str, int c) 
+wchar_t * fake_wcschr(const wchar_t *str, int c)
 {
-    while (*str != 0) 
+    while (*str != 0)
     {
         if (*str == c)
-            return (wchar_t *)str; 
+            return (wchar_t *)str;
         str++;
     }
 
     return NULL;
 }
 
-char * fake_strrchr(const char *str, int c) 
+char * fake_strrchr(const char *str, int c)
 {
     const char *last_occurrence = NULL;
-    while (*str != '\0') 
+    while (*str != '\0')
     {
         if (*str == c)
             last_occurrence = str;
@@ -96,10 +96,10 @@ char * fake_strrchr(const char *str, int c)
     return (char *)last_occurrence;
 }
 
-wchar_t * fake_wcsrchr(const wchar_t *str, int c) 
+wchar_t * fake_wcsrchr(const wchar_t *str, int c)
 {
     const wchar_t *last_occurrence = NULL;
-    while (*str != 0) 
+    while (*str != 0)
     {
         if (*str == c)
             last_occurrence = str;
@@ -108,17 +108,17 @@ wchar_t * fake_wcsrchr(const wchar_t *str, int c)
     return (wchar_t *)last_occurrence;
 }
 
-char * fake_strstr(const char *haystack, const char *needle) 
+char * fake_strstr(const char *haystack, const char *needle)
 {
     if (!*needle)
         return (char *)haystack;
 
-    while (*haystack) 
+    while (*haystack)
     {
         const char *h = haystack;
         const char *n = needle;
 
-        while (*h && *n && *h == *n) 
+        while (*h && *n && *h == *n)
         {
             h++;
             n++;
@@ -132,17 +132,17 @@ char * fake_strstr(const char *haystack, const char *needle)
     return NULL;
 }
 
-wchar_t * fake_wcsstr(const wchar_t *haystack, const wchar_t *needle) 
+wchar_t * fake_wcsstr(const wchar_t *haystack, const wchar_t *needle)
 {
     if (!*needle)
         return (wchar_t *)haystack;
 
-    while (*haystack) 
+    while (*haystack)
     {
         const wchar_t *h = haystack;
         const wchar_t *n = needle;
 
-        while (*h && *n && *h == *n) 
+        while (*h && *n && *h == *n)
         {
             h++;
             n++;
@@ -156,26 +156,26 @@ wchar_t * fake_wcsstr(const wchar_t *haystack, const wchar_t *needle)
     return NULL;
 }
 
-size_t fake_strlen(const char *str) 
+size_t fake_strlen(const char *str)
 {
     size_t len = 0;
 
-    while (*str != '\0') 
+    while (*str != '\0')
     {
         len++;
-        str++; 
+        str++;
     }
     return len;
 }
 
-size_t fake_wcslen(const wchar_t *str) 
+size_t fake_wcslen(const wchar_t *str)
 {
     size_t len = 0;
 
-    while (*str != 0) 
+    while (*str != 0)
     {
         len++;
-        str++; 
+        str++;
     }
     return len;
 }
@@ -207,7 +207,7 @@ void test_wide()
     printf( "testing wcschr and wcsrchr\n" );
     for ( int i = 0; i < 1000; i++ )
     {
-        int start = ( (unsigned int) rand() % 300 ); 
+        int start = ( (unsigned int) rand() % 300 );
         int end = 1 + start + ( (unsigned int) rand() % 70 );
         int len = end - start;
         wchar_t orig = wc[ end ];
@@ -294,7 +294,7 @@ int main( int argc, char * argv[] )
         printf( "testing strchr and strrchr\n" );
         for ( int i = 0; i < 1000; i++ )
         {
-            int start = ( (unsigned int) rand() % 300 ); 
+            int start = ( (unsigned int) rand() % 300 );
             int end = 1 + start + ( (unsigned int) rand() % 70 );
             int len = end - start;
             char orig = ac[ end ];
