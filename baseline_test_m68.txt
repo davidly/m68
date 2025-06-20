@@ -1,4 +1,4 @@
-Thu 06/19/2025 13:21:25.67 
+Fri 06/20/2025 16:19:26.21 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.962999 milliseconds
+25.655000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 19, hour 20, min 21, sec 31
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 19, hour 15, min 21, sec 31
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 19, hour 12, min 21, sec 31
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 19, hour 12, min 21, sec 31
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 20, hour 23, min 19, sec 32
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 20, hour 18, min 19, sec 32
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 20, hour 15, min 19, sec 32
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 20, hour 15, min 19, sec 32
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5736,7 +5736,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 19, hour 12, min 21, sec 39
+tz: 'PST+8', year: 2025, month 6, day 20, hour 15, min 19, sec 40
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -5897,6 +5897,7 @@ building floating point app tap
 building floating point app tphi
 building floating point app ts
 building floating point app tf
+building floating point app pis
 building tchk
 building tmovep
 building tea
@@ -6343,29 +6344,30 @@ finding 68K files
   file  16:        MM.68K     28416
   file  17:      MORE.68K     31872
   file  18:      NM68.68K     16000
-  file  19:    PRIMES.68K     27776
-  file  20:   SENDC68.68K     16384
-  file  21:     SIEVE.68K     26880
-  file  22:   SIEVE68.68K     33536
-  file  23:    SIZE68.68K     14592
-  file  24:  TADDSUBM.68K     34688
-  file  25:       TAP.68K     35584
-  file  26:      TBCD.68K     35712
-  file  27:      TCHK.68K     33792
-  file  28:       TEA.68K     83328
-  file  29:        TF.68K     52352
-  file  30:     TGETS.68K     30464
-  file  31:        TM.68K     29824
-  file  32:    TMOVEP.68K     33792
-  file  33:   TMULDIV.68K     32128
-  file  34:        TP.68K     38400
-  file  35:      TPHI.68K     31744
-  file  36:       TPI.68K     27904
-  file  37:        TS.68K     38272
-  file  38:    TSHIFT.68K     39168
-  file  39:       TTT.68K     39680
-  file  40:    TTT68U.68K      5120
-  file  41:  T_SETJMP.68K     27008
+  file  19:       PIS.68K     43904
+  file  20:    PRIMES.68K     27776
+  file  21:   SENDC68.68K     16384
+  file  22:     SIEVE.68K     26880
+  file  23:   SIEVE68.68K     33536
+  file  24:    SIZE68.68K     14592
+  file  25:  TADDSUBM.68K     34688
+  file  26:       TAP.68K     35584
+  file  27:      TBCD.68K     35712
+  file  28:      TCHK.68K     33792
+  file  29:       TEA.68K     83328
+  file  30:        TF.68K     52352
+  file  31:     TGETS.68K     30464
+  file  32:        TM.68K     29824
+  file  33:    TMOVEP.68K     33792
+  file  34:   TMULDIV.68K     32128
+  file  35:        TP.68K     38400
+  file  36:      TPHI.68K     31744
+  file  37:       TPI.68K     27904
+  file  38:        TS.68K     38272
+  file  39:    TSHIFT.68K     39168
+  file  40:       TTT.68K     39680
+  file  41:    TTT68U.68K      5120
+  file  42:  T_SETJMP.68K     27008
 finding XYZ files
 finding TXT files
   file   0:  FOPENTST.TXT       128
@@ -6551,6 +6553,15 @@ ftoa result:     '3.14158964'
 floattoa result: '3.14158964'
 l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
 test tf completed with great success
+running PIS
+soff128: 0, soff: 0, cGen128 1, cGen 128
+startInChunks: 0, limitInChunks 4
+percent complete: 25.000000
+percent complete: 50.000000
+percent complete: 75.000000
+percent complete: 100.000000
+results are valid for length 128
+final: 243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89452821e638d01377be5466cf34e90c6cc0ac29b7c97c50dd3f84d5b5b5470917
 running tgets with redirected stdin
 file data
 read: 'f' == 102 == 66
@@ -7999,8 +8010,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     281
-  dictionary: 277
+total ms:     279
+  dictionary: 274
   generate:   3
   render:     0
 test ba tp.bas 
@@ -8034,7 +8045,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-381.700988 milliseconds
+371.554992 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8056,4 +8067,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Thu 06/19/2025 13:21:56.54 
+Fri 06/20/2025 16:19:57.30 

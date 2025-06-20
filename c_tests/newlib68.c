@@ -270,6 +270,12 @@ void * sbrk( intptr_t increment )
         return (void *) -1;
     }
 
+    if ( ( 0 != increment ) && ( (char *) result == current_brk ) )
+    {
+        errno = ENOMEM;
+        return (void *) -1;
+    }
+
     return current_brk;
 }
 
@@ -294,7 +300,7 @@ int stat( const char * pathname, struct stat * statbuf )
 DIR * fdopendir( int fd )
 {
     DIR * pd = (DIR *) malloc( sizeof( DIR ) );
-    pd->dd_fd = fd;
+    pd->dd_fd = fd; // ownership transfer
     pd->dd_loc = 0;
     pd->dd_seek = 0;
     pd->dd_buf = (char *) malloc( 256 );
@@ -352,7 +358,7 @@ int closedir( DIR * dir )
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
-/* so this ancient code from Apple is used instead                                 */
+/* so this ancient code from Apple is used instead with minor revisions            */
 
 static FILE * g_fprintf_FILE = 0;
 static int printf_full_len = 0;

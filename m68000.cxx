@@ -1287,19 +1287,19 @@ uint64_t m68000::run()
         // ----hi4----   -op_reg-      -op_size-   -ea_mode-    -ea_reg-
         //                          --op_mode---
 
-        op = getui16( pc );              // 21% of runtime doing this decoding
+        op = getui16( pc );     // 21% of runtime doing this decoding
         uint16_t t = op;
         ea_reg = t & 7;
         t >>= 3;
         ea_mode = t & 7;
         t >>= 3;
         op_mode = t & 7;
-        op_size = op_mode & 3;           // this is generally accurate, but instructions like move have size elsewhere
+        op_size = op_mode & 3;  // this is generally accurate, but instructions like move have size elsewhere and must update op_size for effective_address() to work
         t >>= 3;
         op_reg = t & 7;
         hi4 = t >> 3;
 
-        if ( 0 != g_State )              // 3.5% of runtime on this check
+        if ( 0 != g_State )     // 3.5% of runtime on this check
         {
             if ( g_State & stateEndEmulation )
             {
@@ -1848,7 +1848,6 @@ uint64_t m68000::run()
                             uint32_t dst = effective_address2( op_mode, op_reg );
                             setui8( dst, src );
                             set_nzcv8( src );
-
 #if 0
                             // enormous hack. The gcc clib I'm using writes to 0xffffc when it wants to output a character to stdout
                             if ( 0xffffc == dst )
@@ -1933,7 +1932,7 @@ uint64_t m68000::run()
                     if ( was_super )
                         perhaps_restore_usermode_state();
 
-                    // At this point. the cpu should wait for a interrupt or reset exception to resume running.
+                    // At this point the cpu should wait for a interrupt or reset exception to resume running.
                     // That won't happen with this emulator, so just exit the app.
                     // One of the the gnu cc compilers I'm using invokes this instruction in exit(). make a linux standard exit call.
 
