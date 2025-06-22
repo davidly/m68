@@ -3,7 +3,6 @@ setlocal
 
 if "%1" == "" (goto noargs)
 
-rem O3 and Ofast have at least 3 bugs in code generation that I've found
 if "%2" == "" (set _optflag=2) else (set _optflag=%2)
 
 set gccpath=..\gcc-8.2.0
@@ -18,15 +17,17 @@ set includes=-I%inc4% -I%inc5% -I%inc1% -I%inc2% -I%inc3%
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 
+set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag%
+
 rem generate .s files for debugging
-%gcc% %includes% -mcpu=68000 -x c++ -O%_optflag% %1.c -S -fverbose-asm -o %1.s
-%gcc% %includes% -mcpu=68000 -x c++ -O%_optflag% newlib68.c -S -fverbose-asm -o newlib68.s
+%gcc% %includes% %gccflags% %1.c -S -fverbose-asm -o %1.s
+%gcc% %includes% %gccflags% newlib68.c -S -fverbose-asm -o newlib68.s
 
 rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 rem actually build the app
-%gcc% %defines% %includes% -mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf
+%gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf
 
 goto alldone
 

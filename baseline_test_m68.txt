@@ -1,4 +1,4 @@
-Fri 06/20/2025 16:19:26.21 
+Sun 06/22/2025 12:38:49.29 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -619,7 +619,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-25.655000 milliseconds
+25.761999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4050,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 20, hour 23, min 19, sec 32
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 20, hour 18, min 19, sec 32
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 20, hour 15, min 19, sec 32
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 20, hour 15, min 19, sec 32
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 6, day 22, hour 19, min 38, sec 55
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 6, day 22, hour 14, min 38, sec 55
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 6, day 22, hour 11, min 38, sec 55
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 6, day 22, hour 11, min 38, sec 55
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5736,11 +5736,21 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 6, day 20, hour 15, min 19, sec 40
+tz: 'PST+8', year: 2025, month 6, day 22, hour 11, min 39, sec 3
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
 linux file system enumeration completed with great success
+test tex 
+top of tex
+CUnwould constructor
+throwing execption
+I am unwound, x should be 44: 44
+caught exception exceptional
+attempting large allocations
+caught a standard execption: std::bad_alloc
+  after 2 1 megabyte allocations
+test exceptions completed with great success
 test tbcd 
 result is 0x7 flags 0
 result is 0x8 flags 0
@@ -8010,13 +8020,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     279
-  dictionary: 274
+total ms:     281
+  dictionary: 276
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-0 ms for 1 iterations
+1,000 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -8045,7 +8055,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-371.554992 milliseconds
+372.957000 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8067,4 +8077,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Fri 06/20/2025 16:19:57.30 
+Sun 06/22/2025 12:39:20.83 

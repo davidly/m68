@@ -228,6 +228,8 @@ uint16_t swap_endian16( uint16_t x )
 
 #pragma pack( push, 1 )
 
+#define AT_EH_FRAME_BEGIN 0x69690069 // address of __EH_FRAME_BEGIN__
+
 struct AuxProcessStart
 {
     uint64_t a_type; // AT_xxx ID from elf.h
@@ -251,8 +253,9 @@ struct AuxProcessStart32
     union
     {
         uint32_t a_val;
-        void * a_ptr;
-        void ( * a_fcn )();
+        // need 32-bit values here
+        //void * a_ptr;
+        //void ( * a_fcn )();
     } a_un;
 
     void swap_endianness()
@@ -6019,10 +6022,13 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         head.swap_endianness();
 
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
+        tracer.Trace( "  name offset: %x\n", head.name_offset );
         tracer.Trace( "  flags: %x / %s\n", head.flags, head.show_flags() );
         tracer.Trace( "  address: %x\n", head.address );
         tracer.Trace( "  offset: %x\n", head.offset );
         tracer.Trace( "  size: %x\n", head.size );
+        tracer.Trace( "  link: %x\n", head.link );
+        tracer.Trace( "  info: %x\n", head.info );
 
         if ( 2 == head.type )
         {
@@ -6032,6 +6038,18 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             if ( 0 == read )
                 usage( "can't read symbol table\n" );
         }
+#if 0
+        else if ( 3 == head.type )
+        {
+            vector<uint8_t> strings;
+            strings.resize( head.size );
+            fseek( fp, (long) head.offset, SEEK_SET );
+            read = fread( strings.data(), 1, head.size, fp );
+            if ( 0 == read )
+                usage( "can't read strings table\n" );
+            tracer.TraceBinaryData( strings.data(), head.size, 5 );
+        }
+#endif
     }
 
     // void out the entries that don't have symbol names or have mangled names that start with $
@@ -6045,7 +6063,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     }
 
     // use known my_qsort so traces are consistent across platforms because qsort implementations for duplicate values differ
-    tracer.Trace( "sorting invalid symbol entries\n" );
+    tracer.Trace( "sorting symbol entries\n" );
     my_qsort( g_symbols32.data(), g_symbols32.size(), sizeof( ElfSymbol32 ), symbol_compare32 );
 
     // remove symbols that don't look like they have a valid addresses (rust binaries have tens of thousands of these)
@@ -6080,6 +6098,16 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     for ( size_t se = 0; se < g_symbols32.size(); se++ )
         tracer.Trace( "    %8x  %8x  %s\n", g_symbols32[ se ].value, g_symbols32[ se ].size, & g_string_table[ g_symbols32[ se ].name ] );
+
+    uint32_t the_EH_FRAME_BEGIN = 0;
+    for ( size_t se = 0; se < g_symbols32.size(); se++ )
+    {
+        if ( !strcmp( & g_string_table[ g_symbols32[ se ].name ], "__EH_FRAME_BEGIN__" ) )
+        {
+            the_EH_FRAME_BEGIN = g_symbols32[ se ].value;
+            break;
+        }
+    }
 
     // memory map from high to low addresses:
     //     <end of allocated memory>
@@ -6277,9 +6305,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     if ( 0 == ( 1 & ( app_argc + env_count ) ) )
         pstack--;
 
-    pstack -= sizeof( AuxProcessStart32 ); // the AT_NULL record will be here since memory is initialized to 0
-
-    pstack -= ( 8 * sizeof( AuxProcessStart32 ) ); // for 8 aux records
+    pstack -= ( 10 * sizeof( AuxProcessStart32 ) ); // for 10 aux records
     AuxProcessStart32 * paux = (AuxProcessStart32 *) pstack;
     paux[0].a_type = 25; // AT_RANDOM
     paux[0].a_un.a_val = prandom;
@@ -6305,17 +6331,22 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     paux[7].a_type = 14; // AT_EGID
     paux[7].a_un.a_val = 0x595a5449;
     paux[7].swap_endianness();
+    paux[8].a_type = AT_EH_FRAME_BEGIN;
+    paux[8].a_un.a_val = the_EH_FRAME_BEGIN;
+    paux[8].swap_endianness();
+    paux[9].a_type = 0;
+    paux[9].a_un.a_val = 0;
 
     pstack--; // end of environment data is 0
     pstack--; // move to where the OS environment variable is set OS=RVOS or OS=ARMOS
     *pstack = swap_endian32( env_os_address ); // (REG_TYPE) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( REG_TYPE ) );
-    tracer.Trace( "the OS environment argument is at VM address %llx\n", swap_endian32( *pstack ) );
+    tracer.Trace( "the OS environment argument is at VM address %lx\n", swap_endian32( *pstack ) );
 
     if ( 0 != env_tz_address )
     {
         pstack--; // move to where the TZ environment variable is set TZ=xxx
         *pstack = swap_endian32( env_tz_address );
-        tracer.Trace( "the TZ environment argument is at VM address %llx\n", *pstack );
+        tracer.Trace( "the TZ environment argument is at VM address %lx (orig %lx)\n", swap_endian32( *pstack ), env_tz_address );
     }
 
     pstack--; // the last argv is 0 to indicate the end

@@ -5,11 +5,8 @@
   .global  _start
   .type    _start, @function
 _start:
+    move.l %a7, (g_initial_sp)  /* save the original stack address so EHstart can crawl it */
     jsr __libc_init_array
-
-#    pea __EH_FRAME_BEGIN__
-#    jsr __register_frame
-#    adda.l 4, %a7
 
     # get argc, argv, and env onto the stack as arguments for main
     # the stack has argc, a 0-terminated array of args, and a 0-terminated array of environment variables
@@ -39,7 +36,8 @@ _start:
   .type _init, @function
 _init:
     # call C and C++ initialization functions (this happens for free in newlib)
-    # make sure C++ exception objects are registered so unwind can find them (no idea how to do this)
+    # make sure C++ exception objects are registered so unwind can find them. EHstart is in C++ code.
+    jsr EHstart
     rts
 
   .global _fini
@@ -50,8 +48,8 @@ _fini:
   .global exit_emulator
   .type exit_emulator, @function
 exit_emulator:
-    move.l %d0, %d1             /*  put app exit code in 1st syscall argument register */
-    move.l #93, %d0             /*  linux exit function */
+    move.l %d0, %d1                 /*  put app exit code in 1st syscall argument register */
+    move.l #93, %d0                 /*  linux exit function */
     trap #0
   busy_loop:
     bra busy_loop

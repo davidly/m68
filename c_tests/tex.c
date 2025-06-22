@@ -8,7 +8,7 @@ class CUnwound
     private:
         int x;
     public:
-        CUnwound() : x( 44 ) {}
+        CUnwound() : x( 44 ) { printf( "CUnwould constructor\n" ); }
         ~CUnwound() { printf( "I am unwound, x should be 44: %d\n", x ); }
         void set( int val ) { x = val; }
 };
@@ -18,7 +18,7 @@ struct exceptional : std::exception
     const char * what() const noexcept { return "exceptional"; }
 };
 
-// without this, the call to operator new is optimized out
+// without disabling optimizations, the call to operator new is optimized out
 
 #pragma GCC optimize("O0")
 #pragma clang optimize off
@@ -33,6 +33,7 @@ int main()
         printf( "throwing execption\n" );
         throw exceptional();
         unwound.set( 33 ); // should never be executed
+        printf( "error: exception didn't happen\n" );
     }
     catch ( exception & e )
     {
@@ -46,18 +47,18 @@ int main()
         printf( "attempting large allocations\n" );
         for ( size_t i = 0; i < 1000; i++ )
         {
-            int volatile * myarray = new int[ 1000000 ];
+            int volatile * myarray = new int[ 1024 * 1024 ];
             if ( myarray )
                 successful++;
             else
-                printf( "new failed but didn't raise!?!\n" );
-            //printf( "allocation %zd succeeded %p\n", i, myarray );
+                printf( "error: new failed but didn't raise!?!\n" );
         }
-        printf( "large allocations succeeded?!? (%d)\n", successful );
+        printf( "error: large allocations succeeded?!? (%d)\n", successful );
     }
     catch ( exception & e )
     {
         printf( "caught a standard execption: %s\n", e.what() );
+        printf( "  after %d 1 megabyte allocations\n", successful );
         fflush( stdout );
     }
     catch ( ... )
@@ -65,7 +66,7 @@ int main()
         printf( "caught generic exception\n" ); 
     }
 
-    printf( "leaving main\n" );
+    printf( "test exceptions completed with great success\n" );
     return 0;
 }
 

@@ -20,6 +20,54 @@
 extern "C" void __attribute__((noreturn)) exit_emulator( int status );
 extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
 
+extern "C" void __register_frame( void * x );
+uint32_t * g_initial_sp = 0;
+
+extern unsigned char __EH_FRAME_BEGIN__[];
+
+#define AT_EH_FRAME_BEGIN 0x69690069 // address of __EH_FRAME_BEGIN__
+struct AuxProcessStart32
+{
+    uint32_t a_type; // AT_xxx ID from elf.h
+    union
+    {
+        uint32_t a_val;
+        void * a_ptr;
+        void ( * a_fcn )();
+    } a_un;
+};
+
+extern "C" void EHstart()
+{
+#if 0
+    // in slightly a better world, EHstart() would be replaced the code below.
+    // but __EH_FRAME_BEGIN__ isn't public so the linker can't find it.
+
+    __register_frame( __EH_FRAME_BEGIN__ );
+#else
+    // crawl up the stack to find AT_EH_FRAME_BEGIN to get the address of __EH_FRAME_BEGIN__
+    // and register EH frame records so C++ exceptions work.
+    // Ideally, the linker would resolve __EH_FRAME_BEGIN, but it's a static symbol and I don't
+    // know how to find it short of this AT record.
+
+    uint32_t * pstack = g_initial_sp;
+    pstack += ( *pstack + 2 ); // get past argc and argv including final 0 argument
+    while ( *pstack )          // get past environment variables
+        pstack++;
+
+    pstack++; // past the null termination
+    struct AuxProcessStart32 * paux = (struct AuxProcessStart32 *) pstack;
+
+    while ( 0 != paux->a_type && AT_EH_FRAME_BEGIN != paux->a_type )
+        paux++;
+
+    // the record may not exist; no C++ EH for you
+
+    if ( AT_EH_FRAME_BEGIN == paux->a_type )
+        __register_frame( paux->a_un.a_ptr );
+#endif
+} //EHstart
+
 extern "C" long syscall( long number, ... )
 {
     va_list ap;
