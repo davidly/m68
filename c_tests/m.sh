@@ -14,7 +14,7 @@ gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O2"
 
 # generate .s files for debugging
 $gcccmd $incpaths $gccflags $1.c -S -fverbose-asm -o $1.s
-$gcccmd $incpaths %gccflags $incpaths newlib68.c -S -fverbose-asm -o newlib68.s
+$gcccmd $incpaths $gccflags $incpaths newlib68.c -S -fverbose-asm -o newlib68.s
 
 # build the assembly portion with _start and syscalls
 $gccpath/bin/m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
