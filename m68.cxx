@@ -5935,6 +5935,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     tracer.Trace( "  section entries: %u\n", ehead.section_header_table_entries );
     tracer.Trace( "  section header entry size: %u\n", ehead.section_header_table_size );
     tracer.Trace( "  section offset: %u == %x\n", ehead.section_header_table, ehead.section_header_table );
+    tracer.Trace( "  section with section names: %u == %x\n", ehead.section_with_section_names, ehead.section_with_section_names );
     tracer.Trace( "  flags: %x\n", ehead.flags );
     g_execution_address = ehead.entry_point;
 
@@ -5980,7 +5981,8 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     memory_size -= g_base_address;
     tracer.Trace( "memory_size of content to load from elf file: %x\n", memory_size );
 
-    // first load the string table
+    // first load the string table(s)
+    vector<char> section_names_string_table;
 
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
@@ -5995,17 +5997,34 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         head.swap_endianness();
         if ( 3 == head.type )
         {
-            g_string_table.resize( head.size );
-            fseek( fp, (long) head.offset, SEEK_SET );
-            read = fread( g_string_table.data(), head.size, 1, fp );
-            if ( 1 != read )
-                usage( "can't read string table\n" );
-
-            break;
+            if ( sh == ehead.section_with_section_names )
+            {
+                section_names_string_table.resize( head.size );
+                fseek( fp, (long) head.offset, SEEK_SET );
+                read = fread( section_names_string_table.data(), head.size, 1, fp );
+                if ( 1 != read )
+                    usage( "can't read string table\n" );
+    
+                tracer.Trace( "section names string table:\n" );
+                tracer.TraceBinaryData( (uint8_t *) section_names_string_table.data(), head.size, 4 );
+            }
+            else
+            {
+                g_string_table.resize( head.size );
+                fseek( fp, (long) head.offset, SEEK_SET );
+                read = fread( g_string_table.data(), head.size, 1, fp );
+                if ( 1 != read )
+                    usage( "can't read string table\n" );
+    
+                tracer.Trace( "main string table:\n" );
+                tracer.TraceBinaryData( (uint8_t *) g_string_table.data(), head.size, 4 );
+            }
         }
     }
 
-    // load the symbol data into RAM
+    uint32_t the_EH_FRAME_BEGIN = 0; // for C++ programs, the pointer to the argument for __register_frame() at app startup
+
+    // load the symbol data into RAM and look for .eh_frame
 
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
@@ -6022,13 +6041,18 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         head.swap_endianness();
 
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
-        tracer.Trace( "  name offset: %x\n", head.name_offset );
+        tracer.Trace( "  name %s, offset: %x\n", & section_names_string_table[ head.name_offset ], head.name_offset );
         tracer.Trace( "  flags: %x / %s\n", head.flags, head.show_flags() );
         tracer.Trace( "  address: %x\n", head.address );
         tracer.Trace( "  offset: %x\n", head.offset );
         tracer.Trace( "  size: %x\n", head.size );
         tracer.Trace( "  link: %x\n", head.link );
         tracer.Trace( "  info: %x\n", head.info );
+        tracer.Trace( "  address_alignment: %x\n", head.address_alignment );
+        tracer.Trace( "  entry_size: %x\n", head.entry_size );
+
+        if ( !strcmp( ".eh_frame", & section_names_string_table[ head.name_offset ] ) )
+            the_EH_FRAME_BEGIN = head.address;
 
         if ( 2 == head.type )
         {
@@ -6038,18 +6062,6 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             if ( 0 == read )
                 usage( "can't read symbol table\n" );
         }
-#if 0
-        else if ( 3 == head.type )
-        {
-            vector<uint8_t> strings;
-            strings.resize( head.size );
-            fseek( fp, (long) head.offset, SEEK_SET );
-            read = fread( strings.data(), 1, head.size, fp );
-            if ( 0 == read )
-                usage( "can't read strings table\n" );
-            tracer.TraceBinaryData( strings.data(), head.size, 5 );
-        }
-#endif
     }
 
     // void out the entries that don't have symbol names or have mangled names that start with $
@@ -6098,16 +6110,6 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     for ( size_t se = 0; se < g_symbols32.size(); se++ )
         tracer.Trace( "    %8x  %8x  %s\n", g_symbols32[ se ].value, g_symbols32[ se ].size, & g_string_table[ g_symbols32[ se ].name ] );
-
-    uint32_t the_EH_FRAME_BEGIN = 0;
-    for ( size_t se = 0; se < g_symbols32.size(); se++ )
-    {
-        if ( !strcmp( & g_string_table[ g_symbols32[ se ].name ], "__EH_FRAME_BEGIN__" ) )
-        {
-            the_EH_FRAME_BEGIN = g_symbols32[ se ].value;
-            break;
-        }
-    }
 
     // memory map from high to low addresses:
     //     <end of allocated memory>
@@ -6334,7 +6336,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     paux[8].a_type = AT_EH_FRAME_BEGIN;
     paux[8].a_un.a_val = the_EH_FRAME_BEGIN;
     paux[8].swap_endianness();
-    paux[9].a_type = 0;
+    paux[9].a_type = 0;  // 0 to signify the end of the list of AT aux records
     paux[9].a_un.a_val = 0;
 
     pstack--; // end of environment data is 0
@@ -6575,6 +6577,7 @@ static bool load_image( const char * pimage, const char * app_args )
     tracer.Trace( "  section entries: %u\n", ehead.section_header_table_entries );
     tracer.Trace( "  section header entry size: %u\n", ehead.section_header_table_size );
     tracer.Trace( "  section offset: %llu == %llx\n", ehead.section_header_table, ehead.section_header_table );
+    tracer.Trace( "  section with section names: %llu == %llx\n", ehead.section_with_section_names, ehead.section_with_section_names );
     tracer.Trace( "  flags: %x\n", ehead.flags );
     g_execution_address = (REG_TYPE) ehead.entry_point;
     g_compressed_rvc = 0 != ( ehead.flags & 1 ); // 2-byte compressed RVC instructions, not 4-byte default risc-v instructions
@@ -6625,6 +6628,7 @@ static bool load_image( const char * pimage, const char * app_args )
     tracer.Trace( "memory_size of content to load from elf file: %llx\n", memory_size );
 
     // first load the string table
+    vector<char> section_names_string_table;
 
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
@@ -6639,13 +6643,28 @@ static bool load_image( const char * pimage, const char * app_args )
         head.swap_endianness();
         if ( 3 == head.type )
         {
-            g_string_table.resize( head.size );
-            fseek( fp, (long) head.offset, SEEK_SET );
-            read = fread( g_string_table.data(), head.size, 1, fp );
-            if ( 1 != read )
-                usage( "can't read string table\n" );
-
-            break;
+            if ( sh == ehead.section_with_section_names )
+            {
+                section_names_string_table.resize( head.size );
+                fseek( fp, (long) head.offset, SEEK_SET );
+                read = fread( section_names_string_table.data(), head.size, 1, fp );
+                if ( 1 != read )
+                    usage( "can't read string table\n" );
+    
+                tracer.Trace( "section names string table:\n" );
+                tracer.TraceBinaryData( (uint8_t *) section_names_string_table.data(), head.size, 4 );
+            }
+            else
+            {
+                g_string_table.resize( head.size );
+                fseek( fp, (long) head.offset, SEEK_SET );
+                read = fread( g_string_table.data(), head.size, 1, fp );
+                if ( 1 != read )
+                    usage( "can't read string table\n" );
+    
+                tracer.Trace( "main string table:\n" );
+                tracer.TraceBinaryData( (uint8_t *) g_string_table.data(), head.size, 4 );
+            }
         }
     }
 
@@ -6665,10 +6684,15 @@ static bool load_image( const char * pimage, const char * app_args )
 
         head.swap_endianness();
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
+        tracer.Trace( "  name %s, offset: %x\n", & section_names_string_table[ head.name_offset ], head.name_offset );
         tracer.Trace( "  flags: %llx / %s\n", head.flags, head.show_flags() );
         tracer.Trace( "  address: %llx\n", head.address );
         tracer.Trace( "  offset: %llx\n", head.offset );
         tracer.Trace( "  size: %llx\n", head.size );
+        tracer.Trace( "  link: %x\n", head.link );
+        tracer.Trace( "  info: %x\n", head.info );
+        tracer.Trace( "  address_alignment: %llx\n", head.address_alignment );
+        tracer.Trace( "  entry_size: %llx\n", head.entry_size );
 
         if ( 2 == head.type )
         {

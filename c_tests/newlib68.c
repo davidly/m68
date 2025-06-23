@@ -55,15 +55,15 @@ extern "C" void EHstart()
     while ( *pstack )          // get past environment variables
         pstack++;
 
-    pstack++; // past the null termination
+    pstack++; // get past the environment variable list null termination
     struct AuxProcessStart32 * paux = (struct AuxProcessStart32 *) pstack;
 
     while ( 0 != paux->a_type && AT_EH_FRAME_BEGIN != paux->a_type )
         paux++;
 
-    // the record may not exist; no C++ EH for you
+    // the record may not exist or its value may be 0; no C++ EH for you
 
-    if ( AT_EH_FRAME_BEGIN == paux->a_type )
+    if ( AT_EH_FRAME_BEGIN == paux->a_type && 0 != paux->a_un.a_ptr )
         __register_frame( paux->a_un.a_ptr );
 #endif
 } //EHstart
