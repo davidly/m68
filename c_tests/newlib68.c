@@ -1,3 +1,7 @@
+/*
+    This file provides the layer newlib calls to do OS-specific work.
+    It is very much tuned to a Linux-like OS running on a 32-bit 68000.
+*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -21,6 +25,7 @@ extern "C" void __attribute__((noreturn)) exit_emulator( int status );
 extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
 
 extern "C" void __register_frame( void * x );
+extern "C" void __deregister_frame( void * x );
 uint32_t * g_initial_sp = 0;
 
 extern unsigned char __EH_FRAME_BEGIN__[];
@@ -37,6 +42,26 @@ struct AuxProcessStart32
     } a_un;
 };
 
+uint32_t getauxval( uint32_t t )
+{
+    uint32_t * pstack = g_initial_sp;
+    pstack += ( *pstack + 2 ); // get past argc and argv including final 0 argument
+    while ( *pstack )          // get past environment variables
+        pstack++;
+
+    pstack++; // get past the environment variable list null termination
+    struct AuxProcessStart32 * paux = (struct AuxProcessStart32 *) pstack;
+
+    while ( ( 0 != paux->a_type ) && ( t != paux->a_type ) )
+        paux++;
+
+    if ( t == paux->a_type )
+        return paux->a_un.a_val;
+
+    errno = ENOENT;
+    return 0;
+} //getauxval
+
 extern "C" void EHstart()
 {
 #if 0
@@ -47,26 +72,25 @@ extern "C" void EHstart()
 #else
     // crawl up the stack to find AT_EH_FRAME_BEGIN to get the address of __EH_FRAME_BEGIN__
     // and register EH frame records so C++ exceptions work.
-    // Ideally, the linker would resolve __EH_FRAME_BEGIN, but it's a static symbol and I don't
-    // know how to find it short of this AT record.
 
-    uint32_t * pstack = g_initial_sp;
-    pstack += ( *pstack + 2 ); // get past argc and argv including final 0 argument
-    while ( *pstack )          // get past environment variables
-        pstack++;
+    uint32_t val = getauxval( AT_EH_FRAME_BEGIN );
 
-    pstack++; // get past the environment variable list null termination
-    struct AuxProcessStart32 * paux = (struct AuxProcessStart32 *) pstack;
+    // the value may not exist as an AT record or its value may be 0 if it's not a C++ app
 
-    while ( 0 != paux->a_type && AT_EH_FRAME_BEGIN != paux->a_type )
-        paux++;
-
-    // the record may not exist or its value may be 0; no C++ EH for you
-
-    if ( AT_EH_FRAME_BEGIN == paux->a_type && 0 != paux->a_un.a_ptr )
-        __register_frame( paux->a_un.a_ptr );
+    if ( 0 != val )
+        __register_frame( (void *) val );
 #endif
 } //EHstart
+
+extern "C" void EHstop()
+{
+    uint32_t val = getauxval( AT_EH_FRAME_BEGIN );
+
+    // the value may not exist as an AT record or its value may be 0 if it's not a C++ app
+
+    if ( 0 != val )
+        __deregister_frame( (void *) val );
+} //EHstop
 
 extern "C" long syscall( long number, ... )
 {
@@ -291,22 +315,22 @@ int isatty( int fd )
 _READ_WRITE_RETURN_TYPE read( int fd, void * buf, size_t count )
 {
     return _READ_WRITE_RETURN_TYPE( syscall( SYS_read, fd, buf, count ) );
-}
+} //read
 
 _READ_WRITE_RETURN_TYPE write( int fd, const void * buf, size_t count )
 {
     return (_READ_WRITE_RETURN_TYPE) syscall( SYS_write, fd, (long) buf, count );;
-}
+} //write
 
 extern "C" void exit( int status )
 {
     exit_emulator( status );
-}
+} //exit
 
 off_t lseek( int fd, off_t offset, int whence )
 {
     return (off_t) syscall( SYS_lseek, fd, offset, whence );
-}
+} //lseek
 
 void * sbrk( intptr_t increment )
 {
@@ -325,7 +349,7 @@ void * sbrk( intptr_t increment )
     }
 
     return current_brk;
-}
+} //sbrk
 
 long sysconf( int name )
 {
@@ -407,6 +431,7 @@ int closedir( DIR * dir )
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
 /* so this ancient code from Apple is used instead with minor revisions            */
+/* there is no buffering, so performance is pretty terrible                        */
 
 static FILE * g_fprintf_FILE = 0;
 static int printf_full_len = 0;
@@ -416,13 +441,13 @@ static void printf_putc( char c )
 {
     printf_full_len++;
     write( 1, &c, 1 );
-}
+} //printf_putc
 
 static void fprintf_putc( char c )
 {
     fprintf_full_len++;
     fwrite( &c, 1, 1, g_fprintf_FILE );
-}
+} //fprintf_putc
 
 #define isdigit(d) ( (d) >= '0' && (d) <= '9' )
 #define Ctod(c) ( (c) - '0' )
