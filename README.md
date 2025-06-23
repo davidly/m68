@@ -10,23 +10,23 @@ I've been unable to build the gcc 68000 cross compiler on macOS and Raspberry PI
 
 The build scripts m.bat and m.sh in the c_tests folder can be used to build samples on Windows, macOS, and Linux.
 mm68.bat and mm68.sh build the m68 emulator targeting the 68000 so the emulator can run itself recursively.
-mall.bat and mall.sh build all of the sample apps.
+mall.bat and mall.sh build all of the test apps.
 
-The sample apps in the c_tests folder build with newlib and have the required stubs for newlib to call into
+The test apps in the c_tests folder build with newlib and have the required stubs for newlib to call into
 Linux-like system calls emulated by m68. m68start.s has the assembly code that initializes newlib
 then calls main(). newlib68.c has the small wrappers that are called by newlib then make Linux-style
 system calls into the m68 emulator via the Trap insruction. It's required to link these two object
 files with yor C apps for them to link and run.
 
-m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some sample .c and .s apps that can be built and run.
+m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some test .c and .s apps that can be built and run.
 Those tools all run in m68 along with the binaries they produce. Same for the Pascal and BASIC compilers in the mtpascal and CB68 folders. The DDT debugger works in the emulator including
 instruction tracing and breakpoints.
 
-Trap 0 is used for linux-style syscalls, Trap 2 and trap 3 are used for CP/M 68K, and Trap 15 is used to mimic the 68k emulator
+Trap 0 is used for linux-style syscalls, trap 2 and trap 3 are used for CP/M 68K, and Trap 15 is used to mimic the Peter J. Fondse 68k emulator
 
-I've built and tested m68 on Amd64 on Windows and Ubuntu as well as Arm64 on Raspberry PI OS, Ubuntu, and macOS. It also builds with GCC targeting 68000 (mm68.bat/mm68.sh in c_tests) and that runs in any other build of m68 recursively. I've also tested for RISC-V 64 on hardware running Debian and in the RVOS emulator.
+I've built and tested m68 on Amd64 on Windows and Ubuntu as well as Arm64 on Raspberry PI OS, Ubuntu, and macOS. It also builds with GCC targeting 68000 (mm68.bat/mm68.sh in c_tests) and that runs in any other build of m68 recursively. I've also tested on RISC-V 64 on hardware running Debian and in the RVOS emulator.
 
-M68 can run the NTVAO 6502 + Apple 1 emulator built for 68000 targeting Linux.
+M68 can run the NTVAO 6502 + Apple 1 emulator built for 68000 targeting Linux. Same for NTVCM (Z80 + CP/M 2.2) and RVOS (RISC-V + Linux).
 
 All test cases can run with plain m68, m68 nested in itself, or m68 running in ARMOS or RVOS for versions built for Arm64 or RISC-V 64.
 
@@ -143,7 +143,6 @@ forth83 folder:
     
 notes/bugs:
 
-    * C++ exceptions don't work due to _start not initializing them for newlib
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
 
 compiler and assembler benchmark performance:
