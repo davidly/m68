@@ -5976,7 +5976,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
                     usage( "can't read string table\n" );
     
                 tracer.Trace( "section names string table:\n" );
-                tracer.TraceBinaryData( (uint8_t *) section_names_string_table.data(), head.size, 4 );
+                tracer.TraceBinaryData( (uint8_t *) section_names_string_table.data(), (uint32_t) head.size, 4 );
             }
             else
             {
@@ -5987,7 +5987,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
                     usage( "can't read string table\n" );
     
                 tracer.Trace( "main string table:\n" );
-                tracer.TraceBinaryData( (uint8_t *) g_string_table.data(), head.size, 4 );
+                tracer.TraceBinaryData( (uint8_t *) g_string_table.data(), (uint32_t) head.size, 4 );
             }
         }
     }
@@ -6628,7 +6628,7 @@ static bool load_image( const char * pimage, const char * app_args )
                     usage( "can't read string table\n" );
     
                 tracer.Trace( "section names string table:\n" );
-                tracer.TraceBinaryData( (uint8_t *) section_names_string_table.data(), head.size, 4 );
+                tracer.TraceBinaryData( (uint8_t *) section_names_string_table.data(), (uint32_t) head.size, 4 );
             }
             else
             {
@@ -6639,7 +6639,7 @@ static bool load_image( const char * pimage, const char * app_args )
                     usage( "can't read string table\n" );
     
                 tracer.Trace( "main string table:\n" );
-                tracer.TraceBinaryData( (uint8_t *) g_string_table.data(), head.size, 4 );
+                tracer.TraceBinaryData( (uint8_t *) g_string_table.data(), (uint32_t) head.size, 4 );
             }
         }
     }

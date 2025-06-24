@@ -67,11 +67,11 @@
 
 #else // Linux, MacOS, etc.
 
-    #if !defined( OLDGCC ) && !defined( M68K )
+    #if !defined( OLDGCC ) && !defined( __mc68000__ )
         #include <termios.h>
     #endif
 
-#ifdef M68K
+#ifdef __mc68000__
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem );
 #endif
 
@@ -87,7 +87,7 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
 
     inline void set_process_affinity( uint64_t processAffinityMask )
     {
-#if !defined(__APPLE__) && !defined( OLDGCC ) && !defined( M68K )
+#if !defined(__APPLE__) && !defined( OLDGCC ) && !defined( __mc68000__ )
         cpu_set_t mask;
         CPU_ZERO( &mask );
 
@@ -197,6 +197,8 @@ inline const char * target_platform()
         return "x86";
     #elif defined( __ARM_32BIT_STATE ) // ARM32 on Raspberry PI (and more)
         return "arm32";
+    #elif defined( __mc68000__ )
+        return "m68000";
     #else
         return "(other)";
     #endif
@@ -326,7 +328,7 @@ inline char printable( uint8_t x )
     return x;
 } //printable
 
-#if ( ( defined( __clang__ ) || defined( __GNUC__ ) ) && !defined( OLDGCC ) && !defined( M68K ) )
+#if ( ( defined( __clang__ ) || defined( __GNUC__ ) ) && !defined( OLDGCC ) && !defined( __mc68000__ ) )
 
     inline uint64_t flip_endian64( uint64_t x ) { return __builtin_bswap64( x ); }
     inline uint32_t flip_endian32( uint32_t x ) { return __builtin_bswap32( x ); }
