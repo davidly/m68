@@ -297,6 +297,7 @@ struct utsname_syscall
 };
 
 #define local_KERNEL_NCCS 19
+
 struct local_kernel_termios
 {
     uint32_t c_iflag;     /* input mode flags */
@@ -314,4 +315,43 @@ struct local_kernel_termios
         c_lflag = swap_endian32( c_lflag );
     }
 };
+
+#define AT_EH_FRAME_BEGIN 0x69690069 // address of __EH_FRAME_BEGIN__  Not a real constant; just for emulators
+
+struct AuxProcessStart
+{
+    uint64_t a_type; // AT_xxx ID from elf.h
+    union
+    {
+        uint64_t a_val;
+        void * a_ptr;
+        void ( * a_fcn )();
+    } a_un;
+
+    void swap_endianness()
+    {
+        a_type = swap_endian64( a_type );
+        a_un.a_val = swap_endian64( a_un.a_val );
+    }
+};
+
+struct AuxProcessStart32
+{
+    uint32_t a_type; // AT_xxx ID from elf.h
+    union
+    {
+        uint32_t a_val;
+
+        // commented out because these need to be 32 bit quantities on all platforms
+        //void * a_ptr;
+        //void ( * a_fcn )();
+    } a_un;
+
+    void swap_endianness()
+    {
+        a_type = swap_endian32( a_type );
+        a_un.a_val = swap_endian32( a_un.a_val );
+    }
+};
+
 

@@ -228,43 +228,6 @@ uint16_t swap_endian16( uint16_t x )
 
 #pragma pack( push, 1 )
 
-#define AT_EH_FRAME_BEGIN 0x69690069 // address of __EH_FRAME_BEGIN__
-
-struct AuxProcessStart
-{
-    uint64_t a_type; // AT_xxx ID from elf.h
-    union
-    {
-        uint64_t a_val;
-        void * a_ptr;
-        void ( * a_fcn )();
-    } a_un;
-
-    void swap_endianness()
-    {
-        a_type = swap_endian64( a_type );
-        a_un.a_val = swap_endian64( a_un.a_val );
-    }
-};
-
-struct AuxProcessStart32
-{
-    uint32_t a_type; // AT_xxx ID from elf.h
-    union
-    {
-        uint32_t a_val;
-        // need 32-bit values here
-        //void * a_ptr;
-        //void ( * a_fcn )();
-    } a_un;
-
-    void swap_endianness()
-    {
-        a_type = swap_endian32( a_type );
-        a_un.a_val = swap_endian32( a_un.a_val );
-    }
-};
-
 struct ElfHeader64
 {
     uint32_t magic;
@@ -5978,6 +5941,13 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             g_base_address = head.physical_address;
     }
 
+    // if it won't waste much RAM, start the address space at 0 so low addresses can be used for things like trap vectors
+
+    REG_TYPE elf_base_address = g_base_address;
+
+    if ( g_base_address < 0x10000 )
+        g_base_address = 0;
+
     memory_size -= g_base_address;
     tracer.Trace( "memory_size of content to load from elf file: %x\n", memory_size );
 
@@ -6083,7 +6053,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     size_t to_erase = 0;
     for ( size_t se = 0; se < g_symbols32.size(); se++ )
     {
-        if ( g_symbols32[ se ].value < g_base_address )
+        if ( g_symbols32[ se ].value < elf_base_address )
             to_erase++;
         else
             break;
@@ -6185,6 +6155,11 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             tracer.TraceBinaryData( memory.data() + head.physical_address - g_base_address, get_min( (uint32_t) head.file_size, (uint32_t) 128 ), 4 );
         }
     }
+
+    // if the base address is 0 we need a supervisor stack configured at address 0.
+
+    if ( 0 == g_base_address )
+        * (uint32_t *) memory.data() = swap_endian32( elf_base_address ); // arbitrary, but probably safe here between the vector table and app
 
     // write the command-line arguments into the vm memory in a place where _start can find them.
     // there's an array of pointers to the args followed by the arg strings at offset arg_data_offset.
@@ -6391,7 +6366,8 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     tracer.Trace( "  <code from the .elf file>\n" );
     tracer.Trace( "  initial pc execution_addess:                        %x\n", g_execution_address );
     tracer.Trace( "  <code per the .elf file>\n" );
-    tracer.Trace( "  start of the address space per the .elf file:       %x\n", g_base_address );
+    tracer.Trace( "  start of the address space per the .elf file:       %x\n", elf_base_address );
+    tracer.Trace( "  start of the address space actual:                  %x\n", g_base_address );
 
     tracer.Trace( "vm memory first byte beyond:     %p\n", memory.data() + memory_size );
     tracer.Trace( "vm memory start:                 %p\n", memory.data() );

@@ -37,7 +37,7 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              tcmp ttypes tarray trw terrno mm_old ttime fileops tpi ^
              t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm ^
              fopentst lenum tex ^
-             tbcd tshift taddsubm tea ttt68 ttt68u
+             tbcd tshift taddsubm tea ttt68 ttt68u tchk
 
 ( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
 

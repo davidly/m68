@@ -24,25 +24,9 @@
 extern "C" void __attribute__((noreturn)) exit_emulator( int status );
 extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
 
-extern "C" void __register_frame( void * x );
-extern "C" void __deregister_frame( void * x );
-uint32_t * g_initial_sp = 0;
+uint32_t * g_initial_sp = 0; // stack value at _start invocation. set by _start.
 
-extern unsigned char __EH_FRAME_BEGIN__[];
-
-#define AT_EH_FRAME_BEGIN 0x69690069 // address of __EH_FRAME_BEGIN__
-struct AuxProcessStart32
-{
-    uint32_t a_type; // AT_xxx ID from elf.h
-    union
-    {
-        uint32_t a_val;
-        void * a_ptr;
-        void ( * a_fcn )();
-    } a_un;
-};
-
-uint32_t getauxval( uint32_t t )
+extern "C" uint32_t getauxval( uint32_t t )
 {
     uint32_t * pstack = g_initial_sp;
     pstack += ( *pstack + 2 ); // get past argc and argv including final 0 argument
@@ -56,41 +40,14 @@ uint32_t getauxval( uint32_t t )
         paux++;
 
     if ( t == paux->a_type )
+    {
+        errno = 0;
         return paux->a_un.a_val;
+    }
 
     errno = ENOENT;
     return 0;
 } //getauxval
-
-extern "C" void EHstart()
-{
-#if 0
-    // in slightly a better world, EHstart() would be replaced the code below.
-    // but __EH_FRAME_BEGIN__ isn't public so the linker can't find it.
-
-    __register_frame( __EH_FRAME_BEGIN__ );
-#else
-    // crawl up the stack to find AT_EH_FRAME_BEGIN to get the address of __EH_FRAME_BEGIN__
-    // and register EH frame records so C++ exceptions work.
-
-    uint32_t val = getauxval( AT_EH_FRAME_BEGIN );
-
-    // the value may not exist as an AT record or its value may be 0 if it's not a C++ app
-
-    if ( 0 != val )
-        __register_frame( (void *) val );
-#endif
-} //EHstart
-
-extern "C" void EHstop()
-{
-    uint32_t val = getauxval( AT_EH_FRAME_BEGIN );
-
-    // the value may not exist as an AT record or its value may be 0 if it's not a C++ app
-
-    if ( 0 != val )
-        __deregister_frame( (void *) val );
-} //EHstop
 
 extern "C" long syscall( long number, ... )
 {
@@ -115,11 +72,11 @@ extern "C" long syscall( long number, ... )
     return result;
 } //syscall
 
-int kill( pid_t pid, int sig ) { exit_emulator( 0 ); }
-pid_t getpid( void ) { return 0x4955; } // IU is the best
+extern "C" int kill( pid_t pid, int sig ) { exit_emulator( 0 ); }
+extern "C" pid_t getpid( void ) { return 0x4955; } // IU is the best
 extern "C" void _exit( int code ) { exit_emulator( code ); }
 
-int close( int fd )
+extern "C" int close( int fd )
 {
     return (int) syscall( SYS_close, fd );
 }
@@ -166,7 +123,7 @@ extern "C" int clock_gettime( clockid_t id, struct timespec * res )
     return result;
 } //clock_gettime
 
-int usleep( useconds_t usec )
+extern "C" int usleep( useconds_t usec )
 {
     // usleep is obsolete but used by this old GCC compiler. Use nanosleep instead
 
@@ -195,7 +152,7 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
     return result;
 } //nanosleep
 
-int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
+extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
 {
     struct stat_linux_syscall sls = {0};
     int result = (int) syscall( SYS_newfstatat, fd, path, &sls, flag );
@@ -228,48 +185,48 @@ extern "C" clock_t times( struct tms * buf )
     return (int) syscall( SYS_times, buf );
 }
 
-int rename( const char * oldpath, const char * newpath )
+extern "C" int rename( const char * oldpath, const char * newpath )
 {
     return (int) syscall( SYS_renameat, LINUX_AT_FDCWD, oldpath, LINUX_AT_FDCWD, newpath, 0 );
 }
 
-int chdir( const char * path )
+extern "C" int chdir( const char * path )
 {
     return (int) syscall( SYS_chdir, path );
 }
 
-int mkdirat( int dirfd, const char * path, mode_t mode )
+extern "C" int mkdirat( int dirfd, const char * path, mode_t mode )
 {
     return (int) syscall( SYS_mkdirat, dirfd, path, mode );
 }
 
-int unlinkat( int dirfd, const char * path, int flags )
+extern "C" int unlinkat( int dirfd, const char * path, int flags )
 {
     return (int) syscall( SYS_unlinkat, dirfd, path, flags );
 }
 
-int fdatasync( int fd )
+extern "C" int fdatasync( int fd )
 {
     return (int) syscall( SYS_fdatasync, fd );
 }
 
-char * getcwd( char * buf, size_t size )
+extern "C" char * getcwd( char * buf, size_t size )
 {
     return (char *) syscall( SYS_getcwd, buf, size );
 }
 
-int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval * timeout )
+extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval * timeout )
 {
     // map to pselect6 which means timespec not timeval and 0 sigset
     return (int) syscall( SYS_pselect6, nfds, readfds, writefds, exceptfds, 0, 0 );
 }
 
-int unlink( const char * path )
+extern "C" int unlink( const char * path )
 {
     return (int) syscall( SYS_unlinkat, LINUX_AT_FDCWD, path, 0 );
 }
 
-int fstat( int fd, struct stat * statbuf )
+extern "C" int fstat( int fd, struct stat * statbuf )
 {
     struct stat_linux_syscall sls = {0};
     int result = (int) syscall( SYS_newfstat, fd, &sls );
@@ -292,7 +249,7 @@ int fstat( int fd, struct stat * statbuf )
     return result;
 } //fstat
 
-int gettimeofday( struct timeval *tv, void *tz )
+extern "C" int gettimeofday( struct timeval *tv, void *tz )
 {
     struct linux_timeval_syscall ltsc = {0};
     int result = (int) syscall( SYS_gettimeofday, &ltsc, tz );
@@ -305,19 +262,19 @@ int gettimeofday( struct timeval *tv, void *tz )
     return result;
 } //gettimeofday
 
-int isatty( int fd )
+extern "C" int isatty( int fd )
 {
     local_kernel_termios term;
     int result = (int) syscall( SYS_ioctl, fd, 0x5401 /* TCGETS */, & term );
     return ( 0 == result );
 } //isatty
 
-_READ_WRITE_RETURN_TYPE read( int fd, void * buf, size_t count )
+extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buf, size_t count )
 {
     return _READ_WRITE_RETURN_TYPE( syscall( SYS_read, fd, buf, count ) );
 } //read
 
-_READ_WRITE_RETURN_TYPE write( int fd, const void * buf, size_t count )
+extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buf, size_t count )
 {
     return (_READ_WRITE_RETURN_TYPE) syscall( SYS_write, fd, (long) buf, count );;
 } //write
@@ -327,12 +284,12 @@ extern "C" void exit( int status )
     exit_emulator( status );
 } //exit
 
-off_t lseek( int fd, off_t offset, int whence )
+extern "C" off_t lseek( int fd, off_t offset, int whence )
 {
     return (off_t) syscall( SYS_lseek, fd, offset, whence );
 } //lseek
 
-void * sbrk( intptr_t increment )
+extern "C" void * sbrk( intptr_t increment )
 {
     char * current_brk = (char *) syscall( 214, 0 );
     long result = syscall( SYS_brk, (intptr_t) ( current_brk + increment ) );
@@ -351,7 +308,7 @@ void * sbrk( intptr_t increment )
     return current_brk;
 } //sbrk
 
-long sysconf( int name )
+extern "C" long sysconf( int name )
 {
     if ( _SC_CLK_TCK == name )
         return 100;
@@ -359,12 +316,12 @@ long sysconf( int name )
     return -1;
 } //sysconf
 
-int fsync( int fd )
+extern "C" int fsync( int fd )
 {
     return syscall( SYS_fsync, fd );
 } //fsync
 
-int stat( const char * pathname, struct stat * statbuf )
+extern "C" int stat( const char * pathname, struct stat * statbuf )
 {
     return fstatat( LINUX_AT_FDCWD, pathname, statbuf, 0 );
 } //stat

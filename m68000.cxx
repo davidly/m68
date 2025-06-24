@@ -2252,8 +2252,24 @@ uint64_t m68000::run()
                                     continue;
                             }
                         }
-                        else
-                            unhandled(); // long. The documentation is ambiguous, but apparently only .w is supported
+                        else // long. The documentation is ambiguous, but apparently only .w is supported. gnu as generates 0x4501 for chk.l so I guess it's real?
+                        {
+                            op_size = 2;
+                            int32_t val = (int32_t) effective_value32( effective_address() );
+                            int32_t dval = (int32_t) dregs[ op_reg ].l;
+                            if ( dval < 0 )
+                            {
+                                setflag_n( true );
+                                if ( handle_trap( 6, pc + 2 ) )
+                                    continue;
+                            }
+                            else if ( dval > val )
+                            {
+                                setflag_n( false );
+                                if ( handle_trap( 6, pc + 2 ) )
+                                    continue;
+                            }
+                        }
                     }
                     else if ( 2 == bits11_8 ) // clr
                     {

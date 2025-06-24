@@ -1,6 +1,8 @@
 # the bare minimum to start C apps that use syscall-less newlib on the 68000
 # per calling conventions, d0, d1, a0, and a1 are scratch. others must be preserved.
 
+.equ AT_EH_FRAME_BEGIN, 0x69690069
+
 .text
   .global  _start
   .type    _start, @function
@@ -38,38 +40,56 @@ _start:
   .type _init, @function
 _init:
     # called by __libc_init_array at app startup
-    # call C and C++ initialization functions (this happens for free in newlib)
-    # make sure C++ exception objects are registered so unwind can find them. EHstart is in C++ code.
-    jsr EHstart
+    # make sure C++ exception objects are registered so unwind can find them.
+
+    move.l #AT_EH_FRAME_BEGIN, %d0
+    move.l %d0, -(%a7)
+    jsr getauxval
+    adda.l #4, %a7
+    tst %d0
+    beq _init_done              /* any C++ exception frames to register? */
+    move.l %d0, -(%a7)
+    jsr __register_frame
+    adda.l #4, %a7
+  _init_done:
     rts
 
   .global _fini
   .type _fini, @function
 _fini:
     # called by __libc_fini_array at clean app shutdown
-    jsr EHstop
+    move.l #AT_EH_FRAME_BEGIN, %d0
+    move.l %d0, -(%a7)
+    jsr getauxval
+    adda.l #4, %a7
+    tst %d0
+    beq _fini_done              /* any C++ exception frames to deregister? */
+    move.l %d0, -(%a7)
+    jsr __deregister_frame
+    adda.l #4, %a7
+  _fini_done:
     rts
 
   .global exit_emulator
   .type exit_emulator, @function
 exit_emulator:
-    move.l %d0, %d1                 /*  put app exit code in 1st syscall argument register */
-    move.l #93, %d0                 /*  linux exit function */
+    move.l %d0, %d1             /*  put app exit code in 1st syscall argument register */
+    move.l #93, %d0             /*  linux exit function */
     trap #0
-  busy_loop:                        /* it'd be a bug if this executes, but if it does just loop */
+  busy_loop:                    /* it'd be a bug if this executes, but if it does just loop */
     bra busy_loop
 
   .global syscall6
   .type syscall6, @function
 syscall6:
     movem.l %d2/%d3/%d4/%d5/%d6, -(%a7)
-    move.l 24(%a7), %d0             /* linux syscall ID */
-    move.l 28(%a7), %d1             /* the first argument */
-    move.l 32(%a7), %d2             /* the second argument */
-    move.l 36(%a7), %d3             /* the third argument */
-    move.l 40(%a7), %d4             /* the fourth argument */
-    move.l 44(%a7), %d5             /* the fifth argument */
-    move.l 48(%a7), %d6             /* the sixth argument */
+    move.l 24(%a7), %d0         /* linux syscall ID */
+    move.l 28(%a7), %d1         /* the first argument */
+    move.l 32(%a7), %d2         /* the second argument */
+    move.l 36(%a7), %d3         /* the third argument */
+    move.l 40(%a7), %d4         /* the fourth argument */
+    move.l 44(%a7), %d5         /* the fifth argument */
+    move.l 48(%a7), %d6         /* the sixth argument */
     trap #0
     movem.l (%a7)+, %d6/%d5/%d4/%d3/%d2
     rts
@@ -78,8 +98,8 @@ syscall6:
 #  .global syscall1
 #  .type syscall1, @function
 #syscall1:
-#    move.l 4(%a7), %d0              /* linux syscall ID */
-#    move.l 8(%a7), %d1              /* the one and only argument */
+#    move.l 4(%a7), %d0          /* linux syscall ID */
+#    move.l 8(%a7), %d1          /* the one and only argument */
 #    trap #0
 #    rts
 #
@@ -87,9 +107,9 @@ syscall6:
 #  .type syscall2, @function
 #syscall2:
 #    move.l %d2, -(%a7)
-#    move.l 8(%a7), %d0              /* linux syscall ID */
-#    move.l 12(%a7), %d1             /* the first argument */
-#    move.l 16(%a7), %d2             /* the second argument */
+#    move.l 8(%a7), %d0          /* linux syscall ID */
+#    move.l 12(%a7), %d1         /* the first argument */
+#    move.l 16(%a7), %d2         /* the second argument */
 #    trap #0
 #    move.l (%a7)+, %d2
 #    rts
@@ -98,10 +118,10 @@ syscall6:
 #  .type syscall3, @function
 #syscall3:
 #    movem.l %d2/%d3, -(%a7)
-#    move.l 12(%a7), %d0             /* linux syscall ID */
-#    move.l 16(%a7), %d1             /* the first argument */
-#    move.l 20(%a7), %d2             /* the second argument */
-#    move.l 24(%a7), %d3             /* the third argument */
+#    move.l 12(%a7), %d0         /* linux syscall ID */
+#    move.l 16(%a7), %d1         /* the first argument */
+#    move.l 20(%a7), %d2         /* the second argument */
+#    move.l 24(%a7), %d3         /* the third argument */
 #    trap #0
 #    movem.l (%a7)+, %d3/%d2
 #    rts
@@ -110,10 +130,10 @@ syscall6:
 #  .type syscall4, @function
 #syscall4:
 #    movem.l %d2/%d3/%d4, -(%a7)
-#    move.l 16(%a7), %d0             /* linux syscall ID */
-#    move.l 20(%a7), %d1             /* the first argument */
-#    move.l 24(%a7), %d2             /* the second argument */
-#    move.l 28(%a7), %d3             /* the third argument */
+#    move.l 16(%a7), %d0         /* linux syscall ID */
+#    move.l 20(%a7), %d1         /* the first argument */
+#    move.l 24(%a7), %d2         /* the second argument */
+#    move.l 28(%a7), %d3         /* the third argument */
 #    trap #0
 #    movem.l (%a7)+, %d4/%d3/%d2
 #    rts
@@ -122,12 +142,12 @@ syscall6:
 #  .type syscall5, @function
 #syscall5:
 #    movem.l %d2/%d3/%d4/%d5, -(%a7)
-#    move.l 20(%a7), %d0             /* linux syscall ID */
-#    move.l 24(%a7), %d1             /* the first argument */
-#    move.l 28(%a7), %d2             /* the second argument */
-#    move.l 32(%a7), %d3             /* the third argument */
-#    move.l 36(%a7), %d4             /* the fourth argument */
-#    move.l 40(%a7), %d5             /* the fifth argument */
+#    move.l 20(%a7), %d0         /* linux syscall ID */
+#    move.l 24(%a7), %d1         /* the first argument */
+#    move.l 28(%a7), %d2         /* the second argument */
+#    move.l 32(%a7), %d3         /* the third argument */
+#    move.l 36(%a7), %d4         /* the fourth argument */
+#    move.l 40(%a7), %d5         /* the fifth argument */
 #    trap #0
 #    movem.l (%a7)+, %d5/%d4/%d3/%d2
 #    rts

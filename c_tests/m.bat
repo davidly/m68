@@ -17,6 +17,9 @@ set includes=-I%inc4% -I%inc5% -I%inc1% -I%inc2% -I%inc3%
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 
+rem the linker makes the address space start at 0x2000 lower than the address of .init. Close enough
+set ldflags=-Wl,--section-start=.init=0x4000
+
 set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag%
 
 rem generate .s files for debugging
@@ -27,7 +30,15 @@ rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 rem actually build the app
-%gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf
+
+rem standard way
+rem %gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf
+
+rem using a linker script
+rem %gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf -Wl,-Tlscript.txt
+
+rem just point the linker in the right direction. This enables low addresses and trap vectors to work without allocating gigs of RAM
+%gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf %ldflags%
 
 goto alldone
 
