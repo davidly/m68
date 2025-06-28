@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ "$1" = "nested" ]; then
+    _m68runcmd="../m68 -h:60 ../c_tests/m68.elf"
+fi
+
+if [ "$1" = "armos" ]; then
+    _m68runcmd="../../ArmOS/armos -h:60 ../../ArmOS/bin/m68"
+fi
+
+if [ "$1" = "rvos" ]; then
+    _m68runcmd="../../rvos/rvos -h:60 ../../rvos/bin/m68.elf"
+fi
+
+if [ "$_m68runcmd" = "" ]; then
+    _m68runcmd="../m68"
+fi
+
+outputfile="test_elfto68k.txt"
+echo %date% %time% >%outputfile%
+
+for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
+           tcmp ttypes tarray trw mm_old fileops tpi \
+           t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
+           fopentst tex
+
+do
+  echo building $arg
+  echo building $arg >>$outputfile
+  mt.sh $arg >>$outputfile
+  echo running $arg
+  echo running $arg >>$outputfile
+  argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
+  $_m68runcmd $argu.68K >>$outputfile
+done
+
+diff --ignore-all-space baseline_$outputfile $outputfile
+
