@@ -18,7 +18,7 @@ gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O2"
 #$gcccmd $incpaths $gccflags $incpaths nlcpm.c -S -fverbose-asm -o newlib68.s
 
 # build the assembly portion with _start and syscalls
-$gccpath/bin/m68k-elf-as -mcpu=68000 startcpm.s -o m68start.o
+$gccpath/bin/m68k-elf-as -mcpu=68000 startcpm.s -o startcpm.o
 
 $gcccmd $incpaths $gccflags $1.c nlcpm.c -l:startcpm.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o $1.elf $ldflags
 
