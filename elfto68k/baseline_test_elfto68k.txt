@@ -1,4 +1,4 @@
-Fri 06/27/2025 16:36:33.54 
+Sat 06/28/2025 12:01:32.30 
 building hidave 
 elfto68k successfully created HIDAVE.68K
 running hidave 
@@ -281,10 +281,9 @@ tmuldiv ended with great success
 building ttt 
 elfto68k successfully created TTT.68K
 running ttt 
-starting...
 64930 moves
 10 iterations
-103079215104000.000000 milliseconds
+0.000000 milliseconds
 building sieve 
 elfto68k successfully created SIEVE.68K
 running sieve 
@@ -5453,4 +5452,4 @@ attempting large allocations
 caught a standard execption: std::bad_alloc
   after 2 1 megabyte allocations
 test exceptions completed with great success
-Fri 06/27/2025 16:38:47.62 
+Sat 06/28/2025 12:02:45.41 
