@@ -36,7 +36,7 @@ do
 done
 
 date_time=$(date)
-echo "$date_time" >$outputfile
+echo "$date_time" >>$outputfile
 
 diff --ignore-all-space baseline_$outputfile $outputfile
 
