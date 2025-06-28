@@ -17,7 +17,8 @@ if [ "$_m68runcmd" = "" ]; then
 fi
 
 outputfile="test_elfto68k.txt"
-echo %date% %time% >$outputfile
+date_time=$(date)
+echo "$date_time" >$outputfile
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw mm_old fileops tpi \
@@ -33,6 +34,9 @@ do
   argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
   $_m68runcmd $argu.68K >>$outputfile
 done
+
+date_time=$(date)
+echo "$date_time" >$outputfile
 
 diff --ignore-all-space baseline_$outputfile $outputfile
 
