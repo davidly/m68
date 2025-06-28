@@ -1223,18 +1223,18 @@ bool m68000::handle_trap( uint16_t vector, uint32_t pc_return )
         return false;
     }
 
-    uint16_t original_sr = sr;
-    set_supervisor_state();
-    push( pc_return );
-    push16( original_sr );
-    pc = getui32( vector * 4 );
-    if ( 0 == pc )
+    if ( 0 == getui32( vector * 4 ) )
     {
         tracer.Trace( "no trap handler for %u == %s\n", vector, get_vector( vector ) );
         printf( "no trap handler for %u == %s\n", vector, get_vector( vector ) );
         emulator_hard_termination( *this, "trap vector entry is null.", vector );
     }
 
+    uint16_t original_sr = sr;
+    set_supervisor_state();
+    push( pc_return );
+    push16( original_sr );
+    pc = getui32( vector * 4 );
     tracer.Trace( "invoked trap %u == %s\n", vector, get_vector( vector ) );
     return true;
 } //handle_trap

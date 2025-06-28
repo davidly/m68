@@ -3949,6 +3949,7 @@ struct HeaderCPM68K    // .68k executable files for cp/m 68k v1.3
         tracer.Trace( "  cb_data: %#x\n", cb_data );
         tracer.Trace( "  cb_bss: %#x\n", cb_bss );
         tracer.Trace( "  cb_symbols: %#x\n", cb_symbols );
+        tracer.Trace( "  reserved: %#x\n", reserved );
         tracer.Trace( "  text_start: %#x\n", text_start );
         tracer.Trace( "  relocation_flag: %#x\n", relocation_flag );
     }
@@ -4075,6 +4076,22 @@ struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory
     FCBCPM68K firstFCB;                 // 5c
     uint8_t cb_command_tail;            // 80 also start of default DMA buffer
     uint8_t command_tail[ 127 ];        // 81
+
+    void Trace()
+    {
+        tracer.Trace( "base page:\n" );
+        tracer.Trace( "  lowest tpa:       %lx\n", swap_endian32( lowest_tpa ) );
+        tracer.Trace( "  highest tpa:      %lx\n", swap_endian32( highest_tpa ) );
+        tracer.Trace( "  start_text:       %lx\n", swap_endian32( start_text ) );
+        tracer.Trace( "  cb_text:          %lx\n", swap_endian32( cb_text ) );
+        tracer.Trace( "  start_data:       %lx\n", swap_endian32( start_data ) );
+        tracer.Trace( "  cb_data:          %lx\n", swap_endian32( cb_data ) );
+        tracer.Trace( "  start_bss:        %lx\n", swap_endian32( start_bss ) );
+        tracer.Trace( "  cb_bss:           %lx\n", swap_endian32( cb_bss ) );
+        tracer.Trace( "  cb_after_bss:     %lx\n", swap_endian32( cb_after_bss ) );
+        tracer.Trace( "  cb_command_tail:  %x\n",  cb_command_tail );
+        tracer.TraceBinaryData( command_tail, 127, 4 );
+    }
 };
 
 #pragma pack(pop)
@@ -4355,6 +4372,8 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
     if ( !read_symbols_cpm( fp, head, text_base, data_base, bss_base ) )
         return false;
 
+    pbasepage->Trace();
+
     tracer.Trace( "memory map from highest to lowest addresses:\n" );
     tracer.Trace( "  actual top of stack:                                %x\n", stackPointer );
     tracer.Trace( "  <stack>\n" );
@@ -4440,7 +4459,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     memset( memory.data(), 0, memory.size() );
 
     // put the supervisor stack pointer in the first 4 bytes of RAM.
-    * (uint32_t *) memory.data() = swap_endian32( 0x2000 ); // arbitrary, but above the vector table and below the typical cp/m 68k base page
+    * (uint32_t *) memory.data() = swap_endian32( 1024 ); // arbitrary, but above the vector table and below the typical cp/m 68k base page (where f83 loads)
 
     g_base_address = 0;
     uint32_t base_page = text_base - 0x100; // where the base page (256 bytes) resides
@@ -4575,6 +4594,8 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     if ( !read_symbols_cpm( fp, head, text_base, data_base, bss_base ) )
         return false;
 
+    pbasepage->Trace();
+
     tracer.Trace( "memory map from highest to lowest addresses:\n" );
     tracer.Trace( "  first byte beyond allocated memory:                 %x\n", g_base_address + memory_size );
     tracer.Trace( "  actual top of stack:                                %x\n", g_top_of_stack + 8 );
@@ -4590,6 +4611,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     tracer.Trace( "  start of data segment:                              %x\n", g_execution_address + head.cb_text );
     tracer.Trace( "  <code from the .68k file>\n" );
     tracer.Trace( "  initial pc execution_addess + start of code         %x\n", g_execution_address );
+    tracer.Trace( "  default DMA address:                                %x\n", (uint32_t) ( g_DMA - memory.data() ) );
     tracer.Trace( "  start of base page:                                 %x\n", base_page );
     tracer.Trace( "  start of the address space:                         %x\n", g_base_address );
 
