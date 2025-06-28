@@ -141,6 +141,12 @@ forth83 folder:
    
    [relocatable f86](https://www.forth.org/fd/FD-V09N6.pdf) describes how to hack f83.68k to run on such hardware, but this impacts performance of the interpreter.
     
+elfto68k folder:
+
+    * converts Linux-style 68000 ELF executables to CP/M 68K .68K executables
+    * tested most of the .c apps in this folder except those that require more RAM than my hardware has.
+
+
 notes/bugs:
 
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
@@ -154,7 +160,6 @@ compiler and assembler benchmark performance:
     * ms = milliseconds
     * DR C v1.3 has text in cp68.68k that indicates v1.2, but it ships with CP/M 68K v1.3
     * times on the 68008 are with CP/M 68K and include significant relocatable binary load times
-    * I haven't figured out how to use the modern g++ compiler to produce CP/M 68K binaries
     * much of the g++ e instruction count is consumed by division calculations
     * Forth is interpreted, not compiled.
     * f83.68k won't load on my CP/M 68K device. The start address is 0x500, which is reserved on that machine. There is a documented hack available, but it changes performance.
