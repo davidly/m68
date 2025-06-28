@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 setlocal
 
 if "%1" == "" (goto noargs)
@@ -38,6 +38,7 @@ rem actually compile and link the app
 if %ERRORLEVEL% NEQ 0 ( goto alldone )
 
 elfto68k %1.elf
+del %1.elf
 
 goto alldone
 

@@ -306,17 +306,17 @@ float elapsed( struct timeval & a, struct timeval & b )
 
 extern int main( int argc, char * argv[] )
 {
-    printf( "starting...\n" );
-
     if ( 2 == argc )
         g_Iterations = atoi( argv[1] ); //sscanf( argv[ 1 ], "%d", &g_Iterations );  /* no atoi in MS C 1.0 */
 
     struct timeval tv;
+    memset( & tv, 0, sizeof( tv ) );
     gettimeofday( &tv, 0 );
 
     ttt();
 
     struct timeval tv_after;
+    memset( & tv_after, 0, sizeof( tv_after ) );
     gettimeofday( &tv_after, 0 );
 
     float elap = elapsed( tv, tv_after );

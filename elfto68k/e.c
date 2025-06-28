@@ -11,6 +11,9 @@ extern int main() {
   char buf[ 128 ];
   int x = 0;
   int a[ DIGITS_TO_FIND ];
+  char output[ DIGITS_TO_FIND ];
+  char * position;
+  int out_len = 0;
 
   for (int n = N - 1; n > 0; --n) {
       a[n] = 1;
@@ -24,11 +27,13 @@ extern int main() {
 
           x = 10 * a[n-1] + x/n;
       }
-      printf("%d", x);
-      fflush(stdout);
+
+      position = output + out_len;
+      itoa( x, position, 10 );
+      out_len += strlen( position );
   }
 
-  printf( "\ndone\n" );
+  printf( "%s\ndone\n", output );
 
   return 0;
 }

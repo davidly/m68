@@ -31,6 +31,9 @@
 * x is in d4
 * N is in d3
 
+digits equ 200
+.comm array,digits*2
+
 .text
 _start:
     move.l #$10001, d1      * two word values of 1
@@ -121,9 +124,6 @@ show_num:                   * print the unsigned number in d0.w
     rts
 
 .data
-
-digits equ 200
-array: .ds digits*2
 
 done_string: .dc.b 13,10,'done',13,10,'$'
 num_buf: .dc.b '            '

@@ -34,22 +34,26 @@
 * prime d3
 * #size d2
 
+size equ 8190               
+.globl _flags
+.comm _flags,size+2           * multiple of 4 and includes 2 bonus bytes per algorithm and to stop inner loop
+
 .text
 _start:
     clr.l d6
   nextiter:
-    movea.l #flags, a2
+    movea.l #_flags, a2
     movea.l a2, a3
     add.l #size, a3
     addq.l #2, a3
     move.l #$01010101, d0
 
-  finit:                    * initialize flags to true, 4 bytes at a time
+  finit:                    * initialize _flags to true, 4 bytes at a time
     move.l d0, (a2)+
     cmpa.l a3, a2
     blt finit
 
-    movea.l #flags, a2
+    movea.l #_flags, a2
     move.b #1, #size(a2)
     move.l #size, d2
     moveq.l #-1, d5         * start the loop at -1, not 0 because the += 1 happens at the top of the loop
@@ -62,7 +66,7 @@ _start:
     cmp.l d2, d5
     bgt alldone
 
-  flagset:
+  _flagset:
     moveq.l #3, d3          * prime = 3
     add.l d5, d3            * prime += i
     add.l d5, d3            * prime += i
@@ -131,10 +135,6 @@ show_num:                   * print the unsigned number in d0.w. d0, d1, a0, a1 
     rts
 
 .data
-
-size equ 8190               
-
-flags: .ds size+2           * multiple of 4 and includes 2 bonus bytes per algorithm and to stop inner loop
 
 primes_string: .dc.b ' primes',13,10,'$'
 num_buf: .dc.b '            '
