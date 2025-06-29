@@ -145,7 +145,12 @@ elfto68k folder:
 
     * converts Linux-style 68000 ELF executables to CP/M 68K .68K executables
     * tested most of the .c apps in this folder except those that require more RAM than my hardware has.
-
+    * elfto68k.cxx: converts .elf files built for 68000 with a newlib BSP targeting CP/M 68K and linked statically.
+    * m.bat/m.sh: builds elftl68k
+    * *.c: test apps
+    * mt.bat/mt.sh: builds a single test app
+    * runall.bat/runall.sh: builds and runs the test apps in m68
+    * words.txt: support file for the an.c test app
 
 notes/bugs:
 
