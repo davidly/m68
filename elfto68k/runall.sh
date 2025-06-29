@@ -23,7 +23,7 @@ echo "$date_time" >$outputfile
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw mm_old fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
-           fopentst tex
+           fopentst lenum tex
 
 do
   echo building $arg

@@ -23,7 +23,7 @@ if "%_M68runcmd%" == "" (
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
            tcmp ttypes tarray trw mm_old fileops tpi ^
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
-           fopentst tex
+           fopentst lenum tex
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 

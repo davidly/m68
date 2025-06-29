@@ -1,4 +1,4 @@
-Sat 06/28/2025 12:01:32.30 
+Sun 06/29/2025  8:15:12.60 
 building hidave 
 elfto68k successfully created HIDAVE.68K
 running hidave 
@@ -328,7 +328,7 @@ tstr completed with great success
 building targs 
 elfto68k successfully created TARGS.68K
 running targs 
-argc: 1, argv 14bc8, penv 0
+argc: 1, argv 14ed4, penv 0
 argv[ 0 ]: 'TARGS.68K'
 building tbits 
 elfto68k successfully created TBITS.68K
@@ -5432,7 +5432,7 @@ O_EXCL: 0x800
 O_DIRECTORY: 0x200000
 O_DIRECT: 0x80000
 calling fopen
-result of fopen: 18f5c
+result of fopen: 1908c
 len in pfl: 128
 length of file before initial close: 128
 length from stat: 128
@@ -5440,6 +5440,10 @@ length from fstat: 128
 tz: 'PST+8', year: 1969, month 12, day 31, hour 16, min 0, sec 0
 len in pfl: 0
 exiting fopentst with great success
+building lenum 
+elfto68k successfully created LENUM.68K
+running lenum 
+linux file system enumeration completed with great success
 building tex 
 elfto68k successfully created TEX.68K
 running tex 
@@ -5452,4 +5456,4 @@ attempting large allocations
 caught a standard execption: std::bad_alloc
   after 2 1 megabyte allocations
 test exceptions completed with great success
-Sat 06/28/2025 12:02:45.41 
+Sun 06/29/2025  8:16:29.32 

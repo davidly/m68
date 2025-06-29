@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <math.h>
+#include <dirent.h>
 
 #define _countof( X ) ( sizeof( X ) / sizeof( X[0] ) )
 
@@ -37,7 +38,7 @@ template <class T> inline T get_min( T a, T b )
 struct FCBCPM68K // file control block for cp/m
 {
     uint8_t dr;         // drive
-    char f[ 8 ];        // filename
+    char n[ 8 ];        // filename
     char t[ 3 ];        // file type
     uint8_t ex;         // current extent number. normally set to 0 by user but is in range 0-31
     uint8_t s1;
@@ -52,25 +53,25 @@ struct FCBCPM68K // file control block for cp/m
 
     void set_filename( const char * p )
     {
-        memset( f, ' ', 8 );
+        memset( n, ' ', 8 );
         memset( t, ' ', 3 );
         char * dot = strchr( p, '.' );
         if ( dot )
         {
-            memcpy( f, p, (size_t) ( dot - p ) );
+            memcpy( n, p, (size_t) ( dot - p ) );
             memcpy( t, dot + 1, strlen( dot + 1 ) );
         }
         else
-            memcpy( f, p, strlen( p ) );
+            memcpy( n, p, strlen( p ) );
     }
 
     void make_filename( char * p )
     {
         for ( int i = 0; i < 8; i++ )
         {
-            if ( ' ' == ( 0x7f & f[ i ] ) )
+            if ( ' ' == ( 0x7f & n[ i ] ) )
                 break;
-            *p++ = ( 0x7f & f[ i ] );
+            *p++ = ( 0x7f & n[ i ] );
         }
         if ( ' ' != t[ 0 ] )
         {
@@ -116,8 +117,8 @@ struct FCBCPM68K // file control block for cp/m
     {
         printf( "  FCB\n" );
         printf( "    drive:    %#x == %c\n", dr, ( 0 == dr ) ? 'A' : 'A' + dr - 1 );
-        printf( "    filename: '%c%c%c%c%c%c%c%c'\n", 0x7f & f[0], 0x7f & f[1], 0x7f & f[2], 0x7f & f[3],
-                                                            0x7f & f[4], 0x7f & f[5], 0x7f & f[6], 0x7f & f[7] );
+        printf( "    filename: '%c%c%c%c%c%c%c%c'\n", 0x7f & n[0], 0x7f & n[1], 0x7f & n[2], 0x7f & n[3],
+                                                            0x7f & n[4], 0x7f & n[5], 0x7f & n[6], 0x7f & n[7] );
         printf( "    filetype: '%c%c%c'\n", 0x7f & t[0], 0x7f & t[1], 0x7f & t[2] );
         printf( "    R S A:    %d %d %d\n", 0 != ( 0x80 & t[0] ), 0 != ( 0x80 & t[1] ), 0 != ( 0x80 & t[2] ) );
         printf( "    ex:       %d\n", ex );
@@ -192,7 +193,7 @@ extern "C" void _init_nlcpm()
         __register_frame( g_eh_data );
 
     for ( int i = 0; i < ( sizeof( g_afcb ) / sizeof( g_afcb[ 0 ] ) ); i++ )
-        g_afcb[ i ].f[ 0 ] = '*'; // indicate that it's free
+        g_afcb[ i ].n[ 0 ] = '*'; // indicate that it's free
 } //_init_nlcpm
 
 extern "C" void _fini_nlcpm()
@@ -284,7 +285,7 @@ extern "C" int open( const char * pathname, int flags, ... )
 
     int fd;
     for ( fd = 3; fd < _countof( g_afcb ); fd++ )
-        if ( '*' == g_afcb[ fd ].f[ 0 ] )
+        if ( '*' == g_afcb[ fd ].n[ 0 ] )
             break;
 
     if ( fd >= _countof( g_afcb ) )
@@ -315,7 +316,7 @@ extern "C" int open( const char * pathname, int flags, ... )
 
     if ( 255 == result )
     {
-        g_afcb[ fd ].f[ 0 ] = '*'; // mark this fd as free
+        g_afcb[ fd ].n[ 0 ] = '*'; // mark this fd as free
         errno = EINVAL;
         return -1;
     }
@@ -331,7 +332,7 @@ extern "C" int close( int fd )
         errno = EINVAL;
         return -1;
     }
-    if ( '*' == g_afcb[ fd ].f[ 0 ] )
+    if ( '*' == g_afcb[ fd ].n[ 0 ] )
     {
         errno = EINVAL;
         return -1;
@@ -345,7 +346,7 @@ extern "C" int close( int fd )
         return -1;
     }
 
-    fcb.f[ 0 ] = '*';
+    fcb.n[ 0 ] = '*';
     return 0;
 } //close
 
@@ -356,7 +357,7 @@ extern "C" off_t lseek( int fd, off_t offset, int whence )
         errno = EINVAL;
         return -1;
     }
-    if ( '*' == g_afcb[ fd ].f[ 0 ] )
+    if ( '*' == g_afcb[ fd ].n[ 0 ] )
     {
         errno = EINVAL;
         return -1;
@@ -407,7 +408,7 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
             errno = EINVAL;
             return -1;
         }
-        if ( '*' == g_afcb[ fd ].f[ 0 ] )
+        if ( '*' == g_afcb[ fd ].n[ 0 ] )
         {
             errno = EINVAL;
             return -1;
@@ -501,7 +502,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
             errno = EINVAL;
             return -1;
         }
-        if ( '*' == g_afcb[ fd ].f[ 0 ] )
+        if ( '*' == g_afcb[ fd ].n[ 0 ] )
         {
             errno = EINVAL;
             return -1;
@@ -623,7 +624,7 @@ extern "C" int fstat( int fd, struct stat * statbuf )
         errno = EINVAL;
         return -1;
     }
-    if ( '*' == g_afcb[ fd ].f[ 0 ] )
+    if ( '*' == g_afcb[ fd ].n[ 0 ] )
     {
         errno = EINVAL;
         return -1;
@@ -667,6 +668,91 @@ extern "C" int gettimeofday( struct timeval *tv, void *tz )
 {
     return -1; // no real time clock on CP/M 68K
 } //gettimeofday
+
+const int fdEnumeration = 100;
+static bool g_EnumerationActive = false;
+static FCBCPM68K g_fcbEnumeration;
+
+DIR * fdopendir( int fd )
+{
+    DIR * pd = (DIR *) malloc( sizeof( DIR ) );
+    pd->dd_fd = fd; // ownership transfer
+    pd->dd_loc = 0;
+    pd->dd_seek = 0;
+    pd->dd_buf = (char *) malloc( 256 );
+    pd->dd_len = 256;
+    pd->dd_size = 0;
+
+    return pd;
+} //fdopendir
+
+DIR * opendir( const char * name )
+{
+    if ( strcmp( name, "." ) ) // cp/m doesn't have folders. only support the current directory
+    {
+        errno = EINVAL;
+        return 0;
+    }
+
+    return fdopendir( fdEnumeration );
+} //opendir
+
+struct dirent * readdir( DIR * dir )
+{
+    if ( 0 == dir )
+        return 0;
+
+    uint8_t * pdma = & g_base_page->cb_command_tail;
+    static struct dirent de = { 0 };
+    de.d_ino = 0x67;
+    de.d_off = 0x69646c65; // mirror allergy
+    de.d_reclen = sizeof( de );
+    de.d_type = 8;
+
+    if ( !g_EnumerationActive ) // find the first file in the numeration
+    {
+        g_fcbEnumeration.set_filename( "????????.???" );
+        int result = bdos_cpm( 17, (long) & g_fcbEnumeration ); // find first
+        if ( result >= 0 && result <= 3 )
+        {
+            FCBCPM68K * pfcb = (FCBCPM68K *) ( pdma + result * 32 );
+            pfcb->make_filename( de.d_name );
+            g_EnumerationActive = true;
+        }
+        else
+            return 0;
+    }
+    else // find next
+    {
+        int result = bdos_cpm( 18, (long) & g_fcbEnumeration ); // find next
+        if ( result >= 0 && result <= 3 )
+        {
+            FCBCPM68K * pfcb = (FCBCPM68K *) ( pdma + result * 32 );
+            pfcb->make_filename( de.d_name );
+        }
+        else
+            return 0;
+    }
+
+    return &de;
+} //readdir
+
+int closedir( DIR * dir )
+{
+    if ( 0 == dir )
+        return -1;
+
+    if ( fdEnumeration != dir->dd_fd )
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    g_EnumerationActive = false;
+    free( dir->dd_buf );
+    free( dir );
+    return 0;
+} //closedir
 
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
