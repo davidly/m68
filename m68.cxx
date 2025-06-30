@@ -5270,9 +5270,11 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                         // Digital Research's lk80.com linker has many undocumented expectations no other apps I've tested have.
                         // including rc > 0 after an open. Whitesmith C requires the record count set correctly.
 
-                        pfcb->cr = 0;
                         pfcb->SetRecordCount( fp );
-                        pfcb->ex = 0;
+
+                        // cr and ex can't be zeroed or whitesmith pascal's lnk produces corrupt .com files
+                        // pfcb->cr = 0;
+                        // pfcb->ex = 0;
                         pfcb->s2 = 0;
                         tracer.Trace( "  file opened successfully, record count: %u\n", pfcb->rc );
                     }
