@@ -164,15 +164,13 @@ compiler and assembler benchmark performance:
     * g++ = GNU C++ cross compiler m68k-elf-gcc (GCC) 8.2.0
     * ms = milliseconds
     * DR C v1.3 has text in cp68.68k that indicates v1.2, but it ships with CP/M 68K v1.3
-    * times on the 68008 are with CP/M 68K and include significant relocatable binary load times
-    * much of the g++ e instruction count is consumed by division calculations
-    * Forth is interpreted, not compiled.
+    * times on the 68008 are with CP/M 68K and include significant (often relocatable) binary load times
+    * much of the g++ e benchmark instruction count is consumed by division calculations on full 32-bit integers
+    * Forth is interpreted, not compiled
     * f83.68k won't load on my CP/M 68K device. The start address is 0x500, which is reserved on that machine. There is a documented hack available, but it changes performance.
     * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance
     * assembly code always wins
 
-![table](https://github.com/user-attachments/assets/193172e2-918d-4988-acf6-d56d2e70a078)
-
-
+![runtimes](https://github.com/user-attachments/assets/eed4115f-ac53-4b44-b4a1-dc39ba2d5300)
 
     
