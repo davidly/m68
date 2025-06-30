@@ -42,7 +42,8 @@ int main( int argc, char * argv[] )
         if ( !case_insensitive_compare( "lenum.68k", entry->d_name ) )
             expected_found = true;
 
-        //printf( "entry: '%s'\n", entry->d_name );
+        if ( argc > 1 )
+            printf( "entry: '%s'\n", entry->d_name );
         count++;
     } while( true );
 

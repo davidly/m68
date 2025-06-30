@@ -21,7 +21,7 @@ date_time=$(date)
 echo "$date_time" >$outputfile
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
-           tcmp ttypes tarray trw mm_old fileops tpi \
+           tcmp ttypes tarray trw trw2 mm_old fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
            fopentst lenum tex
 
@@ -34,6 +34,20 @@ do
   argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
   $_m68runcmd $argu.68K >>$outputfile
 done
+
+echo building ba
+echo building ba >>$outputfile
+mt.sh ba >>$outputfile
+echo running ba
+echo running ba >>$outputfile
+$_m68runcmd BA.68K TP.BAS >>$outputfile
+
+echo building an
+echo building an >>$outputfile
+mt.sh an >>$outputfile
+echo running an
+echo running an >>$outputfile
+$_m68runcmd AN.68K david lee >>$outputfile
 
 date_time=$(date)
 echo "$date_time" >>$outputfile

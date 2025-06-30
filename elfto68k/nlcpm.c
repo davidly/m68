@@ -418,7 +418,7 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
         uint8_t * pdma = & g_base_page->cb_command_tail;
         uint8_t * buf = (uint8_t *) buffer;
 
-        // cp/m can only read and write a single 128 byte record-aligned record at a time.
+        // cp/m can only read and write a single 128-byte record-aligned record at a time.
         // in some cases existing data will need to be read and merged with the write.
 
         uint32_t remaining = count;
@@ -454,7 +454,6 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
                     remaining = 0;
                 }
 
-                fcb.SetRandomIOOffset( record );
                 result = bdos_cpm( 34, (long) & fcb ); // random write
                 if ( 0 != result )
                 {

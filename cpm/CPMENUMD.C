@@ -199,7 +199,7 @@ int enumerate( pfile ) char * pfile;
     if ( ! fcb_initialize( & the_fcb, pfile ) )
         return false;
 
-    result = bdos( 17, & the_fcb );
+    result = bdos( 17, & the_fcb ); // find first
 
     while ( result >= 0 && result <= 3 )
     {
@@ -231,7 +231,7 @@ int enumerate( pfile ) char * pfile;
         if ( ( sizeof( list ) / sizeof( char * ) ) == list_len )
             break;
         
-        result = bdos( 18, & the_fcb );
+        result = bdos( 18, & the_fcb ); // find next
     }
 
     if ( 255 != result )

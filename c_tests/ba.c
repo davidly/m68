@@ -12793,8 +12793,11 @@ void ParseInputFile( const char * inputfile )
     while ( pbuf < pbeyond )
     {
         int len = 0;
-        while ( ( pbuf < pbeyond ) && ( ( *pbuf != 10 ) && ( *pbuf != 13 ) ) && ( len < MaxLineLen ) )
+        while ( ( pbuf < pbeyond ) && ( *pbuf != 0x1a ) && ( *pbuf != 10 ) && ( *pbuf != 13 ) && ( len < MaxLineLen ) )
             line[ len++ ] = *pbuf++;
+
+        if ( 0x1a == *pbuf ) // cp/m files grow 128 bytes at a time and if a ^z is found in a "text" file it's EOF
+            break;
 
         while ( ( pbuf < pbeyond ) && ( *pbuf == 10 || *pbuf == 13 ) )
             pbuf++;

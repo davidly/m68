@@ -21,11 +21,26 @@ if "%_M68runcmd%" == "" (
 )
 
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
-           tcmp ttypes tarray trw mm_old fileops tpi ^
+           tcmp ttypes tarray trw trw2 mm_old fileops tpi ^
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
            fopentst lenum tex
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
+
+
+echo building ba
+echo building ba >>%outputfile%
+call mt.bat ba >>%outputfile%
+echo running ba
+echo running ba >>%outputfile%
+%_M68runcmd% ba.68K tp.bas >>%outputfile%
+
+echo building an
+echo building an >>%outputfile%
+call mt.bat an >>%outputfile%
+echo running an
+echo running an >>%outputfile%
+%_M68runcmd% AN.68K david lee >>%outputfile%
 
 goto :alldone
 

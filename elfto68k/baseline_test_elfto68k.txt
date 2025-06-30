@@ -1,4 +1,4 @@
-Sun 06/29/2025  8:15:12.60 
+Sun 06/29/2025 20:47:21.24 
 building hidave 
 elfto68k successfully created HIDAVE.68K
 running hidave 
@@ -328,7 +328,7 @@ tstr completed with great success
 building targs 
 elfto68k successfully created TARGS.68K
 running targs 
-argc: 1, argv 14ed4, penv 0
+argc: 1, argv 14e94, penv 0
 argv[ 0 ]: 'TARGS.68K'
 building tbits 
 elfto68k successfully created TBITS.68K
@@ -3722,6 +3722,22 @@ building trw
 elfto68k successfully created TRW.68K
 running trw 
 trw completed with great success
+building trw2 
+elfto68k successfully created TRW2.68K
+running trw2 
+pass 0 with element count 1
+pass 1 with element count 7
+pass 2 with element count 20
+pass 3 with element count 32
+pass 4 with element count 63
+pass 5 with element count 64
+pass 6 with element count 65
+pass 7 with element count 77
+pass 8 with element count 127
+pass 9 with element count 128
+pass 10 with element count 129
+pass 11 with element count 701
+TRW2.68K completed with great success
 building mm_old 
 elfto68k successfully created MM_OLD.68K
 running mm_old 
@@ -5456,4 +5472,57 @@ attempting large allocations
 caught a standard execption: std::bad_alloc
   after 2 1 megabyte allocations
 test exceptions completed with great success
-Sun 06/29/2025  8:16:29.32 
+building ba 
+elfto68k successfully created BA.68K
+running ba 
+parsing input file tp.bas
+0 ms for 1 iterations
+final move count 6493
+exiting the basic interpreter
+building an 
+elfto68k successfully created AN.68K
+running an 
+a delve id
+a delved i
+a die veld
+a dive led
+a dived le
+a led vied
+add ive le
+add le vie
+addle ive
+addle vie
+aid delve
+aide veld
+ale dived
+ave did le
+ave id led
+ave idled
+dad ive le
+dad le vie
+dale dive
+dale vied
+david eel
+david lee
+dead evil
+dead levi
+dead live
+dead veil
+dead vile
+deal dive
+deal vied
+dee valid
+deed vial
+did leave
+died vale
+died veal
+dive lade
+dive lead
+dived lea
+evade lid
+eve id lad
+id leaved
+idea veld
+lade vied
+lead vied
+Sun 06/29/2025 20:48:43.71 
