@@ -263,6 +263,7 @@ private:
     uint32_t effective_address2( uint16_t m, uint16_t reg );
     const char * effective_string( void );
     const char * effective_string2( uint16_t m, uint16_t reg );
+    int32_t decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn );
     int32_t get_ea_displacement();
     uint32_t sub32( uint32_t a, uint32_t b, bool setflags, bool setx, bool subx );
     uint16_t sub16( uint16_t a, uint16_t b, bool setflags, bool setx, bool subx );

@@ -3512,8 +3512,16 @@ const char * bdos_function( uint32_t id )
     if ( id < _countof( bdos_functions ) )
         return bdos_functions[ id ];
 
+    if ( 45 == id )
+        return "non - cp/m 2.2: set action on hardware error";
+    if ( 48 == id )
+        return "non - cp/m 2.2: empty disk buffers";
+    if ( 105 == id )
+        return "non - cp/m 2.2: get date and time";
     if ( 108 == id )
         return "cp/m v3 get/put exit code";
+    if ( 155 == id )
+        return "non - cp/m 2.2: get date and time with seconds";
 
     return "unknown";
 } //bdos_function
@@ -3826,6 +3834,26 @@ struct FileEntry
     char acName[ CPM_FILENAME_LEN ];
     FILE * fp;
 };
+
+#pragma pack( push, 1 )
+struct CPM3DateTime
+{
+    uint16_t day; // day 1 is 1 January 1978
+    uint8_t hour; // packed bcd (nibbles for each digit)
+    uint8_t minute; // packed bcd
+    uint8_t second; // packed bcd. for BDOS 155, not BDOS 105
+
+    void swap_endian()
+    {
+        day = flip_endian16( day );
+    }
+};
+#pragma pack(pop)
+
+uint8_t packBCD( uint8_t x )
+{
+    return (uint8_t) ( ( ( x / 10 ) << 4 ) | ( x % 10 ) );
+} //packBCD
 
 static bool g_forceLowercase = false;
 static uint8_t * g_DMA = 0;
@@ -4841,9 +4869,12 @@ bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
 
     for ( int i = 0; i < 8; i++ )
     {
-        if ( ' ' == ( 0x7f & pfcb->f[ i ] ) )
+        char c = ( 0x7f & pfcb->f[ i ] );
+        if ( ' ' == c )
             break;
-        *pcFilename++ = ( 0x7f & pfcb->f[ i ] );
+        if ( '/' == c ) // slash is legal in CP/M and MT Pascal v3.0b uses it for P2/FLT.OVL. hack it to use #
+            c = '#';
+        *pcFilename++ = c;
     }
 
     if ( ' ' != pfcb->t[0] )
@@ -4852,9 +4883,10 @@ bool parse_FCB_Filename( FCBCPM68K * pfcb, char * pcFilename )
 
         for ( int i = 0; i < 3; i++ )
         {
-            if ( ' ' == ( 0x7f & pfcb->t[ i ] ) )
+            char c = ( 0x7f & pfcb->t[ i ] );
+            if ( ' ' == c )
                 break;
-            *pcFilename++ = ( 0x7f & pfcb->t[ i ] );
+            *pcFilename++ = c;
         }
     }
 
@@ -5078,6 +5110,28 @@ void emulator_invoke_68k_trap3( m68000 & cpu ) // bios
         }
     }
 } //emulator_invoke_68k_trap3
+
+uint16_t days_since_jan1_1978()
+{
+    time_t current_time;
+    struct tm *time_info;
+
+    current_time = time(NULL);
+    time_info = localtime(&current_time);
+
+    struct tm target_date = {0};
+    target_date.tm_year = 1978 - 1900; // Years since 1900
+    target_date.tm_mon = 0;         // January (0-indexed)
+    target_date.tm_mday = 1;
+    target_date.tm_hour = 0;
+    target_date.tm_min = 0;
+    target_date.tm_sec = 0;
+
+    time_t target_time = mktime(&target_date);
+    time_t difference_seconds = current_time - target_time;
+    uint16_t days_since_1978 = (uint16_t) ( difference_seconds / ( 24 * 60 * 60 ) );
+    return days_since_1978;
+} //days_since_jan1_1978
 
 void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
 {
@@ -5305,7 +5359,18 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                         tracer.Trace( "ERROR: file close failed, error %d = %s\n", errno, strerror( errno ) );
                 }
                 else
-                    tracer.Trace( "ERROR: file close on file that's not open\n" );
+                {
+                    // return error 255 if the file doesn't exist.
+                    // Pro Pascal Compiler v2.1 requires a 0 return code for a file that's not open but exists.
+
+                    if ( file_exists( acFilename ) )
+                    {
+                        tracer.Trace( "    WARNING: file close on file that's not open but exists\n" );
+                        ACCESS_REG( REG_RESULT ) = 0;
+                    }
+                    else
+                        tracer.Trace( "ERROR: file close on file that's not open and doesn't exist\n" );
+                }
             }
             else
                 tracer.Trace( "ERROR: can't parse filename in close call\n" );
@@ -5764,6 +5829,12 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             WriteRandom( cpu );
             break;
         }
+        case 45: // called by BASIC/Z
+        {
+            // non - CP/M 2.2: set action on hardware error
+            ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
         case 47: // chain to program
         {
             tracer.Trace( "chain to len %u command '%s'\n", * g_DMA, g_DMA + 1 );
@@ -5860,6 +5931,32 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
         {
             cpu.set_supervisor_state();
             ACCESS_REG( REG_RESULT ) = 0;
+            break;
+        }
+        case 102:
+        {
+            // Get file date and time (not in cp/m 2.2)
+            break;
+        }
+        case 105: // get date time. cp/m 3.0 and later. Returns seconds in A as packed bcd
+        case 155: // Get date and time. MP/M, Concurrent CP/M. called by rmcobol v1.5
+        {
+            CPM3DateTime * ptime = (CPM3DateTime *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            system_clock::time_point now = system_clock::now();
+            time_t time_now = system_clock::to_time_t( now );
+            struct tm * plocal = localtime( & time_now );
+
+            ptime->day = 1 + days_since_jan1_1978();
+            ptime->hour = packBCD( (uint8_t) plocal->tm_hour );
+            ptime->minute = packBCD( (uint8_t) plocal->tm_min );
+            ACCESS_REG( REG_RESULT ) = packBCD( (uint8_t) plocal->tm_sec );
+
+            if ( 155 == function )
+                ptime->second = (uint8_t) ACCESS_REG( REG_RESULT );
+
+#ifdef TARGET_BIG_ENDIAN
+            ptime->swap_endian();
+#endif
             break;
         }
         case 108: // bdos get put program return code

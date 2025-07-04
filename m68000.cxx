@@ -99,6 +99,22 @@ const char * m68000::render_flags()
     return flags;
 } //render_flags
 
+int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn )
+{
+    // 16 bits: 15        14-12       11                10-9                8  7-0
+    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
+
+    pc += 2;
+    uint16_t extension = getui16( pc );
+    is_a = get_bit16( extension, 15 );
+    Xn = get_bits16( extension, 12, 3 );
+    is_l = get_bit16( extension, 11 );
+    uint16_t scale = get_bits16( extension, 9, 2 );
+    if ( 0 != scale || get_bit16( extension, 8 ) )
+        unhandled(); // if not 0, it's a >68000 instruction
+    return (int32_t) sign_extend( 0xff & extension, 7 );
+} //decode_ea_displacement
+
 const char * m68000::effective_string()
 {
     static char ea[ 40 ];
@@ -140,17 +156,9 @@ const char * m68000::effective_string()
         }
         case 6: // Address with index (d8, An, Xn)
         {
-            // 16 bits: 15        14-12       11                10-9                8  7-0
-            //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  0  signed 8-bit displacement
-            pc += 2;
-            uint16_t extension = getui16( pc );
-            bool is_a = get_bit16( extension, 15 );
-            uint16_t Xn = get_bits16( extension, 12, 3 );
-            bool is_l = get_bit16( extension, 11 );
-            uint16_t scale = get_bits16( extension, 9, 2 );
-            if ( 0 != scale || get_bit16( extension, 8 ) )
-                unhandled(); // > 68000 instruction
-            int32_t displacement = sign_extend( 0xff & extension, 7 );
+            bool is_a, is_l;
+            uint16_t Xn;
+            int32_t displacement = decode_ea_displacement( is_a, is_l, Xn );
             snprintf( ea, _countof( ea ), "(%d,a%u,%c%u.%c)", displacement, ea_reg, is_a ? 'a' : 'd', Xn, is_l ? 'l' : 'w' );
             break;
         }
@@ -181,12 +189,9 @@ const char * m68000::effective_string()
                 }
                 case 3: // program counter with index. ( d8, PC, Dn )
                 {
-                    pc += 2;
-                    uint16_t extension = getui16( pc );
-                    bool is_a = get_bit16( extension, 15 );
-                    uint16_t Xn = get_bits16( extension, 12, 3 );
-                    bool is_l = get_bit16( extension, 11 );
-                    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 );
+                    bool is_a, is_l;
+                    uint16_t Xn;
+                    int32_t displacement = decode_ea_displacement( is_a, is_l, Xn );
                     snprintf( ea, _countof( ea ), "(#%d,pc,%c%u.%c)", displacement, is_a ? 'a' : 'd', Xn, is_l ? 'l' : 'w' );
                     break;
                 }
@@ -232,18 +237,9 @@ const char * m68000::effective_string2( uint16_t mval, uint16_t regval )
 
 int32_t m68000::get_ea_displacement()
 {
-    // 16 bits: 15        14-12       11                10-9                8  7-0
-    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
-
-    pc += 2;
-    uint16_t extension = getui16( pc );
-    bool is_a = get_bit16( extension, 15 );
-    uint16_t Xn = get_bits16( extension, 12, 3 );
-    bool is_l = get_bit16( extension, 11 );
-    uint16_t scale = get_bits16( extension, 9, 2 );
-    if ( 0 != scale || get_bit16( extension, 8 ) )
-        unhandled(); // if not 0, it's a >68000 instruction
-    int32_t displacement = (int32_t) sign_extend( 0xff & extension, 7 );
+    bool is_a, is_l;
+    uint16_t Xn;
+    int32_t displacement = decode_ea_displacement( is_a, is_l, Xn );
     int32_t reg_displacement = is_a ? aregs[ Xn ] : dregs[ Xn ].l;
     if ( !is_l )
         reg_displacement = sign_extend( reg_displacement, 15 ); // both A and D registers behave like this per experimentation
