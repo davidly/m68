@@ -75,7 +75,7 @@ struct HeaderCPM68K    // .68k executable files for cp/m 68k v1.3
         printf( "  cb_data: %#x\n", cb_data );
         printf( "  cb_bss: %#x\n", cb_bss );
         printf( "  cb_symbols: %#x\n", cb_symbols );
-        printf( "  reserved (eh frame): %#x\n", reserved );
+        printf( "  reserved: %#x\n", reserved );
         printf( "  text_start: %#x\n", text_start );
         printf( "  relocation_flag: %#x\n", relocation_flag );
     }
@@ -302,8 +302,9 @@ void usage( const char * err = 0 )
 {
     if ( err )
         printf( "error: %s\n", err );
-    printf( "usage: elfto68k <file>.elf\n" );
+    printf( "usage: elfto68k [-v] <file>.elf\n" );
     printf( "       creates <file>.68K\n" );
+    printf( "       -v      verbose information\n" );
     exit( 1 );
 } //usage
 
@@ -312,10 +313,19 @@ int main( int argc, char * argv[] )
     uint16_t tst = 1;
     g_hostIsLittleEndian = ( 1 & ( * (uint8_t *) &tst ) );
 
-    if ( 2 != argc )
-        usage();
+    char * pinputfile = 0;
 
-    FILE * fp = fopen( argv[ 1 ], "rb" );
+    for ( int arg = 1; arg < argc; arg++ )
+    {
+        if ( !strcmp( argv[ arg ], "-v" ) )
+            trace_status = true;
+        else if ( !pinputfile )
+            pinputfile = argv[ arg ];
+        else
+            usage( "invalid argument" );
+    }
+
+    FILE * fp = fopen( pinputfile, "rb" );
     if ( !fp )
         usage( "can't open input file" );
 
@@ -341,7 +351,7 @@ int main( int argc, char * argv[] )
     if ( 2 != ehead.type )
     {
         printf( "e_type is %d == %s\n", ehead.type, image_type( ehead.type ) );
-        usage( "elf image isn't an executable file (2 expected)" );
+        usage( "elf image type isn't an executable file (2 expected)" );
     }
 
     if ( ELF_MACHINE_ISA != ehead.machine )
@@ -356,12 +366,12 @@ int main( int argc, char * argv[] )
         printf( "  entry address: %x\n", ehead.entry_point );
         printf( "  program entries: %u\n", ehead.program_header_table_entries );
         printf( "  program header entry size: %u\n", ehead.program_header_table_size );
-        printf( "  program offset: %u == %x\n", ehead.program_header_table, ehead.program_header_table );
+        printf( "  program offset: %u == %#x\n", ehead.program_header_table, ehead.program_header_table );
         printf( "  section entries: %u\n", ehead.section_header_table_entries );
         printf( "  section header entry size: %u\n", ehead.section_header_table_size );
-        printf( "  section offset: %u == %x\n", ehead.section_header_table, ehead.section_header_table );
-        printf( "  section with section names: %u == %x\n", ehead.section_with_section_names, ehead.section_with_section_names );
-        printf( "  flags: %x\n", ehead.flags );
+        printf( "  section offset: %u == %#x\n", ehead.section_header_table, ehead.section_header_table );
+        printf( "  section with section names: %u == %#x\n", ehead.section_with_section_names, ehead.section_with_section_names );
+        printf( "  flags: %#x\n", ehead.flags );
     }
 
     // determine how much RAM to allocate
@@ -386,17 +396,17 @@ int main( int argc, char * argv[] )
         if ( trace_status )
         {
             printf( "  type: %x / %s\n", head.type, head.show_type() );
-            printf( "  offset in image: %lx\n", head.offset_in_image );
-            printf( "  virtual address: %lx\n", head.virtual_address );
-            printf( "  physical address: %lx\n", head.physical_address );
-            printf( "  file size: %lx\n", head.file_size );
-            printf( "  memory size: %lx\n", head.memory_size );
-            printf( "  flags: %lx / %s\n", head.flags, head.show_flags() );
-            printf( "  alignment: %lx\n", head.alignment );
+            printf( "  offset in image: %#lx\n", head.offset_in_image );
+            printf( "  virtual address: %#lx\n", head.virtual_address );
+            printf( "  physical address: %#lx\n", head.physical_address );
+            printf( "  file size: %#lx\n", head.file_size );
+            printf( "  memory size: %#lx\n", head.memory_size );
+            printf( "  flags: %#lx / %s\n", head.flags, head.show_flags() );
+            printf( "  alignment: %#lx\n", head.alignment );
         }
 
         if ( 2 == head.type )
-            usage( "dynamic linking is not supported by this tool. link your app with -static\n" );
+            usage( "dynamic linking is not supported by this tool. link your app with -static" );
 
         uint32_t just_past = head.physical_address + head.memory_size;
         if ( just_past > memory_size )
@@ -410,7 +420,7 @@ int main( int argc, char * argv[] )
 
     uint32_t elf_base_address = g_base_address;
     if ( trace_status )
-        printf( "elf base address: %x\n", elf_base_address );
+        printf( "elf base address: %#x\n", elf_base_address );
 
     if ( g_base_address < 0x10000 )
         g_base_address = 0;
@@ -444,6 +454,7 @@ int main( int argc, char * argv[] )
                 read = fread( section_names_string_table.data(), head.size, 1, fp );
                 if ( 1 != read )
                     usage( "can't read string table\n" );
+                break;
             }
         }
     }
@@ -469,9 +480,9 @@ int main( int argc, char * argv[] )
         head.swap_endianness();
 
 #if 0
-        printf( "  type: %x / %s\n", head.type, head.show_type() );
+        printf( "  type: %#x / %s\n", head.type, head.show_type() );
         printf( "  name %s, offset: %x\n", & section_names_string_table[ head.name_offset ], head.name_offset );
-        printf( "  flags: %x / %s\n", head.flags, head.show_flags() );
+        printf( "  flags: %#x / %s\n", head.flags, head.show_flags() );
         printf( "  address: %x\n", head.address );
         printf( "  offset: %x\n", head.offset );
         printf( "  size: %x\n", head.size );
@@ -482,7 +493,10 @@ int main( int argc, char * argv[] )
 #endif
 
         if ( !strcmp( ".eh_frame", & section_names_string_table[ head.name_offset ] ) )
+        {
             the_EH_FRAME_BEGIN = head.address;
+            break;
+        }
     }
 
     if ( trace_status )
@@ -512,6 +526,8 @@ int main( int argc, char * argv[] )
         ElfProgramHeader32 head = {0};
         fseek( fp, (long) o, SEEK_SET );
         read = fread( &head, 1, get_min( sizeof( head ), (size_t) ehead.program_header_table_size ), fp );
+        if ( 0 == read )
+            usage( "can't read program header in order to load it" );
         head.swap_endianness();
 
         // head.type 1 == load. Other entries will overlap and even have physical addresses, but they are redundant
@@ -521,7 +537,7 @@ int main( int argc, char * argv[] )
             fseek( fp, (long) head.offset_in_image, SEEK_SET );
             read = fread( memory.data() + head.physical_address - g_base_address, 1, head.file_size, fp );
             if ( 0 == read )
-                usage( "can't read image" );
+                usage( "can't read image into ram" );
 
             if ( 5 == head.flags ) // text
             {
@@ -553,12 +569,14 @@ int main( int argc, char * argv[] )
         }
     }
 
+    file.close();
+
     char acout[ 255 ];
     strcpy( acout, argv[ 1 ] );
     strupr( acout );
     char * pdot = strchr( acout, '.' );
     if ( !pdot )
-        usage( "input file must have a file extension" );
+        pdot = acout + strlen( acout );
 
     strcpy( pdot, ".68K" );
     FILE * fpout = fopen( acout, "wb" );
@@ -575,7 +593,7 @@ int main( int argc, char * argv[] )
     // 2:                   move a0 to d0
     // 6:                   move pointer to the_EH_FRAME_BEGIN to d1
     // 6:                   jump to _start
-    // 1 + strlen( acout ): filename of 68K executable pointed to by d0
+    // 1 + strlen( acout ): asciiz filename of 68K executable pointed to by d0
     // 0 or 1:              align to 2 bytes per 68000 requirements
 
     uint32_t cbPreStart = 4 + 2 + 6 + 6 + 1 + strlen( acout );
@@ -646,6 +664,11 @@ int main( int argc, char * argv[] )
         printf( "writing data + text: %lx bytes\n", memory_size - elf_base_address );
 
     fwrite( memory.data() + elf_base_address, (size_t) ( memory_size - elf_base_address ), (size_t) 1, fpout );
+
+    file_out.close();
+
+    if ( trace_status )
+        printf( "elf file size: %d --->>> 68K file size: %d\n", portable_filelen( pinputfile ), portable_filelen( acout ) );
 
     printf( "elfto68k successfully created %s\n", acout );
 

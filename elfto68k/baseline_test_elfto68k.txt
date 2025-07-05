@@ -1,4 +1,4 @@
-Sun 06/29/2025 20:47:21.24 
+Sat 07/05/2025  8:42:56.98 
 building hidave 
 elfto68k successfully created HIDAVE.68K
 running hidave 
@@ -328,7 +328,7 @@ tstr completed with great success
 building targs 
 elfto68k successfully created TARGS.68K
 running targs 
-argc: 1, argv 14e94, penv 0
+argc: 1, argv 14e90, penv 0
 argv[ 0 ]: 'TARGS.68K'
 building tbits 
 elfto68k successfully created TBITS.68K
@@ -5448,7 +5448,7 @@ O_EXCL: 0x800
 O_DIRECTORY: 0x200000
 O_DIRECT: 0x80000
 calling fopen
-result of fopen: 1908c
+result of fopen: 19084
 len in pfl: 128
 length of file before initial close: 128
 length from stat: 128
@@ -5525,4 +5525,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Sun 06/29/2025 20:48:43.71 
+Sat 07/05/2025  8:44:17.28 

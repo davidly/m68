@@ -5,7 +5,6 @@
   .global  _start
   .type    _start, @function
 _start:
-    move.l %a7, (g_initial_sp)  /* save the original stack address so EHstart can crawl it */
     move.l 4(%a7), (g_base_page)
     move.l %d1, (g_eh_data)
     move.l %d0, (arg0_value)
@@ -101,10 +100,7 @@ bdos_cpm:
 
 .data
 .align  4
-argvals:
-    .zero 64 * 4
-cmdtail_copy:
-    .zero 128
-
+argvals: .zero 64 * 4
+cmdtail_copy: .zero 128
 arg0_value: .zero 4
 

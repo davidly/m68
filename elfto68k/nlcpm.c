@@ -171,7 +171,6 @@ struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory for an
 
 #pragma pack(pop)
 
-uint32_t * g_initial_sp = 0; // stack value at _start invocation. set by _start.
 struct BasePageCPM * g_base_page = 0; // 256 bytes below _start
 uint32_t g_eh_data = 0; // C++ eh frame data for __register_frame
 char * g_current_brk = 0;
@@ -261,7 +260,7 @@ bool ValidCPMFilename( const char * pc )
 
 uint32_t file_size( FCBCPM68K & fcb )
 {
-    uint32_t pos = fcb.GetRandomIOOffset();
+    uint32_t pos = fcb.GetRandomIOOffset(); // bdos 35 destroys the current offset, so save it
     long result = bdos_cpm( 35, (long) & fcb ); // get file size
     if ( 0 != result )
     {
@@ -269,8 +268,7 @@ uint32_t file_size( FCBCPM68K & fcb )
         return -1;
     }
 
-
-    uint32_t size = fcb.GetRandomIOOffset() * 128;
+    uint32_t size = fcb.GetRandomIOOffset() * 128; // 128 byte granularity on file size in CP/M
     fcb.SetRandomIOOffset( pos ); // restore the position
     return size;
 } //file_size
@@ -513,10 +511,6 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
 
         uint8_t * pdma = & g_base_page->cb_command_tail;
         uint8_t * buf = (uint8_t *) buffer;
-
-        // cp/m can only read and write a single 128 byte record-aligned record at a time.
-        // in some cases existing data will need to be read and merged with the write.
-
         remaining = count;
 
         while ( 0 != remaining )
@@ -640,8 +634,7 @@ extern "C" int fstat( int fd, struct stat * statbuf )
         return -1;
     }
 
-
-    statbuf->st_size = fcb.GetRandomIOOffset() * 128;
+    statbuf->st_size = fcb.GetRandomIOOffset() * 128; // only 128 byte granularity
     fcb.SetRandomIOOffset( pos ); // restore the position
     return 0;
 } //fstat
