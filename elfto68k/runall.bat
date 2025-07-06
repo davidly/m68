@@ -28,8 +28,8 @@ echo building elfto68k
 echo building elfto68k >>%outputfile%
 call m.bat >>%outputfile%
 
-echo building mm68
-echo building mm68 >>%outputfile%
+echo building m68
+echo building m68 >>%outputfile%
 call mm68.bat >>%outputfile%
 
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^

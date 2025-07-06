@@ -1,7 +1,7 @@
-Sun 07/06/2025  6:33:29.75 
+Sun 07/06/2025  6:56:04.64 
 building elfto68k 
 elfto68k.cxx
-building mm68 
+building m68 
 elfto68k successfully created M68.68K
 building hidave 
 elfto68k successfully created HIDAVE.68K
@@ -5531,4 +5531,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Sun 07/06/2025  6:34:58.76 
+Sun 07/06/2025  6:57:35.49 
