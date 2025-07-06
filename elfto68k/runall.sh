@@ -35,7 +35,7 @@ mm68.sh >>$outputfile
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 mm_old fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
-           fopentst lenum tex
+           fopentst lenum tex trename
 
 do
   echo building $arg

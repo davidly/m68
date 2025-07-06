@@ -2043,10 +2043,10 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         case SYS_close:
         {
-            tracer.Trace( "  syscall command SYS_close\n" );
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
+            tracer.Trace( "  syscall command SYS_close %d\n", descriptor );
 
-            if ( descriptor >=0 && descriptor <= 3 )
+            if ( descriptor >= 0 && descriptor <= 2 )
             {
                 // built-in handle stdin, stdout, stderr -- ignore
                 ACCESS_REG( REG_RESULT ) = 0;
