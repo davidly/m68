@@ -323,6 +323,21 @@ extern "C" int open( const char * pathname, int flags, ... )
     return fd;
 } //open
 
+extern "C" int openat( int dirfd, const char * pathname, int flags, ... )
+{
+    int mode = 0;
+
+    if ( 0 != ( flags & O_CREAT ) )
+    {
+        va_list ap;
+        va_start( ap, flags );
+        mode = va_arg( ap, int );
+        va_end( ap );
+    }
+
+    return open( pathname, flags, mode ); // no folders so ignore dirfd
+} //openat
+
 extern "C" int close( int fd )
 {
     if ( fd < 3 || fd >= _countof( g_afcb ) )
@@ -592,6 +607,17 @@ extern "C" int unlink( const char * pathname )
     return 0;
 } //unlink
 
+extern "C" int unlinkat( int dirfd, const char * path, int flags )
+{
+    if ( !ValidCPMFilename( path ) )
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    return unlink( path ); // no folders, so just unlink the path
+} //unlinkat
+
 extern "C" int fsync( int fd )
 {
     bdos_cpm( 48, 0 ); // flush buffers
@@ -602,7 +628,7 @@ extern "C" int fdatasync( int fd )
 {
     bdos_cpm( 48, 0 ); // flush buffers
     return 0;
-}
+} //fdatasync
 
 extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
 {
@@ -649,17 +675,6 @@ extern "C" int stat( const char * pathname, struct stat * statbuf )
     close( fd );
     return result;
 } //stat
-
-extern "C" int isatty( int fd )
-{
-printf( "isatty\n" );
-    return -1;
-} //isatty
-
-extern "C" int gettimeofday( struct timeval *tv, void *tz )
-{
-    return -1; // no real time clock on CP/M 68K
-} //gettimeofday
 
 const int fdEnumeration = 100;
 static bool g_EnumerationActive = false;
@@ -746,6 +761,69 @@ int closedir( DIR * dir )
     return 0;
 } //closedir
 
+extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval * timeout )
+{
+    // just a tiny subset of select() is implemented
+
+    if ( 1 == nfds && 0 != readfds )
+    {
+        // return 1 if a keystroke is available and 0 otherwise
+
+        return bdos_cpm( 6, 0xfe );
+    }
+
+    return 0; // lie and say no I/O is ready
+} //select
+
+extern "C" int rename( const char * oldpath, const char * newpath )
+{
+    if ( !ValidCPMFilename( oldpath ) || !ValidCPMFilename( newpath ) )
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    // two 16-byte FCB starting fields
+
+    uint8_t buf[ 32 ];
+    FCBCPM68K * pold = (FCBCPM68K *) & buf;
+    pold->set_filename( oldpath );
+
+    FCBCPM68K * pnew = (FCBCPM68K *) & buf[ 16 ];
+    pnew->set_filename( newpath );
+
+    int result = bdos_cpm( 23, (long) & buf );
+
+    if ( 0 != result )
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    return 0;
+} //rename
+
+// stubs for calls where CP/M 68K has no equivalent
+
+extern "C" int usleep( useconds_t usec ) { return 0; }
+extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem ) { return 0; }
+extern "C" int isatty( int fd ) { return -1; /* probably some way to make this work */ }
+extern "C" int gettimeofday( struct timeval *tv, void *tz ) { return -1; }
+extern "C" char * getcwd( char * buf, size_t size ) { strcpy( buf, "." ); return buf; }
+extern "C" int chdir( const char * path ) { return 0; }
+extern "C" int mkdirat( int dirfd, const char * path, mode_t mode ) { return 0; }
+extern "C" clock_t times( struct tms * buf ) { return 0; }
+int getrusage( int who, struct rusage *usage ) { return 0; }
+extern "C" long syscall( long number, ... ) { return 0; } // no calling into Linux syscalls here
+
+extern "C" int clock_gettime( clockid_t id, struct timespec * res )
+{
+    res->tv_sec = 0;
+    res->tv_nsec = 0;
+
+    return 0;
+} //clock_gettime
+
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
@@ -755,7 +833,6 @@ int closedir( DIR * dir )
 static FILE * g_fprintf_FILE = 0;
 static int printf_full_len = 0;
 static int fprintf_full_len = 0;
-
 static bool lf_to_crlf = true; // CP/M expects this behavior by apps, often handled by the C runtime
 
 static void printf_putc( char c )
@@ -1261,17 +1338,6 @@ static char *copybyte_str;
 
 static void copybyte( char byte )
 {
-    if ( lf_to_crlf && 10 == byte ) // 10 maps to 13 + 10
-    {
-        copybyte_full_len++;
-    
-        if ( 0 == copybyte_buf_len || copybyte_full_len < copybyte_buf_len )
-        {
-            *copybyte_str++ = 13;
-            *copybyte_str = 0;
-        }
-    }
-
     copybyte_full_len++;
 
     if ( 0 == copybyte_buf_len || copybyte_full_len < copybyte_buf_len )
@@ -1351,4 +1417,10 @@ extern "C" int putchar( int x )
     return 0;
 } //putchar
 
+extern "C" bool _setbinarymode( bool binmode )
+{
+    bool oldstate = lf_to_crlf;
+    lf_to_crlf = !binmode;
+    return !oldstate;
+} //_setbinarymode
 

@@ -8,6 +8,10 @@ if "%1" == "nested" (
   set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
 )
 
+if "%1" == "nested68k" (
+  set _M68runcmd=..\m68 -h:80 m68.68k
+)
+
 if "%1" == "armos" (
   set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
 )
@@ -20,6 +24,14 @@ if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )
 
+echo building elfto68k
+echo building elfto68k >>%outputfile%
+call m.bat >>%outputfile%
+
+echo building mm68
+echo building mm68 >>%outputfile%
+call mm68.bat >>%outputfile%
+
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
            tcmp ttypes tarray trw trw2 mm_old fileops tpi ^
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
@@ -27,6 +39,9 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
+echo running m68.68k
+echo running m68.68k >>%outputfile%
+%_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
 
 echo building ba
 echo building ba >>%outputfile%

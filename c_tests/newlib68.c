@@ -217,7 +217,7 @@ extern "C" char * getcwd( char * buf, size_t size )
 
 extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval * timeout )
 {
-    // map to pselect6 which means timespec not timeval and 0 sigset
+    // map to pselect6 which means timespec no timeval and 0 sigset
     return (int) syscall( SYS_pselect6, nfds, readfds, writefds, exceptfds, 0, 0 );
 }
 
@@ -393,15 +393,30 @@ int closedir( DIR * dir )
 static FILE * g_fprintf_FILE = 0;
 static int printf_full_len = 0;
 static int fprintf_full_len = 0;
+static bool lf_to_crlf = false; // We're emulating Linux here, which doesn't do this
 
 static void printf_putc( char c )
 {
+    if ( lf_to_crlf && 10 == c ) // this is CP/M 68k, whose C runtime converts 10 to 13 + 10
+    {
+        printf_full_len++;
+        char lf = 13;
+        write( 1, &lf, 1 );
+    }
+
     printf_full_len++;
     write( 1, &c, 1 );
 } //printf_putc
 
 static void fprintf_putc( char c )
 {
+    if ( lf_to_crlf && 10 == c ) // this is CP/M 68k, whose C runtime converts 10 to 13 + 10
+    {
+        printf_full_len++;
+        char lf = 13;
+        fwrite( &lf, 1, 1, g_fprintf_FILE );
+    }
+
     fprintf_full_len++;
     fwrite( &c, 1, 1, g_fprintf_FILE );
 } //fprintf_putc
@@ -943,4 +958,11 @@ extern char * floattoa( char * buffer, float f, int precision )
     printfloat( f, 6, copybyte );
     return buffer;
 } //floattoa
+
+extern "C" bool _setbinarymode( bool binmode )
+{
+    bool oldstate = lf_to_crlf;
+    lf_to_crlf = !binmode;
+    return !oldstate;
+} //_setbinarymode
 

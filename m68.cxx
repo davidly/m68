@@ -788,15 +788,18 @@ static void backslash_to_slash( char * p )
     }
 } //backslash_to_slash
 
-class Win32BinaryMode
+#ifdef M68K
+extern "C" bool _setbinarymode( bool binmode );
+#endif
+
+class SetBinaryMode
 {
     int prevmodeout, prevmodeerr;
     bool modeset;
 
     public:
-        Win32BinaryMode( bool set ) : modeset( false ), prevmodeout( 0 ), prevmodeerr( 0 )
+        SetBinaryMode( bool set ) : modeset( false ), prevmodeout( 0 ), prevmodeerr( 0 )
         {
-#if 1
             #if defined( _WIN32 )
                 if ( set && !g_addCRBeforeLF )
                 {
@@ -808,10 +811,17 @@ class Win32BinaryMode
                     modeset = true;
                 }
             #endif
-#endif
+
+            #ifdef M68K
+                if ( set && !g_addCRBeforeLF )
+                {
+                    prevmodeout = _setbinarymode( true );
+                    modeset = true;
+                }
+            #endif
         }
 
-        ~Win32BinaryMode()
+        ~SetBinaryMode()
         {
             #if defined( _WIN32 )
                 if ( modeset )
@@ -822,6 +832,11 @@ class Win32BinaryMode
                     _setmode( _fileno( stdout ), prevmodeout ); // likely back in text mode
                     _setmode( _fileno( stderr ), prevmodeerr ); // likely back in text mode
                 }
+            #endif
+
+            #ifdef M68K
+                if ( modeset )
+                    _setbinarymode( prevmodeout );
             #endif
         }
 };
@@ -848,7 +863,7 @@ size_t WinWrite( int descriptor, uint8_t * p, int count )
             if ( 0 != towrite )
                 written += write( descriptor, & p[ start ], towrite );
 
-            Win32BinaryMode binmode( true );
+            SetBinaryMode binmode( true );
             written += write( descriptor, & p[ i ], 1 );
             towrite = 0;
             start = i + 1;
@@ -1632,7 +1647,7 @@ static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
 
 void send_character( uint8_t c )
 {
-    Win32BinaryMode bm( 10 == c );
+    SetBinaryMode bm( 10 == c );
     printf( "%c", c );
 } //send_character
 
@@ -3299,7 +3314,7 @@ void emulator_invoke_68k_trap15( m68000 & cpu )
         case 1: // putch
         {
             uint8_t val = (uint8_t) ACCESS_REG( 0 );
-            Win32BinaryMode bm( 10 == val );
+            SetBinaryMode bm( 10 == val );
             size_t written = write( 1, &val, 1 );
             update_result_errno( cpu, (REG_TYPE) written );
             break;

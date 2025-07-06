@@ -1,4 +1,8 @@
-Sat 07/05/2025  8:42:56.98 
+Sun 07/06/2025  6:33:29.75 
+building elfto68k 
+elfto68k.cxx
+building mm68 
+elfto68k successfully created M68.68K
 building hidave 
 elfto68k successfully created HIDAVE.68K
 running hidave 
@@ -328,7 +332,7 @@ tstr completed with great success
 building targs 
 elfto68k successfully created TARGS.68K
 running targs 
-argc: 1, argv 14e90, penv 0
+argc: 1, argv 14018, penv 0
 argv[ 0 ]: 'TARGS.68K'
 building tbits 
 elfto68k successfully created TBITS.68K
@@ -3815,7 +3819,7 @@ building td
 elfto68k successfully created TD.68K
 running td 
 double: 3.141592
-sprintf double 3.14159265358979311599
+sprintf double 3.14159265358979311599
 double from printf: 3.14159265358979311599
 float from printf: 1.202056
 double from printf r: -3.776373
@@ -5448,7 +5452,7 @@ O_EXCL: 0x800
 O_DIRECTORY: 0x200000
 O_DIRECT: 0x80000
 calling fopen
-result of fopen: 19084
+result of fopen: 1908c
 len in pfl: 128
 length of file before initial close: 128
 length from stat: 128
@@ -5472,6 +5476,8 @@ attempting large allocations
 caught a standard execption: std::bad_alloc
   after 2 1 megabyte allocations
 test exceptions completed with great success
+running m68.68k 
+trw completed with great success
 building ba 
 elfto68k successfully created BA.68K
 running ba 
@@ -5525,4 +5531,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Sat 07/05/2025  8:44:17.28 
+Sun 07/06/2025  6:34:58.76 
