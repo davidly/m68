@@ -8472,11 +8472,30 @@ label_no_array_eq_optimization:
 
                     break;
                 }
+                else if ( m68kCPM == g_AssemblyTarget &&
+                          6 == vals.size() &&
+                          Token_NOT == vals[ t + 1 ].token &&
+                          Token_VARIABLE == vals[ t + 2 ].token &&
+                          IsVariableInReg( varmap, vals[ t + 2 ].strValue ) &&
+                          Token_GOTO == vals[ t + 4 ].token )
+                {
+
+                    // line 2410 has 6 tokens  ====>> 2410 if 0 = wi% goto 2500
+                    //  token   0 IF, value 0, strValue ''
+                    //  token   1 EXPRESSION, value 3, strValue ''
+                    //  token   2 NOT, value 0, strValue ''
+                    //  token   3 VARIABLE, value 0, strValue 'wi%'
+                    //  token   4 THEN, value 0, strValue ''
+                    //  token   5 GOTO, value 46, strValue ''
+
+                    fprintf( fp, "    cmp.l #0, %s\n", GenVariableReg( varmap, vals[ t + 2 ].strValue ) );
+                    fprintf( fp, "    beq ln$%d\n", vals[ t + 4 ].value );
+                }
                 else if ( mos6502Apple1 == g_AssemblyTarget &&
                           19 == vals.size() &&
                           16 == vals[ t ].value &&
                           Token_VARIABLE == vals[ t + 1 ].token &&
-                          Token_EQ ==  vals[ t + 2 ].token &&
+                          Token_EQ == vals[ t + 2 ].token &&
                           Token_OPENPAREN == vals[ t + 4 ].token &&
                           Token_CONSTANT == vals[ t + 6 ].token &&
                           Token_AND == vals[ t + 8 ].token &&
@@ -10302,8 +10321,7 @@ label_no_array_eq_optimization:
                     //  4 THEN, value 0, strValue ''
                     //  5 RETURN, value 0, strValue ''
 
-                    fprintf( fp, "    move.l   %s, d0\n", GenVariableReg( varmap, vals [ t + 2 ].strValue ) );
-                    fprintf( fp, "    tst.l    d0\n" );
+                    fprintf( fp, "    cmp.l    #0, %s\n", GenVariableReg( varmap, vals [ t + 2 ].strValue ) );
                     fprintf( fp, "    beq      label_gosub_return\n"  );
                     break;
                 }
