@@ -177,12 +177,21 @@ int main()
     i64_test( (int64_t) -370000000, (int64_t) 14 );
     i64_test( (int64_t) -3, (int64_t) -14 );
     i64_test( (int64_t) -370000000, (int64_t) -14 );
+    i64_test( (int64_t) 28000000000000, (int64_t) 4 );
+    i64_test( (int64_t) 28000000000000, (int64_t) -4 );
+    i64_test( (int64_t) -28000000000000, (int64_t) 4 );
+    i64_test( (int64_t) -28000000000000, (int64_t) -4 );
+
     ui64_test( (uint64_t) 3, (uint64_t) 14 );
     ui64_test( (uint64_t) 370000000, (uint64_t) 14 );
     ui64_test( (uint64_t) -3, (uint64_t) 14 );
     ui64_test( (uint64_t) -370000000, (uint64_t) 14 );
     ui64_test( (uint64_t) -3, (uint64_t) -14 );
     ui64_test( (uint64_t) -370000000, (uint64_t) -14 );
+    ui64_test( (uint64_t) 28000000000000, (uint64_t) 4 );
+    ui64_test( (uint64_t) 28000000000000, (uint64_t) -4L );
+    ui64_test( (uint64_t) -28000000000000, (uint64_t) 4 );
+    ui64_test( (uint64_t) -28000000000000, (uint64_t) -4L );
 
     printf( "tmuldiv ended with great success\n" );
     fflush( stdout );

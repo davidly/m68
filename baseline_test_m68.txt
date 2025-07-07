@@ -1,4 +1,4 @@
-Sun 07/06/2025  8:30:46.80 
+Sun 07/06/2025 20:10:09.00 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -596,6 +596,18 @@ i64 -3 / -14: 0
 i64 -370000000 * -14: 5180000000
 i64 -370000000 % -14: -6
 i64 -370000000 / -14: 26428571
+i64 28000000000000 * 4: 112000000000000
+i64 28000000000000 % 4: 0
+i64 28000000000000 / 4: 7000000000000
+i64 28000000000000 * -4: -112000000000000
+i64 28000000000000 % -4: 0
+i64 28000000000000 / -4: -7000000000000
+i64 -28000000000000 * 4: -112000000000000
+i64 -28000000000000 % 4: 0
+i64 -28000000000000 / 4: -7000000000000
+i64 -28000000000000 * -4: 112000000000000
+i64 -28000000000000 % -4: 0
+i64 -28000000000000 / -4: 7000000000000
 ui64 3 * 14: 42
 ui64 3 % 14: 3
 ui64 3 / 14: 0
@@ -614,12 +626,24 @@ ui64 18446744073709551613 / 18446744073709551602: 1
 ui64 18446744073339551616 * 18446744073709551602: 5180000000
 ui64 18446744073339551616 % 18446744073709551602: 18446744073339551616
 ui64 18446744073339551616 / 18446744073709551602: 0
+ui64 28000000000000 * 4: 112000000000000
+ui64 28000000000000 % 4: 0
+ui64 28000000000000 / 4: 7000000000000
+ui64 28000000000000 * 18446744073709551612: 18446632073709551616
+ui64 28000000000000 % 18446744073709551612: 28000000000000
+ui64 28000000000000 / 18446744073709551612: 0
+ui64 18446716073709551616 * 4: 18446632073709551616
+ui64 18446716073709551616 % 4: 0
+ui64 18446716073709551616 / 4: 4611679018427387904
+ui64 18446716073709551616 * 18446744073709551612: 112000000000000
+ui64 18446716073709551616 % 18446744073709551612: 18446716073709551616
+ui64 18446716073709551616 / 18446744073709551612: 0
 tmuldiv ended with great success
 test ttt 
 starting...
 64930 moves
 10 iterations
-24.225000 milliseconds
+26.893999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4050,10 +4074,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 6, hour 15, min 30, sec 52
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 6, hour 10, min 30, sec 52
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 6, hour 7, min 30, sec 52
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 6, hour 7, min 30, sec 52
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 7, hour 3, min 10, sec 15
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 6, hour 22, min 10, sec 15
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 6, hour 19, min 10, sec 15
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 6, hour 19, min 10, sec 15
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5736,7 +5760,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 6, hour 7, min 31, sec 0
+tz: 'PST+8', year: 2025, month 7, day 6, hour 19, min 10, sec 23
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -8034,13 +8058,13 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     268
-  dictionary: 264
+total ms:     276
+  dictionary: 271
   generate:   3
   render:     0
 test ba tp.bas 
 parsing input file c_tests\tp.bas
-1,000 ms for 1 iterations
+0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
 parsing input file c_tests\tp.bas
@@ -8069,7 +8093,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-359.098999 milliseconds
+365.680999 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8091,4 +8115,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Sun 07/06/2025  8:31:17.69 
+Sun 07/06/2025 20:10:40.51 
