@@ -4920,7 +4920,6 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
         fprintf( fp, "*   lo68 -l -r -u_nofloat -o <filename>.68K S.O, <filename>.O CLIB\n" );
         fprintf( fp, "* \n" );
         fprintf( fp, "* BA flags: use registers: %s, expression optimization: %s\n", YesNo( useRegistersInASM ), YesNo( g_ExpressionOptimization ) );
-        fprintf( fp, ".data\n" );
     }
     else if ( oiOS == g_AssemblyTarget )
     {
@@ -4987,6 +4986,7 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                 }
                 else if ( m68kCPM == g_AssemblyTarget )
                 {
+                    fprintf( fp, ".bss\n" );
                     fprintf( fp, "%s:\n", GenVariableName( vals[ 0 ].strValue ) );
                     fprintf( fp, ".ds %d\n", cdwords * 4 );
                 }
@@ -5032,6 +5032,7 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                     }
                     else if ( m68kCPM == g_AssemblyTarget )
                     {
+                        fprintf( fp, ".data\n" );
                         string str68k = cpm68kEscape( vals[ t ].strValue );
                         fprintf( fp, "s$%zd$%d: .dc.b %s,0\n", l, t, str68k.c_str() );
                     }
@@ -5142,6 +5143,9 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
             num6502ZeroPageVariables++;
         }
     }
+
+    if ( m68kCPM == g_AssemblyTarget )
+        fprintf( fp, ".data\n" );
 
     for ( std::map<string, Variable>::iterator it = varmap.begin(); it != varmap.end(); it++ )
     {
