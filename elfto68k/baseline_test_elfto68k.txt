@@ -1,4 +1,4 @@
-Sun 07/06/2025 20:02:19.18 
+Mon 07/07/2025 13:48:11.87 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -5509,7 +5509,7 @@ trw completed with great success
 building ba 
 elfto68k successfully created BA.68K
 running ba 
-parsing input file tp.bas
+parsing input file TP.BAS
 0 ms for 1 iterations
 final move count 6493
 exiting the basic interpreter
@@ -5559,4 +5559,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Sun 07/06/2025 20:03:50.32 
+Mon 07/07/2025 13:49:44.49 
