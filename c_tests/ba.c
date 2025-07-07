@@ -6078,6 +6078,47 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
 
                         t += vals[ t ].value;
                     }
+                    else if ( m68kCPM == g_AssemblyTarget && 
+                              6 == vals.size() &&
+                              Token_PLUS == vals[ t + 2 ].token &&
+                              Token_VARIABLE == vals[ t + 1 ].token &&
+                              Token_VARIABLE == vals[ t + 3 ].token &&
+                              IsVariableInReg( varmap, vals[ variableToken ].strValue ) &&
+                              IsVariableInReg( varmap, vals[ t + 1 ].strValue ) &&
+                              IsVariableInReg( varmap, vals[ t + 3 ].strValue ) &&
+                              !stcmp( vals[ variableToken ].strValue, vals[ t + 1 ].strValue ) )
+                    {
+                        // 150 K% = K% + PR%
+                        fprintf( fp, "    add.l    %s, %s\n", 
+                                 GenVariableReg( varmap, vals[ t + 3 ].strValue ),
+                                 GenVariableReg( varmap, vals[ variableToken ].strValue ) );
+                    }
+                    else if ( m68kCPM == g_AssemblyTarget && 
+                              6 == vals.size() &&
+                              Token_PLUS == vals[ t + 2 ].token &&
+                              Token_VARIABLE == vals[ t + 1 ].token &&
+                              Token_VARIABLE == vals[ t + 3 ].token &&
+                              IsVariableInReg( varmap, vals[ variableToken ].strValue ) &&
+                              IsVariableInReg( varmap, vals[ t + 1 ].strValue ) &&
+                              IsVariableInReg( varmap, vals[ t + 3 ].strValue ) &&
+                              stcmp( vals[ variableToken ].strValue, vals[ t + 1 ].strValue ) &&
+                              stcmp( vals[ variableToken ].strValue, vals[ t + 3 ].strValue ) )
+                    {
+                        // line 120 has 6 tokens  ====>> 120 K% = I% + PR%
+                        //   0 VARIABLE, value 0, strValue 'k%'
+                        //   1 EQ, value 0, strValue ''
+                        //   2 EXPRESSION, value 4, strValue ''
+                        //   3 VARIABLE, value 0, strValue 'i%'
+                        //   4 PLUS, value 0, strValue ''
+                        //   5 VARIABLE, value 0, strValue 'pr%'
+
+                        fprintf( fp, "    move.l   %s, %s\n", 
+                                 GenVariableReg( varmap, vals[ t + 3 ].strValue ),
+                                 GenVariableReg( varmap, vals[ variableToken ].strValue ) );
+                        fprintf( fp, "    add.l    %s, %s\n", 
+                                 GenVariableReg( varmap, vals[ t + 1 ].strValue ),
+                                 GenVariableReg( varmap, vals[ variableToken ].strValue ) );
+                    }
                     else if ( oiOS == g_AssemblyTarget &&
                               6 == vals.size() &&
                               isTokenSimpleValue( vals[ t + 1 ].token ) &&
@@ -6099,7 +6140,7 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                              IsVariableInReg( varmap, vals[ t + 3 ].strValue ) &&
                              !stcmp( vals[ variableToken ].strValue, vals[ t + 1 ].strValue ) )
                         {
-                            // K% = K% + PR%
+                            // 150 K% = K% + PR%
                             fprintf( fp, "    add      %s, %s\n",
                                      GenVariableReg( varmap, vals[ variableToken ].strValue ),
                                      GenVariableReg( varmap, vals[ t + 3 ].strValue ) );
@@ -6348,6 +6389,31 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                         fprintf( fp, "    lxi      d, %d\n", vals[ t + 5 ].value );
                         fprintf( fp, "    dad      d\n" );
                         fprintf( fp, "    shld     %s\n", GenVariableName( vals[ variableToken ].strValue ) );
+                    }
+                    else if ( m68kCPM == g_AssemblyTarget &&
+                              8 == vals.size() &&
+                              Token_VARIABLE == vals[ t + 1 ].token &&
+                              Token_PLUS == vals[ t + 2 ].token &&
+                              Token_VARIABLE == vals[ t + 3 ].token &&
+                              !stcmp( vals[ t + 1 ].strValue, vals[ t + 3 ].strValue ) &&
+                              Token_PLUS == vals[ t + 4 ].token &&
+                              Token_CONSTANT == vals[ t + 5 ].token &&
+                              IsVariableInReg( varmap, vals[ t + 1 ].strValue ) &&
+                              IsVariableInReg( varmap, vals[ variableToken ].strValue ) )
+                    {
+                        // line 105 has 8 tokens  ====>> 105 PR% = I% + I% + 3
+                        //   0 VARIABLE, value 0, strValue 'pr%'
+                        //   1 EQ, value 0, strValue ''
+                        //   2 EXPRESSION, value 6, strValue ''
+                        //   3 VARIABLE, value 0, strValue 'i%'
+                        //   4 PLUS, value 0, strValue ''
+                        //   5 VARIABLE, value 0, strValue 'i%'
+                        //   6 PLUS, value 0, strValue ''
+                        //   7 CONSTANT, value 3, strValue ''
+
+                        fprintf( fp, "    move.l   %s, %s\n", GenVariableReg( varmap, vals[ t + 1 ].strValue ), GenVariableReg( varmap, vals[ variableToken ].strValue ) );
+                        fprintf( fp, "    add.l    %s, %s\n", GenVariableReg( varmap, vals[ t + 1 ].strValue ), GenVariableReg( varmap, vals[ variableToken ].strValue ) );
+                        fprintf( fp, "    adda.l   #%d, %s\n", vals[ t + 5 ].value, GenVariableReg( varmap, vals[ variableToken ].strValue ) );
                     }
                     else if ( oiOS == g_AssemblyTarget &&
                               8 == vals.size() &&
@@ -9759,6 +9825,36 @@ label_no_array_eq_optimization:
                     }
 
                     fprintf( fp, "    jmp      line_number_%d\n", vals[ t + 9 ].value );
+                    break;
+                }
+                else if ( m68kCPM == g_AssemblyTarget &&
+                          11 == vals.size() &&
+                          Token_CONSTANT == vals[ t + 1 ].token &&
+                          0 == vals[ t + 1 ].value &&
+                          Token_EQ == vals[ t + 2 ].token &&
+                          Token_VARIABLE == vals[ t + 6 ].token &&
+                          IsVariableInReg( varmap, vals[ t + 6 ].strValue ) &&
+                          Token_OPENPAREN == vals[ t + 4 ].token &&
+                          Token_GOTO == vals[ t + 9 ].token )
+                {
+                    //  line 100 has 11 tokens  ====>> 100 IF 0 = FL%(I%) goto 180
+                    //     0 IF, value 0, strValue ''
+                    //     1 EXPRESSION, value 8, strValue ''
+                    //     2 CONSTANT, value 0, strValue ''
+                    //     3 EQ, value 0, strValue ''
+                    //     4 VARIABLE, value 0, strValue 'fl%'
+                    //     5 OPENPAREN, value 0, strValue ''
+                    //     6 EXPRESSION, value 2, strValue ''
+                    //     7 VARIABLE, value 0, strValue 'i%'
+                    //     8 CLOSEPAREN, value 0, strValue ''
+                    //     9 THEN, value 0, strValue ''
+                    //    10 GOTO, value 180, strValue ''
+
+                    fprintf( fp, "    lea       %s, a0\n", GenVariableName( vals[ t + 3 ].strValue ) );
+                    fprintf( fp, "    move.l    %s, d0\n", GenVariableReg( varmap, vals[ t + 6 ].strValue ) );
+                    fprintf( fp, "    lsl.l     #2, d0\n" );
+                    fprintf( fp, "    tst.l     (a0,d0.l)\n" );
+                    fprintf( fp, "    beq       ln$%d\n",  vals[ t + 9 ].value );
                     break;
                 }
                 else if ( oiOS == g_AssemblyTarget &&
