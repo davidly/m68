@@ -56,6 +56,7 @@ int main()
 
     for ( i = 0; i < 4096; i++ )
     {
+        memset( buf, 0x69, buf_bytes );
         result = read( fd, (char *) buf, buf_bytes );
         if ( buf_bytes != result )
         {
@@ -67,8 +68,8 @@ int main()
         {
             if ( buf[ j ] != i )
             {
-                printf( "j %d, buf[j] %04x, i %d\n", j, buf[j], i );
-                show_error( "data read from file isn't what was expected at point A" );
+                printf( "i %x, j %x, buf[j] %04x\n", i, j, buf[j] );
+                show_error( "data read from file isn't what was expected (should be i) at point A" );
             }
         }
     }

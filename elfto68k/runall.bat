@@ -45,13 +45,15 @@ echo running m68.68k >>%outputfile%
 
 echo building ba
 echo building ba >>%outputfile%
+copy ..\c_tests\ba.c . >nul
 call mt.bat ba >>%outputfile%
 echo running ba
 echo running ba >>%outputfile%
-%_M68runcmd% ba.68K tp.bas >>%outputfile%
+%_M68runcmd% ba.68K TP.BAS >>%outputfile%
 
 echo building an
 echo building an >>%outputfile%
+copy ..\c_tests\an.c . >nul
 call mt.bat an >>%outputfile%
 echo running an
 echo running an >>%outputfile%
@@ -63,6 +65,7 @@ goto :alldone
 
 echo building %~1
 echo building %~1 >>%outputfile%
+copy ..\c_tests\%~1.c . >nul
 call mt.bat %~1 >>%outputfile%
 echo running %~1
 echo running %~1 >>%outputfile%

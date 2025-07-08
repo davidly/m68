@@ -40,6 +40,7 @@ for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
 do
   echo building $arg
   echo building $arg >>$outputfile
+  cp ../$arg.c . >/dev/null
   mt.sh $arg >>$outputfile
   echo running $arg
   echo running $arg >>$outputfile
@@ -53,6 +54,7 @@ $_m68runcmd M68.68K -h:4 TRW.68K >>$outputfile
 
 echo building ba
 echo building ba >>$outputfile
+cp ../c_tests/ba.c . >/dev/null
 mt.sh ba >>$outputfile
 echo running ba
 echo running ba >>$outputfile
@@ -60,6 +62,7 @@ $_m68runcmd BA.68K TP.BAS >>$outputfile
 
 echo building an
 echo building an >>$outputfile
+cp ../c_tests/an.c . >/dev/null
 mt.sh an >>$outputfile
 echo running an
 echo running an >>$outputfile

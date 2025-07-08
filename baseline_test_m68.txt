@@ -1,4 +1,4 @@
-Mon 07/07/2025 11:17:23.81 
+Mon 07/07/2025 20:34:01.38 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ test ttt
 starting...
 64930 moves
 10 iterations
-24.169000 milliseconds
+23.919000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4062,6 +4062,20 @@ sum: 0xf8
 tarray completed with great success
 test trw 
 trw completed with great success
+test trw2 
+pass 0 with element count 1
+pass 1 with element count 7
+pass 2 with element count 20
+pass 3 with element count 32
+pass 4 with element count 63
+pass 5 with element count 64
+pass 6 with element count 65
+pass 7 with element count 77
+pass 8 with element count 127
+pass 9 with element count 128
+pass 10 with element count 129
+pass 11 with element count 701
+c_tests/trw2.elf completed with great success
 test terrno 
 errno opening a file for read that doesn't exist: 2 (2 file not found expected)
 errno doing write to stdin file descriptor: 13. (13 permission denied expected)
@@ -4074,10 +4088,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 7, hour 18, min 17, sec 30
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 7, hour 13, min 17, sec 30
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 7, hour 10, min 17, sec 30
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 7, hour 10, min 17, sec 30
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 8, hour 3, min 34, sec 7
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 7, hour 22, min 34, sec 7
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 7, hour 19, min 34, sec 7
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 7, hour 19, min 34, sec 7
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5760,7 +5774,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 7, hour 10, min 17, sec 38
+tz: 'PST+8', year: 2025, month 7, day 7, hour 19, min 34, sec 15
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -8058,8 +8072,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     268
-  dictionary: 264
+total ms:     273
+  dictionary: 268
   generate:   3
   render:     0
 test ba tp.bas 
@@ -8093,7 +8107,7 @@ test m68.elf ttt.elf 1
 starting...
 6493 moves
 1 iterations
-366.368011 milliseconds
+372.472991 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8115,4 +8129,4 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-Mon 07/07/2025 11:17:56.09 
+Mon 07/07/2025 20:34:32.63 

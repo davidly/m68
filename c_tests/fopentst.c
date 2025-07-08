@@ -166,7 +166,7 @@ int main( int argc, char * argv[] )
     fp = fopen( TEST_FILE, "w+t" );
     if ( !fp )
     {
-        printf( "can't create test file, error %d\n", errno );
+        printf( "can't create test file with t flag, error %d\n", errno );
         exit( 1 );
     }
 

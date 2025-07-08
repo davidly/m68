@@ -23,8 +23,8 @@ set ldflags=-Wl,--section-start=.init=0x4000
 set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag%
 
 rem generate .s files for debugging
-%gcc% %includes% %gccflags% %1.c -S -fverbose-asm -o %1.s
-%gcc% %includes% %gccflags% newlib68.c -S -fverbose-asm -o newlib68.s
+rem %gcc% %includes% %gccflags% %1.c -S -fverbose-asm -o %1.s
+rem %gcc% %includes% %gccflags% newlib68.c -S -fverbose-asm -o newlib68.s
 
 rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
@@ -37,8 +37,7 @@ rem %gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -st
 rem using a linker script
 rem %gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf -Wl,-Tlscript.txt
 
-rem just point the linker in the right direction. This enables low addresses and trap vectors to work without allocating gigs of RAM
-%gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf %ldflags%
+%gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o %1.elf %ldflags% 
 
 goto alldone
 

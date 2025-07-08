@@ -1,4 +1,4 @@
-Mon 07/07/2025 13:48:11.87 
+Mon 07/07/2025 20:43:51.83 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -356,7 +356,7 @@ tstr completed with great success
 building targs 
 elfto68k successfully created TARGS.68K
 running targs 
-argc: 1, argv 14018, penv 0
+argc: 1
 argv[ 0 ]: 'TARGS.68K'
 building tbits 
 elfto68k successfully created TBITS.68K
@@ -5475,8 +5475,6 @@ O_APPEND: 0x8
 O_EXCL: 0x800
 O_DIRECTORY: 0x200000
 O_DIRECT: 0x80000
-calling fopen
-result of fopen: 1908c
 len in pfl: 128
 length of file before initial close: 128
 length from stat: 128
@@ -5559,4 +5557,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Mon 07/07/2025 13:49:44.49 
+Mon 07/07/2025 20:45:27.89 

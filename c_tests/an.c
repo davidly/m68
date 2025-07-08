@@ -1398,8 +1398,8 @@ extern "C" int main( int argc, char * argv[] )
 
         long filelen = portable_filelen( fileDictionary.fp );
         unique_ptr<char> dictionary( new char [ filelen + 1 ] );
-        size_t lread = fread( dictionary.get(), filelen, 1, fileDictionary.fp );
-        if ( 1 != lread )
+        size_t lread = fread( dictionary.get(), 1, filelen, fileDictionary.fp );
+        if ( 0 == lread )
         {
             printf( "unable to read dictionary file\n" );
             return 0;

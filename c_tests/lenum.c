@@ -23,6 +23,9 @@ int case_insensitive_compare( const char *str1, const char *str2 )
 
 int main( int argc, char * argv[] )
 {
+    char acApp[ 60 ];
+    strcpy( acApp, argv[ 0 ] );
+
     DIR * dir = opendir( "." );
     if ( 0 == dir )
     {
@@ -39,11 +42,11 @@ int main( int argc, char * argv[] )
         if ( !entry )
             break;
 
-        if ( !case_insensitive_compare( "..", entry->d_name ) )
+        if ( ( !case_insensitive_compare( acApp, entry->d_name ) ) || ( !strcmp( "..", entry->d_name ) ) )
             expected_found = true;
 
-        //printf( "entry: '%s'\n", entry->d_name );
-
+        if ( argc > 1 )
+            printf( "entry: '%s'\n", entry->d_name );
         count++;
     } while( true );
 
