@@ -40,7 +40,7 @@ for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
 do
   echo building $arg
   echo building $arg >>$outputfile
-  cp ../$arg.c . >/dev/null
+  cp ../c_tests/$arg.c . >/dev/null
   mt.sh $arg >>$outputfile
   echo running $arg
   echo running $arg >>$outputfile
