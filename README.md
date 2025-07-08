@@ -125,7 +125,7 @@ rvos folder:
     * mrvos.bat: Windows build script for my rvos repo. rvos is a RISC-V 64 + Linux emulator.
     * validated running the rvos test suite in that repo with rvos running in m68.
 
-sysfor and syspas folders:
+svsfor and svspas folders:
 
     * Silicon Valley Software FORTRAN and Pascal compilers
     * *.sh and *.bat: scripts to build and run test apps
@@ -144,10 +144,11 @@ forth83 folder:
 elfto68k folder:
 
     * converts Linux-style 68000 ELF executables to CP/M 68K .68K executables
-    * tested most of the .c apps in this folder except those that require more RAM than my hardware has.
+    * tested most of the .c apps in c_tests except those that require more RAM than my hardware has, directories, or a real-time clock.
     * elfto68k.cxx: converts .elf files built for 68000 with a newlib BSP targeting CP/M 68K and linked statically.
     * m.bat/m.sh: builds elftl68k
-    * *.c: test apps
+    * nlcpm.c implements a newlib BSP targeting CP/M 68K
+    * startcpm.s: implements assembly portions of the newlib BSP targeting CP/M 68K
     * mt.bat/mt.sh: builds a single test app
     * runall.bat/runall.sh: builds and runs the test apps in m68
     * words.txt: support file for the an.c test app
