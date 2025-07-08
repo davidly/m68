@@ -32,7 +32,7 @@ do
     $_runcmd c_tests/$arg.elf >>$outputfile
 done
 
-for arg in cpm mtpascal cb68 cpmcv11 cpmcv12 syspas sysfor forth83
+for arg in cpm mtpascal cb68 cpmcv11 cpmcv12 svspas svsfor forth83
 do
     echo compiler test $arg
     echo compiler test $arg >>$outputfile
