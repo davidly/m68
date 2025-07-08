@@ -1,4 +1,4 @@
-Tue 07/08/2025  7:04:34.56 
+Tue 07/08/2025 13:21:03.16 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -3768,6 +3768,13 @@ pass 9 with element count 128
 pass 10 with element count 129
 pass 11 with element count 701
 TRW2.68K completed with great success
+building terrno 
+elfto68k successfully created TERRNO.68K
+running terrno 
+errno opening a file for read that doesn't exist: 2 (2 file not found expected)
+errno doing write to stdin file descriptor: 13. (13 permission denied expected)
+errno opening a file for read with invalid open flags: 22 (22 invalid argument expected)
+errno test completed with great success
 building mm_old 
 elfto68k successfully created MM_OLD.68K
 running mm_old 
@@ -5557,4 +5564,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Tue 07/08/2025  7:06:05.39 
+Tue 07/08/2025 13:22:35.65 

@@ -33,7 +33,7 @@ echo building m68 >>%outputfile%
 call mm68.bat >>%outputfile%
 
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
-           tcmp ttypes tarray trw trw2 mm_old fileops tpi ^
+           tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi ^
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
            fopentst lenum tex trename
 

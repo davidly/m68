@@ -306,8 +306,9 @@ extern "C" int open( const char * pathname, int flags, ... )
     }
 
     uint32_t result = 0;
+    bool create = flags & ( O_CREAT | O_TRUNC );
 
-    if ( flags & ( O_CREAT | O_TRUNC ) )
+    if ( create )
         result = bdos_cpm( 22, (long) & fcb ); // make
     else
         result = bdos_cpm( 15, (long) & fcb ); // open
@@ -315,7 +316,10 @@ extern "C" int open( const char * pathname, int flags, ... )
     if ( 255 == result )
     {
         g_afcb[ fd ].n[ 0 ] = '*'; // mark this fd as free
-        errno = EINVAL;
+        if ( create )
+            errno = EINVAL;
+        else
+            errno = ENOENT;
         return -1;
     }
 
@@ -416,7 +420,12 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
     }
     else
     {
-        if ( fd < 3 || fd >= _countof( g_afcb ) )
+        if ( fd < 3 )
+        {
+            errno = EACCES;
+            return -1;
+        }
+        if ( fd >= _countof( g_afcb ) )
         {
             errno = EINVAL;
             return -1;
@@ -502,7 +511,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
     if ( 0 == count )
         return 0;
 
-    if ( 1 == fd )
+    if ( 0 == fd )
     {
         // todo: handle this
         return -1;
