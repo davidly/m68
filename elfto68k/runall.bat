@@ -39,10 +39,6 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 
-echo running m68.68k
-echo running m68.68k >>%outputfile%
-%_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
-
 echo building ba
 echo building ba >>%outputfile%
 copy ..\c_tests\ba.c . >nul
@@ -50,6 +46,9 @@ call mt.bat ba >>%outputfile%
 echo running ba
 echo running ba >>%outputfile%
 %_M68runcmd% ba.68K TP.BAS >>%outputfile%
+del ba.s 2>nul
+del ba.c 2>nul
+del ba.68k 2>nul
 
 echo building an
 echo building an >>%outputfile%
@@ -58,6 +57,9 @@ call mt.bat an >>%outputfile%
 echo running an
 echo running an >>%outputfile%
 %_M68runcmd% AN.68K david lee >>%outputfile%
+del an.s 2>nul
+del an.c 2>nul
+del an.68k 2>nul
 
 goto :alldone
 
@@ -70,6 +72,16 @@ call mt.bat %~1 >>%outputfile%
 echo running %~1
 echo running %~1 >>%outputfile%
 %_M68runcmd% %~1.68K >>%outputfile%
+
+if "%~1" == "trw" (
+    echo running m68.68k
+    echo running m68.68k >>%outputfile%
+    %_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
+)
+
+del %~1.s 2>nul
+del %~1.c 2>nul
+del %~1.68k 2>nul
 exit /b 0
 
 :alldone

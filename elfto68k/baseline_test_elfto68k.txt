@@ -1,4 +1,4 @@
-Mon 07/07/2025 20:43:51.83 
+Tue 07/08/2025  7:04:34.56 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -3750,6 +3750,8 @@ building trw
 elfto68k successfully created TRW.68K
 running trw 
 trw completed with great success
+running m68.68k 
+trw completed with great success
 building trw2 
 elfto68k successfully created TRW2.68K
 running trw2 
@@ -5502,8 +5504,6 @@ building trename
 elfto68k successfully created TRENAME.68K
 running trename 
 trename completed with great success
-running m68.68k 
-trw completed with great success
 building ba 
 elfto68k successfully created BA.68K
 running ba 
@@ -5557,4 +5557,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Mon 07/07/2025 20:45:27.89 
+Tue 07/08/2025  7:06:05.39 

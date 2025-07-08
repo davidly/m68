@@ -46,11 +46,17 @@ do
   echo running $arg >>$outputfile
   argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
   $_m68runcmd $argu.68K >>$outputfile
-done
 
-echo running m68.68k
-echo running m68.68k >>$outputfile
-$_m68runcmd M68.68K -h:4 TRW.68K >>$outputfile
+  if [ "$argu" = "TRW" ]; then
+    echo running m68.68k
+    echo running m68.68k >>$outputfile
+    $_m68runcmd M68.68K -h:4 TRW.68K >>$outputfile
+  fi
+
+  rm $arg.s 2>/dev/null
+  rm $arg.c 2>/dev/null
+  rm $argu.68K 2>/dev/null
+done
 
 echo building ba
 echo building ba >>$outputfile
@@ -59,6 +65,9 @@ mt.sh ba >>$outputfile
 echo running ba
 echo running ba >>$outputfile
 $_m68runcmd BA.68K TP.BAS >>$outputfile
+rm ba.s 2>/dev/null
+rm ba.c 2>/dev/null
+rm BA.68K 2>/dev/null
 
 echo building an
 echo building an >>$outputfile
@@ -67,6 +76,9 @@ mt.sh an >>$outputfile
 echo running an
 echo running an >>$outputfile
 $_m68runcmd AN.68K david lee >>$outputfile
+rm an.s 2>/dev/null
+rm an.c 2>/dev/null
+rm AN.68K 2>/dev/null
 
 date_time=$(date)
 echo "$date_time" >>$outputfile

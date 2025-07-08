@@ -180,6 +180,7 @@ int main( int argc, char * argv[] )
     fprintf( fp, "new line 0\n" );
     fclose( fp );
 
+    remove( TEST_FILE );
     printf( "exiting fopentst with great success\n" );
     return 0;
 } /*main*/

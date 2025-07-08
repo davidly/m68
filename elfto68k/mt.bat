@@ -3,6 +3,7 @@ setlocal
 
 if "%1" == "" (goto noargs)
 
+rem building with -O2 yields 33% faster test runtimes (because compiling is faster) and smaller binaries for CP/M 68k machines
 if "%2" == "" (set _optflag=2) else (set _optflag=%2)
 
 set gccpath=..\gcc-8.2.0
