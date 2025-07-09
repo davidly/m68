@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -x
 
-gccpath=~/outrun/gcc-8.2.0
+gccpath=../gcc-8.2.0-linux
 gcccmd=$gccpath/bin/m68k-elf-gcc
 
 
