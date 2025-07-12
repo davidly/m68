@@ -1051,9 +1051,10 @@ static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat
         {
             if ( data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
             {
-                pstat->st_mode = S_IFDIR;
                 if ( ( data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) && is_dir_symbolic_link( ac ) )
-                    pstat->st_mode |= 0xa000; // S_IFLNK;
+                    pstat->st_mode = 0xa000; // S_IFLNK;
+                else
+                    pstat->st_mode = S_IFDIR;
             }
             else
                 pstat->st_mode = S_IFREG;
@@ -3088,7 +3089,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_nlink = local_stat.st_nlink;
                 pout->stx_uid = local_stat.st_uid;
                 pout->stx_gid = local_stat.st_gid;
-                pout->stx_mode = (uint16_t) local_stat.st_mode;
+                pout->stx_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
                 pout->stx_size = local_stat.st_size;
                 pout->stx_blocks = local_stat.st_blocks;
                 pout->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
