@@ -1,4 +1,4 @@
-Sat 07/12/2025 10:02:05.41 
+Sat 07/12/2025 10:05:37.37 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -642,7 +642,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-24.097000 milliseconds
+23.966999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4087,10 +4087,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 12, hour 17, min 2, sec 11
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 12, hour 12, min 2, sec 11
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 12, hour 9, min 2, sec 11
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 12, hour 9, min 2, sec 11
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 12, hour 17, min 5, sec 43
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 12, hour 12, min 5, sec 43
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 12, hour 9, min 5, sec 43
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 12, hour 9, min 5, sec 43
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5773,7 +5773,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 12, hour 9, min 2, sec 19
+tz: 'PST+8', year: 2025, month 7, day 12, hour 9, min 5, sec 51
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -8071,8 +8071,8 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     271
-  dictionary: 267
+total ms:     273
+  dictionary: 269
   generate:   3
   render:     0
 test ba tp.bas 
@@ -8105,7 +8105,7 @@ created assembler file: c_tests\tp.asm, use registers: yes, expression optimizat
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-370.509002 milliseconds
+378.946014 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8127,6 +8127,6 @@ read: 'a' == 97 == 0x61
 read: 't' == 116 == 0x74
 read: 'a' == 97 == 0x61
 tgets completed with great success
-test ff . "ff.c" 
+test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sat 07/12/2025 10:02:36.78 
+Sat 07/12/2025 10:06:08.97 
