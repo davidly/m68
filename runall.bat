@@ -85,8 +85,8 @@ echo running tgets with redirected stdin
 echo running tgets with redirected stdin >>%outputfile%
 %_runcmd% c_tests\tgets <c_tests\tgets.txt >>%outputfile%
 
-echo running ff . "ff.c"
-echo running ff . "ff.c" >>%outputfile%
+echo test ff . "ff.c"
+echo test ff . "ff.c" >>%outputfile%
 %_runcmd% c_tests\ff . "ff.c" >>%outputfile%
 
 goto :alldone
