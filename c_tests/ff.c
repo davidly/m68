@@ -14,23 +14,26 @@
 #include <unistd.h>
 #include <fnmatch.h>
 
-// these two are goofy/buggy ai-generated implementations because newlib has none
-#include "fnmatch.c"
-#include "realpath.c"
-
 extern "C" int lstat (const char *__restrict __path, struct stat *__restrict __buf );
 
+
 #ifndef DT_LNK // newlib doesn't define these
-#define DT_UNKNOWN 0
-#define DT_FIFO 1
-#define DT_CHR 2
-#define DT_DIR 4
-#define DT_BLK 6
-#define DT_REG 8
-#define DT_LNK 10
-#define DT_SOCK 12
-#define DT_WHT 14
-#endif
+
+  // these two are goofy/buggy ai-generated implementations because newlib has none
+  #include "fnmatch.c"
+  #include "realpath.c"
+
+  #define DT_UNKNOWN 0
+  #define DT_FIFO 1
+  #define DT_CHR 2
+  #define DT_DIR 4
+  #define DT_BLK 6
+  #define DT_REG 8
+  #define DT_LNK 10
+  #define DT_SOCK 12
+  #define DT_WHT 14
+
+#endif // DT_LNK
 
 bool g_exclude_mnt = true;
 bool g_show_info = false;
@@ -143,25 +146,26 @@ void search( const char * pstart, const char * ppattern )
             if ( g_use_stat )
                 pentry->d_type = DT_UNKNOWN; // really just for testing stat() and lstat()
             
-            struct stat st = {0};
-            bool stat_retrieved = false;
             bool is_dir = false;
             int result = 0;
-
+            
             if ( DT_UNKNOWN == pentry->d_type )
             {
+                struct stat st = {0};
                 result = stat( next, & st );
                 if ( result )
                 {
                     //printf( "error: stat failed for '%s', errno: %d\n", next, errno );
                     continue;
                 }
-
-                stat_retrieved = true;
+                
                 is_dir = S_ISDIR( st.st_mode );
             }
             else
                 is_dir = ( DT_DIR == pentry->d_type );
+        
+            struct stat st_link = {0};
+            bool lstat_retrieved = false;
 
             if ( is_dir )
             {
@@ -169,20 +173,19 @@ void search( const char * pstart, const char * ppattern )
 
                 if ( DT_UNKNOWN == pentry->d_type ) // some file systems don't support setting d_type
                 {
-                    struct stat st_link = {0};
                     result = lstat( next, & st_link );
                     if ( result )
                     {
                         //printf( "error: lstat failed for '%s', errno: %d\n", next, errno );
                         continue;
                     }
-
+                    lstat_retrieved = true;
                     is_link = S_ISLNK( st_link.st_mode );
                 }
                 else
                     is_link = ( DT_LNK == pentry->d_type );
 
-                if ( !is_link )
+                if ( !is_link )  // only queue directories, not links to directories
                     q.push( next );
             }
         
@@ -193,19 +196,18 @@ void search( const char * pstart, const char * ppattern )
             {
                 if ( g_show_info )
                 {
-                    if ( !stat_retrieved )
+                    if ( !lstat_retrieved )
                     {
-                        result = stat( next, & st );
+                        result = lstat( next, & st_link );
                         if ( result )
                         {
                             //printf( "error: stat failed for '%s', errno: %d\n", next, errno );
                             continue;
                         }
-
-                        stat_retrieved = true;
+                        lstat_retrieved = true;
                     }
 
-                    struct tm * timeInfo = localtime( & st.st_mtime );
+                    struct tm * timeInfo = localtime( & st_link.st_mtime );
                     char buffer[ 80 ];
                     result = strftime( buffer, sizeof( buffer ), "%Y-%m-%d %H:%M:%S", timeInfo );
                     if ( 0 == result )
@@ -214,7 +216,7 @@ void search( const char * pstart, const char * ppattern )
                         continue;
                     }
 
-                    printf( "%s  %13ld  %s  ", mode_str( (uint16_t) st.st_mode ), st.st_size, buffer );
+                    printf( "%s  %13ld  %s  ", mode_str( (uint16_t) st_link.st_mode ), st_link.st_size, buffer );
                 }
 
                 printf( "%s\n", next );
