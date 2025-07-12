@@ -1,5 +1,10 @@
 #pragma once
 
+// the emulator only supports paths and filenames up to this length across all platforms
+
+#define EMULATOR_MAX_PATH 2048
+#define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100
+
 #define emulator_sys_rand               0x2000
 #define emulator_sys_print_double       0x2001
 #define emulator_sys_trace_instructions 0x2002
@@ -75,6 +80,7 @@
 #define SYS_prlimit64 261
 #define SYS_renameat2 276
 #define SYS_getrandom 278
+#define SYS_statx 291
 #define SYS_rseq 293
 
 // open apparently undefined for riscv? the old RISC-V64 g++ compiler/runtime uses these syscalls
@@ -203,6 +209,101 @@ struct stat_linux_syscall
         st_ctim.swap_endianness();
     }
 };
+
+#ifndef STATX_TYPE
+# define STATX_TYPE 0x0001U
+# define STATX_MODE 0x0002U
+# define STATX_NLINK 0x0004U
+# define STATX_UID 0x0008U
+# define STATX_GID 0x0010U
+# define STATX_ATIME 0x0020U
+# define STATX_MTIME 0x0040U
+# define STATX_CTIME 0x0080U
+# define STATX_INO 0x0100U
+# define STATX_SIZE 0x0200U
+# define STATX_BLOCKS 0x0400U
+# define STATX_BASIC_STATS 0x07ffU
+# define STATX_ALL 0x0fffU
+# define STATX_BTIME 0x0800U
+# define STATX_MNT_ID 0x1000U
+# define STATX_DIOALIGN 0x2000U
+# define STATX__RESERVED 0x80000000U
+#endif
+
+#pragma pack( push, 1 )
+struct statx_timestamp_linux_syscall
+{
+    int64_t tv_sec;     /* Seconds since the Epoch (UNIX time) */
+    uint32_t tv_nsec;   /* Nanoseconds since tv_sec */
+    void swap_endianness()
+    {
+        tv_sec = swap_endian64( tv_sec );
+        tv_nsec = swap_endian32( tv_nsec );
+    }
+};
+
+struct statx_linux_syscall
+{
+    uint32_t stx_mask;        /* Mask of bits indicating filled fields */
+    uint32_t stx_blksize;     /* Block size for filesystem I/O */
+    uint64_t stx_attributes;  /* Extra file attribute indicators */
+    uint32_t stx_nlink;       /* Number of hard links */
+    uint32_t stx_uid;         /* User ID of owner */
+    uint32_t stx_gid;         /* Group ID of owner */
+    uint16_t stx_mode;        /* File type and mode */
+    uint64_t stx_ino;         /* Inode number */
+    uint64_t stx_size;        /* Total size in bytes */
+    uint64_t stx_blocks;      /* Number of 512B blocks allocated */
+    uint64_t stx_attributes_mask; /* Mask to show what's supported in stx_attributes */
+
+    /* The following fields are file timestamps */
+    struct statx_timestamp_linux_syscall stx_atime;  /* Last access */
+    struct statx_timestamp_linux_syscall stx_btime;  /* Creation */
+    struct statx_timestamp_linux_syscall stx_ctime;  /* Last status change */
+    struct statx_timestamp_linux_syscall stx_mtime;  /* Last modification */
+
+    /* If this file represents a device, then the next two fields contain the ID of the device */
+    uint32_t stx_rdev_major;  /* Major ID */
+    uint32_t stx_rdev_minor;  /* Minor ID */
+
+    /* The next two fields contain the ID of the device containing the filesystem where the file resides */
+    uint32_t stx_dev_major;   /* Major ID */
+    uint32_t stx_dev_minor;   /* Minor ID */
+
+    uint64_t stx_mnt_id;      /* Mount ID */
+
+    /* Direct I/O alignment restrictions */
+    uint32_t stx_dio_mem_align;
+    uint32_t stx_dio_offset_align;
+
+    uint64_t stx_subvol;      /* Subvolume identifier */
+
+    /* Direct I/O atomic write limits */
+    uint32_t stx_atomic_write_unit_min;
+    uint32_t stx_atomic_write_unit_max;
+    uint32_t stx_atomic_write_segments_max;
+
+    /* File offset alignment for direct I/O reads */
+    uint32_t   stx_dio_read_offset_align;
+
+    void swap_endianness()
+    {
+        stx_mask = swap_endian32( stx_mask );
+        stx_blksize = swap_endian32( stx_blksize );
+        stx_attributes = swap_endian64( stx_attributes );
+        stx_nlink = swap_endian32( stx_nlink );
+        stx_uid = swap_endian32( stx_uid );
+        stx_gid = swap_endian32( stx_gid );
+        stx_mode = swap_endian16( stx_mode );
+        stx_ino = swap_endian64( stx_ino );
+        stx_size = swap_endian64( stx_size );
+        stx_blocks = swap_endian64( stx_blocks );
+        stx_atime.swap_endianness();
+        stx_mtime.swap_endianness();
+        stx_ctime.swap_endianness();
+    }
+};
+#pragma pack(pop)
 
 #pragma warning(disable: 4200) // 0-sized array
 struct linux_dirent64_syscall

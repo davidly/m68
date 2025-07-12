@@ -34,6 +34,7 @@
 #include <locale.h>
 
 #include <djl_os.hxx>
+#include "linuxem.h"
 
 #ifdef _WIN32
     #include <io.h>
@@ -76,12 +77,13 @@
 
         #ifdef M68K
             DIR * fdopendir( int fd );
+            extern "C" int lstat( const char * path, struct stat * statbuf );
         #endif
     #endif
 
     struct LINUX_FIND_DATA
     {
-        char cFileName[ MAX_PATH ];
+        char cFileName[ EMULATOR_MAX_PATH ];
     };
 #endif
 
@@ -91,8 +93,6 @@
 
 using namespace std;
 using namespace std::chrono;
-
-#include "linuxem.h"
 
 #ifdef ARMOS
 
@@ -972,9 +972,21 @@ static uint64_t SystemTime_to_esecs( SYSTEMTIME & st )
     return ( edays * 24ull * 3600ull ) + secs;
 } //SystemTime_to_esecs
 
+static bool is_dir_symbolic_link( const char * path )
+{
+    WIN32_FIND_DATAA findData;
+    HANDLE hFind = FindFirstFileA(path, &findData);
+    if ( INVALID_HANDLE_VALUE == hFind )
+        return false;
+
+    FindClose( hFind );
+
+    return ( IO_REPARSE_TAG_SYMLINK == findData.dwReserved0 );
+} //is_dir_symbolic_link
+
 static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat, const char * path )
 {
-    char ac[ MAX_PATH ];
+    char ac[ EMULATOR_MAX_PATH ];
     if ( 0 != path )
     {
         strcpy( ac, path );
@@ -1038,7 +1050,11 @@ static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat
         if ( ok )
         {
             if ( data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
+            {
                 pstat->st_mode = S_IFDIR;
+                if ( ( data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) && is_dir_symbolic_link( ac ) )
+                    pstat->st_mode |= 0xa000; // S_IFLNK;
+            }
             else
                 pstat->st_mode = S_IFREG;
 
@@ -1509,6 +1525,7 @@ static const SysCall syscalls[] =
     { "SYS_prlimit64", SYS_prlimit64 },
     { "SYS_renameat2", SYS_renameat2 },
     { "SYS_getrandom", SYS_getrandom },
+    { "SYS_statx", SYS_statx },
     { "SYS_rseq", SYS_rseq },
     { "SYS_open", SYS_open }, // only called for older systems
     { "SYS_unlink", SYS_unlink }, // only called for older systems
@@ -1664,8 +1681,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 {
 #ifdef _WIN32
     static HANDLE g_hFindFirst = INVALID_HANDLE_VALUE; // for enumerating directories. Only one can be active at once.
-    static char g_acFindFirstPattern[ MAX_PATH ];
-    char acPath[ MAX_PATH ];
+    static char g_acFindFirstPattern[ EMULATOR_MAX_PATH ];
+    char acPath[ EMULATOR_MAX_PATH ];
 #else
     #if !defined( OLDGCC )
         static DIR * g_FindFirst = 0;
@@ -1841,7 +1858,6 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 0 == result )
             {
                 size_t cbStat = sizeof( struct stat_linux_syscall );
-                tracer.Trace( "  sizeof stat_linux_syscall: %d\n", (int) cbStat );
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
                 local_stat.swap_endianness();
                 memcpy( cpu.getmem( ACCESS_REG( REG_ARG1 ) ), & local_stat, cbStat );
@@ -2115,6 +2131,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( INVALID_HANDLE_VALUE == g_hFindFirst )
             {
+                tracer.Trace( "findfirstfilea call, pattern '%s'\n", g_acFindFirstPattern );
                 g_hFindFirst = FindFirstFileA( g_acFindFirstPattern, &fd );
                 if ( INVALID_HANDLE_VALUE != g_hFindFirst )
                 {
@@ -2134,17 +2151,22 @@ void emulator_invoke_svc( CPUClass & cpu )
                         pcur->d_reclen = (uint16_t) ( dname_off + len + 1 );
                         pcur->d_off = pcur->d_reclen;
                         strcpy( pcur->d_name, fd.cFileName );
-                        if ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes )
-                            pcur->d_type = 4;
+
+                        if ( ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes ) && ( FILE_ATTRIBUTE_REPARSE_POINT & fd.dwFileAttributes ) && is_dir_symbolic_link( fd.cFileName ) )
+                            pcur->d_type = 10; // DT_LNK
+                        else if ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes )
+                            pcur->d_type = 4; // DT_DIR
                         else
-                            pcur->d_type = 8;
-                        tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off );
+                            pcur->d_type = 8; // DT_REG
+
+                        tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d, d_type %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off, pcur->d_type );
                         result = pcur->d_reclen;
                         pcur->swap_endianness();
                     }
                 }
                 else
                 {
+                    tracer.Trace( "find first failed error %d\n", GetLastError() );
                     errno = EINVAL;
                     result = -1;
                 }
@@ -2171,11 +2193,14 @@ void emulator_invoke_svc( CPUClass & cpu )
                         pcur->d_off = pcur->d_reclen;
                         strcpy( pcur->d_name, fd.cFileName );
 
-                        if ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes )
-                            pcur->d_type = 4;
+                        if ( ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes ) && ( FILE_ATTRIBUTE_REPARSE_POINT & fd.dwFileAttributes ) && is_dir_symbolic_link( fd.cFileName ) )
+                            pcur->d_type = 10; // DT_LNK
+                        else if ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes )
+                            pcur->d_type = 4; // DT_DIR
                         else
-                            pcur->d_type = 8;
-                        tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off );
+                            pcur->d_type = 8; // DT_REG
+
+                        tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d, d_type %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off, pcur->d_type );
                         result = pcur->d_reclen;
                     }
                 }
@@ -2226,16 +2251,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tracer.Trace( "  reclen in the struct: %d\n", (int) pcur->d_reclen );
                     pcur->d_off = pcur->d_reclen;
                     strcpy( pcur->d_name, pent->d_name );
-
-                    struct stat local_stat = {0};
-                    result = stat( pent->d_name, & local_stat );
-
-                    if ( S_ISDIR( local_stat.st_mode ) )
-                        pcur->d_type = 4;
-                    else
-                        pcur->d_type = 8;
-
-                    tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d\n", pcur->d_name, (int) pcur->d_reclen, (int) pcur->d_off );
+                    pcur->d_type = pent->d_type;
+        
+                    tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d, d_type %#x\n", pcur->d_name, (int) pcur->d_reclen, (int) pcur->d_off, pcur->d_type );
                     result = pcur->d_reclen;
                     pcur->swap_endianness();
                 }
@@ -2468,7 +2486,10 @@ void emulator_invoke_svc( CPUClass & cpu )
                     g_hFindFirst = INVALID_HANDLE_VALUE;
                 }
                 strcpy( g_acFindFirstPattern, acPath );
-                strcat( g_acFindFirstPattern, "\\*.*" );
+                size_t len = strlen( g_acFindFirstPattern );
+                if ( '\\' != g_acFindFirstPattern[ len - 1 ] )
+                    strcat( g_acFindFirstPattern, "\\" );
+                strcat( g_acFindFirstPattern, "*.*" );
                 descriptor = findFirstDescriptor;
             }
             else
@@ -2536,7 +2557,6 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 0 == result )
             {
                 size_t cbStat = sizeof( struct stat_linux_syscall );
-                tracer.Trace( "  sizeof stat_linux_syscall: %zd\n", cbStat );
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
                 tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
                 local_stat.swap_endianness();
@@ -3023,6 +3043,107 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             result = getrandom( buf, buflen, flags );
 #endif
+            update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_statx:
+        {
+            //                    0                                        1          2                  3                                4
+            // int statx( int dirfd, const char *_Nullable restrict pathname, int flags, unsigned int mask, struct statx *restrict statxbuf );
+            tracer.Trace( "  syscall cmd SYS_statx\n" );
+            int dirfd = (int) ACCESS_REG( REG_ARG0 );
+            tracer.Trace( "  dirfd: %d\n", dirfd );
+            const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            int flags = (int) ACCESS_REG( REG_ARG2 );
+            tracer.Trace( "  flags: %#x, EMULATOR_AT_SYMLINK_NOFOLLOW: %x\n", flags, EMULATOR_AT_SYMLINK_NOFOLLOW );
+            tracer.Trace( "  statx on path '%s'\n", pathname );
+            int mask = (int) ACCESS_REG( REG_ARG3 );
+
+            if ( STATX_BASIC_STATS != mask ) // very simplistic implementation
+            {
+                errno = EINVAL;
+                update_result_errno( cpu, -1 );
+                break;
+            }
+
+            struct statx_linux_syscall * pout = (struct statx_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
+            memset( pout, 0, sizeof( struct statx_linux_syscall ) );
+            pout->stx_mask = mask;
+            int result = 0;
+
+#ifdef _WIN32
+            struct stat_linux_syscall local_stat = {0};
+            char ac[ EMULATOR_MAX_PATH ];
+            strcpy( ac, pathname );
+            slash_to_backslash( ac );
+            result = fill_pstat_windows( -1, & local_stat, ac );
+            if ( 0 == result )
+            {
+                size_t cbStat = sizeof( struct stat_linux_syscall );
+                assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
+                local_stat.swap_endianness();
+
+                pout->stx_blksize = (uint32_t) local_stat.st_blksize;
+                pout->stx_ino = local_stat.st_ino;
+                pout->stx_nlink = local_stat.st_nlink;
+                pout->stx_uid = local_stat.st_uid;
+                pout->stx_gid = local_stat.st_gid;
+                pout->stx_mode = (uint16_t) local_stat.st_mode;
+                pout->stx_size = local_stat.st_size;
+                pout->stx_blocks = local_stat.st_blocks;
+                pout->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
+                pout->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+            }
+            else
+            {
+                errno = 2;
+                tracer.Trace( "  fill_pstat_windows failed\n" );
+            }
+#else
+            tracer.Trace( "  sizeof struct stat: %d\n", (int) sizeof( struct stat ) );
+            struct stat local_stat = {0};
+
+            result = fstatat( dirfd, pathname, & local_stat, flags );
+            if ( 0 == result )
+            {
+                // the syscall version of stat has similar fields but a different layout, so copy fields one by one
+
+                pout->stx_blksize = (uint32_t) local_stat.st_blksize;
+                pout->stx_ino = local_stat.st_ino;
+                pout->stx_nlink = local_stat.st_nlink;
+                pout->stx_uid = local_stat.st_uid;
+                pout->stx_gid = local_stat.st_gid;
+                pout->stx_mode = (uint16_t) local_stat.st_mode;
+                pout->stx_size = local_stat.st_size;
+                pout->stx_blocks = local_stat.st_blocks;
+#ifdef __APPLE__
+                pout->stx_atime.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout->stx_atime.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
+                pout->stx_mtime.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
+                pout->stx_ctime.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
+#elif defined( OLDGCC ) || defined( M68K )
+                // no time on old gcc intended for embedded systems
+#else
+                pout->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
+                pout->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+#endif
+                pout->swap_endianness();
+                tracer.Trace( "  file size %d, isdir %s\n", (int) local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+            }
+            else
+                tracer.Trace( "  fstat failed, error %d\n", errno );
+#endif
+
             update_result_errno( cpu, result );
             break;
         }

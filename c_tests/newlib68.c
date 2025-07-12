@@ -152,6 +152,29 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
     return result;
 } //nanosleep
 
+extern "C" int lstat( const char * path, struct stat * statbuf )
+{
+    struct statx_linux_syscall statx = {0};
+    int result = (int) syscall( SYS_statx, LINUX_AT_FDCWD, path, AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS, & statx );
+    if ( -1 == result )
+        return result;
+
+    statbuf->st_dev = 0;
+    statbuf->st_ino = statx.stx_ino;
+    statbuf->st_mode = statx.stx_mode;
+    statbuf->st_nlink = statx.stx_nlink;
+    statbuf->st_uid = statx.stx_uid;
+    statbuf->st_gid = statx.stx_gid;
+    statbuf->st_rdev = 0;
+    statbuf->st_size = statx.stx_size;
+    statbuf->st_blksize = 512;
+    statbuf->st_blocks = statx.stx_blocks;
+    statbuf->st_atime = statx.stx_atime.tv_sec;
+    statbuf->st_mtime = statx.stx_mtime.tv_sec;
+    statbuf->st_ctime = statx.stx_ctime.tv_sec;
+    return result;
+} //lstat
+
 extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
 {
     struct stat_linux_syscall sls = {0};
@@ -332,8 +355,8 @@ DIR * fdopendir( int fd )
     pd->dd_fd = fd; // ownership transfer
     pd->dd_loc = 0;
     pd->dd_seek = 0;
-    pd->dd_buf = (char *) malloc( 256 );
-    pd->dd_len = 256;
+    pd->dd_buf = (char *) malloc( EMULATOR_MAX_PATH );
+    pd->dd_len = EMULATOR_MAX_PATH;
     pd->dd_size = 0;
 
     return pd;
@@ -355,7 +378,7 @@ struct dirent * readdir( DIR * dir )
 
     // m68 returns one file at a time as a simplification.
 
-    static uint8_t ui8_buf[ 300 ];
+    static uint8_t ui8_buf[ EMULATOR_MAX_PATH + sizeof( struct linux_dirent64_syscall ) ];
     struct linux_dirent64_syscall * pdesc = (struct linux_dirent64_syscall *) & ui8_buf;
 
     int result = syscall( SYS_getdents64, dir->dd_fd, pdesc, sizeof( ui8_buf ) );
