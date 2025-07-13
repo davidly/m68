@@ -155,7 +155,7 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
 extern "C" int lstat( const char * path, struct stat * statbuf )
 {
     struct statx_linux_syscall statx = {0};
-    int result = (int) syscall( SYS_statx, LINUX_AT_FDCWD, path, AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS, & statx );
+    int result = (int) syscall( SYS_statx, LINUX_AT_FDCWD, path, EMULATOR_AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS, & statx );
     if ( -1 == result )
         return result;
 
