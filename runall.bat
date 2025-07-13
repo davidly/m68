@@ -53,7 +53,7 @@ echo test an -t david lee >>%outputfile%
 
 echo test ba tp.bas
 echo test ba tp.bas >>%outputfile%
-%_runcmd% c_tests\ba c_tests\tp.bas >>%outputfile%
+%_runcmd% c_tests\ba -q c_tests\tp.bas >>%outputfile%
 
 set _genlist=6 8 a d 3 i I m o r x
 ( for %%g in (%_genlist%) do ( call :genRun %%g ) )
@@ -62,7 +62,7 @@ goto after_ba
 
 :genRun
 
-%_runcmd% c_tests\ba -a:%~1 -x c_tests\tp.bas >>%outputfile%
+%_runcmd% c_tests\ba -a:%~1 -x -q c_tests\tp.bas >>%outputfile%
 exit /b 0
 
 :after_ba

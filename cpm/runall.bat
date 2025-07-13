@@ -18,7 +18,7 @@ if "%_M68runcmd%" == "" (
 )
 
 rem compile and run a basic app
-%_M68runcmd% ..\c_tests\ba -x -a:c ..\c_tests\tp.bas
+%_M68runcmd% ..\c_tests\ba -x -a:c -q ..\c_tests\tp.bas
 copy ..\c_tests\tp.s
 call ma.bat tp
 %_M68runcmd% tp.68k

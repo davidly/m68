@@ -48,7 +48,7 @@ $_runcmd c_tests/an.elf -t david lee >>$outputfile
 
 echo test ba
 echo test ba tp.bas >>$outputfile
-$_runcmd c_tests/ba.elf c_tests/tp.bas >>$outputfile
+$_runcmd c_tests/ba.elf -q c_tests/tp.bas >>$outputfile
 
 echo test m68.elf ttt.elf 1
 echo test m68.elf ttt.elf 1 >>$outputfile
@@ -66,7 +66,7 @@ popd 1>/dev/null
 
 for codegen in 6 8 a d 3 i I m o r x;
 do
-    $_runcmd c_tests/ba.elf -a:$codegen -x c_tests/tp.bas >>$outputfile
+    $_runcmd c_tests/ba.elf -a:$codegen -q -x c_tests/tp.bas >>$outputfile
 done
 
 # run app with redirected input

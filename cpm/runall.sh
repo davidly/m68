@@ -17,7 +17,7 @@ if [ "$_m68runcmd" = "" ]; then
 fi
 
 # compile and run a basic app
-$_m68runcmd -h:1 ../c_tests/ba -x -a:c ../c_tests/tp.bas
+$_m68runcmd -h:1 ../c_tests/ba -x -a:c -q ../c_tests/tp.bas
 cp ../c_tests/tp.s TP.S
 unix2dos TP.S
 ma.sh TP
