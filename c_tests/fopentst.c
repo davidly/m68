@@ -117,10 +117,10 @@ int main( int argc, char * argv[] )
     printf( "O_EXCL: %#x\n", O_EXCL );
 #endif
 #ifdef O_EXLOCK
-    printf( "O_EXCLOCK: %#x\n", O_EXCLOCK );
+    printf( "O_EXLOCK: %#x\n", O_EXLOCK );
 #endif
 #ifdef O_SHLOCK
-    printf( "O_SHCLOCK: %#x\n", O_SHCLOCK );
+    printf( "O_SHLOCK: %#x\n", O_SHLOCK );
 #endif
 #ifdef O_DIRECTORY
     printf( "O_DIRECTORY: %#x\n", O_DIRECTORY );

@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <ctype.h>
 #include <time.h>
-#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <string>
@@ -14,7 +10,7 @@
 #include <unistd.h>
 #include <fnmatch.h>
 
-extern "C" int lstat (const char *__restrict __path, struct stat *__restrict __buf );
+extern "C" int lstat( const char *__restrict __path, struct stat *__restrict __buf );
 
 #ifndef DT_LNK // newlib doesn't define these
 
@@ -37,7 +33,7 @@ extern "C" int lstat (const char *__restrict __path, struct stat *__restrict __b
 bool g_exclude_mnt = true;
 bool g_show_info = false;
 bool g_case_sensitive = true;
-bool g_use_stat = false;
+bool g_use_lstat = false;
 
 void usage( const char * perr )
 {
@@ -52,7 +48,7 @@ void usage( const char * perr )
     printf( "      -c              case-insensitive filename matching\n" );
     printf( "      -i              show file information (type, size, last modified time)\n" );
     printf( "      -m              don't exclude files under /mnt, /sys, or /proc\n" );
-    printf( "      -s              don't use dirent->d_type; use stat and lstat instead\n" );
+    printf( "      -s              don't use dirent->d_type if available; use lstat instead\n" );
     printf( "  examples:\n" );
     printf( "      ff /home/user \"*.txt\"\n" );
     printf( "      ff -c -i .. lesserafim.png\n" );
@@ -96,7 +92,7 @@ inline int my_strcmp( const char * s1, const char * s2 )
 
 inline char my_tolower( char c )
 {
-    if ( c >= 'A' && c <= 'Z' )
+    if ( c <= 'Z' && c >= 'A' )
         return c + ( 'a' - 'A' );
 
     return c;
@@ -120,7 +116,7 @@ inline bool is_excluded( const char * p )
 const char * mode_str( uint16_t mode )
 {
     static char ac[ 12 ];
-    ac[ 0 ] = S_ISSOCK( mode ) ? 's' : S_ISLNK( mode ) ? 'l' : S_ISREG( mode ) ? ' '  : S_ISBLK( mode ) ? 'b' :
+    ac[ 0 ] = S_ISSOCK( mode ) ? 's' : S_ISLNK( mode ) ? 'l' : S_ISREG( mode )  ? ' ' : S_ISBLK( mode ) ? 'b' :
               S_ISDIR( mode )  ? 'd' : S_ISCHR( mode ) ? 'c' : S_ISFIFO( mode ) ? 'f' : '?';
     ac[ 1 ] = ' ';
 
@@ -185,50 +181,30 @@ void search( const char * pstart, const char * ppattern )
             if ( is_excluded( next ) )
                 continue;
 
-            if ( g_use_stat )
-                pentry->d_type = DT_UNKNOWN; // really just for testing stat() and lstat()
+            if ( g_use_lstat )
+                pentry->d_type = DT_UNKNOWN; // really just for testing lstat()
             
             bool is_dir = false;
-            
+            struct stat st_link;
+            bool lstat_retrieved = false;
+
             if ( DT_UNKNOWN == pentry->d_type )
             {
-                struct stat st;
-                int result = stat( next, & st );
+                int result = lstat( next, & st_link ); // lstat, not stat, to determine if this file is a directory, not perhaps a link to a directory
                 if ( result )
                 {
-                    //printf( "error: stat failed for '%s', errno: %d\n", next, errno );
+                    //printf( "error: lstat failed for '%s', errno: %d\n", next, errno );
                     continue;
                 }
                 
-                is_dir = S_ISDIR( st.st_mode );
+                lstat_retrieved = true;
+                is_dir = S_ISDIR( st_link.st_mode );
             }
             else
                 is_dir = ( DT_DIR == pentry->d_type );
         
-            struct stat st_link;
-            bool lstat_retrieved = false;
-
             if ( is_dir )
-            {
-                bool is_link = false;
-
-                if ( DT_UNKNOWN == pentry->d_type ) // some file systems don't support setting d_type
-                {
-                    int result = lstat( next, & st_link );
-                    if ( result )
-                    {
-                        //printf( "error: lstat failed for '%s', errno: %d\n", next, errno );
-                        continue;
-                    }
-                    lstat_retrieved = true;
-                    is_link = S_ISLNK( st_link.st_mode );
-                }
-                else
-                    is_link = ( DT_LNK == pentry->d_type );
-
-                if ( !is_link )  // only queue directories, not links to directories
-                    q.push( next );
-            }
+                q.push( next );
         
             if ( !g_case_sensitive )
                 my_strlwr( pentry->d_name );
@@ -259,8 +235,8 @@ void search( const char * pstart, const char * ppattern )
                     printf( "%s  %13ld  %s  ", mode_str( (uint16_t) st_link.st_mode ), st_link.st_size, buffer );
                 }
 
-                printf( "%s\n", next );
-             }
+                puts( next );
+            }
         }
 
         int result = closedir( dir );
@@ -283,7 +259,7 @@ int main( int argc, char * argv[] )
         else if ( !strcmp( argv[ i ], "-m" ) )
             g_exclude_mnt = false;
         else if ( !strcmp( argv[ i ], "-s" ) )
-            g_use_stat = false;
+            g_use_lstat = true;
         else if ( '-' == argv[i][0] )
             usage( "unrecognized argument" );
         else if ( !ppattern )

@@ -888,31 +888,32 @@ static void slash_to_backslash( char * p )
 
 static int windows_translate_flags( int flags )
 {
-    // Translate open() flags from Linux to Windows
-    // Microsoft C uses different constants for flags than linux:
-    //             msft (win+dos)     linux                                      68000 newlib
-    //             --------------     -----                                      ------------
-    // 0           O_RDONLY           O_RDONLY                                   O_RDONLY
-    // 1           O_WRONLY           O_WRONLY                                   O_WRONLY
-    // 2           O_RDRW             O_RDWR                                     O_RDWR
-    // 0x8         O_APPEND           n/a                                        O_APPEND
-    // 0x10        O_RANDOM           _FMARK / O_SHLOCK / _FSHLOCK / O_SYNC
-    // 0x20        O_SEQUENTIAL       _FDEFER / O_EXLOCK / _FEXLOCK
-    // 0x40        O_TEMPORARY        O_CREAT
-    // 0x80        O_NOINHERIT        O_EXCL
-    // 0x100       O_CREAT            n/a
-    // 0x200       O_TRUNC            O_TRUNC                                    O_CREAT
-    // 0x400       O_EXCL             O_APPEND                                   O_TRUNC
-    // 0x800                                                                     O_EXCL
-    // 0x2000      O_OBTAINDIR        O_ASYNC                                    O_SYNC
-    // 0x4000      O_TEXT             n/a                                        O_NONBLOCK
-    // 0x8000      O_BINARY           n/a
-    // 0x10100     n/a                O_FSYNC, O_SYNC
-    // 0x200000                                                                  O_DIRECTORY
+/*
+  Translate open() flags from Linux to Windows
 
-   //               riscv64      arm32 and arm64
-   // O_DIRECT      0x4000       0x10000
-   // O_DIRECTORY   0x10000      0x4000
+           DOS & Windows   Linux RISC-V64 & AMD64  Linux Arm32 & Arm64  macOS       newlib 68000  Watcom      Manx CP/M
+           -------------   ----------------------  -------------------  -----       ------------  ------      ---------
+  0x0      O_RDONLY        O_RDONLY                O_RDONLY             O_RDONLY    O_RDONLY      O_RDONLY    O_RDONLY
+  0x1      O_WRONLY        O_WRONLY                O_WRONLY             O_WRONLY    O_WRONLY      O_WRONLY    O_WRONLY
+  0x2      O_RDRW          O_RDRW                  O_RDRW               O_RDRW      O_RDRW        O_RDRW      O_RDRW
+  0x8      O_APPEND                                                     O_APPEND    O_APPEND              
+  0x10     O_RANDOM                                                     O_SHLOCK    O_SHLOCK      O_APPEND        
+  0x20     O_SEQUENTIAL                                                 O_EXLOCK    O_EXLOCK      O_CREAT 
+  0x40     O_TEMPORARY     O_CREAT                 O_CREAT                                        O_TRUNC 
+  0x80     O_NOINHERIT     O_EXCL                  O_EXCL                                         O_NOINHERIT     
+  0x100    O_CREAT                                                                                O_TEXT      O_CREAT
+  0x200    O_TRUNC         O_TRUNC                 O_TRUNC              O_CREAT     O_CREAT       O_BINARY        
+  0x400    O_EXCL          O_APPEND                O_APPEND             O_TRUNC     O_TRUNC       O_EXCL      O_EXCL
+  0x800                    O_EXCL  O_EXCL          O_APPEND
+  0x2000                   O_ASYNC                 O_ASYNC              O_SYNC      O_SYNC         
+  0x4000   O_TEXT          O_DIRECT                O_DIRECTORY          O_NONBLOCK  O_NONBLOCK             
+  0x8000   O_BINARY                                                
+  0x10000                  O_DIRECTORY             O_DIRECT                             
+  0x10100                  O_SYNC                  O_SYNC                       
+  0x80000                                                               O_DIRECT    O_DIRECT                
+  0x100000                                                              O_DIRECTORY                     
+  0x200000                                                                          O_DIRECTORY
+*/
 
     int f = flags & 3; // copy rd/wr/rdrw
 
@@ -6099,8 +6100,8 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
         case 108: // bdos get put program return code
         {
             // This is not a CP/M v2.2 function. It is in CP/M v3 and it's so handy that it's here too. called by DR PLI v1.4.
-            // if DE = 0xffff then return current code in HL
-            // otherwise, set the current code to the value in DE
+            // if DE = 0xffff then return current code in HL (mapped to 68k registers)
+            // otherwise, set the current code to the value in DE (mapped to 68k registers)
 
             if ( 0xffff == ACCESS_REG( REG_ARG0 ) )
                 ACCESS_REG( REG_RESULT ) = g_exit_code;
