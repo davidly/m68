@@ -34,6 +34,8 @@ void cppreference() // from https://en.cppreference.com/w/c/io/fprintf
     printf("Fixed-width types:\n");
     printf("\tLargest 32-bit value is %" PRIu32 " or %#" PRIx32 "\n",
                                      UINT32_MAX,     UINT32_MAX );
+    printf("\tLargest 64-bit value is %" PRIu64 " or %#" PRIx64 "\n",
+                                     UINT64_MAX,     UINT64_MAX );
 }
 
 int main( int argc, char * argv[] )

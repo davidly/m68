@@ -74,8 +74,8 @@ echo running %~1 >>%outputfile%
 %_M68runcmd% %~1.68K >>%outputfile%
 
 if "%~1" == "trw" (
-    echo running m68.68k
-    echo running m68.68k >>%outputfile%
+    echo running trw in m68.68k
+    echo running trw in m68.68k >>%outputfile%
     %_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
 )
 

@@ -48,8 +48,8 @@ do
   $_m68runcmd $argu.68K >>$outputfile
 
   if [ "$argu" = "TRW" ]; then
-    echo running m68.68k
-    echo running m68.68k >>$outputfile
+    echo running trw in m68.68k
+    echo running trw in m68.68k >>$outputfile
     $_m68runcmd M68.68K -h:4 TRW.68K >>$outputfile
   fi
 

@@ -99,7 +99,7 @@ bdos_cpm:
     rts
 
 .data
-.align  4
+.align 4
 argvals: .zero 64 * 4
 cmdtail_copy: .zero 128
 arg0_value: .zero 4

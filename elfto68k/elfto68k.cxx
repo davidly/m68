@@ -416,6 +416,9 @@ int main( int argc, char * argv[] )
             g_base_address = head.physical_address;
     }
 
+    if ( g_base_address > ( 1024 * 1024 ) )
+        usage( "elf physical address is too high" );
+
     // if it won't waste much RAM, start the address space at 0 so low addresses can be used for things like trap vectors
 
     uint32_t elf_base_address = g_base_address;
@@ -621,7 +624,7 @@ int main( int argc, char * argv[] )
 
     fwrite( &chead, sizeof( chead ), 1, fpout );
 
-    // move pointer to argv[0] to d0 ==> lea (d16, pc), a0
+    // move pointer to argv[0] to a0 ==> lea (d16, pc), a0
 
     uint16_t moveApp = swap_endian16( 0x41fa );
     fwrite( & moveApp, 2, 1, fpout );

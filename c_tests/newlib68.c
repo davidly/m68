@@ -500,6 +500,9 @@ static void printdouble( double d, int precision, void (*putc)(char) )
         return;
     }
 
+    double multiplier = pow( 10.0, precision );
+    d = round( d * multiplier ) / multiplier;
+
     uint64_t wholePart = (int64_t) d; // large double values will be above 18,446,744,073,709,551,615
     printnum( wholePart, 10, putc );
 
@@ -617,6 +620,8 @@ static void _doprnt(
                     prec = va_arg(*argp, int);
                     c = *++fmt;
                 }
+                else
+                    prec = 0;
             }
 
             if (c == 'l')
@@ -757,12 +762,15 @@ static void _doprnt(
                     goto print_unsigned;
 
                 case 'd':
+                case 'i':
                     truncate = _doprnt_truncates;
                 case 'D':
+                case 'I':
                     base = 10;
                     goto print_signed;
 
                 case 'f':
+                case 'g': // 'e' isn't supported yet, so just use %f
                     goto print_float;
 
                 case 'u':
@@ -981,6 +989,24 @@ extern char * floattoa( char * buffer, float f, int precision )
     printfloat( f, 6, copybyte );
     return buffer;
 } //floattoa
+
+extern "C" int puts( const char * str )
+{
+    while ( *str )
+    {
+        printf_putc( *str );
+        str++;
+    }
+
+    printf_putc( 10 );
+    return 0;
+} //puts
+
+extern "C" int putchar( int x )
+{
+    printf_putc( x & 0xff );
+    return 0;
+} //putchar
 
 extern "C" bool _setbinarymode( bool binmode )
 {
