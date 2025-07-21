@@ -60,9 +60,9 @@ int main( int argc, char * argv[] )
     printf( "  %1.1lf\n", d );
     printf( "  %.4lf\n", d );
     printf( "  %4.lf\n", d );
-    printf( " %e\n", d );
-    printf( " %a\n", d );
-    printf( " %g\n", d );
+    printf( "  %e\n", d );
+    printf( "  %a\n", d );
+    printf( "  %g\n", d );
 
     d = -6789.01234;
     printf( "double: %lf\n", d );
@@ -70,9 +70,9 @@ int main( int argc, char * argv[] )
     printf( "  %1.1lf\n", d );
     printf( "  %.4lf\n", d );
     printf( "  %4.lf\n", d );
-    printf( " %e\n", d );
-    printf( " %a\n", d );
-    printf( " %g\n", d );
+    printf( "  %e\n", d );
+    printf( "  %a\n", d );
+    printf( "  %g\n", d );
  
     cppreference();
  

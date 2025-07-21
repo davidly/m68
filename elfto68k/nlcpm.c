@@ -836,8 +836,10 @@ extern "C" int clock_gettime( clockid_t id, struct timespec * res )
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
-/* so this ancient code from Apple is used instead with minor revisions            */
-/* there is no buffering, so performance is pretty terrible                        */
+/* So this ancient code from Apple is used instead with minor revisions            */
+/* Newlib can be built to include floating point support, but apparently not       */
+/* 64-bit integers. e and a format specifiers aren't implemented.                  */
+/* There is no buffering, so performance is pretty terrible                        */
 
 static FILE * g_fprintf_FILE = 0;
 static int printf_full_len = 0;
@@ -875,7 +877,7 @@ static void fprintf_putc( char c )
 
 #define MAXBUF ( sizeof( uint64_t ) * 8 )  // enough for binary
 
-static void printnum( uint64_t u, int base, void (*putc)(char) )
+static void print_ui64( uint64_t u, int base, void (*putc)(char) )
 {
     char buf[ MAXBUF ];
     char * p = & buf[ MAXBUF - 1 ];
@@ -889,7 +891,7 @@ static void printnum( uint64_t u, int base, void (*putc)(char) )
 
     while ( ++p != & buf[ MAXBUF ] )
         (*putc)( *p );
-} //printnum
+} //print_ui64
 
 static double set_d_sign( double d, bool sign )
 {
@@ -902,7 +904,33 @@ static bool get_d_sign( double d )
     return ( 0ull != ( ( * (uint64_t *) &d ) & 0x8000000000000000 ) );
 } //get_d_sign
 
-static void printdouble( double d, int precision, void (*putc)(char) )
+static bool round_up( double fraction, int precision )
+{
+    // true if only nines exit through precision and next digit after precision is >= 5.
+    // Required because round() only works if the rounded value can be represented in a double.
+    // Numbers like 27.1084 can't -- they are represented as 27.108399999999999
+
+    while( precision > 0 )
+    {
+        fraction *= 10.0;
+        uint32_t wholePart = (int32_t) fraction;
+        fraction -= wholePart;
+
+        if ( precision > 1 )
+        {
+            if ( 9 != wholePart )
+                return false;
+        }
+        else if ( wholePart <= 4 )
+            return false;
+
+        precision--;
+    }
+
+    return true;
+} //round_up
+
+static void print_double( double d, int precision, void (*putc)(char) )
 {
     if ( get_d_sign( d ) )
     {
@@ -929,8 +957,8 @@ static void printdouble( double d, int precision, void (*putc)(char) )
     double multiplier = pow( 10.0, precision );
     d = round( d * multiplier ) / multiplier;
 
-    uint64_t wholePart = (int64_t) d; // large double values will be above 18,446,744,073,709,551,615
-    printnum( wholePart, 10, putc );
+    uint64_t wholePart = (uint64_t) d; // large double values will be above 18,446,744,073,709,551,615
+    print_ui64( wholePart, 10, putc );
 
     if ( precision > 0 )
     {
@@ -939,18 +967,25 @@ static void printdouble( double d, int precision, void (*putc)(char) )
 
         while ( precision > 0 )
         {
-            fraction *= 10;
+            fraction *= 10.0;
             wholePart = (int64_t) fraction;
-            (*putc)( '0' + wholePart );
             fraction -= wholePart;
+
+            if ( round_up( fraction, precision ) )
+            {
+                wholePart++;
+                precision = 0;
+            }
+
+            (*putc)( '0' + wholePart );
             precision--;
         }
     }
-} //printdouble
+} //print_double
 
 static void printfloat( float f, int precision, void (*putc)(char) )
 {
-    return printdouble( f, precision, putc );
+    return print_double( f, precision, putc );
 } //print_float
 
 const static bool _doprnt_truncates = false;
@@ -1080,7 +1115,7 @@ static void _doprnt(
                         u = va_arg(*argp, uint64_t );
                     p = va_arg(*argp, char *);
                     base = *p++;
-                    printnum(u, base, putc);
+                    print_ui64(u, base, putc);
 
                     if (u == 0)
                         break;
@@ -1105,7 +1140,7 @@ static void _doprnt(
                                 j = 32 - j;
                             for (; (c = *p) > 32; p++)
                                 (*putc)(c);
-                            printnum((unsigned)( (u>>(j-1)) & ((2<<(i-j))-1)),
+                            print_ui64((unsigned)( (u>>(j-1)) & ((2<<(i-j))-1)),
                                         base, putc);
                         }
                         else if (u & (1<<(i-1))) {
@@ -1321,7 +1356,7 @@ static void _doprnt(
                     // varargs promotes floats to doubles in va_arg
 
                     double d = va_arg( *argp, double );
-                    printdouble( d, ( -1 == prec ? 6 : prec ), putc );
+                    print_double( d, ( -1 == prec ? 6 : prec ), putc );
                     break;
                 }
 
