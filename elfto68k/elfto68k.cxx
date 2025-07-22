@@ -325,6 +325,9 @@ int main( int argc, char * argv[] )
             usage( "invalid argument" );
     }
 
+    if ( 0 == pinputfile )
+        usage( "no input file specified" );
+
     FILE * fp = fopen( pinputfile, "rb" );
     if ( !fp )
         usage( "can't open input file" );
