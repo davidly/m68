@@ -661,16 +661,16 @@ extern "C" int fstat( int fd, struct stat * statbuf )
     FCBCPM68K & fcb = g_afcb[ fd ];
     memset( statbuf, 0, sizeof( struct stat ) );
 
-    uint32_t pos = fcb.GetRandomIOOffset();
-    long result = bdos_cpm( 35, (long) & fcb );
+    uint32_t pos = fcb.GetRandomIOOffset(); // save the current position because computing file size overwrites it
+    long result = bdos_cpm( 35, (long) & fcb ); // compute file size
     if ( 0 != result )
     {
         errno = EINVAL;
         return -1;
     }
 
-    statbuf->st_size = fcb.GetRandomIOOffset() * 128; // only 128 byte granularity
-    fcb.SetRandomIOOffset( pos ); // restore the position
+    statbuf->st_size = fcb.GetRandomIOOffset() * 128; // only 128-byte granularity
+    fcb.SetRandomIOOffset( pos ); // restore the original position
     return 0;
 } //fstat
 
@@ -695,8 +695,8 @@ DIR * fdopendir( int fd )
     pd->dd_fd = fd; // ownership transfer
     pd->dd_loc = 0;
     pd->dd_seek = 0;
-    pd->dd_buf = (char *) malloc( 256 );
-    pd->dd_len = 256;
+    pd->dd_len = 13;
+    pd->dd_buf = (char *) malloc( pd->dd_len );
     pd->dd_size = 0;
 
     return pd;
@@ -720,10 +720,10 @@ struct dirent * readdir( DIR * dir )
 
     uint8_t * pdma = & g_base_page->cb_command_tail;
     static struct dirent de = { 0 };
-    de.d_ino = 0x67;
+    de.d_ino = 0x67; // g I miss you
     de.d_off = 0x69646c65; // mirror allergy
     de.d_reclen = sizeof( de );
-    de.d_type = 8;
+    de.d_type = 8; // normal file
 
     if ( !g_EnumerationActive ) // find the first file in the numeration
     {
@@ -778,7 +778,7 @@ extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * e
     {
         // return 1 if a keystroke is available and 0 otherwise
 
-        return bdos_cpm( 6, 0xfe );
+        return bdos_cpm( 6, 0xfe ); // direct console i/o
     }
 
     return 0; // lie and say no I/O is ready
@@ -801,7 +801,7 @@ extern "C" int rename( const char * oldpath, const char * newpath )
     FCBCPM68K * pnew = (FCBCPM68K *) & buf[ 16 ];
     pnew->set_filename( newpath );
 
-    int result = bdos_cpm( 23, (long) & buf );
+    int result = bdos_cpm( 23, (long) & buf ); // rename file
 
     if ( 0 != result )
     {
@@ -836,7 +836,7 @@ extern "C" int clock_gettime( clockid_t id, struct timespec * res )
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
-/* So this ancient code from Apple is used instead with minor revisions            */
+/* So this ancient code from Apple is used instead with minor revisions.           */
 /* Newlib can be built to include floating point support, but apparently not       */
 /* 64-bit integers. e and a format specifiers aren't implemented.                  */
 /* There is no buffering, so performance is pretty terrible                        */
@@ -851,8 +851,8 @@ static void printf_putc( char c )
     if ( lf_to_crlf && 10 == c ) // this is CP/M 68k, whose C runtime converts 10 to 13 + 10
     {
         printf_full_len++;
-        char lf = 13;
-        write( 1, &lf, 1 );
+        char cr = 13;
+        write( 1, &cr, 1 );
     }
 
     printf_full_len++;
@@ -864,8 +864,8 @@ static void fprintf_putc( char c )
     if ( lf_to_crlf && 10 == c ) // this is CP/M 68k, whose C runtime converts 10 to 13 + 10
     {
         printf_full_len++;
-        char lf = 13;
-        fwrite( &lf, 1, 1, g_fprintf_FILE );
+        char cr = 13;
+        fwrite( &cr, 1, 1, g_fprintf_FILE );
     }
 
     fprintf_full_len++;
@@ -906,14 +906,14 @@ static bool get_d_sign( double d )
 
 static bool round_up( double fraction, int precision )
 {
-    // true if only nines exit through precision and next digit after precision is >= 5.
+    // true if only nines exist through precision and next digit after precision is >= 5.
     // Required because round() only works if the rounded value can be represented in a double.
     // Numbers like 27.1084 can't -- they are represented as 27.108399999999999
 
     while( precision > 0 )
     {
         fraction *= 10.0;
-        uint32_t wholePart = (int32_t) fraction;
+        uint32_t wholePart = (uint32_t) fraction;
         fraction -= wholePart;
 
         if ( precision > 1 )

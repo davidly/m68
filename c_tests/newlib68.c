@@ -406,11 +406,10 @@ int closedir( DIR * dir )
     return 0;
 } //closedir
 
-
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
-/* So this ancient code from Apple is used instead with minor revisions            */
+/* So this ancient code from Apple is used instead with minor revisions.           */
 /* Newlib can be built to include floating point support, but apparently not       */
 /* 64-bit integers. e and a format specifiers aren't implemented.                  */
 /* There is no buffering, so performance is pretty terrible                        */
@@ -425,8 +424,8 @@ static void printf_putc( char c )
     if ( lf_to_crlf && 10 == c ) // this is CP/M 68k, whose C runtime converts 10 to 13 + 10
     {
         printf_full_len++;
-        char lf = 13;
-        write( 1, &lf, 1 );
+        char cr = 13;
+        write( 1, &cr, 1 );
     }
 
     printf_full_len++;
@@ -438,8 +437,8 @@ static void fprintf_putc( char c )
     if ( lf_to_crlf && 10 == c ) // this is CP/M 68k, whose C runtime converts 10 to 13 + 10
     {
         printf_full_len++;
-        char lf = 13;
-        fwrite( &lf, 1, 1, g_fprintf_FILE );
+        char cr = 13;
+        fwrite( &cr, 1, 1, g_fprintf_FILE );
     }
 
     fprintf_full_len++;
@@ -480,14 +479,14 @@ static bool get_d_sign( double d )
 
 static bool round_up( double fraction, int precision )
 {
-    // true if only nines exit through precision and next digit after precision is >= 5.
+    // true if only nines exist through precision and next digit after precision is >= 5.
     // Required because round() only works if the rounded value can be represented in a double.
     // Numbers like 27.1084 can't -- they are represented as 27.108399999999999
 
     while( precision > 0 )
     {
         fraction *= 10.0;
-        uint32_t wholePart = (int32_t) fraction;
+        uint32_t wholePart = (uint32_t) fraction;
         fraction -= wholePart;
 
         if ( precision > 1 )

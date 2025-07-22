@@ -433,7 +433,7 @@ int main( int argc, char * argv[] )
     if ( trace_status )
         printf( "memory_size: %x\n", memory_size );
 
-    // first load the section header string table (so we can find the eh frame begin
+    // first load the section header string table (so we can find the eh frame begin)
 
     vector<char> section_names_string_table;
 
