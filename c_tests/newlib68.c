@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <chrono>
 #include <math.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -71,6 +72,29 @@ extern "C" long syscall( long number, ... )
     va_end( ap );
     return result;
 } //syscall
+
+// The default implementation of these in newlib use time(), which has just 1-second resolution.
+// By overriding these functions and using gettimeofday() instead, resolution is in microseconds.
+
+namespace std
+{
+    namespace chrono
+    {
+        system_clock::time_point system_clock::now() noexcept
+        {
+            timeval tv;
+            gettimeofday( &tv, 0 );
+            return time_point( duration( chrono::seconds( tv.tv_sec ) + chrono::microseconds( tv.tv_usec ) ) );
+        }
+
+        steady_clock::time_point steady_clock::now() noexcept
+        {
+            timeval tv;
+            gettimeofday( &tv, 0 );
+            return time_point( duration( chrono::seconds( tv.tv_sec ) + chrono::microseconds( tv.tv_usec ) ) );
+        }
+    }
+}
 
 extern "C" int kill( pid_t pid, int sig ) { exit_emulator( 0 ); }
 extern "C" pid_t getpid( void ) { return 0x4955; } // IU is the best

@@ -1543,6 +1543,7 @@ static const SysCall syscalls[] =
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
 // That consistency enables identical instruction trace log files across platforms for debugging.
+// Various C runtimes behave differently on tie values.
 
 const void * my_bsearch( const void * key, const void * vbase, size_t num, unsigned width, int (*compare)( const void * a, const void * b ) )
 {
@@ -1985,6 +1986,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             else if ( timebaseFrequencyDescriptor == descriptor && buffer_size >= 8 )
             {
                 uint64_t freq = 1000000000000; // nanoseconds, but the LPi4a is off by 3 orders of magnitude, so I replicate that bug here
+                freq = swap_endian64( freq );
                 memcpy( buffer, &freq, 8 );
                 update_result_errno( cpu, 8 );
                 break;
@@ -3536,7 +3538,6 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
         }
     }
 
-
 #else
 
     for ( size_t i = 0; i < 32; i++ )
@@ -3888,7 +3889,7 @@ static int symbol_compare32( const void * a, const void * b )
     return -1;
 } //symbol_compare32
 
-#else
+#else //M68
 
 const char * emulator_symbol_lookup( uint64_t address, uint64_t & offset )
 {
@@ -3922,7 +3923,7 @@ static int symbol_compare( const void * a, const void * b )
     return -1;
 } //symbol_compare
 
-#endif
+#endif //M68
 
 static void remove_spaces( char * p )
 {
@@ -4155,7 +4156,7 @@ struct FCBCPM68K // file control block for cp/m
             }
         }
         *p++ = 0;
-    }
+    } //make_filename
 
     // r0 and r1 are a 16-bit count of 128 byte records in CP/M 2.2. For CP/M 68K, reverse the byte ordering and add r2
 
