@@ -60,8 +60,8 @@ template <class T, class U> T do_cast( U x )
 {
     size_t cbU = sizeof( U );
     size_t cbT = sizeof( T );
-    bool signedU = std::is_signed<T>();
-    bool signedT = std::is_signed<U>();
+    bool signedU = std::is_signed<U>();
+    bool signedT = std::is_signed<T>();
     T result = 0;
 
     if ( IS_FP( result ) )
