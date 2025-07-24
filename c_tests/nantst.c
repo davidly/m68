@@ -42,8 +42,8 @@ const char * tf( bool f )
 void _perhaps_inline show_num( double d )
 {
     printf( "  %lf = %#llx, isnan %s, isinf %s, iszero %s, signbit %s\n", * (uint64_t *) &d,
-            (double) d, tf( isnan( d ) ), tf( isinf( d ) ),
-            tf( 0.0 == d ),  tf( signbit( d ) ) );
+            (double) d, tf( std::isnan( d ) ), tf( std::isinf( d ) ),
+            tf( 0.0 == d ),  tf( std::signbit( d ) ) );
 } //show_num
 
 template <class T> void _perhaps_inline cmp( T a, T b )

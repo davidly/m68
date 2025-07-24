@@ -1,4 +1,4 @@
-Tue 07/22/2025 21:24:52.34 
+Wed 07/23/2025 21:00:02.20 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-23.900999 milliseconds
+23.802999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4088,10 +4088,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 23, hour 4, min 25, sec 0
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 22, hour 23, min 25, sec 0
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 22, hour 20, min 25, sec 0
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 22, hour 20, min 25, sec 0
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 24, hour 4, min 0, sec 11
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 23, hour 23, min 0, sec 11
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 23, hour 20, min 0, sec 11
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 23, hour 20, min 0, sec 11
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5759,6 +5759,8 @@ clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
 sleepy time ended with great success
+test tdir 
+tdir completed with great success
 test fopentst 
 O_CREAT: 0x200
 O_TRUNC: 0x400
@@ -5774,7 +5776,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 22, hour 20, min 25, sec 8
+tz: 'PST+8', year: 2025, month 7, day 23, hour 20, min 0, sec 19
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -8068,17 +8070,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     294
-  dictionary: 289
+total ms:     276
+  dictionary: 272
   generate:   3
   render:     0
 test ba tp.bas 
-229 ms for 1 iterations
+232 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-380.572998 milliseconds
+377.151001 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8102,4 +8104,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Tue 07/22/2025 21:25:26.04 
+Wed 07/23/2025 21:00:36.74 

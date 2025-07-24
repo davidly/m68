@@ -262,16 +262,26 @@ extern "C" char * getcwd( char * buf, size_t size )
     return (char *) syscall( SYS_getcwd, buf, size );
 }
 
+extern "C" int mkdir( const char * path, mode_t mode )
+{
+    return (int) syscall( SYS_mkdirat, LINUX_AT_FDCWD, path, mode );
+} //mkdir
+
+extern "C" int rmdir( const char * path )
+{
+    return (int) syscall( SYS_unlinkat, LINUX_AT_FDCWD, path, AT_REMOVEDIR );
+} //mkdir
+
 extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval * timeout )
 {
     // map to pselect6 which means timespec no timeval and 0 sigset
     return (int) syscall( SYS_pselect6, nfds, readfds, writefds, exceptfds, 0, 0 );
-}
+} //select
 
 extern "C" int unlink( const char * path )
 {
     return (int) syscall( SYS_unlinkat, LINUX_AT_FDCWD, path, 0 );
-}
+} //unlink
 
 extern "C" int fstat( int fd, struct stat * statbuf )
 {
