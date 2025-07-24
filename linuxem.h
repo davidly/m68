@@ -4,6 +4,7 @@
 
 #define EMULATOR_MAX_PATH 2048
 #define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100
+#define EMULATOR_AT_REMOVEDIR 0x200 // this is 8 for newlib
 
 #define emulator_sys_rand               0x2000
 #define emulator_sys_print_double       0x2001

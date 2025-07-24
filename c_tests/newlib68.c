@@ -269,7 +269,7 @@ extern "C" int mkdir( const char * path, mode_t mode )
 
 extern "C" int rmdir( const char * path )
 {
-    return (int) syscall( SYS_unlinkat, LINUX_AT_FDCWD, path, AT_REMOVEDIR );
+    return (int) syscall( SYS_unlinkat, LINUX_AT_FDCWD, path, EMULATOR_AT_REMOVEDIR );
 } //mkdir
 
 extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval * timeout )
