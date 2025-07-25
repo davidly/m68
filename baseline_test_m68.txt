@@ -1,4 +1,4 @@
-Thu 07/24/2025 13:28:57.73 
+Fri 07/25/2025  5:43:20.29 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-25.153 milliseconds
+38.827 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -1114,6 +1114,12 @@ floating point:
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
 test ttypes 
+types: i8 a, ui8 h, i16 s, ui16 t, i32 l, ui32 m, i64 x, ui64 y, f f, d d, ld e
+int8_t is signed: 1, uint8_t is signed: 0
+int16_t is signed: 1, uint16_t is signed: 0
+int32_t is signed: 1, uint32_t is signed: 0
+int64_t is signed: 1, uint64_t is signed: 0
+float is signed: 1, double is signed: 1, long double is signed: 1
 cast:     types    int8 +    int8, size 2, sumA -74.000000000000, sumB -44.000000000000, sumC -88.000000000000
 overflow: types    int8 +    int8, size 2, sumA 113.000000000000, sumB -30.000000000000, sumC -60.000000000000
 cast:     types    int8 +   uint8, size 2, sumA -2.000000000000, sumB 0.000000000000, sumC -8.000000000000
@@ -4088,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 24, hour 20, min 29, sec 6
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 24, hour 15, min 29, sec 6
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 24, hour 12, min 29, sec 6
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 24, hour 12, min 29, sec 6
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 25, hour 12, min 43, sec 31
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 25, hour 7, min 43, sec 31
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 25, hour 4, min 43, sec 31
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 25, hour 4, min 43, sec 31
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5776,7 +5782,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 24, hour 12, min 29, sec 14
+tz: 'PST+8', year: 2025, month 7, day 25, hour 4, min 43, sec 41
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -8070,17 +8076,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     270
-  dictionary: 266
-  generate:   3
-  render:     0
+total ms:     395
+  dictionary: 389
+  generate:   4
+  render:     1
 test ba tp.bas 
-227 ms for 1 iterations
+340 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-362.453003 milliseconds
+523.140991 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8104,4 +8110,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Thu 07/24/2025 13:29:32.07 
+Fri 07/25/2025  5:44:03.65 

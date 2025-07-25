@@ -28,6 +28,16 @@ bool IS_FP( uint32_t x ) { return false; }
 bool IS_FP( int64_t x ) { return false; }
 bool IS_FP( uint64_t x ) { return false; }
 
+template <typename T> bool is_signed_type()
+{
+    bool s = std::is_signed< T >();
+
+    if ( 'n' == * typeid( T ).name() ) // old gnu compilers for riscv64 get this wrong in is_signed for int128_t
+        s = true;
+
+    return s;
+} //is_signed_type
+
 template <class T> T do_abs( T x )
 {
     return ( x < 0 ) ? -x : x;
@@ -60,8 +70,8 @@ template <class T, class U> T do_cast( U x )
 {
     size_t cbU = sizeof( U );
     size_t cbT = sizeof( T );
-    bool signedU = std::is_signed<U>();
-    bool signedT = std::is_signed<T>();
+    bool signedU = is_signed_type<U>();
+    bool signedT = is_signed_type<T>();
     T result = 0;
 
     if ( IS_FP( result ) )
@@ -365,12 +375,17 @@ template <class T, class U, size_t size> T tst( T t, U u )
 
 int main( int argc, char * argv[], char * env[] )
 {
-#if 0
     printf( "types: i8 %s, ui8 %s, i16 %s, ui16 %s, i32 %s, ui32 %s, i64 %s, ui64 %s, f %s, d %s, ld %s\n",
             typeid(int8_t).name(), typeid(uint8_t).name(), typeid(int16_t).name(), typeid(uint16_t).name(),
             typeid(int32_t).name(), typeid(uint32_t).name(), typeid(int64_t).name(), typeid(uint64_t).name(),
             typeid(float).name(), typeid(double).name(), typeid(ldouble_t).name() );
-#endif
+
+    printf( "int8_t is signed: %d, uint8_t is signed: %d\n", is_signed_type<int8_t>(), is_signed_type<uint8_t>() );
+    printf( "int16_t is signed: %d, uint16_t is signed: %d\n", is_signed_type<int16_t>(), is_signed_type<uint16_t>() );
+    printf( "int32_t is signed: %d, uint32_t is signed: %d\n", is_signed_type<int32_t>(), is_signed_type<uint32_t>() );
+    printf( "int64_t is signed: %d, uint64_t is signed: %d\n", is_signed_type<int64_t>(), is_signed_type<uint64_t>() );
+    printf( "float is signed: %d, double is signed: %d, long double is signed: %d\n",
+            is_signed_type<float>(), is_signed_type<double>(), is_signed_type<ldouble_t>() );
 
 #if 1
     run_dimension( 2 );

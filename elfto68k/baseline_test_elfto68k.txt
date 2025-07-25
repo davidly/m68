@@ -1,4 +1,4 @@
-Thu 07/24/2025 20:44:12.79 
+Fri 07/25/2025  5:44:57.46 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -799,6 +799,12 @@ floating point:
 building ttypes 
 elfto68k successfully created TTYPES.68K
 running ttypes 
+types: i8 a, ui8 h, i16 s, ui16 t, i32 l, ui32 m, i64 x, ui64 y, f f, d d, ld e
+int8_t is signed: 1, uint8_t is signed: 0
+int16_t is signed: 1, uint16_t is signed: 0
+int32_t is signed: 1, uint32_t is signed: 0
+int64_t is signed: 1, uint64_t is signed: 0
+float is signed: 1, double is signed: 1, long double is signed: 1
 cast:     types    int8 +    int8, size 2, sumA -74.000000000000, sumB -44.000000000000, sumC -88.000000000000
 overflow: types    int8 +    int8, size 2, sumA 113.000000000000, sumB -30.000000000000, sumC -60.000000000000
 cast:     types    int8 +   uint8, size 2, sumA -2.000000000000, sumB 0.000000000000, sumC -8.000000000000
@@ -5565,4 +5571,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Thu 07/24/2025 20:45:53.35 
+Fri 07/25/2025  5:46:40.40 
