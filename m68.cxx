@@ -6578,15 +6578,17 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     pstack--; // end of environment data is 0
     pstack--; // move to where the OS environment variable is set OS=RVOS or OS=ARMOS
-    *pstack = swap_endian32( env_os_address ); // (REG_TYPE) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( REG_TYPE ) );
-    tracer.Trace( "the OS environment argument is at VM address %lx\n", swap_endian32( *pstack ) );
 
     if ( 0 != env_tz_address )
     {
-        pstack--; // move to where the TZ environment variable is set TZ=xxx
         *pstack = swap_endian32( env_tz_address );
         tracer.Trace( "the TZ environment argument is at VM address %lx (orig %lx)\n", swap_endian32( *pstack ), env_tz_address );
+        pstack--;
     }
+
+    // point to the OS= environment variable location
+    *pstack = swap_endian32( env_os_address ); // (REG_TYPE) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( REG_TYPE ) );
+    tracer.Trace( "the OS environment argument is at VM address %lx\n", swap_endian32( *pstack ) );
 
     pstack--; // the last argv is 0 to indicate the end
 
@@ -7209,16 +7211,18 @@ static bool load_image( const char * pimage, const char * app_args )
     paux[7].swap_endianness();
 
     pstack--; // end of environment data is 0
-    pstack--; // move to where the OS environment variable is set OS=RVOS or OS=ARMOS
-    *pstack = swap_endian64( env_os_address ); // (uint64_t) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( uint64_t ) );
-    tracer.Trace( "the OS environment argument is at VM address %llx\n", *pstack );
+    pstack--; // move to where the first environment variable is
 
     if ( 0 != env_tz_address )
     {
-        pstack--; // move to where the TZ environment variable is set TZ=xxx
         *pstack = swap_endian64( env_tz_address );
         tracer.Trace( "the TZ environment argument is at VM address %llx\n", env_tz_address );
+        pstack--;
     }
+
+    // point to the OS= environment variable location
+    *pstack = swap_endian64( env_os_address );
+    tracer.Trace( "the OS environment argument is at VM address %llx\n", *pstack );
 
     pstack--; // the last argv is 0 to indicate the end
 
