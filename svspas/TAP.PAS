@@ -42,8 +42,7 @@ begin
         sofar := sofar + ( 1.0 / ( dj * dj * dj ) );
         if ( j = ( prev * 10 ) ) then begin
             prev := j;
-            write( '  at ', i );
-            writeln( ' iterations: ', sofar );
+            writeln( '  at ', j, ' iterations: ', sofar );
         end;
     end;
 end;
