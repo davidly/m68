@@ -1,4 +1,4 @@
-Sat 07/26/2025  8:45:21.85 
+Sat 07/26/2025 14:36:18.96 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-42.117001 milliseconds
+23.983000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 26, hour 15, min 45, sec 33
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 26, hour 10, min 45, sec 33
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 26, hour 7, min 45, sec 33
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 26, hour 7, min 45, sec 33
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 26, hour 21, min 36, sec 27
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 26, hour 16, min 36, sec 27
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 36, sec 27
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 26, hour 13, min 36, sec 27
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5782,7 +5782,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 26, hour 7, min 45, sec 42
+tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 36, sec 35
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -7665,6 +7665,47 @@ Total code size = 634
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
+building tap
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+    GCD      [1166550 bytes]
+             {1166236 bytes}
+    FIRST_IM [1166414 bytes]
+             {1165868 bytes}
+    RANDOM   [1166538 bytes]
+             {1166366 bytes}
+ TAP      [1166618 bytes]
+          {1165352 bytes}
+
+0 errors.  89 lines.  File tap.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+GCD      - GCD         Code size = 72
+FIRST_IM - FIRST_IM    Code size = 234
+RANDOM   - RANDOM      Code size = 60
+TAP      - TAP         Code size = 464
+Total code size = 830
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+building tphi
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+ TPHI     [1167050 bytes]
+          {1166500 bytes}
+
+0 errors.  20 lines.  File tphi.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+TPHI     - TPHI        Code size = 208
+Total code size = 208
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -7676,6 +7717,37 @@ moves evaluated:        6493
 iterations:             1
 running MM
 summ is: 465880
+running TAP
+tap starting, should tend towards 1.2020569031595942854...
+first implementation...
+  at 52548 iterations:  1.19753198567419D+000
+  at 52548 iterations:  1.20200740065968D+000
+  at 52548 iterations:  1.20205640365934D+000
+  at 52548 iterations:  1.20205689816010D+000
+  at 52548 iterations:  1.20205690310973D+000
+second implementation...
+  at 10 iterations:  1.25000000000000D+000
+  at 100 iterations:  1.25000000000000D+000
+  at 1000 iterations:  1.21506682867558D+000
+  at 10000 iterations:  1.20758362516604D+000
+  at 100000 iterations:  1.20439846318756D+000
+tap completed with great success
+running TPHI
+should tend towards 1.618033988749...
+  at 1 iterations:  2.00000000000000D+000
+  at 2 iterations:  1.50000000000000D+000
+  at 3 iterations:  1.66666662693024D+000
+  at 4 iterations:  1.60000002384186D+000
+  at 5 iterations:  1.62500000000000D+000
+  at 6 iterations:  1.61538457870483D+000
+  at 7 iterations:  1.61904764175415D+000
+  at 8 iterations:  1.61764705181122D+000
+  at 9 iterations:  1.61818182468414D+000
+  at 10 iterations:  1.61797749996185D+000
+  at 11 iterations:  1.61805558204651D+000
+  at 12 iterations:  1.61802577972412D+000
+  at 13 iterations:  1.61803710460663D+000
+  at 14 iterations:  1.61803281307220D+000
 compiler test svsfor 
 building e
 MC68000 Fortran77 Compiler  V2.1               01-Dec-83
@@ -8076,17 +8148,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     401
-  dictionary: 395
-  generate:   4
+total ms:     272
+  dictionary: 268
+  generate:   3
   render:     1
 test ba tp.bas 
-342 ms for 1 iterations
+232 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-522.546021 milliseconds
+366.631989 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8110,4 +8182,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sat 07/26/2025  8:46:05.09 
+Sat 07/26/2025 14:36:54.50 

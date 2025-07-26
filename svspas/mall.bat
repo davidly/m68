@@ -13,7 +13,7 @@ if "%1" == "rvos" (
   set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
-set _paslist=e sieve ttt mm
+set _paslist=e sieve ttt mm tap tphi
 
 ( for %%a in (%_paslist%) do ( call :pasrun %%a ) )
 

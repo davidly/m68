@@ -177,10 +177,10 @@ const REG_TYPE g_stack_commit = 128 * 1024;    // RAM to allocate for the fixed 
 
 #ifdef M68
 REG_TYPE g_brk_commit = 10 * 1024 * 1024;      // RAM to reserve if the app calls brk to allocate space. 10 meg default
-REG_TYPE g_mmap_commit = 0 * 1024 * 1024;      // RAM to reserve if the app mmap to allocate space. 10 meg default
+REG_TYPE g_mmap_commit = 0 * 1024 * 1024;      // RAM to reserve if the app calls mmap to allocate space. 0 meg default
 #else
 REG_TYPE g_brk_commit = 40 * 1024 * 1024;      // RAM to reserve if the app calls brk to allocate space. 40 meg default
-REG_TYPE g_mmap_commit = 40 * 1024 * 1024;     // RAM to reserve if the app mmap to allocate space. 40 meg default
+REG_TYPE g_mmap_commit = 40 * 1024 * 1024;     // RAM to reserve if the app calls mmap to allocate space. 40 meg default
 #endif
 
 bool g_terminate = false;                      // has the app asked to shut down?

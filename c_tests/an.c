@@ -1577,7 +1577,7 @@ extern "C" int main( int argc, char * argv[] )
     }
     catch ( bad_alloc & e )
     {
-        printf( "caught exception bad_alloc -- out of RAM. If in RVOS use -h or -m to add RAM. %s\n", e.what() );
+        printf( "caught exception bad_alloc -- out of RAM. If in an emulator use -h or -m to add RAM. %s\n", e.what() );
     }
     catch ( exception & e )
     {
