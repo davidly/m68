@@ -2679,6 +2679,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 #ifdef __APPLE__
             if ( -100 == directory )
                 directory = -2;
+            if ( EMULATOR_AT_REMOVEDIR == flags )
+                flags = AT_REMOVEDIR;
 #endif
             int result = unlinkat( directory, path, flags );
 #endif
