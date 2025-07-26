@@ -1,4 +1,4 @@
-Sat 07/26/2025 14:36:18.96 
+Sat 07/26/2025 14:47:10.48 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-23.983000 milliseconds
+24.010000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 26, hour 21, min 36, sec 27
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 26, hour 16, min 36, sec 27
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 36, sec 27
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 26, hour 13, min 36, sec 27
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 26, hour 21, min 47, sec 19
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 26, hour 16, min 47, sec 19
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 47, sec 19
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 26, hour 13, min 47, sec 19
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5782,7 +5782,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 36, sec 35
+tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 47, sec 27
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -7672,21 +7672,21 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
     GCD      [1166550 bytes]
              {1166236 bytes}
     FIRST_IM [1166414 bytes]
-             {1165868 bytes}
+             {1165896 bytes}
     RANDOM   [1166538 bytes]
              {1166366 bytes}
  TAP      [1166618 bytes]
           {1165352 bytes}
 
-0 errors.  89 lines.  File tap.pas
+0 errors.  88 lines.  File tap.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
 GCD      - GCD         Code size = 72
-FIRST_IM - FIRST_IM    Code size = 234
+FIRST_IM - FIRST_IM    Code size = 232
 RANDOM   - RANDOM      Code size = 60
-TAP      - TAP         Code size = 464
-Total code size = 830
+TAP      - TAP         Code size = 446
+Total code size = 810
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -7720,11 +7720,11 @@ summ is: 465880
 running TAP
 tap starting, should tend towards 1.2020569031595942854...
 first implementation...
-  at 52548 iterations:  1.19753198567419D+000
-  at 52548 iterations:  1.20200740065968D+000
-  at 52548 iterations:  1.20205640365934D+000
-  at 52548 iterations:  1.20205689816010D+000
-  at 52548 iterations:  1.20205690310973D+000
+  at 10 iterations:  1.19753198567419D+000
+  at 100 iterations:  1.20200740065968D+000
+  at 1000 iterations:  1.20205640365934D+000
+  at 10000 iterations:  1.20205689816010D+000
+  at 100000 iterations:  1.20205690310973D+000
 second implementation...
   at 10 iterations:  1.25000000000000D+000
   at 100 iterations:  1.25000000000000D+000
@@ -8149,16 +8149,16 @@ idea veld
 lade vied
 lead vied
 total ms:     272
-  dictionary: 268
+  dictionary: 267
   generate:   3
   render:     1
 test ba tp.bas 
-232 ms for 1 iterations
+229 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-366.631989 milliseconds
+363.674988 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8182,4 +8182,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sat 07/26/2025 14:36:54.50 
+Sat 07/26/2025 14:47:45.91 
