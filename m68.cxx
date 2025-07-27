@@ -1200,7 +1200,7 @@ static int linux_translate_flags( int flags )
     if ( 0x8 & flags )
         f |= 0x400; // O_APPEND
 
-#if defined( __riscv )
+#if defined( __riscv ) || defined( __x86_64__ )
     if ( 0x200000 & flags )
         f |= 0x10000; // O_DIRECTORY
 #else
@@ -2433,6 +2433,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_openat:
         {
             tracer.Trace( "  syscall command SYS_openat\n" );
+            tracer.Trace( "  O_DIRECT %#x, O_DIRECTORY %#x, AT_FDCWD %d\n", O_DIRECT, O_DIRECTORY, AT_FDCWD );
             // a0: directory. a1: asciiz string of file to open. a2: flags. a3: mode
 
             int directory = (int) ACCESS_REG( REG_ARG0 );
@@ -2446,7 +2447,6 @@ void emulator_invoke_svc( CPUClass & cpu )
             int64_t descriptor = 0;
 
             tracer.Trace( "  open dir %d, flags %x, mode %x, file '%s'\n", directory, flags, mode, pname );
-            //tracer.Trace( "  O_DIRECT %#x, O_DIRECTORY %#x\n", O_DIRECT, O_DIRECTORY );
 
             if ( !strcmp( pname, "/proc/device-tree/cpus/timebase-frequency" ) )
             {
@@ -2530,7 +2530,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             flags = translate_open_flags_to_68k( flags );
 #endif
 
-            tracer.Trace( "  final directory %d, flags %#llx, mode %x passed to openat\n", directory, flags, mode );
+            tracer.Trace( "  final directory %d, flags %#x, mode %#x passed to openat\n", directory, flags, mode );
             descriptor = openat( directory, pname, flags, mode );
 #endif // _WIN32
             update_result_errno( cpu, (int) descriptor );
@@ -6607,35 +6607,35 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     tracer.TraceBinaryData( (uint8_t *) pstack, (uint32_t) aux_data_size, 2 );
 
     tracer.Trace( "memory map from highest to lowest addresses:\n" );
-    tracer.Trace( "  first byte beyond allocated memory:                 %x\n", g_base_address + memory_size );
-    tracer.Trace( "  <mmap arena>                                        (%d = %x bytes)\n", g_mmap_commit, g_mmap_commit );
-    tracer.Trace( "  mmap start adddress:                                %x\n", g_base_address + g_mmap_offset );
+    tracer.Trace( "  first byte beyond allocated memory:                 %lx\n", g_base_address + memory_size );
+    tracer.Trace( "  <mmap arena>                                        (%ld = %lx bytes)\n", g_mmap_commit, g_mmap_commit );
+    tracer.Trace( "  mmap start adddress:                                %lx\n", g_base_address + g_mmap_offset );
     tracer.Trace( "  <filler to align to 4k-page for mmap allocations>\n" );
 
-    tracer.Trace( "  <argv data, pointed to by argv array below>         (%d == %x bytes)\n", g_arg_data_commit, g_arg_data_commit );
-    tracer.Trace( "  start of argv data:                                 %x\n", g_base_address + arg_data_offset );
+    tracer.Trace( "  <argv data, pointed to by argv array below>         (%ld == %lx bytes)\n", g_arg_data_commit, g_arg_data_commit );
+    tracer.Trace( "  start of argv data:                                 %lx\n", g_base_address + arg_data_offset );
 
-    tracer.Trace( "  start of aux data:                                  %x\n", g_top_of_stack + aux_data_size );
-    tracer.Trace( "  <random, alignment, aux recs, env, argv>            (%d == %x bytes)\n", aux_data_size, aux_data_size );
-    tracer.Trace( "  initial stack pointer g_top_of_stack:               %x\n", g_top_of_stack );
+    tracer.Trace( "  start of aux data:                                  %lx\n", g_top_of_stack + aux_data_size );
+    tracer.Trace( "  <random, alignment, aux recs, env, argv>            (%ld == %lx bytes)\n", aux_data_size, aux_data_size );
+    tracer.Trace( "  initial stack pointer g_top_of_stack:               %lx\n", g_top_of_stack );
     REG_TYPE stack_bytes = g_stack_commit - aux_data_size;
-    tracer.Trace( "  <stack>                                             (%d == %x bytes)\n", stack_bytes, stack_bytes );
-    tracer.Trace( "  last byte stack can use (g_bottom_of_stack):        %x\n", g_base_address + g_bottom_of_stack );
-    tracer.Trace( "  <unallocated space between brk and the stack>       (%d == %llx bytes)\n", g_brk_commit, g_brk_commit );
-    tracer.Trace( "  end_of_data / current brk:                          %x\n", g_base_address + g_end_of_data );
+    tracer.Trace( "  <stack>                                             (%ld == %lx bytes)\n", stack_bytes, stack_bytes );
+    tracer.Trace( "  last byte stack can use (g_bottom_of_stack):        %lx\n", g_base_address + g_bottom_of_stack );
+    tracer.Trace( "  <unallocated space between brk and the stack>       (%ld == %llx bytes)\n", g_brk_commit, g_brk_commit );
+    tracer.Trace( "  end_of_data / current brk:                          %lx\n", g_base_address + g_end_of_data );
     REG_TYPE uninitialized_bytes = g_end_of_data - first_uninitialized_data;
-    tracer.Trace( "  <uninitialized data per the .elf file>              (%d == %x bytes)\n", uninitialized_bytes, uninitialized_bytes );
-    tracer.Trace( "  first byte of uninitialized data:                   %x\n", first_uninitialized_data );
+    tracer.Trace( "  <uninitialized data per the .elf file>              (%ld == %lx bytes)\n", uninitialized_bytes, uninitialized_bytes );
+    tracer.Trace( "  first byte of uninitialized data:                   %lx\n", first_uninitialized_data );
     tracer.Trace( "  <initialized data from the .elf file>\n" );
     tracer.Trace( "  <code from the .elf file>\n" );
-    tracer.Trace( "  initial pc execution_addess:                        %x\n", g_execution_address );
+    tracer.Trace( "  initial pc execution_addess:                        %lx\n", g_execution_address );
     tracer.Trace( "  <code per the .elf file>\n" );
-    tracer.Trace( "  start of the address space per the .elf file:       %x\n", elf_base_address );
-    tracer.Trace( "  start of the address space actual:                  %x\n", g_base_address );
+    tracer.Trace( "  start of the address space per the .elf file:       %lx\n", elf_base_address );
+    tracer.Trace( "  start of the address space actual:                  %lx\n", g_base_address );
 
     tracer.Trace( "vm memory first byte beyond:     %p\n", memory.data() + memory_size );
     tracer.Trace( "vm memory start:                 %p\n", memory.data() );
-    tracer.Trace( "memory_size:                     %#x == %d\n", memory_size, memory_size );
+    tracer.Trace( "memory_size:                     %lx == %ld\n", memory_size, memory_size );
 
     return true;
 } //load_image32

@@ -1,4 +1,4 @@
-Sat 07/26/2025 14:47:10.48 
+Sun 07/27/2025  6:29:29.92 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-24.010000 milliseconds
+24.642 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 26, hour 21, min 47, sec 19
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 26, hour 16, min 47, sec 19
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 47, sec 19
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 26, hour 13, min 47, sec 19
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 27, hour 13, min 29, sec 38
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 27, hour 8, min 29, sec 38
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 27, hour 5, min 29, sec 38
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 27, hour 5, min 29, sec 38
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5764,6 +5764,7 @@ test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
+getrusage user time in ms: 984, system time 0
 sleepy time ended with great success
 test tdir 
 tdir completed with great success
@@ -5782,7 +5783,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 26, hour 13, min 47, sec 27
+tz: 'PST+8', year: 2025, month 7, day 27, hour 5, min 29, sec 46
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -7830,6 +7831,24 @@ Total code size = 408
 MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
+building tphi
+MC68000 Fortran77 Compiler  V2.1               01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+PHI    [1165166 bytes]
+       {1164268 bytes}
+
+
+0 errors.  29 lines.  File tphi.for
+Smallest available space: 1165166 bytes.
+MC68000 Code Generator  V2.1                   01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+PHI      - PHI         Code size = 346
+Total code size = 346
+MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319  done
 running SIEVE
@@ -7842,6 +7861,35 @@ running TTT
 running MM
     465880
 mm completed with great success
+running TPHI
+ should tend towards 1.61803398874989484820458683436563811772030
+     iteration    1  r8: 2.0000000000000000
+     iteration    2  r8: 1.5000000000000000
+     iteration    3  r8: 1.6666666666666670
+     iteration    4  r8: 1.6000000000000000
+     iteration    5  r8: 1.6250000000000000
+     iteration    6  r8: 1.6153846153846150
+     iteration    7  r8: 1.6190476190476190
+     iteration    8  r8: 1.6176470588235290
+     iteration    9  r8: 1.6181818181818180
+     iteration   10  r8: 1.6179775280898880
+     iteration   11  r8: 1.6180555555555560
+     iteration   12  r8: 1.6180257510729610
+     iteration   13  r8: 1.6180371352785150
+     iteration   14  r8: 1.6180327868852460
+     iteration   15  r8: 1.6180344478216820
+     iteration   16  r8: 1.6180338134001250
+     iteration   17  r8: 1.6180340557275540
+     iteration   18  r8: 1.6180339631667060
+     iteration   19  r8: 1.6180339985218030
+     iteration   20  r8: 1.6180339850173580
+     iteration   21  r8: 1.6180339901755970
+     iteration   22  r8: 1.6180339882053250
+     iteration   23  r8: 1.6180339889579020
+     iteration   24  r8: 1.6180339886704430
+     iteration   25  r8: 1.6180339887802430
+     iteration   26  r8: 1.6180339887383030
+ complete
 compiler test forth83 
 running E
 
@@ -8148,17 +8196,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     272
-  dictionary: 267
+total ms:     279
+  dictionary: 275
   generate:   3
-  render:     1
+  render:     0
 test ba tp.bas 
-229 ms for 1 iterations
+240 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-363.674988 milliseconds
+367.682007 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8182,4 +8230,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sat 07/26/2025 14:47:45.91 
+Sun 07/27/2025  6:30:05.65 
