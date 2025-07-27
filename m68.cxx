@@ -2433,10 +2433,13 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_openat:
         {
             tracer.Trace( "  syscall command SYS_openat\n" );
+#if defined( O_DIRECT ) && defined( O_DIRECTORY ) && defined( AT_FDCWD )
             tracer.Trace( "  O_DIRECT %#x, O_DIRECTORY %#x, AT_FDCWD %d\n", O_DIRECT, O_DIRECTORY, AT_FDCWD );
-            // a0: directory. a1: asciiz string of file to open. a2: flags. a3: mode
+#endif
 
+            // a0: directory. a1: asciiz string of file to open. a2: flags. a3: mode
             int directory = (int) ACCESS_REG( REG_ARG0 );
+
 #ifdef __APPLE__
             if ( -100 == directory )
                 directory = -2; // Linux vs. MacOS
