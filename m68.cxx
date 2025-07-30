@@ -6310,6 +6310,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     }
 
     // use known my_qsort so traces are consistent across platforms because qsort implementations for duplicate values differ
+
     tracer.Trace( "sorting symbol entries\n" );
     my_qsort( g_symbols32.data(), g_symbols32.size(), sizeof( ElfSymbol32 ), symbol_compare32 );
 
@@ -6958,6 +6959,7 @@ static bool load_image( const char * pimage, const char * app_args )
     }
 
     // use known qsort so traces are consistent across platforms because qsort implementations for ties differ
+
     my_qsort( g_symbols.data(), g_symbols.size(), sizeof( ElfSymbol64 ), symbol_compare );
 
     // remove symbols that don't look like they have a valid addresses (rust binaries have tens of thousands of these)

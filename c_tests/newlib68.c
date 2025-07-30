@@ -103,7 +103,7 @@ extern "C" void _exit( int code ) { exit_emulator( code ); }
 extern "C" int close( int fd )
 {
     return (int) syscall( SYS_close, fd );
-}
+} //close
 
 extern "C" int open( const char * pathname, int flags, ... )
 {
@@ -225,42 +225,42 @@ extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int fl
 int getrusage( int who, struct rusage *usage )
 {
     return (int) syscall( SYS_getrusage, who, usage );
-}
+} //getrusage
 
 extern "C" clock_t times( struct tms * buf )
 {
     return (int) syscall( SYS_times, buf );
-}
+} //times
 
 extern "C" int rename( const char * oldpath, const char * newpath )
 {
     return (int) syscall( SYS_renameat, LINUX_AT_FDCWD, oldpath, LINUX_AT_FDCWD, newpath, 0 );
-}
+} //rename
 
 extern "C" int chdir( const char * path )
 {
     return (int) syscall( SYS_chdir, path );
-}
+} //chdir
 
 extern "C" int mkdirat( int dirfd, const char * path, mode_t mode )
 {
     return (int) syscall( SYS_mkdirat, dirfd, path, mode );
-}
+} //mkdirat
 
 extern "C" int unlinkat( int dirfd, const char * path, int flags )
 {
     return (int) syscall( SYS_unlinkat, dirfd, path, flags );
-}
+} //unlinkat
 
 extern "C" int fdatasync( int fd )
 {
     return (int) syscall( SYS_fdatasync, fd );
-}
+} //fdatasync
 
 extern "C" char * getcwd( char * buf, size_t size )
 {
     return (char *) syscall( SYS_getcwd, buf, size );
-}
+} //getcwd
 
 extern "C" int mkdir( const char * path, mode_t mode )
 {

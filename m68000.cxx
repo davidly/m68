@@ -111,7 +111,10 @@ int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn 
     is_l = get_bit16( extension, 11 );
     uint16_t scale = get_bits16( extension, 9, 2 );
     if ( 0 != scale || get_bit16( extension, 8 ) )
+    {
+        tracer.Trace( "scale isn't 0, so it's not a 68000 instruction\n" );
         unhandled(); // if not 0, it's a >68000 instruction
+    }
     return (int32_t) sign_extend( 0xff & extension, 7 );
 } //decode_ea_displacement
 
