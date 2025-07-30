@@ -3,8 +3,8 @@ m68 runs 68000 elf, Motorola hex, and CP/M 68K binaries on Windows, macOS, and L
 
 m68 loads binaries into memory then emulates the Motorola 68000 and required system calls to execute them. 
 
-C and C++ programs in the c_tests folder can be built with a 68000 cross compiler on most platforms. I've run buildgcc-8.2.0.sh on both Windows 11 running on AMD64 and Ubuntu running 
-on Arm64 to build the GNU gcc 8.2.0 cross compiler. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details. 
+C and C++ programs in the c_tests folder can be built with a 68000 cross compiler on most platforms. I've run buildgcc-8.2.0.sh on Windows 11 running on AMD64 and Ubuntu running 
+on both Arm64 and AMD64 to build the GNU gcc 8.2.0 cross compiler. See [Building GCC for 68000](http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet) for details. 
 
 I've been unable to build the gcc 68000 cross compiler on macOS or Raspberry PI 5. I am able to run the 68000 gcc cross-compiler built on Ubutnu for Arm64 on a Raspberry PI 5. 
 
@@ -12,7 +12,7 @@ The build scripts m.bat and m.sh in the c_tests folder can be used to build samp
 mm68.bat and mm68.sh build the m68 emulator targeting the 68000 so the emulator can run itself recursively.
 mall.bat and mall.sh build all of the test apps.
 
-The test apps in the c_tests folder build with newlib and have the required stubs for newlib to call into
+The test apps in the c_tests folder build with newlib and have the required BSP stubs for newlib to call into
 Linux-like system calls emulated by m68. m68start.s has the assembly code that initializes newlib
 then calls main(). newlib68.c has the small wrappers that are called by newlib then make Linux-style
 system calls into the m68 emulator via the Trap insruction. It's required to link these two object
