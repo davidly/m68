@@ -52,13 +52,13 @@ int main()
 
     d = tanh( 2.2 );
     printf( "tanh of 2.2 is %lf\n", s );
-    
+
     d = log( 0.3 );
     printf( "log of 0.3: %lf\n", d );
 
     d = log10( 300.0 );
     printf( "log10 of 300: %lf\n", d );
-    
+
     double b = 0.2;
     for ( double a = -0.5; a < 0.5; a += 0.1 )
     {
@@ -90,7 +90,7 @@ int main()
 
     printf( "r should be 1.0: %lf\n", r );
     printf( "  r high point %lf\n", t );
-    
+
     printf( "test doubles completed with great success\n" );
     return 0;
 } //main

@@ -14,7 +14,7 @@ void validate( void * amaps[], size_t i, size_t size )
     {
         if ( p[x] != c )
         {
-            printf( "buffer %p number %d size %d doesn't have value %c at offset %d -- it has integer %d\n", 
+            printf( "buffer %p number %d size %d doesn't have value %c at offset %d -- it has integer %d\n",
                     p, (int) i, (int) size, c, (int) x, (int) p[x] );
             exit( 1 );
         }

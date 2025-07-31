@@ -17,15 +17,15 @@ int main() {
         for (i = 0; i < HIGH_MARK; i++) {
             r[i] = 2000;
         }
-    
+
         for (k = HIGH_MARK; k > 0; k -= 14) {
             d = 0;
-    
+
             i = k;
             for (;;) {
                 d += r[i] * 10000;
                 b = 2 * i - 1;
-    
+
                 r[i] = d % b;
                 d /= b;
                 i--;

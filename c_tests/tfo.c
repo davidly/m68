@@ -20,7 +20,7 @@ long portable_filelen( FILE * fp )
     //printf( "file length from ftell: %ld\n", len );
     fseek( fp, current, SEEK_SET );
     return len;
-} 
+}
 
 int main( int argc, char * argv[] )
 {
@@ -53,7 +53,7 @@ int main( int argc, char * argv[] )
 
     fclose( fp );
     remove( "tfo.txt" );
-    
+
     printf( "tfo completed with great success\n" );
     return 0;
 }

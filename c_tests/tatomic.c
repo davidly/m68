@@ -72,7 +72,7 @@ int main( int argc, char * argv[] )
 
 #if 0
     // armos only has one core and supports one thread. but code will uses mutexes so validate they don't fail
-    
+
     std::mutex mtx;
     mtx.lock();
     mtx.unlock();

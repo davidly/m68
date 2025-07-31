@@ -63,7 +63,7 @@ int main()
     }
     catch ( ... )
     {
-        printf( "caught generic exception\n" ); 
+        printf( "caught generic exception\n" );
     }
 
     printf( "test exceptions completed with great success\n" );

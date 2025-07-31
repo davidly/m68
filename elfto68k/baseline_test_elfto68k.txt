@@ -1,4 +1,4 @@
-Fri 07/25/2025  5:44:57.46 
+Wed 07/30/2025 17:18:43.65 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -5478,6 +5478,21 @@ running tfo
 filelen: 0
 filelen: 128
 tfo completed with great success
+building nqueens 
+elfto68k successfully created NQUEENS.68K
+running nqueens 
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
+     9          352
+    10          724
+    11         2680
 building fopentst 
 elfto68k successfully created FOPENTST.68K
 running fopentst 
@@ -5571,4 +5586,4 @@ id leaved
 idea veld
 lade vied
 lead vied
-Fri 07/25/2025  5:46:40.40 
+Wed 07/30/2025 17:20:18.30 

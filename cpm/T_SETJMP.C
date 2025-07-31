@@ -6,7 +6,7 @@ static jmp_buf buf;
 void second()
 {
     printf( "second\n" );
-    longjmp( buf, 1 );   
+    longjmp( buf, 1 );
 }
 
 void first()
@@ -16,10 +16,10 @@ void first()
 }
 
 int main()
-{   
+{
     if ( ! setjmp( buf ) )
-        first();         
-    else                 
+        first();
+    else
         printf( "back in main\n" );
 
     printf( "falling out of main\n" );

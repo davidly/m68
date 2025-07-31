@@ -122,7 +122,7 @@ int main( argc, argv ) int argc; char * argv[];
     {
         if ( logging )
             printf( "in alloc mode\n" );
-    
+
         for ( i = 0; i < allocs; i++ )
         {
             cb = 8 + ( i * 10 );
@@ -133,54 +133,54 @@ int main( argc, argv ) int argc; char * argv[];
             pc = (char *) calloc( c_cb, 1 );
             chkmem( pc, 0, c_cb );
             memset_x( pc, 0xcc, c_cb );
-    
+
             ap[ i ] = (char *) malloc( cb );
             memset_x( ap[ i ], 0xaa, cb );
-    
+
             chkmem( pc, 0xcc, c_cb );
             free( pc );
         }
-    
+
         if ( logging )
             printf( "in free mode, even first\n" );
-    
+
         for ( i = 0; i < allocs; i += 2 )
         {
             cb = 8 + ( i * 10 );
             c_cb = cb + 3;
             if ( logging )
                 printf( "  i, cb: %d %d\n", i, cb );
-    
+
             pc = (char *) calloc( c_cb, 1 );
             chkmem( pc, 0, c_cb );
             memset_x( pc, 0xcc, c_cb );
-    
+
             chkmem( ap[ i ], 0xaa, cb );
             memset_x( ap[ i ], 0xff, cb );
             free( ap[ i ] );
-    
+
             chkmem( pc, 0xcc, c_cb );
             free( pc );
         }
-    
+
         if ( logging )
             printf( "in free mode, now odd\n" );
-    
+
         for ( i = 1; i < allocs; i += 2 )
         {
             cb = 8 + ( i * 10 );
             c_cb = cb + 7;
             if ( logging )
                 printf( "  i, cb: %d %d\n", i, cb );
-    
+
             pc = (char *) calloc( c_cb, 1 );
             chkmem( pc, 0, c_cb );
             memset_x( pc, 0xcc, c_cb );
-    
+
             chkmem( ap[ i ], 0xaa, cb );
             memset_x( ap[ i ], 0xff, cb );
             free( ap[ i ] );
-    
+
             chkmem( pc, 0xcc, c_cb );
             free( pc );
         }

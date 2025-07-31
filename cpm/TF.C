@@ -186,7 +186,7 @@ float my_sin( x ) float x;
     float flimit = TRIG_FLT_EPSILON / atof( "2" );
     float ftmp = fone;
 
-    for ( i = 1; i <= 10 && fabs( ftmp ) > flimit; i++ ) 
+    for ( i = 1; i <= 10 && fabs( ftmp ) > flimit; i++ )
     {
         tmp = 2 * i - 1;
         fbang = factorial( tmp );
@@ -260,7 +260,7 @@ float my_acos( x ) float x;
         if ( fabs( x - cos_mid ) <= flimit )
             return mid;
 
-        if ( cos_mid > x ) 
+        if ( cos_mid > x )
             low = mid;
         else
             high = mid;
@@ -342,11 +342,11 @@ float my_sqrt( num ) float num;
 {
     float fone = atof( "1" );
     float ftwo = atof( "2" );
-    float x = num; 
+    float x = num;
     float y = fone;
     float e = atof( ".00002" );
 
-    while ( ( x - y ) > e ) 
+    while ( ( x - y ) > e )
     {
         x = ( x + y ) / ftwo;
         y = num / x;
@@ -370,19 +370,19 @@ float my_frexp( x, exp ) float x; int * exp;
     }
 
     abs_x = fabs( x );
-    
+
     while ( abs_x >= fone )
     {
         abs_x /= ftwo;
         exponent++;
     }
-    
+
     while ( abs_x < fhalf )
     {
         abs_x *= ftwo;
         exponent--;
     }
-    
+
     *exp = exponent;
     return ( x >= fzero ) ? abs_x : -abs_x;
 } //my_frexp
@@ -467,7 +467,7 @@ int main()
 
     TRIG_FLT_EPSILON = atof( "0.0005" ); // atof( "0.00002" );  /* 0.00000011920928955078 would be better, but trig functions don't have that precision */
     M_PI = atof( "3.14159265" ); // this atof trashes stack if this string is long
-    
+
     floattoa( ac, atof( "-1.234567" ), 8 );
     printf( "float converted by floattoa: %s\n", ac );
     floattoa( ac, atof( "1.234567" ), 8 );
@@ -500,7 +500,7 @@ int main()
 
     s = my_sin( radians );
     printf( "my_sin of 30 degress is %f\n", s );
-                                        
+
     s = sinh( atof( "0.5" ) );
     printf( "sinh of 0.5 degress is %f\n", s );
 
@@ -530,13 +530,13 @@ int main()
 
     f = tanh( atof( "2.2" ) );
     printf( "tanh of 2.2 is %f\n", s );
-    
+
     f = log( atof( "0.3" ) );
     printf( "log of 0.3: %f\n", f );
 
     f = log10( atof( "300.0" ) );
     printf( "log10 of 300: %f\n", f );
-    
+
     // frexp in the C runtime produces incorrect results
     mantissa = my_frexp( pi, &exponent );
     printf( "pi has mantissa: %f, exponent %d\n", mantissa, exponent );

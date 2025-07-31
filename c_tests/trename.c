@@ -53,7 +53,7 @@ int main( int argc, char * argv[] )
         FILE * fA = fopen( FileA, "w" );
         if ( 0 == fA )
             error( "can't create file A" );
-    
+
         static uint8_t data[ 1024 ];
         memset( &data, 3, sizeof( data ) );
         int result = fwrite( &data, 1, sizeof( data ), fA );
@@ -62,7 +62,7 @@ int main( int argc, char * argv[] )
             printf( "result: %ld\n", result );
             error( "can't write data to file A" );
         }
-    
+
         result = fclose( fA );
         if ( 0 != result )
             error( "can't close file A" );

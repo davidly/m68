@@ -56,7 +56,7 @@ long portable_filelen( fp ) FILE * fp;
     printf( "file length from ftell: %ld\n", len );
     fseek( fp, current, SEEK_SET );
     return len;
-} 
+}
 
 void read_and_validate( offset, chunkLen, fp ) long offset; int chunkLen; FILE * fp;
 {

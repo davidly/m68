@@ -27,7 +27,7 @@ static char cs[][16] = { // okay
 void calculator() {
     char c;
     float f1, f2, f3;
-   
+
     printf("\nEnter float op float, e.g. 0.6 + 0.7\n");
     for (;;) {
         scanf("%f %c %f", &f1, &c, &f2);
@@ -37,7 +37,7 @@ void calculator() {
             case '*': f3 = f1 * f2; break;
             case '/': f3 = f1 / f2; break;
             default: printf("wrong op: %c\n", c); return; break;
-        }   
+        }
         printf("%14.7e %c %14.7e = %14.7e\n", f1, c, f2, f3);
         printf("0x%08lx %c 0x%08lx = 0x%08lx\n", f1, c, f2, f3);
     }
@@ -51,7 +51,7 @@ int main(argc, argv)
     long l;
     float f;
     double d;
-   
+
     printf("sizeof int %d\n", sizeof(i));
     printf("sizeof long %d\n", sizeof(l));
     printf("sizeof float %d\n", sizeof(f));

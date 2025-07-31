@@ -6078,7 +6078,7 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
 
                         t += vals[ t ].value;
                     }
-                    else if ( m68kCPM == g_AssemblyTarget && 
+                    else if ( m68kCPM == g_AssemblyTarget &&
                               6 == vals.size() &&
                               Token_PLUS == vals[ t + 2 ].token &&
                               Token_VARIABLE == vals[ t + 1 ].token &&
@@ -6089,11 +6089,11 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                               !stcmp( vals[ variableToken ].strValue, vals[ t + 1 ].strValue ) )
                     {
                         // 150 K% = K% + PR%
-                        fprintf( fp, "    add.l    %s, %s\n", 
+                        fprintf( fp, "    add.l    %s, %s\n",
                                  GenVariableReg( varmap, vals[ t + 3 ].strValue ),
                                  GenVariableReg( varmap, vals[ variableToken ].strValue ) );
                     }
-                    else if ( m68kCPM == g_AssemblyTarget && 
+                    else if ( m68kCPM == g_AssemblyTarget &&
                               6 == vals.size() &&
                               Token_PLUS == vals[ t + 2 ].token &&
                               Token_VARIABLE == vals[ t + 1 ].token &&
@@ -6112,10 +6112,10 @@ void GenerateASM( const char * outputfile, map<string, Variable> & varmap, bool 
                         //   4 PLUS, value 0, strValue ''
                         //   5 VARIABLE, value 0, strValue 'pr%'
 
-                        fprintf( fp, "    move.l   %s, %s\n", 
+                        fprintf( fp, "    move.l   %s, %s\n",
                                  GenVariableReg( varmap, vals[ t + 3 ].strValue ),
                                  GenVariableReg( varmap, vals[ variableToken ].strValue ) );
-                        fprintf( fp, "    add.l    %s, %s\n", 
+                        fprintf( fp, "    add.l    %s, %s\n",
                                  GenVariableReg( varmap, vals[ t + 1 ].strValue ),
                                  GenVariableReg( varmap, vals[ variableToken ].strValue ) );
                     }

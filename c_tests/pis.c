@@ -150,7 +150,7 @@ int main( int argc, char * argv[] )
         countGenerated = 128 * countGenerated128;
     }
 
-    printf( "startingOffset128: %d, startingOffset: %d, countGenerated128 %d, countGenerated %d\n", 
+    printf( "startingOffset128: %d, startingOffset: %d, countGenerated128 %d, countGenerated %d\n",
             startingOffset128, startingOffset, countGenerated128, countGenerated );
 
     size_t bufsize = 1 + countGenerated;
@@ -197,7 +197,7 @@ int main( int argc, char * argv[] )
             "7efb2a98a1f1651d39af017666ca593e82430e888cee8619456f9fb47d84a5c33b8b5ebee06f75d885c1"
             "2073401a449f56c16aa64ed3aa62363f77061bfedf72429b023d37d0d724d00a1248db0fead349f1c09b"
             "075372c980991b7b";
-    
+
         if ( countGenerated128 >= 8 && strncmp( ac, Julia1k, 1024 ) )
             printf( "results 1k don't match Julia!\n" );
         else if ( strncmp( ac, Julia1k, 128 ) )

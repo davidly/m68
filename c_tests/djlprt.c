@@ -35,7 +35,7 @@ static void printfloat( float f, int precision, void (*putc)(char) )
         (*putc)( '-' );
         f *= -1.0;
     }
-    
+
     long wholePart = (long) f;
     printnum( wholePart, 10, putc );
 
@@ -63,7 +63,7 @@ void printdouble( double d, int precision, void (*putc)(char) )
         (*putc)( '-' );
         d *= -1.0;
     }
-    
+
     long wholePart = (long) d;
     printnum( wholePart, 10, putc );
 
@@ -342,7 +342,7 @@ static void _doprnt(
                     truncate = _doprnt_truncates;
                     base = 16;
                     goto print_signed;
-                        
+
                 case 'Z':
                     base = 16;
                     capitals=16;        /* Print in upper case */

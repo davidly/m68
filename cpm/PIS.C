@@ -242,7 +242,7 @@ int main( argc, argv ) int argc; char * argv[];
         cGen = 128 * cGen128;
     }
 
-    printf( "soff128: %ld, soff: %ld, cGen128 %ld, cGen %ld\n", 
+    printf( "soff128: %ld, soff: %ld, cGen128 %ld, cGen %ld\n",
             soff128, soff, cGen128, cGen );
 
     bufsize = 1 + cGen;

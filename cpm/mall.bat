@@ -14,7 +14,7 @@ if "%1" == "rvos" (
 )
 
 set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets ^
-           cpmenumd primes targs
+           nqueens cpmenumd primes targs
 
 ( for %%a in (%_clist%) do ( call :crun %%a ) )
 

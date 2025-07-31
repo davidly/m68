@@ -34,25 +34,25 @@ int main( int argc, char * argv[] )
         int fd = open( TRW_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO );
         if ( -1 == fd )
             show_error( "unable to create data file" );
-    
+
         for ( i = 0; i < RW_LOOPS; i++ )
         {
             for ( j = 0; j < BUF_ELEMENTS; j++ )
                 buf[ j ] = i;
-    
+
             result = write( fd, (char *) buf, BUF_BYTES );
             if ( BUF_BYTES != result )
                 show_error( "unable to write to file" );
         }
-    
+
         fdatasync( fd );
         fsync( fd );
         close( fd );
-    
+
         fd = open( TRW_FILE, O_RDONLY );
         if ( -1 == fd )
             show_error( "unable to open data file read only" );
-    
+
         for ( i = 0; i < RW_LOOPS; i++ )
         {
             memset( buf, 0x69, BUF_BYTES );
@@ -62,7 +62,7 @@ int main( int argc, char * argv[] )
                 printf( "result: %d, i %d\n", result, i );
                 show_error( "unable to read from file at point A" );
             }
-    
+
             for ( j = 0; j < BUF_ELEMENTS; j++ )
             {
                 if ( buf[ j ] != i )
@@ -72,13 +72,13 @@ int main( int argc, char * argv[] )
                 }
             }
         }
-    
+
         close( fd );
-    
+
         fd = open( TRW_FILE, O_RDWR );
         if ( -1 == fd )
             show_error( "unable to open data file read/write" );
-    
+
         for ( i = 0; i < RW_LOOPS; i++ )
         {
             if ( 0 == ( i % 8 ) )
@@ -90,22 +90,22 @@ int main( int argc, char * argv[] )
                     printf( "file_offset %ld, seek_offset %ld\n", file_offset, seek_offset );
                     show_error( "lseek location not as expected" );
                 }
-    
+
                 for ( j = 0; j < BUF_ELEMENTS; j++ )
                     buf[ j ] = i + 0x4000;
-    
+
                 result = write( fd, (char *) buf, BUF_BYTES );
                 if ( BUF_BYTES != result )
                     show_error( "unable to write to file after lseek" );
             }
         }
-    
+
         close( fd );
-    
+
         fd = open( TRW_FILE, O_RDONLY );
         if ( -1 == fd )
             show_error( "unable to open data file read only" );
-    
+
         for ( i = RW_LOOPS-1; i >= 0; i-- )
         {
             seek_offset = (long int) i * BUF_BYTES;
@@ -115,11 +115,11 @@ int main( int argc, char * argv[] )
                 printf( "file_offset %ld, seek_offset %ld\n", file_offset, seek_offset );
                 show_error( "lseek location not as expected" );
             }
-    
+
             result = read( fd, (char *) buf, BUF_BYTES );
             if ( BUF_BYTES != result )
                 show_error( "unable to read from file after lseek" );
-    
+
             for ( j = 0; j < BUF_ELEMENTS; j++ )
             {
                 if ( 0 == ( i % 8 ) )
@@ -134,7 +134,7 @@ int main( int argc, char * argv[] )
                 }
             }
         }
-    
+
         close( fd );
     }
 

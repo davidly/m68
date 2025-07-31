@@ -11,7 +11,7 @@
 #define _perhaps_inline __attribute__((noinline))
 
 // -Ofast doesn't understand infinity so the compiler would emit this warning
-// v14 of clang doesn't understand this 
+// v14 of clang doesn't understand this
 #pragma clang diagnostic ignored "-Wnan-infinity-disabled"
 
 template <class T> inline T get_max( T a, T b )

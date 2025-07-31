@@ -152,15 +152,15 @@ char ** x_bsearch( key, vbase, num, width, compare ) char ** key; char ** vbase;
     char * base = (char *) vbase;
     int k, cmp;
     char * here;
-    int i = 0;
-    int j = num - 1;
+    int lo = 0;
+    int hi = num - 1;
 
     if ( 0 == num )
         return 0;
 
     do
     {
-        k = ( j + i ) / 2;
+        k = ( hi + lo ) / 2;
         here = base + width * k;
         cmp = ( *compare )( key, here );
         if ( 0 == cmp )
@@ -171,10 +171,10 @@ char ** x_bsearch( key, vbase, num, width, compare ) char ** key; char ** vbase;
         }
 
         if ( cmp < 0 )
-            j = k - 1;
+            hi = k - 1;
         else
-            i = k + 1;
-    } while ( j >= i );
+            lo = k + 1;
+    } while ( hi >= lo );
 
     return 0;
 } 

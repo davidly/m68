@@ -98,7 +98,7 @@ inline char my_tolower( char c )
     return c;
 } //my_tolower
 
-inline char * my_strlwr( char * str ) 
+inline char * my_strlwr( char * str )
 {
     for ( char * p = str; *p; ++p )
         *p = my_tolower( *p );
@@ -153,7 +153,7 @@ void search( const char * pstart, const char * ppattern )
                 printf( "can't open starting folder '%s', error %d\n", current.c_str(), errno );
             continue;
         }
-        
+
         static char next[ 2048 ]; // windows will return very long paths these days (if running wsl and/or an emulator)
         strcpy( next, current.c_str() );
         int dir_len = strlen( next );
@@ -183,7 +183,7 @@ void search( const char * pstart, const char * ppattern )
 
             if ( g_use_lstat )
                 pentry->d_type = DT_UNKNOWN; // really just for testing lstat()
-            
+
             bool is_dir = false;
             struct stat st_link;
             bool lstat_retrieved = false;
@@ -196,16 +196,16 @@ void search( const char * pstart, const char * ppattern )
                     //printf( "error: lstat failed for '%s', errno: %d\n", next, errno );
                     continue;
                 }
-                
+
                 lstat_retrieved = true;
                 is_dir = S_ISDIR( st_link.st_mode );
             }
             else
                 is_dir = ( DT_DIR == pentry->d_type );
-        
+
             if ( is_dir )
                 q.push( next );
-        
+
             if ( !g_case_sensitive )
                 my_strlwr( pentry->d_name );
 

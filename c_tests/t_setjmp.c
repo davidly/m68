@@ -18,7 +18,7 @@ void first(void)
 }
 
 int main()
-{   
+{
     if ( ! setjmp( buf ) )
         first();          // when executed, setjmp returns 0
     else                  // when longjmp jumps back, setjmp returns 1

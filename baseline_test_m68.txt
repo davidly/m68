@@ -1,4 +1,4 @@
-Sun 07/27/2025  6:29:29.92 
+Thu 07/31/2025  7:28:04.24 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-24.642 milliseconds
+21.995001 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 27, hour 13, min 29, sec 38
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 27, hour 8, min 29, sec 38
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 27, hour 5, min 29, sec 38
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 27, hour 5, min 29, sec 38
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 31, hour 14, min 28, sec 11
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 31, hour 9, min 28, sec 11
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 31, hour 6, min 28, sec 11
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 31, hour 6, min 28, sec 11
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5764,8 +5764,20 @@ test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
-getrusage user time in ms: 984, system time 0
 sleepy time ended with great success
+test nqueens 
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
+     9          352
+    10          724
+    11         2680
 test tdir 
 tdir completed with great success
 test fopentst 
@@ -5783,7 +5795,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 27, hour 5, min 29, sec 46
+tz: 'PST+8', year: 2025, month 7, day 31, hour 6, min 28, sec 19
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -5951,6 +5963,7 @@ building tmuldiv
 building mm
 building fopentst
 building tgets
+building nqueens
 building cpmenumd
 building primes
 building targs
@@ -6380,6 +6393,19 @@ len in pfl: 80
 length of file before initial close: 80
 len in pfl: 0
 exiting fopentst with great success
+running NQUEENS
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
+     9          352
+    10          724
+    11         2680
 running CPMENUMD
 finding COM files
 finding 68K files
@@ -6403,31 +6429,32 @@ finding 68K files
   file  16:        MM.68K     28416
   file  17:      MORE.68K     31872
   file  18:      NM68.68K     16000
-  file  19:       PIS.68K     43904
-  file  20:    PRIMES.68K     27776
-  file  21:   SENDC68.68K     16384
-  file  22:     SIEVE.68K     26880
-  file  23:   SIEVE68.68K       768
-  file  24:    SIZE68.68K     14592
-  file  25:  TADDSUBM.68K     34688
-  file  26:       TAP.68K     35584
-  file  27:     TARGS.68K     26880
-  file  28:      TBCD.68K     35712
-  file  29:      TCHK.68K     33792
-  file  30:       TEA.68K     83328
-  file  31:        TF.68K     52352
-  file  32:     TGETS.68K     30464
-  file  33:        TM.68K     29824
-  file  34:    TMOVEP.68K     33792
-  file  35:   TMULDIV.68K     32128
-  file  36:        TP.68K     37376
-  file  37:      TPHI.68K     31744
-  file  38:       TPI.68K     27904
-  file  39:        TS.68K     38272
-  file  40:    TSHIFT.68K     39168
-  file  41:       TTT.68K     39680
-  file  42:    TTT68U.68K      5120
-  file  43:  T_SETJMP.68K     27008
+  file  19:   NQUEENS.68K     28032
+  file  20:       PIS.68K     43904
+  file  21:    PRIMES.68K     27776
+  file  22:   SENDC68.68K     16384
+  file  23:     SIEVE.68K     26880
+  file  24:   SIEVE68.68K       768
+  file  25:    SIZE68.68K     14592
+  file  26:  TADDSUBM.68K     34688
+  file  27:       TAP.68K     35584
+  file  28:     TARGS.68K     26880
+  file  29:      TBCD.68K     35712
+  file  30:      TCHK.68K     33792
+  file  31:       TEA.68K     83328
+  file  32:        TF.68K     52352
+  file  33:     TGETS.68K     30464
+  file  34:        TM.68K     29824
+  file  35:    TMOVEP.68K     33792
+  file  36:   TMULDIV.68K     32128
+  file  37:        TP.68K     37376
+  file  38:      TPHI.68K     31744
+  file  39:       TPI.68K     27904
+  file  40:        TS.68K     38272
+  file  41:    TSHIFT.68K     39168
+  file  42:       TTT.68K     39680
+  file  43:    TTT68U.68K      5120
+  file  44:  T_SETJMP.68K     27008
 finding XYZ files
 finding TXT files
   file   0:  FOPENTST.TXT       128
@@ -8196,17 +8223,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     279
-  dictionary: 275
-  generate:   3
+total ms:     238
+  dictionary: 234
+  generate:   2
   render:     0
 test ba tp.bas 
-240 ms for 1 iterations
+202 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-367.682007 milliseconds
+324.622986 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8230,4 +8257,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sun 07/27/2025  6:30:05.65 
+Thu 07/31/2025  7:28:38.74 

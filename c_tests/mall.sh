@@ -4,7 +4,7 @@
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
              tcmp ttypes tarray trw trw2 an terrno mm_old ttime fileops tpi \
              t_setjmp ba td tf tap tphi mm ts glob nantst pis tfo sleeptm ff \
-             tdir fopentst lenum tgets tex trename
+             nqueens tdir fopentst lenum tgets tex trename
 do
     echo $arg
     m.sh $arg

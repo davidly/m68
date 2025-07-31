@@ -157,5 +157,5 @@ int main()
     printf( "tmuldiv ended with great success\n" );
     fflush( stdout );
     return 0;
-} 
+}
 

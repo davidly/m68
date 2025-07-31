@@ -300,9 +300,9 @@ int main( int argc, char * argv[] )
         run_tests( uint32_t, "%u");
         run_tests( int64_t, "%lld");
         run_tests( uint64_t, "%llu");
-#else    
+#else
         run_this_test( uint8_t );
-#endif    
+#endif
     }
 
 

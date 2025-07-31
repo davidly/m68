@@ -544,7 +544,7 @@ static void print_double( double d, int precision, void (*putc)(char) )
         (*putc)( '-' );
         d = set_d_sign( d, false );
     }
-    
+
     if ( isnan( d ) )
     {
         (*putc)( 'n' );
@@ -552,7 +552,7 @@ static void print_double( double d, int precision, void (*putc)(char) )
         (*putc)( 'n' );
         return;
     }
-    
+
     if ( isinf( d ) )
     {
         (*putc)( 'i' );
@@ -863,7 +863,7 @@ static void _doprnt(
                     truncate = _doprnt_truncates;
                     base = 16;
                     goto print_signed;
-                        
+
                 case 'Z':
                     base = 16;
                     capitals=16;        /* Print in upper case */

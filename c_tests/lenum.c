@@ -53,14 +53,14 @@ int main( int argc, char * argv[] )
     if ( !expected_found )
     {
         printf( "error: no expected file found in enumeration out of %d files returned\n", count );
-        return 1; 
+        return 1;
     }
 
     int ret = closedir( dir );
     if ( 0 != ret )
     {
         printf( "error: closedir after enumeration failed, errno: %d\n", errno );
-        return 1; 
+        return 1;
     }
 
     printf( "linux file system enumeration completed with great success\n" );

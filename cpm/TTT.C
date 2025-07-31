@@ -149,7 +149,7 @@ ttype pos0func()
 {
     register char x;
     x = g_board[0];
-    
+
     if ( ( x == g_board[1] && x == g_board[2] ) ||
          ( x == g_board[3] && x == g_board[6] ) ||
          ( x == g_board[4] && x == g_board[8] ) )
@@ -161,94 +161,94 @@ ttype pos1func()
 {
     register char x;
     x = g_board[1];
-    
+
     if ( ( x == g_board[0] && x == g_board[2] ) ||
          ( x == g_board[4] && x == g_board[7] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos2func()
 {
     register char x;
     x = g_board[2];
-    
+
     if ( ( x == g_board[0] && x == g_board[1] ) ||
          ( x == g_board[5] && x == g_board[8] ) ||
          ( x == g_board[4] && x == g_board[6] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos3func()
 {
     register char x;
     x = g_board[3];
-    
+
     if ( ( x == g_board[4] && x == g_board[5] ) ||
          ( x == g_board[0] && x == g_board[6] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos4func()
 {
     register char x;
     x = g_board[4];
-    
+
     if ( ( x == g_board[0] && x == g_board[8] ) ||
          ( x == g_board[2] && x == g_board[6] ) ||
          ( x == g_board[1] && x == g_board[7] ) ||
          ( x == g_board[3] && x == g_board[5] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos5func()
 {
     register char x;
     x = g_board[5];
-    
+
     if ( ( x == g_board[3] && x == g_board[4] ) ||
          ( x == g_board[2] && x == g_board[8] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos6func()
 {
     register char x;
     x = g_board[6];
-    
+
     if ( ( x == g_board[7] && x == g_board[8] ) ||
          ( x == g_board[0] && x == g_board[3] ) ||
          ( x == g_board[4] && x == g_board[2] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos7func()
 {
     register char x;
     x = g_board[7];
-    
+
     if ( ( x == g_board[6] && x == g_board[8] ) ||
          ( x == g_board[1] && x == g_board[4] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 ttype pos8func()
 {
     register char x;
     x = g_board[8];
-    
+
     if ( ( x == g_board[6] && x == g_board[7] ) ||
          ( x == g_board[2] && x == g_board[5] ) ||
          ( x == g_board[0] && x == g_board[4] ) )
         return x;
     return PieceBlank;
-} 
+}
 
 int * winner_functions[9];
 
@@ -278,7 +278,7 @@ ttype MinMax( alpha, beta, depth, move ) ttype alpha; ttype beta; ttype depth; t
             return ScoreTie;
     }
 
-    if ( depth & 1 ) 
+    if ( depth & 1 )
     {
         value = ScoreMin;
         pieceMove = PieceX;
@@ -297,7 +297,7 @@ ttype MinMax( alpha, beta, depth, move ) ttype alpha; ttype beta; ttype depth; t
             score = MinMax( alpha, beta, depth + 1, p );
             g_board[p] = PieceBlank;
 
-            if ( depth & 1 ) 
+            if ( depth & 1 )
             {
                 if ( ScoreWin == score )
                     return ScoreWin;

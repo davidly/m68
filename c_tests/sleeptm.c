@@ -17,7 +17,7 @@ using namespace std::chrono;
 
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem );
 extern "C" int clock_gettime( clockid_t id, struct timespec * res );
-                             
+
 int main( int argc, char * argv[] )
 {
     high_resolution_clock::time_point tStart = high_resolution_clock::now();

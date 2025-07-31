@@ -1548,11 +1548,11 @@ static const SysCall syscalls[] =
 const void * my_bsearch( const void * key, const void * vbase, size_t num, unsigned width, int (*compare)( const void * a, const void * b ) )
 {
     const char * base = (const char *) vbase;
-    int i = 0;
-    int j = (int) num - 1;
+    int lo = 0;
+    int hi = (int) num - 1;
     do
     {
-        int k = ( j + i ) / 2;
+        int k = ( lo + hi ) / 2;
         const char * here = base + width * k;
         int cmp = ( *compare )( key, here );
         if ( 0 == cmp )
@@ -1563,10 +1563,10 @@ const void * my_bsearch( const void * key, const void * vbase, size_t num, unsig
         }
 
         if ( cmp < 0 )
-            j = k - 1;
+            hi = k - 1;
         else
-            i = k + 1;
-      } while ( j >= i );
+            lo = k + 1;
+      } while ( hi >= lo );
 
    return 0;
 } //my_bsearch
