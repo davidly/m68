@@ -41,8 +41,9 @@ const char * tf( bool f )
 
 void _perhaps_inline show_num( double d )
 {
-    printf( "  %lf = %#llx, isnan %s, isinf %s, iszero %s, signbit %s\n", * (uint64_t *) &d,
-            (double) d, tf( std::isnan( d ) ), tf( std::isinf( d ) ),
+    printf( "  %lf = %#llx, isnan %s, isinf %s, iszero %s, signbit %s\n",
+            d, * (uint64_t *) &d,
+            tf( std::isnan( d ) ), tf( std::isinf( d ) ),
             tf( 0.0 == d ),  tf( std::signbit( d ) ) );
 } //show_num
 
@@ -96,7 +97,7 @@ double _perhaps_inline do_math( double a, double b )
     minmax( a, b );
 
     return r;
-}
+} //do_math
 
 double zero = 0.0;
 double neg_zero = set_double_sign( 0.0, true );
@@ -132,8 +133,6 @@ double test_case( double d )
 
 int main( int argc, char * argv[] )
 {
-    double d;
-
     printf( "NAN: %#llx\n", * (uint64_t *) & not_a_number );
     printf( "-NAN: %#llx\n", * (uint64_t *) & neg_not_a_number );
     printf( "quiet NAN: %#llx\n", * (uint64_t *) & quiet_nan );

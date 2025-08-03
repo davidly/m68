@@ -122,5 +122,3 @@ diff baseline_%outputfile% %outputfile%
 
 :eof
 
-
-

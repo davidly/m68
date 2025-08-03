@@ -127,7 +127,7 @@ C      call winner
       b( p ) = 0
       if ( pm .eq. 1 ) go to 4340
       if ( sc .eq. 4 ) go to 4530
-      if ( sc .lt.  v ) v = sc
+      if ( sc .lt. v ) v = sc
       if ( v .lt. beta ) beta = v
       if ( beta .le. alpha ) go to 4520
       go to 4500
