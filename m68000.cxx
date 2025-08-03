@@ -99,7 +99,7 @@ const char * m68000::render_flags()
     return flags;
 } //render_flags
 
-int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn )
+inline int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn )
 {
     // 16 bits: 15        14-12       11                10-9                8  7-0
     //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
@@ -112,8 +112,8 @@ int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn 
     uint16_t scale = get_bits16( extension, 9, 2 );
     if ( 0 != scale || get_bit16( extension, 8 ) )
     {
-        tracer.Trace( "scale isn't 0, so it's not a 68000 instruction\n" );
-        unhandled(); // if not 0, it's a >68000 instruction
+        tracer.Trace( "ea displacement word scale isn't 0 or bit8 is 1, so it's not a 68000 instruction\n" );
+        unhandled(); // it's a post-68000 instruction
     }
     return (int32_t) sign_extend( 0xff & extension, 7 );
 } //decode_ea_displacement
@@ -1184,7 +1184,6 @@ bool m68000::check_condition( uint16_t c )
         case 14: return ( ! flag_z() && ( flag_n() == flag_v() ) );  // greater than
         default: return ( flag_z() || ( flag_n() != flag_v() ) );    // less than or equal
     }
-
     assume_false;
 } //check_condition
 
@@ -1206,6 +1205,7 @@ static const char * get_vector( uint16_t vector )
         case 11: return "unimplemented instruction line F";
         default: return "unknown";
     }
+    assume_false;
 } //get_vector
 
 bool m68000::handle_trap( uint16_t vector, uint32_t pc_return )
@@ -1287,16 +1287,16 @@ uint64_t m68000::run()
         //                          --op_mode---
 
         op = getui16( pc );     // 21% of runtime doing this decoding
-        uint16_t t = op;
-        ea_reg = t & 7;
-        t >>= 3;
-        ea_mode = t & 7;
-        t >>= 3;
-        op_mode = t & 7;
+        hi4 = op;
+        ea_reg = hi4 & 7;
+        hi4 >>= 3;
+        ea_mode = hi4 & 7;
+        hi4 >>= 3;
+        op_mode = hi4 & 7;
         op_size = op_mode & 3;  // this is generally accurate, but instructions like move have size elsewhere and must update op_size for effective_address() to work
-        t >>= 3;
-        op_reg = t & 7;
-        hi4 = t >> 3;
+        hi4 >>= 3;
+        op_reg = hi4 & 7;
+        hi4 >>= 3;
 
         if ( 0 != g_State )     // 3.5% of runtime on this check
         {
@@ -1328,8 +1328,8 @@ uint64_t m68000::run()
         {
             case 0: // many math and cmp instructions. I coded the below as a switch() on the second highest nibble and that was slower
             {
-                uint16_t bits11_8 = opbits( 8, 4 );
                 uint16_t bits11_6 = opbits( 6, 6 );
+                uint16_t bits11_8 = bits11_6 >> 2;
 
                 if ( 0x003c == op ) // ori to CCR
                 {
@@ -1947,11 +1947,11 @@ uint64_t m68000::run()
                 }
                 else
                 {
-                    uint16_t bits11_8 = opbits( 8, 4 );
-                    uint16_t bits11_7 = opbits( 7, 5 );
-                    uint32_t bits11_6 = opbits( 6, 6 );
-                    uint16_t bits11_4 = opbits( 4, 8 );
                     uint16_t bits11_3 = opbits( 3, 9 );
+                    uint16_t bits11_4 = bits11_3 >> 1;
+                    uint32_t bits11_6 = bits11_4 >> 2;
+                    uint32_t bits11_7 = bits11_6 >> 1;
+                    uint32_t bits11_8 = bits11_7 >> 1;
 
                     if ( 3 == bits11_6 ) // move from sr. Unpriviledged. Popek and Goldberg be damned.
                     {
@@ -1982,6 +1982,17 @@ uint64_t m68000::run()
                             skip_trace = true;
                         }
                         perhaps_restore_usermode_state();
+                    }
+                    else if ( 0xa == bits11_8 ) // tst
+                    {
+                        uint32_t val = effective_address();
+
+                        if ( 0 == op_size )
+                            set_nzcv8( effective_value8( val ) );
+                        else if ( 1 == op_size )
+                            set_nzcv16( effective_value16( val ) );
+                        else
+                            set_nzcv32( effective_value32( val ) );
                     }
                     else if ( 4 == bits11_8 ) // neg
                     {
@@ -2044,17 +2055,6 @@ uint64_t m68000::run()
                         }
                         else
                             unhandled();
-                    }
-                    else if ( 0xa == bits11_8 ) // tst
-                    {
-                        uint32_t val = effective_address();
-
-                        if ( 0 == op_size )
-                            set_nzcv8( effective_value8( val ) );
-                        else if ( 1 == op_size )
-                            set_nzcv16( effective_value16( val ) );
-                        else
-                            set_nzcv32( effective_value32( val ) );
                     }
                     else if ( 0x1ca == bits11_3 ) // link
                     {
@@ -3056,7 +3056,7 @@ uint64_t m68000::run()
                     if ( 0 == op_reg || 1 == op_reg ) // ASd / LSd memory
                     {
                         bool is_asd = ( 0 == op_reg );
-    
+
                         if ( opbit( 8 ) ) // left. ASL / LSL memory
                         {
                             setflags_cx( original_signed );
@@ -3079,16 +3079,16 @@ uint64_t m68000::run()
                         assert( 2 == op_reg || 3 == op_reg );
                         bool is_rox = ( 2 == op_reg );
                         bool original_x = flag_x();
-    
+
                         if ( opbit( 8 ) ) // left. ROL / ROXL memory
                         {
                             if ( is_rox )
                                 setflags_cx( sign16( value ) );
                             else // ROL
                                 setflag_c( original_signed );
-    
+
                             value <<= 1;
-    
+
                             if ( ( is_rox && original_x ) || ( !is_rox && original_signed ) )
                                 value |= 1;
                         }
@@ -3097,9 +3097,9 @@ uint64_t m68000::run()
                             setflag_c( value & 1 );
                             if ( is_rox )
                                 setflag_x( value & 1 );
-    
+
                             value >>= 1;
-    
+
                             if ( ( is_rox && original_x ) || ( !is_rox && flag_c() ) )
                                 value |= 0x8000;
                         }
@@ -3123,7 +3123,7 @@ uint64_t m68000::run()
                     {
                         bool sign_changed = false;
                         bool is_arithmetic = ( 0 == bits4_3 );
-    
+
                         if ( opbit( 8 ) ) // left. ASL / LSL register
                         {
                             if ( 0 == op_size )
@@ -3298,7 +3298,7 @@ uint64_t m68000::run()
                                 setflag_z( 0 == dregs[ ea_reg ].l );
                             }
                         }
-    
+
                         if ( 0 == shift )
                             setflag_c( flag_x() );
                         setflag_v( false );

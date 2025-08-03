@@ -216,7 +216,33 @@ private:
 
     inline uint16_t opbit( uint32_t bit ) const { return ( 1 & ( op >> bit ) ); }
 
-    // it seems slower to not use an "if ( f )", but multiple assignment with shift is faster on both x64 and 68000
+    // it's counterintuitive (to me) that the 3rd method generates the fastest code on x64 and 68000. msft and gnu++
+
+#if 0 // slowest
+
+    inline void setflag_c( bool f ) { if ( f ) sr |=      1; else sr &= 0xfffe; }
+    inline void setflag_v( bool f ) { if ( f ) sr |=      2; else sr &= 0xfffd; }
+    inline void setflag_z( bool f ) { if ( f ) sr |=      4; else sr &= 0xfffb; }
+    inline void setflag_n( bool f ) { if ( f ) sr |=      8; else sr &= 0xfff7; }
+    inline void setflag_x( bool f ) { if ( f ) sr |=   0x10; else sr &= 0xffef; }
+    inline void setflag_s( bool f ) { if ( f ) sr |= 0x2000; else sr &= 0xdfff; }
+    inline void setflag_t( bool f ) { if ( f ) sr |= 0x8000; else sr &= 0x7fff; }
+
+#endif
+
+#if 0 // slower
+
+    inline void setflag_c( bool f ) { sr &= 0xfffe; if ( f ) sr |=      1; }
+    inline void setflag_v( bool f ) { sr &= 0xfffd; if ( f ) sr |=      2; }
+    inline void setflag_z( bool f ) { sr &= 0xfffb; if ( f ) sr |=      4; }
+    inline void setflag_n( bool f ) { sr &= 0xfff7; if ( f ) sr |=      8; }
+    inline void setflag_x( bool f ) { sr &= 0xffef; if ( f ) sr |=   0x10; }
+    inline void setflag_s( bool f ) { sr &= 0xdfff; if ( f ) sr |= 0x2000; }
+    inline void setflag_t( bool f ) { sr &= 0x7fff; if ( f ) sr |= 0x8000; }
+
+#endif
+
+#if 1 // fastest
 
     inline void setflag_c( bool f ) { sr &= 0xfffe; sr |= ( 0 != f ); }
     inline void setflag_v( bool f ) { sr &= 0xfffd; sr |= ( ( 0 != f ) << 1 ); }
@@ -226,7 +252,9 @@ private:
     inline void setflag_s( bool f ) { sr &= 0xdfff; sr |= ( ( 0 != f ) << 13 ); }
     inline void setflag_t( bool f ) { sr &= 0x7fff; sr |= ( ( 0 != f ) << 15 ); }
 
-    inline void setflags_cx( bool f ) { setflag_c( f ); setflag_x( f ); }
+#endif
+
+    inline void setflags_cx( bool f ) { if ( f ) sr |= 0x11; else sr &= 0xffee; }
     inline void clearflags_cv() { sr &= 0xfffc; }
 
     inline bool flag_c() { return ( 0 != ( sr &      1 ) ); }
