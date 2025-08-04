@@ -502,8 +502,8 @@ void m68000::trace_state()
     {
         case 0: // many math and cmp instructions
         {
-            uint16_t bits11_8 = opbits( 8, 4 );
             uint16_t bits11_6 = opbits( 6, 6 );
+            uint16_t bits11_8 = bits11_6 >> 2;
 
             if ( 0x003c == op ) // ori to CCR
                 tracer.Trace( "ori #%x, ccr\n", getui16( pc + 2 ) & 0xff );
@@ -614,7 +614,7 @@ void m68000::trace_state()
         {
             uint16_t moves = opbits( 12, 2 );
             op_size = ( 1 == moves ) ? 0 : ( 3 == moves ) ? 1 : 2; // map moves to s
-            if ( 1 == opbits( 6, 3 ) ) // movea.l or movea.w
+            if ( 1 == op_mode ) // movea.l or movea.w
                 tracer.Trace( "movea.%c %s, a%u\n", get_size(), effective_string(), op_reg );
             else // move.b / move.w / move.l
             {
@@ -645,11 +645,11 @@ void m68000::trace_state()
                 tracer.Trace( "illegal\n" );
             else
             {
-                uint16_t bits11_6 = opbits( 6, 6 );
-                uint16_t bits11_7 = opbits( 7, 5 );
-                uint16_t bits11_8 = opbits( 8, 4 );
                 uint16_t bits11_3 = opbits( 3, 9 );
-                uint16_t bits11_4 = opbits( 4, 8 );
+                uint16_t bits11_4 = bits11_3 >> 1;
+                uint32_t bits11_6 = bits11_4 >> 2;
+                uint32_t bits11_7 = bits11_6 >> 1;
+                uint32_t bits11_8 = bits11_7 >> 1;
 
                 if ( 3 == bits11_6 ) // move from sr
                 {
@@ -768,14 +768,14 @@ void m68000::trace_state()
             }
             else if ( opbit( 8 ) ) // subq
             {
-                uint32_t data = opbits( 9, 3 );
+                uint32_t data = op_reg;
                 if ( 0 == data )
                     data = 8;
                 tracer.Trace( "subq.%c #%u, %s\n", get_size(), data, effective_string() );
             }
             else // addq
             {
-                uint32_t data = opbits( 9, 3 );
+                uint32_t data = op_reg;
                 if ( 0 == data )
                     data = 8;
                 tracer.Trace( "addq.%c #%u, %s\n", get_size(), data, effective_string() );
@@ -805,7 +805,6 @@ void m68000::trace_state()
         }
         case 8: // divu / divs / sbcd / or
         {
-            uint16_t bit8 = opbit( 8 );
             uint16_t bits8_4 = opbits( 4, 5 );
 
             if ( 0x10 == bits8_4 ) // sbcd
@@ -815,19 +814,19 @@ void m68000::trace_state()
                 else // data register mode
                     tracer.Trace( "sbcd d%u, d%u\n", ea_reg, op_reg );
             }
-            else if ( !bit8 && 3 == op_size ) // divu
+            else if ( 3 == op_mode ) // divu
             {
                 op_size = 1; // word operation
                 tracer.Trace( "divu.w %s, d%u\n", effective_string(), op_reg );
             }
-            else if ( bit8 && 3 == op_size ) // divs
+            else if ( 7 == op_mode ) // divs
             {
                 op_size = 1; // word operation
                 tracer.Trace( "divs.w %s, d%u\n", effective_string(), op_reg );
             }
             else // or
             {
-                if ( bit8 )
+                if ( opbit( 8 ) )
                     tracer.Trace( "or.%c d%u, %s\n", get_size(), op_reg, effective_string() );
                 else
                     tracer.Trace( "or.%c %s, d%u\n", get_size(), effective_string(), op_reg );
@@ -836,7 +835,7 @@ void m68000::trace_state()
         }
         case 0x9: // sub / subx / suba
         {
-            if ( 3 == opbits( 6, 2 ) ) // suba
+            if ( 3 == op_size ) // suba
             {
                 op_size = opbit( 8 ) ? 2 : 1;
                 tracer.Trace( "suba.%c %s, a%u\n", opbit( 8 ) ? 'l' : 'w', effective_string(), op_reg );
@@ -859,41 +858,38 @@ void m68000::trace_state()
         }
         case 0xb: // eor, cmpm, cmp, cmpa
         {
-            uint16_t bit8 = opbit( 8 );
-            if ( 3 == op_mode || 7 == op_mode ) // cmpa
+            if ( 3 == op_size ) // cmpa
             {
+                uint16_t bit8 = opbit( 8 );
                 op_size = bit8 ? 2 : 1;
                 tracer.Trace( "cmpa.%c %s, a%u\n", bit8 ? 'l' : 'w', effective_string(), op_reg );
             }
             else if ( op_mode <= 2 ) // cmp
                 tracer.Trace( "cmp.%c %s, d%u\n", ( 0 == op_mode ) ? 'b' : ( 1 == op_mode ) ? 'w' : 'l', effective_string(), op_reg );
-            else if ( bit8 && 1 == ea_mode ) // cmpm
+            else if ( 1 == ea_mode ) // cmpm
                 tracer.Trace( "cmpm.%c (a%u)+, (a%u)+\n", get_size(), ea_reg, op_reg );
-            else if ( bit8 ) // eor
+            else // eor
                 tracer.Trace( "eor.%c d%u, %s\n", get_size(), op_reg, effective_string() );
-            else
-                unhandled();
             break;
         }
         case 0xc: // mulu / muls / abcd / exg / and
         {
-            uint16_t bit8 = opbit( 8 );
-            uint16_t bits7_6 = opbits( 6, 2);
-            uint16_t bits5_4 = opbits( 4, 2 );
+            uint16_t bit8 = op_mode >> 2; // opbit( 8 );
+            uint16_t bits5_4 = ea_mode >> 1;
 
-            if ( bit8 && 0 == bits7_6 && 0 == bits5_4 ) // abcd
+            if ( 4 == op_mode && 0 == bits5_4 ) // abcd
             {
                 if ( opbit( 3 ) ) // address register mode
                     tracer.Trace( "abcd -(a%u), -(a%u)\n", ea_reg, op_reg );
                 else // data register mode
                     tracer.Trace( "abcd d%u, d%u\n", ea_reg, op_reg );
             }
-            else if ( !bit8 && 3 == bits7_6 ) // mulu
+            else if ( 3 == op_mode ) // mulu
             {
                 op_size = 1;
                 tracer.Trace( "mulu.w %s, d%u\n", effective_string(), op_reg );
             }
-            else if ( bit8 && 3 == bits7_6 ) // muls
+            else if ( 7 == op_mode ) // muls
             {
                 op_size = 1;
                 tracer.Trace( "muls.w %s, d%u\n", effective_string(), op_reg );
@@ -921,7 +917,7 @@ void m68000::trace_state()
         }
         case 0xd: // add / addx / adda
         {
-            if ( 3 == opbits( 6, 2 ) ) // adda
+            if ( 3 == op_size ) // adda
             {
                 op_size = opbit( 8 ) ? 2 : 1;
                 tracer.Trace( "adda.%c %s, a%u\n", opbit( 8 ) ? 'l' : 'w', effective_string(), op_reg );
@@ -1806,7 +1802,7 @@ uint64_t m68000::run()
             {
                 op_size = ( 1 == hi4 ) ? 0 : ( 3 == hi4 ) ? 1 : 2; // map move size to op_size
 
-                if ( 1 == opbits( 6, 3 ) ) // movea.l / movea.w
+                if ( 1 == op_mode ) // movea.l / movea.w
                 {
                     if ( 2 == op_size )
                         aregs[ op_reg ] = effective_value32( effective_address() );
@@ -2019,12 +2015,7 @@ uint64_t m68000::run()
                     else if ( 0xe4 == bits11_4 ) // trap
                     {
                         uint16_t vector = op & 0xf;
-                        if ( 15 == vector )
-                        {
-                            emulator_invoke_68k_trap15( *this ); // 68k emulator
-                            pc += 2;
-                        }
-                        else if ( 0 == vector )
+                        if ( 0 == vector )
                             emulator_invoke_svc( *this ); // linux-style syscall
                         else if ( 2 == vector )
                         {
@@ -2035,6 +2026,11 @@ uint64_t m68000::run()
                         }
                         else if ( 3 == vector )
                             emulator_invoke_68k_trap3( *this ); // digital research cp/m 68k bios vector
+                        else if ( 15 == vector )
+                        {
+                            emulator_invoke_68k_trap15( *this ); // 68k emulator
+                            pc += 2;
+                        }
                         else
                         {
                             if ( handle_trap( vector + 0x20, pc + 2 ) )
@@ -2069,14 +2065,6 @@ uint64_t m68000::run()
                         aregs[ 7 ] = aregs[ ea_reg ];
                         aregs[ ea_reg ] = pop();
                     }
-                    else if ( 0x21 == bits11_6 && 0 == ea_mode ) // swap
-                    {
-                        uint16_t highpart = dregs[ ea_reg ].l >> 16;
-                        dregs[ ea_reg ].l = ( dregs[ ea_reg ].l << 16 ) | highpart;
-                        set_nzcv32( dregs[ ea_reg ].l );
-                    }
-                    else if ( 0x21 == bits11_6 ) // pea
-                        push( effective_address() );
                     else if ( 0x3a == bits11_6 ) // jsr
                     {
                         uint32_t address = effective_address();
@@ -2089,6 +2077,14 @@ uint64_t m68000::run()
                         pc = effective_address();
                         continue;
                     }
+                    else if ( 0x21 == bits11_6 && 0 == ea_mode ) // swap
+                    {
+                        uint16_t highpart = dregs[ ea_reg ].l >> 16;
+                        dregs[ ea_reg ].l = ( dregs[ ea_reg ].l << 16 ) | highpart;
+                        set_nzcv32( dregs[ ea_reg ].l );
+                    }
+                    else if ( 0x21 == bits11_6 ) // pea
+                        push( effective_address() );
                     else if ( 0x22 == ( 0x2e & bits11_6 ) ) // movem
                     {
                         bool memory_to_register = opbit( 10 );
@@ -2462,7 +2458,7 @@ uint64_t m68000::run()
                 }
                 else if ( opbit( 8 ) ) // subq
                 {
-                    uint32_t data = opbits( 9, 3 );
+                    uint32_t data = op_reg;
                     if ( 0 == data )
                         data = 8;
 
@@ -2490,7 +2486,7 @@ uint64_t m68000::run()
                 }
                 else // addq
                 {
-                    uint32_t data = opbits( 9, 3 );
+                    uint32_t data = op_reg;
                     if ( 0 == data )
                         data = 8;
 
@@ -2553,14 +2549,13 @@ uint64_t m68000::run()
                 if ( opbit( 8 ) )
                     unhandled();
 
-                uint32_t data = sign_extend( opbits( 0, 8 ), 7 );
+                uint32_t data = sign_extend( op & 0xff, 7 );
                 dregs[ op_reg ].l = data;
                 set_nzcv32( data );
                 break;
             }
             case 8: // divu / divs / sbcd / or
             {
-                uint16_t bit8 = opbit( 8 );
                 uint16_t bits8_4 = opbits( 4, 5 );
 
                 if ( 0x10 == bits8_4 ) // sbcd
@@ -2574,7 +2569,7 @@ uint64_t m68000::run()
                     else // data register mode
                         dregs[ op_reg ].b = bcd_sub( dregs[ op_reg ].b, dregs[ ea_reg ].b );
                 }
-                else if ( !bit8 && 3 == op_size ) // divu
+                else if ( 3 == op_mode ) // divu
                 {
                     op_size = 1; // word operation
                     uint32_t dividend = dregs[ op_reg ].l;
@@ -2602,7 +2597,7 @@ uint64_t m68000::run()
                     }
                     setflag_c( false );
                 }
-                else if ( bit8 && 3 == op_size ) // divs
+                else if ( 7 == op_mode ) // divs
                 {
                     op_size = 1; // word operation
                     int32_t dividend = (int32_t) dregs[ op_reg ].l;
@@ -2633,7 +2628,7 @@ uint64_t m68000::run()
                 else // or
                 {
                     uint32_t address = effective_address();
-                    if ( bit8 ) // Dn | <ea> => <ea>
+                    if ( opbit( 8 ) ) // Dn | <ea> => <ea>
                     {
                         if ( 0 == op_size )
                         {
@@ -2680,7 +2675,7 @@ uint64_t m68000::run()
             }
             case 0x9: // sub / subx / suba
             {
-                if ( 3 == opbits( 6, 2 ) ) // suba
+                if ( 3 == op_size ) // suba
                 {
                     if ( opbit( 8 ) ) // long
                     {
@@ -2782,11 +2777,10 @@ uint64_t m68000::run()
             }
             case 0xb: // eor, cmpm, cmp, cmpa
             {
-                uint16_t bit8 = op_mode >> 2; // opbit( 8 );
-                if ( 3 == op_mode || 7 == op_mode ) // cmpa
+                if ( 3 == op_size ) // cmpa
                 {
                     uint32_t source;
-
+                    uint16_t bit8 = op_mode >> 2; // opbit( 8 );
                     if ( bit8 )
                     {
                         op_size = 2;
@@ -2809,7 +2803,7 @@ uint64_t m68000::run()
                     else
                         sub32( dregs[ op_reg ].l, effective_value32( address ), true, false, false );
                 }
-                else if ( bit8 && 1 == ea_mode ) // cmpm
+                else if ( 1 == ea_mode ) // cmpm
                 {
                     if ( 0 == op_size )
                     {
@@ -2830,7 +2824,7 @@ uint64_t m68000::run()
                         aregs[ ea_reg ] += 4;
                     }
                 }
-                else if ( bit8 ) // eor
+                else // eor
                 {
                     if ( 0 == ea_mode )
                     {
@@ -2873,17 +2867,14 @@ uint64_t m68000::run()
                         }
                     }
                 }
-                else
-                    unhandled();
                 break;
             }
             case 0xc: // mulu / muls / abcd / exg / and
             {
-                uint16_t bit8 = opbit( 8 );
-                uint16_t bits7_6 = opbits( 6, 2);
-                uint16_t bits5_4 = opbits( 4, 2 );
+                uint16_t bit8 = op_mode >> 2; // opbit( 8 );
+                uint16_t bits5_4 = ea_mode >> 1;
 
-                if ( bit8 && 0 == bits7_6 && 0 == bits5_4 ) // abcd
+                if ( 4 == op_mode && 0 == bits5_4 ) // abcd
                 {
                     if ( opbit( 3 ) ) // address register predecrement mode
                     {
@@ -2894,7 +2885,7 @@ uint64_t m68000::run()
                     else // data register mode
                         dregs[ op_reg ].b = bcd_add( dregs[ op_reg ].b, dregs[ ea_reg ].b );
                 }
-                else if ( !bit8 && 3 == bits7_6 ) // mulu
+                else if ( 3 == op_mode ) // mulu
                 {
                     op_size = 1; // word operation
                     uint32_t left = effective_value16( effective_address() );
@@ -2903,7 +2894,7 @@ uint64_t m68000::run()
                     set_nzcv32( result );
                     dregs[ op_reg ].l = result;
                 }
-                else if ( bit8 && 3 == bits7_6 ) // muls
+                else if ( 7 == op_mode ) // muls
                 {
                     op_size = 1; // word operation
                     int32_t left = (int16_t) effective_value16( effective_address() );
@@ -2974,7 +2965,7 @@ uint64_t m68000::run()
             }
             case 0xd: // add / addx / adda
             {
-                if ( 3 == opbits( 6, 2 ) ) // adda
+                if ( 3 == op_size ) // adda
                 {
                     if ( opbit( 8 ) ) // long
                     {

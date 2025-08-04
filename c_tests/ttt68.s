@@ -64,6 +64,7 @@ main:
     jsr printf
     adda #8, %a7
 
+    clr.l %d0
     rts
 
   .type run_move, @function
