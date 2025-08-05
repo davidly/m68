@@ -69,7 +69,7 @@ copy ..\c_tests\fnmatch.c . >nul
 call mt.bat ff >>%outputfile%
 echo running ff
 echo running ff >>%outputfile%
-%_M68runcmd% FF.68K *.68K >>%outputfile%
+%_M68runcmd% FF.68K -i *.68K >>%outputfile%
 del ff.s 2>nul
 del ff.c 2>nul
 del realpath.s 2>nul
