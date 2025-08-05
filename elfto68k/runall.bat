@@ -37,7 +37,25 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
            nqueens fopentst lenum tex trename
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
+( for %%a in (%_clist%) do (
+    echo building %%a
+    echo building %%a >>%outputfile%
+    copy ..\c_tests\%%a.c . >nul
+    call mt.bat %%a >>%outputfile%
+    echo running %%a
+    echo running %%a >>%outputfile%
+    %_M68runcmd% %%a.68K >>%outputfile%
+    
+    if "%%a" == "trw" (
+        echo running trw in m68.68k
+        echo running trw in m68.68k >>%outputfile%
+        %_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
+    )
+    
+    del %%a.s 2>nul
+    del %%a.c 2>nul
+    del %%a.68k 2>nul
+) )
 
 echo building ba
 echo building ba >>%outputfile%
@@ -69,7 +87,7 @@ copy ..\c_tests\fnmatch.c . >nul
 call mt.bat ff >>%outputfile%
 echo running ff
 echo running ff >>%outputfile%
-%_M68runcmd% FF.68K -i *.68K >>%outputfile%
+%_M68runcmd% FF.68K -i M*.68K >>%outputfile%
 del ff.s 2>nul
 del ff.c 2>nul
 del realpath.s 2>nul
@@ -78,33 +96,6 @@ del fnmatch.s 2>nul
 del fnmatch.c 2>nul
 del ff.68k 2>nul
 
-goto :alldone
-
-:crun
-
-echo building %~1
-echo building %~1 >>%outputfile%
-copy ..\c_tests\%~1.c . >nul
-call mt.bat %~1 >>%outputfile%
-echo running %~1
-echo running %~1 >>%outputfile%
-%_M68runcmd% %~1.68K >>%outputfile%
-
-if "%~1" == "trw" (
-    echo running trw in m68.68k
-    echo running trw in m68.68k >>%outputfile%
-    %_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
-)
-
-del %~1.s 2>nul
-del %~1.c 2>nul
-del %~1.68k 2>nul
-exit /b 0
-
-:alldone
-
 echo %date% %time% >>%outputfile%
 diff baseline_%outputfile% %outputfile%
-
-:eof
 

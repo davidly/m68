@@ -36,7 +36,6 @@ for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
            nqueens fopentst lenum tex trename
-
 do
   echo building $arg
   echo building $arg >>$outputfile
@@ -88,7 +87,7 @@ cp ../c_tests/fnmatch.c . >/dev/null
 mt.sh ff >>$outputfile
 echo running ff
 echo running ff >>$outputfile
-$_m68runcmd FF.68K -i "*.68K" >>$outputfile
+$_m68runcmd FF.68K -i "M*.68K" >>$outputfile
 rm ff.s 2>/dev/null
 rm ff.c 2>/dev/null
 rm realpath.s 2>/dev/null
