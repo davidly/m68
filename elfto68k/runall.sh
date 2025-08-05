@@ -80,6 +80,23 @@ rm an.s 2>/dev/null
 rm an.c 2>/dev/null
 rm AN.68K 2>/dev/null
 
+echo building ff
+echo building ff >>$outputfile
+cp ../c_tests/ff.c . >/dev/null
+cp ../c_tests/realpath.c . >/dev/null
+cp ../c_tests/fnmatch.c . >/dev/null
+mt.sh ff >>$outputfile
+echo running ff
+echo running ff >>$outputfile
+$_m68runcmd FF.68K "*.68K" >>$outputfile
+rm ff.s 2>/dev/null
+rm ff.c 2>/dev/null
+rm realpath.s 2>/dev/null
+rm realpath.c 2>/dev/null
+rm fnmatch.s 2>/dev/null
+rm fnmatch.c 2>/dev/null
+rm FF.68K 2>/dev/null
+
 date_time=$(date)
 echo "$date_time" >>$outputfile
 

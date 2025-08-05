@@ -1,4 +1,4 @@
-Wed 07/30/2025 17:18:43.65 
+Tue 08/05/2025  8:02:18.00 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -5586,4 +5586,9 @@ id leaved
 idea veld
 lade vied
 lead vied
-Wed 07/30/2025 17:20:18.30 
+building ff 
+elfto68k successfully created FF.68K
+running ff 
+/FF.68K
+/M68.68K
+Tue 08/05/2025  8:03:59.93 

@@ -61,6 +61,23 @@ del an.s 2>nul
 del an.c 2>nul
 del an.68k 2>nul
 
+echo building ff
+echo building ff >>%outputfile%
+copy ..\c_tests\ff.c . >nul
+copy ..\c_tests\realpath.c . >nul
+copy ..\c_tests\fnmatch.c . >nul
+call mt.bat ff >>%outputfile%
+echo running ff
+echo running ff >>%outputfile%
+%_M68runcmd% FF.68K *.68K >>%outputfile%
+del ff.s 2>nul
+del ff.c 2>nul
+del realpath.s 2>nul
+del realpath.c 2>nul
+del fnmatch.s 2>nul
+del fnmatch.c 2>nul
+del ff.68k 2>nul
+
 goto :alldone
 
 :crun

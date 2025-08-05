@@ -19,13 +19,6 @@
 
 #define _countof( X ) ( sizeof( X ) / sizeof( X[0] ) )
 
-template <class T> inline T get_max( T a, T b )
-{
-    if ( a > b )
-        return a;
-    return b;
-} //get_max
-
 template <class T> inline T get_min( T a, T b )
 {
     if ( a < b )
@@ -404,7 +397,6 @@ extern "C" off_t lseek( int fd, off_t offset, int whence )
         return -1;
     }
 
-
     return fcb.current_offset;
 } //lseek
 
@@ -513,7 +505,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
 
     if ( 0 == fd )
     {
-        // todo: handle this
+        // todo: handle read from stdin
         return -1;
     }
     else
@@ -531,8 +523,6 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
 
         FCBCPM68K & fcb = g_afcb[ fd ];
         uint32_t size = file_size( fcb );
-
-
         uint8_t * pdma = & g_base_page->cb_command_tail;
         uint8_t * buf = (uint8_t *) buffer;
         remaining = count;
@@ -670,12 +660,20 @@ extern "C" int fstat( int fd, struct stat * statbuf )
     }
 
     statbuf->st_size = fcb.GetRandomIOOffset() * 128; // only 128-byte granularity
+    statbuf->st_mode = S_IFREG | 0x1ff; // regular file. full permissions
+    statbuf->st_blksize = 128;
+
     fcb.SetRandomIOOffset( pos ); // restore the original position
     return 0;
 } //fstat
 
 extern "C" int stat( const char * pathname, struct stat * statbuf )
 {
+    if ( '.' == pathname[ 0 ] && '/' == pathname[ 1 ] )
+        pathname += 2;
+    else if ( '/' == pathname[ 0 ] )
+        pathname++;
+
     int fd = open( pathname, 0 );
     if ( -1 == fd )
         return -1;
@@ -684,6 +682,11 @@ extern "C" int stat( const char * pathname, struct stat * statbuf )
     close( fd );
     return result;
 } //stat
+
+extern "C" int lstat( const char * path, struct stat * statbuf )
+{
+    return stat( path, statbuf ); // no links on cp/m
+} //lstat
 
 const int fdEnumeration = 100;
 static bool g_EnumerationActive = false;
@@ -704,7 +707,7 @@ DIR * fdopendir( int fd )
 
 DIR * opendir( const char * name )
 {
-    if ( strcmp( name, "." ) ) // cp/m doesn't have folders. only support the current directory
+    if ( strcmp( name, "." ) && strcmp( name, "/" ) ) // cp/m doesn't have folders. only support the current directory
     {
         errno = EINVAL;
         return 0;
@@ -723,7 +726,7 @@ struct dirent * readdir( DIR * dir )
     de.d_ino = 0x67; // g I miss you
     de.d_off = 0x69646c65; // mirror allergy
     de.d_reclen = sizeof( de );
-    de.d_type = 8; // normal file
+    de.d_type = 8; // DT_REG regular file
 
     if ( !g_EnumerationActive ) // find the first file in the numeration
     {
