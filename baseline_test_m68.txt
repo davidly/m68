@@ -1,4 +1,4 @@
-Thu 07/31/2025  7:28:04.24 
+Wed 08/06/2025 15:15:16.58 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-21.995001 milliseconds
+24.530001 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4032,16 +4032,16 @@ sum: 0xfff8
 sum: 0xfff8
 sum: 0xfffffff8
 sum: 0xfffffff8
-sum high fffffff8 low 0
-sum high fffffff8 low 0
+sum: 0xfffffffffffffff8
+sum: 0xfffffffffffffff8
 sum: 0xf8
 sum: 0xf8
 sum: 0xfff8
 sum: 0xfff8
 sum: 0xfffffff8
 sum: 0xfffffff8
-sum high fffffff8 low 0
-sum high fffffff8 low 0
+sum: 0xfffffffffffffff8
+sum: 0xfffffffffffffff8
 sum: 0xfff8
 sum: 0xfff8
 sum: 0xf8
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 7, day 31, hour 14, min 28, sec 11
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 7, day 31, hour 9, min 28, sec 11
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 7, day 31, hour 6, min 28, sec 11
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 7, day 31, hour 6, min 28, sec 11
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 6, hour 22, min 15, sec 25
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 6, hour 17, min 15, sec 25
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 6, hour 14, min 15, sec 25
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 6, hour 14, min 15, sec 25
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5795,7 +5795,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 7, day 31, hour 6, min 28, sec 19
+tz: 'PST+8', year: 2025, month 8, day 6, hour 14, min 15, sec 34
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -8223,17 +8223,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     238
-  dictionary: 234
-  generate:   2
+total ms:     281
+  dictionary: 277
+  generate:   3
   render:     0
 test ba tp.bas 
-202 ms for 1 iterations
+229 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-324.622986 milliseconds
+387.403015 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8257,4 +8257,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Thu 07/31/2025  7:28:38.74 
+Wed 08/06/2025 15:15:55.74 

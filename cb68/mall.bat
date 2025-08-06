@@ -15,15 +15,9 @@ if "%1" == "rvos" (
 
 set _clist=e sieve ttt mm mmf
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
+( for %%a in (%_clist%) do (
+    echo building %%a
+    call m.bat %%a
+))
 
-goto :alldone
-
-:crun
-
-echo building %~1
-call m.bat %~1
-exit /b 0
-
-:alldone
 

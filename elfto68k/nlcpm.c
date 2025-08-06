@@ -1,19 +1,15 @@
 /*
-    This file provides the layer newlib calls to do OS-specific work.
+    This file provides the BSP layer newlib calls to do OS-specific work.
     It is very much tuned to CP/M 68K running on a 32-bit 68000.
 */
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdnoreturn.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
 #include <math.h>
 #include <dirent.h>
 
@@ -164,10 +160,10 @@ struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory for an
 
 #pragma pack(pop)
 
-struct BasePageCPM * g_base_page = 0; // 256 bytes below _start
-uint32_t g_eh_data = 0; // C++ eh frame data for __register_frame
-char * g_current_brk = 0;
-struct FCBCPM68K g_afcb[ 20 ]; // file descriptors index into this array
+struct BasePageCPM * g_base_page = 0; // 256 bytes below _start. initialized by _start() in startcpm.s
+uint32_t g_eh_data = 0;               // C++ eh frame data for __register_frame. initialized by _start() in startcpm.s
+char * g_current_brk = 0;             // brk. initialized by _init_nlcpm() at startup
+struct FCBCPM68K g_afcb[ 20 ];        // file descriptors index into this array. initialized by _init_nlcpm() at startup
 
 extern "C" void __attribute__((noreturn)) exit_cpm( int status );
 extern "C" long bdos_cpm( long number, long arg0 );
@@ -175,9 +171,10 @@ extern "C" int kill( pid_t pid, int sig ) { exit_cpm( 0 ); }
 extern "C" pid_t getpid( void ) { return 0x4955; } // IU is the best
 extern "C" void _exit( int code ) { exit_cpm( code ); }
 extern "C" void __register_frame( uint32_t eh_data );
+extern "C" void __libc_fini_array( void );
 extern "C" void __deregister_frame( uint32_t eh_data );
 
-extern "C" void _init_nlcpm()
+extern "C" void _init_nlcpm() // called by _init()
 {
     g_current_brk = (char *) ( g_base_page->start_bss + g_base_page->cb_bss );
 
@@ -188,7 +185,7 @@ extern "C" void _init_nlcpm()
         g_afcb[ i ].n[ 0 ] = '*'; // indicate that it's free
 } //_init_nlcpm
 
-extern "C" void _fini_nlcpm()
+extern "C" void _fini_nlcpm() // called by _fini()
 {
     if ( 0 != g_eh_data )
         __deregister_frame( g_eh_data );
@@ -196,6 +193,7 @@ extern "C" void _fini_nlcpm()
 
 extern "C" void exit( int status )
 {
+    __libc_fini_array(); // cleanup resources allocated by the C runtime
     exit_cpm( status );
 } //exit
 

@@ -19,15 +19,7 @@ if "%_M68runcmd%" == "" (
 
 set _clist=E SIEVE TTT MM TPHI
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
-
-goto :alldone
-
-:crun
-
-echo running %~1
-%_M68runcmd% %~1.68k
-exit /b 0
-
-:alldone
-
+( for %%a in (%_clist%) do (
+    echo running %%a
+    %_M68runcmd% %%a.68k
+))

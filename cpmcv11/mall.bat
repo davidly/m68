@@ -16,29 +16,16 @@ if "%1" == "rvos" (
 rem it appears tmuldiv and fileops fail due to corruption in t C runtime file object. tpi won't link
 set _clist=e sieve ttt tm t_setjmp mm
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
-
-goto :makeasm
-
-:crun
-
-echo building %~1
-call m.bat %~1
-exit /b 0
-
-:makeasm
+( for %%a in (%_clist%) do (
+    echo building %%a
+    call m.bat %%a
+))
 
 set _asmlist=ttt68u tchk tmovep
 
-( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
+( for %%a in (%_asmlist%) do (
+    echo building %%a
+    call ma.bat %%a
+))
 
-goto :alldone
-
-:asmRun
-
-echo building %~1
-call ma.bat %~1
-exit /b 0
-
-:alldone
 

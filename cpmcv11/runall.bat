@@ -17,19 +17,13 @@ if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )
 
-set _clist=E SIEVE TTT TM TTT68U T_SETJMP TCHK TMOVEP MM
+set _applist=E SIEVE TTT TM TTT68U T_SETJMP TCHK TMOVEP MM
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
+( for %%a in (%_applist%) do (
+    echo running %%a
+    rem the C runtime zeroes bss, so use a small bss
+    %_M68runcmd% -h:1 %%a.68k
+))
 
-goto :alldone
-
-:crun
-
-echo running %~1
-rem the C runtime zeroes bss, so use a small bss
-%_M68runcmd% -h:1 %~1.68k
-exit /b 0
-
-:alldone
 
 

@@ -15,9 +15,9 @@ gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O3"
 ldflags="-Wl,--section-start=.init=0x4000"
 
 # generate .s files for debugging
-$gcccmd $incpaths $gccflags $defines ../m68.cxx -S -fverbose-asm -o m68.s
-$gcccmd $incpaths $gccflags $defines ../m68000.cxx -S -fverbose-asm -o m68000.s
-$gcccmd $incpaths $gccflags $defines nlcpm.c -S -fverbose-asm -o nlcpm.s
+#$gcccmd $incpaths $gccflags $defines ../m68.cxx -S -fverbose-asm -o m68.s
+#$gcccmd $incpaths $gccflags $defines ../m68000.cxx -S -fverbose-asm -o m68000.s
+#$gcccmd $incpaths $gccflags $defines nlcpm.c -S -fverbose-asm -o nlcpm.s
 
 # build the assembly portion with _start and syscalls
 $gccpath/bin/m68k-elf-as -mcpu=68000 startcpm.s -o startcpm.o

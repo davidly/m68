@@ -1,4 +1,4 @@
-Tue 08/05/2025 13:16:50.71 
+Wed 08/06/2025 15:15:09.06 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -3719,16 +3719,16 @@ sum: 0xfff8
 sum: 0xfff8
 sum: 0xfffffff8
 sum: 0xfffffff8
-sum high fffffff8 low 0
-sum high fffffff8 low 0
+sum: 0xfffffffffffffff8
+sum: 0xfffffffffffffff8
 sum: 0xf8
 sum: 0xf8
 sum: 0xfff8
 sum: 0xfff8
 sum: 0xfffffff8
 sum: 0xfffffff8
-sum high fffffff8 low 0
-sum high fffffff8 low 0
+sum: 0xfffffffffffffff8
+sum: 0xfffffffffffffff8
 sum: 0xfff8
 sum: 0xfff8
 sum: 0xf8
@@ -5590,4 +5590,4 @@ building ff
 elfto68k successfully created FF.68K
 running ff 
   rwxrwxrwx         384768  1970-01-01 00:00:00  /M68.68K
-Tue 08/05/2025 13:18:30.28 
+Wed 08/06/2025 15:16:49.28 

@@ -6,23 +6,23 @@
   N x N chessboard such that no two queens threaten each other.
   Mirror and flip optimizations are not applied.
 
-    n	fundamental	all
-    1	1	        1
-    2	0	        0
-    3	0       	0
-    4	1	        2
-    5	2	        10
-    6	1	        4
-    7	6	        40
-    8	12	        92
-    9	46	        352
-    10	92	        724
-    11	341	        2,680
-    12	1,787	    14,200
-    13	9,233	    73,712
-    14	45,752	    365,596
-    15	285,053	    2,279,184
-    16	1,846,955	14,772,512
+    n   fundamental     all
+    1   1               1
+    2   0               0
+    3   0               0
+    4   1               2
+    5   2               10
+    6   1               4
+    7   6               40
+    8   12              92
+    9   46              352
+    10  92              724
+    11  341             2,680
+    12  1,787           14,200
+    13  9,233           73,712
+    14  45,752          365,596
+    15  285,053         2,279,184
+    16  1,846,955       14,772,512
 */
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ void solve( int col, int n )
 {
     if ( col == n )
     {
-        //printSolution(board);
+        //printSolution( n );
         solutions++;
         return;
     }
@@ -94,7 +94,6 @@ int main( int argc, char * argv[] )
         solve( 0, n );
         printf("  %4u   %10lu\n", n, solutions );
         solutions = 0;
-        memset( board, 0, sizeof( board ) );
     }
     return 0;
 } //main

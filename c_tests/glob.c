@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 class CTest
 {
@@ -27,5 +28,6 @@ int main( int argc, char * argv[], char * envp[] )
     printf( "value of ctest::foo: %d\n", ctest.get_foo() );
 
     printf( "end of main\n" );
+    exit( 0 );
 } //main
 

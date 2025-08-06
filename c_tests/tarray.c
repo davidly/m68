@@ -41,7 +41,7 @@ template <class T> void validate_array( T * a, size_t c )
     uint64_t ones = one_bits( 8 * sizeof( T ) );
     uint64_t result = (uint64_t) sum & ones;
     if ( 8 == sizeof( T ) )
-        printf( "sum high %x low %x\n", result << 32, result & 0xffffffff );
+        printf( "sum: %#llx\n", result );
     else
         printf( "sum: %#x\n", (uint32_t) result );
 } //validate_array
@@ -49,7 +49,7 @@ template <class T> void validate_array( T * a, size_t c )
 template <class T> void test_array( T * a, size_t c )
 {
     for ( size_t i = 0; i < c; i++ )
-        a[ i ] = (T) ( i - ( c / 2 ) );
+        a[ i ] = (T) ( (T) i - ( (T) c / 2 ) );
 
     validate_array( a, c );
 } //test_array
@@ -140,14 +140,14 @@ void test_many()
     for ( size_t i = 0; i < _countof( amany ); i++ )
     {
         SMany & m = amany[ i ];
-        m.ui8 = i;
-        m.ui64 = i * 8;
-        m.ui16 = i * 2;
-        m.ui32 = i * 4;
+        m.ui8 = (uint8_t) i;
+        m.ui64 = (uint64_t) i * 8;
+        m.ui16 = (uint16_t) i * 2;
+        m.ui32 = (uint32_t) i * 4;
         m.i8 = - (int8_t) i;
-        m.i64 = - (int64_t) ( i * 8 );
-        m.i16 = - (int16_t) ( i * 2 );
-        m.i32 = - (int32_t) ( i * 4 );
+        m.i64 = - (int64_t) i * 8;
+        m.i16 = - (int16_t) i * 2;
+        m.i32 = - (int32_t) i * 4;
     }
 
     memset( amany_before, 0, sizeof( amany_before ) );
@@ -159,11 +159,11 @@ void test_many()
 
         if ( m.ui8 != i )
             printf( "error: i %u, ui8 is %llu, not %llu\n", (int) i, (uint64_t) m.ui8, (uint64_t) i );
-        if ( m.ui64 != i * 8 )
+        if ( m.ui64 != (uint64_t) i * 8 )
             printf( "error: i %u, ui64 is %llu, not %llu\n", (int) i, (uint64_t) m.ui64, (uint64_t) i * 8 );
-        if ( m.ui16 != i * 2 )
+        if ( m.ui16 != (uint16_t) i * 2 )
             printf( "error: i %u, ui16 is %llu, not %llu\n", (int) i, (uint64_t) m.ui16, (uint64_t) i * 2 );
-        if ( m.ui32 != i * 4 )
+        if ( m.ui32 != (uint32_t) i * 4 )
             printf( "error: i %u, ui32 is %llu, not %llu\n", (int) i, (uint64_t) m.ui32, (uint64_t) i * 4 );
 
         if ( m.i8 != - (int8_t) i )

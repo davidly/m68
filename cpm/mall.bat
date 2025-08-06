@@ -16,49 +16,30 @@ if "%1" == "rvos" (
 set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets ^
            nqueens cpmenumd primes targs
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
+( for %%a in (%_clist%) do (
+    echo building %%a
+    call m.bat %%a
+))
 
 set _cflist=floata mandle tap tphi ts tf pis
 
-( for %%a in (%_cflist%) do ( call :cfrun %%a ) )
-
-goto :makeasm
-
-:crun
-
-echo building %~1
-call m.bat %~1
-exit /b 0
-
-:cfrun
-
-echo building floating point app %~1
-call mf.bat %~1
-exit /b 0
-
-:makeasm
+( for %%a in (%_cflist%) do (
+    echo building floating point app %%a
+    call mf.bat %%a
+))
 
 set _asmlist=tchk tmovep tea tbcd taddsubm tshift
 
-( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
+( for %%a in (%_asmlist%) do (
+    echo building %%a
+    call ma.bat %%a
+))
 
 set _justasmlist=ttt68u e68 sieve68
 
-( for %%a in (%_justasmlist%) do ( call :justasmRun %%a ) )
+( for %%a in (%_justasmlist%) do (
+    echo building %%a
+    call maa.bat %%a
+))
 
-goto :alldone
-
-:asmRun
-
-echo building %~1
-call ma.bat %~1
-exit /b 0
-
-:justasmRun
-
-echo building %~1
-call maa.bat %~1
-exit /b 0
-
-:alldone
 

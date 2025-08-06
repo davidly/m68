@@ -15,15 +15,9 @@ if "%1" == "rvos" (
 
 set _paslist=e sieve ttt mm tap tphi
 
-( for %%a in (%_paslist%) do ( call :pasrun %%a ) )
+( for %%a in (%_paslist%) do (
+    echo building %%a
+    call m.bat %%a
+))
 
-goto :alldone
-
-:pasrun
-
-echo building %~1
-call m.bat %~1
-exit /b 0
-
-:alldone
 

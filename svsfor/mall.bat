@@ -15,15 +15,8 @@ if "%1" == "rvos" (
 
 set _forlist=e sieve ttt mm tphi
 
-( for %%a in (%_forlist%) do ( call :forrun %%a ) )
-
-goto :alldone
-
-:forrun
-
-echo building %~1
-call m.bat %~1
-exit /b 0
-
-:alldone
+( for %%a in (%_forlist%) do (
+    echo building %%a
+    call m.bat %%a
+))
 

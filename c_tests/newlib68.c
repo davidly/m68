@@ -1,5 +1,5 @@
 /*
-    This file provides the layer newlib calls to do OS-specific work.
+    This file provides the BSP layer newlib calls to do OS-specific work.
     It is very much tuned to a Linux-like OS running on a 32-bit 68000.
 */
 #include <sys/types.h>
@@ -22,6 +22,7 @@
 
 #define LINUX_AT_FDCWD -100
 
+extern "C" void __libc_fini_array( void );
 extern "C" void __attribute__((noreturn)) exit_emulator( int status );
 extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
 
@@ -338,6 +339,7 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buf, size_t count
 
 extern "C" void exit( int status )
 {
+    __libc_fini_array(); // cleanup resources allocated by the C runtime
     exit_emulator( status );
 } //exit
 

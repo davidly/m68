@@ -27,20 +27,13 @@ set _clist=E SIEVE TTT TM FILEOPS TPI TTT68U T_SETJMP TMULDIV TCHK TMOVEP MM ^
            E68 SIEVE68 TEA TBCD TADDSUBM TSHIFT FOPENTST NQUEENS CPMENUMD FLOATA ^
            MANDLE TAP TPHI TS PRIMES TF PIS TARGS
 
-( for %%a in (%_clist%) do ( call :crun %%a ) )
+( for %%a in (%_clist%) do (
+    echo running %%a
+    %_M68runcmd% %%a.68k
+))
 
 rem run app with redirected input
 echo running tgets with redirected stdin
 %_M68runcmd% tgets.68k <tgets.txt
-
-goto :alldone
-
-:crun
-
-echo running %~1
-%_M68runcmd% %~1.68k
-exit /b 0
-
-:alldone
 
 

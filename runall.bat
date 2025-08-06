@@ -2,23 +2,23 @@
 setlocal
 
 if "%1" == "" (
-  set _runcmd=m68
-  set _M68runcmd=..\m68
+    set _runcmd=m68
+    set _M68runcmd=..\m68
 ) else (
 if "%1" == "nested" (
-  set _runcmd=m68 -h:80 c_tests\m68.elf
-  set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
+    set _runcmd=m68 -h:80 c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
 ) else (
 if "%1" == "armos" (
-  set _runcmd=..\armos\armos -h:80 ..\armos\bin\m68
-  set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+    set _runcmd=..\armos\armos -h:80 ..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
 ) else (
 if "%1" == "rvos" (
-  set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
-  set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+    set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 ) else (
-  echo invalid argument
-  goto :eof
+    echo invalid argument
+    goto :eof
 ))))
 
 set outputfile=test_m68.txt
@@ -26,9 +26,13 @@ echo %date% %time% >%outputfile%
 
 rem note that tmuldiv results are incorrect due to compiler bugs but consistent with m68k
 
-set _applist=sieve e ttt tm ts tpi tmuldiv tstr mm tprintf tshift
+set _hexlist=sieve e ttt tm ts tpi tmuldiv tstr mm tprintf tshift
 
-( for %%a in (%_applist%) do ( call :appRun %%a ) )
+( for %%a in (%_hexlist%) do (
+    echo test %%a.hex
+    echo test %%a.hex >>%outputfile%
+    %_runcmd% hexapps\%%a.hex >>%outputfile%
+))
 
 rem many tests including nantst produce different results than other compiler/ISA implementations.
 rem for example, the old gcc for m68k has a different value for infinity for floating point numbers.
@@ -39,11 +43,22 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              nqueens tdir fopentst lenum tex trename ^
              tbcd tshift taddsubm tea ttt68 ttt68u tchk
 
-( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
+( for %%a in (%_elflist%) do (
+    echo test %%a
+    echo test %%a >>%outputfile%
+    %_runcmd% c_tests\%%a >>%outputfile%
+))
 
 set _compList=cpm mtpascal cb68 cpmcv11 cpmcv12 svspas svsfor forth83
 
-( for %%a in (%_compList%) do ( call :compRun %%a ) )
+( for %%a in (%_compList%) do (
+    echo compiler test %%a
+    echo compiler test %%a >>%outputfile%
+    pushd %%a
+    call mall.bat >>..\%outputfile%
+    call runall.bat >>..\%outputfile%
+    popd
+))
 
 rem 1-off tests
 
@@ -56,16 +71,9 @@ echo test ba tp.bas >>%outputfile%
 %_runcmd% c_tests\ba -q c_tests\tp.bas >>%outputfile%
 
 set _genlist=6 8 a d 3 i I m o r x
-( for %%g in (%_genlist%) do ( call :genRun %%g ) )
-
-goto after_ba
-
-:genRun
-
-%_runcmd% c_tests\ba -a:%~1 -x -q c_tests\tp.bas >>%outputfile%
-exit /b 0
-
-:after_ba
+( for %%g in (%_genlist%) do (
+    %_runcmd% c_tests\ba -a:%%g -x -q c_tests\tp.bas >>%outputfile%
+))
 
 echo test m68.elf ttt.elf 1
 echo test m68.elf ttt.elf 1 >>%outputfile%
@@ -88,34 +96,6 @@ echo running tgets with redirected stdin >>%outputfile%
 echo test ff . ff.c
 echo test ff . ff.c >>%outputfile%
 %_runcmd% c_tests\ff . ff.c >>%outputfile%
-
-goto :alldone
-
-:appRun
-
-echo test %~1.hex
-echo test %~1.hex >>%outputfile%
-%_runcmd% hexapps\%~1.hex >>%outputfile%
-exit /b 0
-
-:elfRun
-
-echo test %~1
-echo test %~1 >>%outputfile%
-%_runcmd% c_tests\%~1 >>%outputfile%
-exit /b 0
-
-:compRun
-
-echo compiler test %~1
-echo compiler test %~1 >>%outputfile%
-pushd %~1
-call mall.bat >>..\%outputfile%
-call runall.bat >>..\%outputfile%
-popd
-exit /b 0
-
-:alldone
 
 echo %date% %time% >>%outputfile%
 diff baseline_%outputfile% %outputfile%

@@ -14,24 +14,13 @@ if "%1" == "rvos" (
 )
 
 set _intlist=e sieve ttt mm
-( for %%a in (%_intlist%) do ( call :intrun %%a ) )
+( for %%a in (%_intlist%) do (
+    echo building %%a
+    call m.bat %%a
+))
 
 set _floatlist=tphi tap
-( for %%a in (%_floatlist%) do ( call :floatrun %%a ) )
-
-goto :alldone
-
-:intrun
-
-echo building %~1
-call m.bat %~1
-exit /b 0
-
-:floatrun
-
-echo building %~1
-call mf.bat %~1
-exit /b 0
-
-:alldone
-
+( for %%a in (%_floatlist%) do (
+    echo building %%a
+    call mf.bat %%a
+))
