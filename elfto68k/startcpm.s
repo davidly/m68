@@ -64,8 +64,8 @@ _start:
 
     jsr __libc_fini_array       /* ask the C runtime to shut down */
 
-    move.l %d7, %d0             /* restore app exit code */
-    bra exit_cpm                /* could jsr but we're not coming back anyway */
+    move.l %d7, -(%a7)          /* push the exit code */
+    jsr exit_cpm
 
 .global _init
 .type _init, @function
@@ -86,11 +86,9 @@ _fini:
 .global exit_cpm
 .type exit_cpm, @function
 exit_cpm:
-    move.l %d0, %d1             /* put app exit code in the first syscall argument register */
+    move.l 4(%a7), %d1          /* put app exit code in 1st syscall argument register */
     clr.l %d0                   /* the cp/m exit function is 0 */
-    trap #2
-  busy_loop:                    /* it'd be a bug if this executes, but if it does just loop */
-    bra busy_loop
+    trap #2                     /* no coming back from this */
 
 .global bdos_cpm
 .type bdos_cpm, @function

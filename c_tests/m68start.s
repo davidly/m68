@@ -33,8 +33,9 @@ _start:
     move.l %d0, %d7             /* save app exit code */
 
     jsr __libc_fini_array
-    move.l %d7, %d0             /* restore app exit code */
-    bra exit_emulator           /* could jsr but we're not coming back anyway */
+
+    move.l %d7, -(%a7)          /* push the exit code */
+    jsr exit_emulator
 
   .global _init
   .type _init, @function
@@ -73,11 +74,9 @@ _fini:
   .global exit_emulator
   .type exit_emulator, @function
 exit_emulator:
-    move.l %d0, %d1             /*  put app exit code in 1st syscall argument register */
-    move.l #93, %d0             /*  linux exit function */
-    trap #0
-  busy_loop:                    /* it'd be a bug if this executes, but if it does just loop */
-    bra busy_loop
+    move.l 4(%a7), %d1          /* put app exit code in 1st syscall argument register */
+    move.l #93, %d0             /* linux exit function */
+    trap #0                     /* no coming back from this */ 
 
   .global syscall6
   .type syscall6, @function
