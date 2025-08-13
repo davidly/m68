@@ -2,6 +2,7 @@
    App to prove you can't win at Tic-Tac-Toe if the opponent is competent.
 *)
 
+{$R-}
 program ttt;
 
 const

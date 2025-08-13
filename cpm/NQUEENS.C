@@ -36,16 +36,6 @@
 unsigned long solutions = 0;
 bool board[N][N] = { false };
 
-char * memset( p, v, c ) char * p; int v; int c;
-{
-    int i;
-    char * orig = p;
-
-    for ( i = 0; i < c; i++ )
-        *p++ = (char) v;
-    return orig;
-}
-
 int printSolution( n ) int n;
 {
     int r, c;
@@ -85,7 +75,7 @@ int solve( col, n ) int col; int n;
 
     if ( col == n )
     {
-        //printSolution(board);
+        //printSolution( n );
         solutions++;
         return;
     }
@@ -110,7 +100,6 @@ int main()
         solve( 0, n );
         printf("  %4u   %10lu\n", n, solutions );
         solutions = 0;
-        memset( board, 0, sizeof( board ) );
     }
     return 0;
 } //main

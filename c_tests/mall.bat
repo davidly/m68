@@ -8,15 +8,10 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              t_setjmp ba td tf tap tphi mm ts glob nantst pis tfo sleeptm ff ^
              nqueens tdir fopentst lenum tgets tex trename
 
-( for %%a in (%_elflist%) do ( call :elfRun %%a ) )
-
-goto :makem68elf
-
-:elfRun
-
-echo building %~1
-call m.bat %~1 %_optflag%
-exit /b 0
+( for %%a in (%_elflist%) do (
+    echo building %%a
+    call m.bat %%a %_optflag%
+) )
 
 :makem68elf
 echo build m68.elf
@@ -24,15 +19,10 @@ call mm68.bat
 
 set _asmlist=tbcd tshift taddsubm tea ttt68 ttt68u tchk
 
-( for %%a in (%_asmlist%) do ( call :asmRun %%a ) )
-
-goto :alldone
-
-:asmRun
-
-echo building %~1
-call ma.bat %~1
-exit /b 0
+( for %%a in (%_asmlist%) do (
+    echo building %%a
+    call ma.bat %%a
+) )
 
 :alldone
 

@@ -13,7 +13,7 @@ if "%1" == "rvos" (
   set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
-set _clist=e sieve ttt mm mmf
+set _clist=e sieve ttt mm mmf nqueens
 
 ( for %%a in (%_clist%) do (
     echo building %%a

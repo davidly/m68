@@ -34,7 +34,7 @@
 unsigned long solutions = 0;
 bool board[N][N] = { false };
 
-void printSolution( int n )
+void printSolution( const int n )
 {
     for ( int r = 0; r < n; r++ )
     {
@@ -47,7 +47,7 @@ void printSolution( int n )
 
 // this assumes pieces are placed in order from column 0 to n-1
 
-inline bool isSafe( int row, int col, int n )
+inline bool isSafe( const int row, const int col, const int n )
 {
     int c, r;
 
@@ -66,7 +66,7 @@ inline bool isSafe( int row, int col, int n )
     return true;
 } //isSafe
 
-void solve( int col, int n )
+void solve( const int col, const int n )
 {
     if ( col == n )
     {

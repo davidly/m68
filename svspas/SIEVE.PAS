@@ -1,3 +1,4 @@
+{$R-}
 program sieve( INPUT, OUTPUT );
 
 const

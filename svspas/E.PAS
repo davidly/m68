@@ -1,3 +1,4 @@
+{$R-}
 program e;
 
 const
@@ -39,4 +40,3 @@ begin
     writeln( 'done' );
 end.
 
-

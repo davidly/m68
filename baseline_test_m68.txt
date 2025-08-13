@@ -1,4 +1,4 @@
-Wed 08/06/2025 15:15:16.58 
+Wed 08/13/2025  7:55:42.66 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-24.530001 milliseconds
+18.888000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 6, hour 22, min 15, sec 25
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 6, hour 17, min 15, sec 25
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 6, hour 14, min 15, sec 25
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 6, hour 14, min 15, sec 25
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 13, hour 14, min 55, sec 50
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 13, hour 9, min 55, sec 50
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 13, hour 6, min 55, sec 50
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 13, hour 6, min 55, sec 50
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5795,7 +5795,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 8, day 6, hour 14, min 15, sec 34
+tz: 'PST+8', year: 2025, month 8, day 13, hour 6, min 55, sec 58
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6429,7 +6429,7 @@ finding 68K files
   file  16:        MM.68K     28416
   file  17:      MORE.68K     31872
   file  18:      NM68.68K     16000
-  file  19:   NQUEENS.68K     28032
+  file  19:   NQUEENS.68K     27904
   file  20:       PIS.68K     43904
   file  21:    PRIMES.68K     27776
   file  22:   SENDC68.68K     16384
@@ -6807,6 +6807,40 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 mm,paslib.l68 
+building nqueens
+--------------------------------------------------
+Pascal MT+68                           Version 3.3
+Serial  No. 3170-0000-000088   All Rights Reserved
+Copyright (c) 1984          Digital Research, Inc.
+--------------------------------------------------
+PASTEMP.TOK ROUTED TO DISK: @
++++++++
+SYNTAX SCAN COMPLETE
+SYMBOL TABLE INITIALIZATION
+AVAILABLE MEMORY: 1048421
+USER TABLE SPACE: 1047745
+RELEASE 3.3 -- PHASE 1
+##
+REMAINING MEMORY: 1047652
+RELEASE 3.3 -- PHASE 2
+MT+68K
+ISSAFE         12    SIZE:   408
+SOLVE         420    SIZE:   208
+NQUEENS       628    SIZE:   324
+
+LINES :     118
+ERRORS:       0
+CODE  :     952
+BSS   :     256
+
+PASCAL/MT+68K COMPILATION COMPLETE
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+nqueens,paslib.l68 
 building tphi
 --------------------------------------------------
 Pascal MT+68                           Version 3.3
@@ -6921,6 +6955,19 @@ second implementation...
   at 1000 iterations:  1.201923076923E+000
   at 10000 iterations:  1.194457716196E+000
 tap completed with great success
+running NQUEENS
+size    solutions
+   1            1
+   2            0
+   3            0
+   4            2
+   5           10
+   6            4
+   7           40
+   8           92
+   9          352
+  10          724
+  11         2680
 compiler test cb68 
 building e
 --------------------------------------------------
@@ -7337,6 +7384,78 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 mmf.o,cb68.l68 
+building nqueens
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     integer b, n, c, s, r, sa, st, lc, lr, h
+    2:     
+    3:     1 h = 11
+    4:     10 dim b(h,h)
+    5:     20 dim st(h)
+    6:     30 for n = 1 to h
+    7:     40     c = 0
+    8:     50     s = 0
+    9:     60     gosub 100
+   10:     70     print "solutions for n "; n; ": "; s
+   11:     80     next n
+   12:     90 goto 5000
+   13:     
+   14:     100 if c = n then s = s + 1 : return
+   15:     130 r = 0
+   16:     140     gosub 500
+   17:     200     if 0 = sa then goto 300
+   18:     210         b(r,c) = 1
+   19:     220         st(c) = r
+   20:     230         c = c + 1
+   21:     240         gosub 100
+   22:     250         c = c - 1
+   23:     260         r = st(c)
+   24:     270         b(r,c) = 0
+   25:     300     r = r + 1
+   26:     310     if r < n then goto 140
+   27:     320 return
+   28:     
+   29:     500 sa = 0
+   30:     510 for lc = 0 to c
+   31:     520     if b(r,lc) then return
+   32:     525     next lc
+   33:     530 lr = r - 1
+   34:     540 lc = c - 1
+   35:     550     if lr < 0 or lc < 0 then goto 600
+   36:     560     if b(lr,lc) then return
+   37:     570     lr = lr - 1
+   38:     580     lc = lc - 1
+   39:     590     goto 550
+   40:     600 lr = r + 1
+   41:     610 lc = c - 1
+   42:     620     if lr = n or lc < 0 then goto 670
+   43:     630     if b(lr,lc) then return
+   44:     640     lr = lr + 1
+   45:     650     lc = lc - 1
+   46:     660     goto 620
+   47:     670 sa = 1
+   48:     680 return
+   49:     
+   50:     5000 end
+   51:     
+end of compilation
+no errors detected
+code area size:    732       000002dch
+data area size:    68        00000044h
+common area size:  0         00000000h
+symbol table space remaining: 49039
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+nqueens.o,cb68.l68 
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -7352,6 +7471,18 @@ SUM =  465880
 running MMF
 SUM =  465880
 
+running NQUEENS
+solutions for n  1 :  1
+solutions for n  2 :  0
+solutions for n  3 :  0
+solutions for n  4 :  2
+solutions for n  5 :  10
+solutions for n  6 :  4
+solutions for n  7 :  40
+solutions for n  8 :  92
+solutions for n  9 :  352
+solutions for n  10 :  724
+solutions for n  11 :  2680
 compiler test cpmcv11 
 building e
 building sieve
@@ -7607,14 +7738,14 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
  E        [1166952 bytes]
-          {1166018 bytes}
+          {1166054 bytes}
 
-0 errors.  41 lines.  File e.pas
+0 errors.  42 lines.  File e.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
-E        - E           Code size = 196
-Total code size = 196
+E        - E           Code size = 160
+Total code size = 160
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -7623,14 +7754,14 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
  SIEVE    [1166894 bytes]
-          {1166160 bytes}
+          {1166196 bytes}
 
-0 errors.  31 lines.  File sieve.pas
+0 errors.  32 lines.  File sieve.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
-SIEVE    - SIEVE       Code size = 172
-Total code size = 172
+SIEVE    - SIEVE       Code size = 136
+Total code size = 136
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -7643,22 +7774,22 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
     LOOKFORW [1166264 bytes]
              {1164744 bytes}
     MINMAX   [1166004 bytes]
-             {1164374 bytes}
+             {1164410 bytes}
     RUNIT    [1166036 bytes]
-             {1165784 bytes}
+             {1165808 bytes}
  TTT      [1166150 bytes]
-          {1165456 bytes}
+          {1165468 bytes}
 
-0 errors.  252 lines.  File ttt.pas
+0 errors.  253 lines.  File ttt.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
 WINNER2  - WINNER2     Code size = 426
 LOOKFORW - LOOKFORW    Code size = 172
-MINMAX   - MINMAX      Code size = 278
-RUNIT    - RUNIT       Code size = 82
-TTT      - TTT         Code size = 222
-Total code size = 1180
+MINMAX   - MINMAX      Code size = 240
+RUNIT    - RUNIT       Code size = 58
+TTT      - TTT         Code size = 210
+Total code size = 1106
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -7667,29 +7798,29 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
     FILLA    [1166548 bytes]
-             {1166334 bytes}
+             {1166358 bytes}
     FILLB    [1166502 bytes]
-             {1166276 bytes}
+             {1166300 bytes}
     FILLC    [1166456 bytes]
-             {1166248 bytes}
+             {1166272 bytes}
     MATMULT  [1166376 bytes]
-             {1165948 bytes}
+             {1166044 bytes}
     SUMMIT   [1166364 bytes]
-             {1166158 bytes}
+             {1166182 bytes}
  MATRIX   [1166512 bytes]
           {1166284 bytes}
 
-0 errors.  77 lines.  File mm.pas
+0 errors.  78 lines.  File mm.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
-FILLA    - FILLA       Code size = 90
-FILLB    - FILLB       Code size = 94
-FILLC    - FILLC       Code size = 84
-MATMULT  - MATMULT     Code size = 202
-SUMMIT   - SUMMIT      Code size = 88
+FILLA    - FILLA       Code size = 62
+FILLB    - FILLB       Code size = 66
+FILLC    - FILLC       Code size = 56
+MATMULT  - MATMULT     Code size = 112
+SUMMIT   - SUMMIT      Code size = 60
 MATRIX   - MATRIX      Code size = 76
-Total code size = 634
+Total code size = 432
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -7706,7 +7837,7 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
  TAP      [1166618 bytes]
           {1165352 bytes}
 
-0 errors.  88 lines.  File tap.pas
+0 errors.  89 lines.  File tap.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -7725,7 +7856,7 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
  TPHI     [1167050 bytes]
           {1166500 bytes}
 
-0 errors.  20 lines.  File tphi.pas
+0 errors.  21 lines.  File tphi.pas
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -8223,17 +8354,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     281
-  dictionary: 277
+total ms:     260
+  dictionary: 256
   generate:   3
   render:     0
 test ba tp.bas 
-229 ms for 1 iterations
+213 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-387.403015 milliseconds
+270.717987 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8257,4 +8388,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Wed 08/06/2025 15:15:55.74 
+Wed 08/13/2025  7:56:22.48 

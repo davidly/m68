@@ -19,7 +19,7 @@ fi
 
 export _m68runcmd
 
-for arg in e sieve ttt mm mmf
+for arg in e sieve ttt mm mmf nqueens
 do
     echo building $arg
     m.sh $arg

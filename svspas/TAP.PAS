@@ -1,3 +1,4 @@
+{$R-}
 program tap;
 
 var

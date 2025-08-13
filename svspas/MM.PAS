@@ -2,6 +2,7 @@
 { various bugs not found because dimensions are square fixed by David Lee }
 { expected result: 4.65880E+05 }
 
+{$R-}
 program matrix( output );
 
 const
