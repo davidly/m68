@@ -1,4 +1,4 @@
-Wed 08/13/2025  7:55:42.66 
+Wed 08/13/2025  8:29:01.43 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-18.888000 milliseconds
+18.93 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 13, hour 14, min 55, sec 50
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 13, hour 9, min 55, sec 50
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 13, hour 6, min 55, sec 50
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 13, hour 6, min 55, sec 50
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 13, hour 15, min 29, sec 9
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 13, hour 10, min 29, sec 9
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 13, hour 7, min 29, sec 9
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 13, hour 7, min 29, sec 9
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5795,7 +5795,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 8, day 13, hour 6, min 55, sec 58
+tz: 'PST+8', year: 2025, month 8, day 13, hour 7, min 29, sec 17
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -7865,6 +7865,28 @@ Total code size = 208
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
+building nqueens
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+    ISSAFE   [1166488 bytes]
+             {1165444 bytes}
+    SOLVE    [1166442 bytes]
+             {1165994 bytes}
+ NQUEENS  [1166556 bytes]
+          {1165968 bytes}
+
+0 errors.  118 lines.  File nqueens.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+ISSAFE   - ISSAFE      Code size = 174
+SOLVE    - SOLVE       Code size = 118
+NQUEENS  - NQUEENS     Code size = 170
+Total code size = 462
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -7907,6 +7929,19 @@ should tend towards 1.618033988749...
   at 12 iterations:  1.61802577972412D+000
   at 13 iterations:  1.61803710460663D+000
   at 14 iterations:  1.61803281307220D+000
+running NQUEENS
+size    solutions
+   1            1
+   2            0
+   3            0
+   4            2
+   5           10
+   6            4
+   7           40
+   8           92
+   9          352
+  10          724
+  11         2680
 compiler test svsfor 
 building e
 MC68000 Fortran77 Compiler  V2.1               01-Dec-83
@@ -8354,17 +8389,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     260
-  dictionary: 256
+total ms:     258
+  dictionary: 254
   generate:   3
   render:     0
 test ba tp.bas 
-213 ms for 1 iterations
+214 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-270.717987 milliseconds
+268.963013 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8388,4 +8423,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Wed 08/13/2025  7:56:22.48 
+Wed 08/13/2025  8:29:42.43 

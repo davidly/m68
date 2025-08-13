@@ -16,7 +16,7 @@ if [ "$_m68runcmd" = "" ]; then
   _m68runcmd="../m68"
 fi
 
-for arg in E SIEVE TTT MM TAP TPHI
+for arg in E SIEVE TTT MM TAP TPHI NQUEENS
 do
   echo running $arg
   $_m68runcmd $arg.68K
