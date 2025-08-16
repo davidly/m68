@@ -45,7 +45,6 @@ int main( int argc, char * argv[] )
 
     long len = portable_filelen( fp );
     if ( 0 != len )
-    if ( !fp )
     {
         printf( "opening the file again for write didn't truncate the file!\n" );
         exit( 1 );
