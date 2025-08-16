@@ -2,7 +2,7 @@
 * a6 board
 * a5 pointer to position of current move
 * a4 in issafe(), pointer to position check for a queen
-* d7 n -- current board size
+* d7 n -- current board size 1..maxsize
 * d6 r -- current row
 * d5 c -- current column
 * d4 solutions -- # of solutions found for current board sized n
@@ -39,12 +39,12 @@ _start:
     jsr show_num               * show solution count
     move.l #crlf_string, d1
     bsr print_string
-    addi.l #1, d7              * increment n
-    cmp.l #maxsize, d7         * all done?
+    addq.l #1, d7              * increment n
+    cmp.w #maxsize, d7         * all done?
     ble inc_board
 
-    clr.l d0
-    rts
+    clr.l d0                   * exit code
+    rts                        * return to the OS
 
 solve:
     cmp.l d5, d7               * compare c and n.  if ( c == n ) { solutions++; return; }
@@ -82,8 +82,8 @@ issafe:
     subq.l #1, d2              * for ( lc = c - 1; lc >= 0 lc-- ) if ( board[r][lc] ) return false;
     move.l a5, a4              * a5 has the pointer to the board position being checked
   next_a:
-    tst.b -(a4)
-    dbne d2, next_a            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop
+    tst.b -(a4)                * is there a queen there?
+    dbne d2, next_a            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop. condition flags not set.
     bne safe0                  * if a queen is on the last position checked we're not safe
 
   safe_b:                      * for ( lr = r, lc = c; lr >= 0 && lc >= 0; lr--, lc-- ) if ( board[lr][lc] ) return false;
@@ -94,9 +94,9 @@ issafe:
   next_b:
     subq.l #1, d3
     bmi safe_c                 * if row < 0 move on to "C" tests
-    suba.l #maxsize+1, a4      * move to the next position to check
+    suba.l #maxsize+1, a4      * move to the next position to check. up and to left
     tst.b (a4)
-    dbne d2, next_b            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop
+    dbne d2, next_b            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop. condition flags not set.
     bne safe0                  * if a queen is on the last position checked we're not safe
 
   safe_c:                      * for ( lr = r, lc = c; lc >= 0 && lr < n; lr++, lc-- ) if ( board[lr][lc] ) return false;
@@ -108,16 +108,16 @@ issafe:
     addq.l #1, d3
     cmp.l d3, d7               * compare lr to n
     beq safe1                  * is lr n? if so, we're safe
-    adda.l #maxsize-1, a4
+    adda.l #maxsize-1, a4      * move to the next position to check. down and to left
     tst.b (a4)
-    dbne d2, next_c            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop
+    dbne d2, next_c            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop. condition flags not set.
     bne safe0                  * if a queen is on the last position checked we're not safe
 
   safe1:
-    moveq.l #1, d0             * also sets Z
+    moveq.l #1, d0             * also clears Z. safe from other queens.
     rts
   safe0:
-    clr.l d0                   * also clears Z
+    clr.l d0                   * also sets Z. not safe from other queens.
     rts
 
 show_num:                      * print the unsigned number in d0.w right-justified 6 columns
