@@ -36,10 +36,10 @@ rem lr and lc -- local r and c in the "is safe" function
 320 return
 
 500 sa = 0
-505 lc = 0
-510     if lc = c then goto 530
+505 lc = c - 1
+510     if lc < 0 then goto 530
 515     if b(r,lc) then return
-520     lc = lc + 1
+520     lc = lc - 1
 525     goto 510
 530 lr = r - 1
 540 lc = c - 1

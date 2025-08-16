@@ -33,7 +33,7 @@
 
 #define N 8 // largest board size to solve
 
-unsigned long solutions = 0;
+long solutions = 0;
 bool board[N][N] = { false };
 
 int printSolution( n ) int n;
@@ -54,15 +54,15 @@ bool isSafe( row, col, n ) int row; int col; int n;
 {
     int c, r;
 
-    for ( c = 0; c < col; c++ )
+    for ( c = col - 1; c >= 0; c-- )
         if ( board[row][c] )
             return false;
 
-    for ( r = row, c = col; r >= 0 && c >= 0; r--, c-- )
+    for ( r = row - 1, c = col - 1; r >= 0 && c >= 0; r--, c-- )
         if ( board[r][c] )
             return false;
 
-    for ( r = row, c = col; c >= 0 && r < n; r++, c-- )
+    for ( r = row + 1, c = col - 1; c >= 0 && r < n; r++, c-- )
         if ( board[r][c] )
             return false;
 

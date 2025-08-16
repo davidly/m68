@@ -1,4 +1,4 @@
-Fri 08/15/2025 14:48:12.61 
+Sat 08/16/2025  7:11:09.02 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-18.655001 milliseconds
+23.705999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 15, hour 21, min 48, sec 21
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 15, hour 16, min 48, sec 21
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 15, hour 13, min 48, sec 21
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 15, hour 13, min 48, sec 21
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 16, hour 14, min 11, sec 17
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 16, hour 9, min 11, sec 17
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 16, hour 6, min 11, sec 17
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 16, hour 6, min 11, sec 17
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5792,7 +5792,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 8, day 15, hour 13, min 48, sec 28
+tz: 'PST+8', year: 2025, month 8, day 16, hour 6, min 11, sec 25
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6830,13 +6830,13 @@ RELEASE 3.3 -- PHASE 1
 REMAINING MEMORY: 1047652
 RELEASE 3.3 -- PHASE 2
 MT+68K
-ISSAFE         12    SIZE:   402
-SOLVE         414    SIZE:   204
-NQUEENS       618    SIZE:   322
+ISSAFE         12    SIZE:   406
+SOLVE         418    SIZE:   204
+NQUEENS       622    SIZE:   322
 
 LINES :     118
 ERRORS:       0
-CODE  :     940
+CODE  :     944
 BSS   :     142
 
 PASCAL/MT+68K COMPILATION COMPLETE
@@ -7433,10 +7433,10 @@ end of pass 2
    36:     320 return
    37:     
    38:     500 sa = 0
-   39:     505 lc = 0
-   40:     510     if lc = c then goto 530
+   39:     505 lc = c - 1
+   40:     510     if lc < 0 then goto 530
    41:     515     if b(r,lc) then return
-   42:     520     lc = lc + 1
+   42:     520     lc = lc - 1
    43:     525     goto 510
    44:     530 lr = r - 1
    45:     540 lc = c - 1
@@ -7459,7 +7459,7 @@ end of pass 2
    62:     
 end of compilation
 no errors detected
-code area size:    734       000002deh
+code area size:    744       000002e8h
 data area size:    68        00000044h
 common area size:  0         00000000h
 symbol table space remaining: 49021
@@ -7881,7 +7881,7 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
     ISSAFE   [1166488 bytes]
-             {1165444 bytes}
+             {1165418 bytes}
     SOLVE    [1166442 bytes]
              {1165994 bytes}
  NQUEENS  [1166556 bytes]
@@ -7891,10 +7891,10 @@ MC68000 Pascal Compiler  V2.1                  27-Feb-84
 MC68000 Code Generator  V2.1                   27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
-ISSAFE   - ISSAFE      Code size = 168
+ISSAFE   - ISSAFE      Code size = 172
 SOLVE    - SOLVE       Code size = 106
 NQUEENS  - NQUEENS     Code size = 164
-Total code size = 438
+Total code size = 442
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -8059,7 +8059,7 @@ NQUEEN [1164858 bytes]
 SOLVE  [1164676 bytes]
        {1163756 bytes}
 ISSAFE [1164634 bytes]
-       {1163126 bytes}
+       {1163058 bytes}
 
 
 0 errors.  92 lines.  File nqueens.for
@@ -8069,8 +8069,8 @@ MC68000 Code Generator  V2.1                   01-Dec-83
 
 NQUEEN   - NQUEEN      Code size = 364
 SOLVE    - SOLVE       Code size = 200
-ISSAFE   - ISSAFE      Code size = 322
-Total code size = 886
+ISSAFE   - ISSAFE      Code size = 332
+Total code size = 896
 MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
@@ -8431,17 +8431,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     250
-  dictionary: 245
+total ms:     262
+  dictionary: 258
   generate:   3
   render:     0
 test ba tp.bas 
-210 ms for 1 iterations
+219 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-262.398987 milliseconds
+354.192993 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8465,4 +8465,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Fri 08/15/2025 14:48:47.60 
+Sat 08/16/2025  7:11:45.05 

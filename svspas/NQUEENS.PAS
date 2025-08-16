@@ -49,11 +49,11 @@ var
     safe : boolean;
 begin
     safe := true;
-    c := 0;
-    while ( c < col ) and safe do
+    c := col - 1;
+    while ( c >= 0 ) and safe do
     begin
         if ( board[ row, c ] ) then safe := false;
-        c := c + 1;
+        c := c - 1;
     end;
 
     if ( safe ) then

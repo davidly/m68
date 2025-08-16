@@ -67,10 +67,10 @@ C nqueens is too long for svs fortran, so use nqueen as program name
       common /area/ b,rstack,n,c,r,safe,lc,lr,s
 
       safe = 0
-      lc = 0
- 510      if ( lc .eq. c ) go to 530
+      lc = c - 1
+ 510      if ( lc .lt. 0 ) go to 530
           if ( b(r,lc) .eq. 1 ) return
-          lc = lc + 1
+          lc = lc - 1
           go to 510
  530  lr = r - 1
       lc = c - 1
