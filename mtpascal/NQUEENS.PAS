@@ -33,8 +33,8 @@
 program nqueens;
 
 const 
-    LIMIT = 11;
-    LIMIT_MINUS_1 = 10;
+    LIMIT = 8;
+    LIMIT_MINUS_1 = 7;
 
 type
     boardType = array[ 0..LIMIT_MINUS_1, 0..LIMIT_MINUS_1 ] of boolean;

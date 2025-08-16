@@ -1,6 +1,15 @@
 integer b, n, c, s, r, sa, st, lc, lr, h
+rem b  -- the board
+rem c  -- current column
+rem r  -- current row
+rem s  -- solution count
+rem n  -- current number of columns to solve for
+rem h  -- hightest board dimension to solve for
+rem st -- stack to save current r when recursing
+rem sa -- returns if a board position is safe
+rem lr and lc -- local r and c in the "is safe" function
 
-1 h = 11
+1 h = 8
 10 dim b(h,h)
 20 dim st(h)
 30 for n = 1 to h
@@ -27,9 +36,11 @@ integer b, n, c, s, r, sa, st, lc, lr, h
 320 return
 
 500 sa = 0
-510 for lc = 0 to c
-520     if b(r,lc) then return
-525     next lc
+505 lc = 0
+510     if lc = c then goto 530
+515     if b(r,lc) then return
+520     lc = lc + 1
+525     goto 510
 530 lr = r - 1
 540 lc = c - 1
 550     if lr < 0 or lc < 0 then goto 600

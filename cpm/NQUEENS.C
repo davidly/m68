@@ -31,7 +31,7 @@
 #define true 1
 #define false 0
 
-#define N 11 // largest board size to solve
+#define N 8 // largest board size to solve
 
 unsigned long solutions = 0;
 bool board[N][N] = { false };

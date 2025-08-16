@@ -35,7 +35,7 @@ set _asmlist=tchk tmovep tea tbcd taddsubm tshift
     call ma.bat %%a
 ))
 
-set _justasmlist=ttt68u e68 sieve68
+set _justasmlist=ttt68u e68 sieve68 nq68
 
 ( for %%a in (%_justasmlist%) do (
     echo building %%a

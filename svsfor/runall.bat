@@ -17,7 +17,7 @@ if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )
 
-set _clist=E SIEVE TTT MM TPHI
+set _clist=E SIEVE TTT MM TPHI NQUEENS
 
 ( for %%a in (%_clist%) do (
     echo running %%a

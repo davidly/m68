@@ -1,4 +1,4 @@
-Wed 08/06/2025 15:15:09.06 
+Fri 08/15/2025 14:49:26.04 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -5490,9 +5490,6 @@ running nqueens
      6            4
      7           40
      8           92
-     9          352
-    10          724
-    11         2680
 building fopentst 
 elfto68k successfully created FOPENTST.68K
 running fopentst 
@@ -5590,4 +5587,4 @@ building ff
 elfto68k successfully created FF.68K
 running ff 
   rwxrwxrwx         384768  1970-01-01 00:00:00  /M68.68K
-Wed 08/06/2025 15:16:49.28 
+Fri 08/15/2025 14:51:02.00 
