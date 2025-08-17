@@ -4552,7 +4552,7 @@ bool load59_cpm68k( FILE *fp, uint32_t lowestAddress, uint32_t highestAddress, u
     tracer.Trace( "  <stack>\n" );
     tracer.Trace( "  <unallocated space between brk and the stack>\n" );
     tracer.Trace( "  end_of_bss / current brk:                           %x\n", text_base + head.cb_text + head.cb_data  + head.cb_bss );
-    tracer.Trace( "  <uninitialized bss data\n" );
+    tracer.Trace( "  <uninitialized bss data>\n" );
     tracer.Trace( "  start of bss segment:                               %x\n", text_base + head.cb_text + head.cb_data );
     tracer.Trace( "  <initialized data from the .68k file>\n" );
     tracer.Trace( "  start of data segment:                              %x\n", text_base + head.cb_text );
@@ -4778,7 +4778,7 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
     tracer.Trace( "  last byte stack can use (g_bottom_of_stack):        %x\n", g_base_address + g_bottom_of_stack );
     tracer.Trace( "  <unallocated space between brk and the stack>       (%d == %llx bytes)\n", g_brk_commit, g_brk_commit );
     tracer.Trace( "  end_of_bss / current brk:                           %x\n", g_base_address + g_end_of_data );
-    tracer.Trace( "  <uninitialized bss data\n" );
+    tracer.Trace( "  <uninitialized bss data>\n" );
     tracer.Trace( "  start of bss segment:                               %x\n", g_execution_address + head.cb_text + head.cb_data );
     tracer.Trace( "  <initialized data from the .68k file>\n" );
     tracer.Trace( "  start of data segment:                              %x\n", g_execution_address + head.cb_text );
