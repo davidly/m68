@@ -38,7 +38,7 @@ do
     ma.sh $arg
 done
 
-for arg in ttt68u e68 sieve68 nq68
+for arg in ttt68u e68 sieve68 nq68 nq681d
 do
     echo building $arg
     maa.sh $arg
