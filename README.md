@@ -173,6 +173,7 @@ compiler and assembler benchmark performance:
     * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance
     * assembly code always wins
 
-<img width="1685" height="554" alt="table" src="https://github.com/user-attachments/assets/91b8a361-f2fe-4474-b3fe-818e3b05fb5d" />
+<img width="1955" height="558" alt="table" src="https://github.com/user-attachments/assets/e0d36f7f-b422-4ee9-8529-3cc2b5280039" />
+
 
    
