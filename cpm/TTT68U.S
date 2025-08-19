@@ -89,9 +89,7 @@ mm_max:
     rts
 
   _max_no_winner_check:
-    move.w d6, -(a7)
-    move.w d2, -(a7)
-    move.w d4, -(a7)
+    movem.w d2/d4/d6, -(a7)
     moveq.l #minsc, d2
     addq.l #1, d5
 
@@ -279,9 +277,7 @@ mm_max:
     move.l d2, d0
 
   _max_restore_value:
-    move.w (a7)+, d4
-    move.w (a7)+, d2
-    move.w (a7)+, d6
+    movem.w (a7)+, d6/d4/d2
     subq.l #1, d5
     rts
 
@@ -308,9 +304,7 @@ mm_min:
     rts
 
   _min_no_winner_check:
-    move.w d6, -(a7)
-    move.w d2, -(a7)
-    move.w d3, -(a7)
+    movem.w d2/d3/d6, -(a7)
     moveq.l #maxsc, d2
     addq.l #1, d5
 
@@ -498,9 +492,7 @@ mm_min:
     move.l d2, d0
 
   _min_restore_value:
-    move.w (a7)+, d3
-    move.w (a7)+, d2
-    move.w (a7)+, d6
+    movem.w (a7)+, d6/d3/d2
     subq.l #1, d5
     rts
 

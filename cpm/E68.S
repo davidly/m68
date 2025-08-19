@@ -69,8 +69,7 @@ _start:
     move.w d4, (a3)         * a[n] = x % n
     clr.w d4                * zero out the remainder portion
     swap d4                 * quotient back in d4.w
-    subq.l #2, a3           * point to a[ n - 1 ]
-    move.w (a3), d0         * load a[ n - 1 ]
+    move.w -(a3), d0        * load a[ n - 1 ]
     mulu.w d6, d0           * 10 * a[ n - 1 ]
     add.w d0, d4            * x = 10 * a[ n - 1 ] + x / n
     subq.l #1, d5           * while ( --n )

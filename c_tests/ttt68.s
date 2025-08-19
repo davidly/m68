@@ -106,9 +106,7 @@ minmax_max:
     rts
 
   _max_no_winner_check:
-    move.w %d6, -(%a7)          | save caller's move
-    move.w %d2, -(%a7)          | save caller's value 
-    move.w %d4, -(%a7)          | save caller's alpha
+    movem.w %d2/%d4/%d6, -(%a7) | save caller's value, alpha, and move
     moveq.l #score_min, %d2     | maximizing, so set initial value to minimum
     moveq.l #-1, %d6            | %d6 has the move 0..8
     addq.l #1, %d5              | increment depth
@@ -145,9 +143,7 @@ minmax_max:
     move.l %d2, %d0
 
   _max_restore_value:
-    move.w (%a7)+, %d4          | restore caller's alpha
-    move.w (%a7)+, %d2          | restore caller's value
-    move.w (%a7)+, %d6          | restore caller's move
+    movem.w (%a7)+, %d6/%d4/%d2 | restore caller's move, alpha, and value
     subq.l #1, %d5              | restore depth
     rts
 
@@ -175,9 +171,7 @@ minmax_min:
     rts
 
   _min_no_winner_check:
-    move.w %d6, -(%a7)          | save caller's move
-    move.w %d2, -(%a7)          | save caller's value 
-    move.w %d3, -(%a7)          | save caller's beta
+    movem.w %d2/%d3/%d6, -(%a7) | save caller's value, beta, and move
     moveq.l #score_max, %d2     | minimizing, so set initial value to maximum
     moveq.l #-1, %d6            | %d6 has the move 0..8
     addq.l #1, %d5              | increment depth
@@ -214,9 +208,7 @@ minmax_min:
     move.l %d2, %d0
 
   _min_restore_value:
-    move.w (%a7)+, %d3          | restore caller's beta
-    move.w (%a7)+, %d2          | restore caller's value
-    move.w (%a7)+, %d6          | restore caller's move
+    movem.w (%a7)+, %d6/%d3/%d2 | restore caller's move, beta, and value
     subq.l #1, %d5              | restore depth
     rts
 

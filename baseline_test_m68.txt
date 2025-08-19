@@ -1,4 +1,4 @@
-Sat 08/16/2025  7:11:09.02 
+Tue 08/19/2025 10:11:25.80 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-23.705999 milliseconds
+28.731001 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 16, hour 14, min 11, sec 17
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 16, hour 9, min 11, sec 17
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 16, hour 6, min 11, sec 17
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 16, hour 6, min 11, sec 17
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 8, day 19, hour 17, min 11, sec 34
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 8, day 19, hour 12, min 11, sec 34
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 8, day 19, hour 9, min 11, sec 34
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 8, day 19, hour 9, min 11, sec 34
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -5775,6 +5775,16 @@ test nqueens
      6            4
      7           40
      8           92
+test nq1d 
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
 test tdir 
 tdir completed with great success
 test fopentst 
@@ -5792,7 +5802,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 8, day 16, hour 6, min 11, sec 25
+tz: 'PST+8', year: 2025, month 8, day 19, hour 9, min 11, sec 42
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -5961,6 +5971,7 @@ building mm
 building fopentst
 building tgets
 building nqueens
+building nq1d
 building cpmenumd
 building primes
 building targs
@@ -6401,6 +6412,16 @@ running NQUEENS
      6            4
      7           40
      8           92
+running NQ1D
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
 running CPMENUMD
 finding COM files
 finding 68K files
@@ -6424,33 +6445,35 @@ finding 68K files
   file  16:        MM.68K     28416
   file  17:      MORE.68K     31872
   file  18:      NM68.68K     16000
-  file  19:      NQ68.68K      1024
-  file  20:   NQUEENS.68K     27776
-  file  21:       PIS.68K     43904
-  file  22:    PRIMES.68K     27776
-  file  23:   SENDC68.68K     16384
-  file  24:     SIEVE.68K     26880
-  file  25:   SIEVE68.68K       768
-  file  26:    SIZE68.68K     14592
-  file  27:  TADDSUBM.68K     34688
-  file  28:       TAP.68K     35584
-  file  29:     TARGS.68K     26880
-  file  30:      TBCD.68K     35712
-  file  31:      TCHK.68K     33792
-  file  32:       TEA.68K     83328
-  file  33:        TF.68K     52352
-  file  34:     TGETS.68K     30464
-  file  35:        TM.68K     29824
-  file  36:    TMOVEP.68K     33792
-  file  37:   TMULDIV.68K     32128
-  file  38:        TP.68K     37376
-  file  39:      TPHI.68K     31744
-  file  40:       TPI.68K     27904
-  file  41:        TS.68K     38272
-  file  42:    TSHIFT.68K     39168
-  file  43:       TTT.68K     39680
-  file  44:    TTT68U.68K      5120
-  file  45:  T_SETJMP.68K     27008
+  file  19:      NQ1D.68K     27520
+  file  20:      NQ68.68K      1024
+  file  21:    NQ681D.68K      1024
+  file  22:   NQUEENS.68K     27776
+  file  23:       PIS.68K     43904
+  file  24:    PRIMES.68K     27776
+  file  25:   SENDC68.68K     16384
+  file  26:     SIEVE.68K     26880
+  file  27:   SIEVE68.68K       768
+  file  28:    SIZE68.68K     14592
+  file  29:  TADDSUBM.68K     34688
+  file  30:       TAP.68K     35584
+  file  31:     TARGS.68K     26880
+  file  32:      TBCD.68K     35712
+  file  33:      TCHK.68K     33792
+  file  34:       TEA.68K     83328
+  file  35:        TF.68K     52352
+  file  36:     TGETS.68K     30464
+  file  37:        TM.68K     29824
+  file  38:    TMOVEP.68K     33792
+  file  39:   TMULDIV.68K     32128
+  file  40:        TP.68K     37376
+  file  41:      TPHI.68K     31744
+  file  42:       TPI.68K     27904
+  file  43:        TS.68K     38272
+  file  44:    TSHIFT.68K     39168
+  file  45:       TTT.68K     39680
+  file  46:    TTT68U.68K      5120
+  file  47:  T_SETJMP.68K     27008
 finding XYZ files
 finding TXT files
   file   0:  FOPENTST.TXT       128
@@ -6649,15 +6672,15 @@ running TARGS
 argc: 1, argv B808, penv 0
 argv[ 0 ]: 'C runtime'
 running NQ68
-  size count
-     1     1
-     2     0
-     3     0
-     4     2
-     5    10
-     6     4
-     7    40
-     8    92
+    size   count
+       1       1
+       2       0
+       3       0
+       4       2
+       5      10
+       6       4
+       7      40
+       8      92
 running tgets with redirected stdin
 Baby DONT Cry
 read: 'B' == 66 == 42
@@ -6847,6 +6870,40 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 nqueens,paslib.l68 
+building nq1d
+--------------------------------------------------
+Pascal MT+68                           Version 3.3
+Serial  No. 3170-0000-000088   All Rights Reserved
+Copyright (c) 1984          Digital Research, Inc.
+--------------------------------------------------
+PASTEMP.TOK ROUTED TO DISK: @
+++++++
+SYNTAX SCAN COMPLETE
+SYMBOL TABLE INITIALIZATION
+AVAILABLE MEMORY: 1048421
+USER TABLE SPACE: 1047745
+RELEASE 3.3 -- PHASE 1
+##
+REMAINING MEMORY: 1047660
+RELEASE 3.3 -- PHASE 2
+MT+68K
+ISSAFE         12    SIZE:   344
+SOLVE         356    SIZE:   184
+NQUEENS       540    SIZE:   268
+
+LINES :     111
+ERRORS:       0
+CODE  :     808
+BSS   :      30
+
+PASCAL/MT+68K COMPILATION COMPLETE
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+nq1d,paslib.l68 
 building tphi
 --------------------------------------------------
 Pascal MT+68                           Version 3.3
@@ -6962,6 +7019,16 @@ second implementation...
   at 10000 iterations:  1.194457716196E+000
 tap completed with great success
 running NQUEENS
+size    solutions
+   1            1
+   2            0
+   3            0
+   4            2
+   5           10
+   6            4
+   7           40
+   8           92
+running NQ1D
 size    solutions
    1            1
    2            0
@@ -7470,6 +7537,88 @@ Copyright (c) 1983          Digital Research, Inc.
 --------------------------------------------------
 
 nqueens.o,cb68.l68 
+building nq1d
+--------------------------------------------------
+CB68 CBASIC Compiler                   Version 1.0
+Serial No. 3123-0000-000061    All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+end of pass 1
+end of pass 2
+    1:     integer b, n, c, s, r, sa, st, lc, lr, h
+    2:     rem b  -- the board
+    3:     rem c  -- current column
+    4:     rem r  -- current row
+    5:     rem s  -- solution count
+    6:     rem n  -- current number of columns to solve for
+    7:     rem h  -- hightest board dimension to solve for
+    8:     rem st -- stack to save current r when recursing
+    9:     rem sa -- returns if a board position is safe
+   10:     rem lr and lc -- local r and c in the "is safe" function
+   11:     
+   12:     1 h = 8
+   13:     10 dim b(h)
+   14:     20 dim st(h)
+   15:     21 for n = 0 to h-1
+   16:     22    b(n) = 255
+   17:     23 next n
+   18:     30 for n = 1 to h
+   19:     40     c = 0
+   20:     50     s = 0
+   21:     60     gosub 100
+   22:     70     print "solutions for n "; n; ": "; s
+   23:     80     next n
+   24:     90 goto 5000
+   25:     
+   26:     100 if c = n then s = s + 1 : return
+   27:     130 r = 0
+   28:     140     gosub 500
+   29:     200     if 0 = sa then goto 300
+   30:     210         b(r) = c
+   31:     220         st(c) = r
+   32:     230         c = c + 1
+   33:     240         gosub 100
+   34:     250         c = c - 1
+   35:     260         r = st(c)
+   36:     270         b(r) = 255
+   37:     300     r = r + 1
+   38:     310     if r < n then goto 140
+   39:     320 return
+   40:     
+   41:     500 sa = 0
+   42:     510 if 255 <> b(r) then return
+   43:     530 lr = r - 1
+   44:     540 lc = c - 1
+   45:     550     if lr < 0 or lc < 0 then goto 600
+   46:     560     if b(lr) = lc then return
+   47:     570     lr = lr - 1
+   48:     580     lc = lc - 1
+   49:     590     goto 550
+   50:     600 lr = r + 1
+   51:     610 lc = c - 1
+   52:     620     if lr = n or lc < 0 then goto 670
+   53:     630     if b(lr) = lc then return
+   54:     640     lr = lr + 1
+   55:     650     lc = lc - 1
+   56:     660     goto 620
+   57:     670 sa = 1
+   58:     680 return
+   59:     
+   60:     5000 end
+   61:     
+end of compilation
+no errors detected
+code area size:    700       000002bch
+data area size:    68        00000044h
+common area size:  0         00000000h
+symbol table space remaining: 49019
+--------------------------------------------------
+LINK68 Overlay Linker                  Release 0.f
+Serial No. XXXX-0000           All Rights Reserved
+Copyright (c) 1983          Digital Research, Inc.
+--------------------------------------------------
+
+nq1d.o,cb68.l68 
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -7486,6 +7635,15 @@ running MMF
 SUM =  465880
 
 running NQUEENS
+solutions for n  1 :  1
+solutions for n  2 :  0
+solutions for n  3 :  0
+solutions for n  4 :  2
+solutions for n  5 :  10
+solutions for n  6 :  4
+solutions for n  7 :  40
+solutions for n  8 :  92
+running NQ1D
 solutions for n  1 :  1
 solutions for n  2 :  0
 solutions for n  3 :  0
@@ -7898,6 +8056,28 @@ Total code size = 442
 MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
+building nq1d
+MC68000 Pascal Compiler  V2.1                  27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+    ISSAFE   [1166578 bytes]
+             {1165654 bytes}
+    SOLVE    [1166532 bytes]
+             {1166126 bytes}
+ NQUEENS  [1166646 bytes]
+          {1166126 bytes}
+
+0 errors.  111 lines.  File nq1d.pas
+MC68000 Code Generator  V2.1                   27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+ISSAFE   - ISSAFE      Code size = 146
+SOLVE    - SOLVE       Code size = 102
+NQUEENS  - NQUEENS     Code size = 154
+Total code size = 402
+MC68000 CPM Object Code Formatter   V2.1       27-Feb-84
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
@@ -7941,6 +8121,16 @@ should tend towards 1.618033988749...
   at 13 iterations:  1.61803710460663D+000
   at 14 iterations:  1.61803281307220D+000
 running NQUEENS
+size    solutions
+   1            1
+   2            0
+   3            0
+   4            2
+   5           10
+   6            4
+   7           40
+   8           92
+running NQ1D
 size    solutions
    1            1
    2            0
@@ -8074,6 +8264,30 @@ Total code size = 896
 MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
 (C) Copyright 1983 Silicon Valley Software, Inc.
 
+building nq1d
+MC68000 Fortran77 Compiler  V2.1               01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+NQUEEN [1164906 bytes]
+       {1164034 bytes}
+SOLVE  [1164724 bytes]
+       {1163870 bytes}
+ISSAFE [1164682 bytes]
+       {1163494 bytes}
+
+
+0 errors.  86 lines.  File nq1d.for
+Smallest available space: 1164682 bytes.
+MC68000 Code Generator  V2.1                   01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
+NQUEEN   - NQUEEN      Code size = 268
+SOLVE    - SOLVE       Code size = 174
+ISSAFE   - ISSAFE      Code size = 250
+Total code size = 692
+MC68000 CPM Object Code Formatter   V2.1       01-Dec-83
+(C) Copyright 1983 Silicon Valley Software, Inc.
+
 running E
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319  done
 running SIEVE
@@ -8116,6 +8330,16 @@ running TPHI
      iteration   26  r8: 1.6180339887383030
  complete
 running NQUEENS
+ size     solutions
+    1             1
+    2             0
+    3             0
+    4             2
+    5            10
+    6             4
+    7            40
+    8            92
+running NQ1D
  size     solutions
     1             1
     2             0
@@ -8431,17 +8655,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     262
-  dictionary: 258
+total ms:     273
+  dictionary: 269
   generate:   3
-  render:     0
+  render:     1
 test ba tp.bas 
-219 ms for 1 iterations
+220 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-354.192993 milliseconds
+355.585999 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -8465,4 +8689,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sat 08/16/2025  7:11:45.05 
+Tue 08/19/2025 10:12:02.00 

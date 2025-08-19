@@ -381,8 +381,8 @@ static const char * condition_string( uint16_t c )
 {
     switch( c )
     {
-        case  0: return "ra"; // T -- normal branch
-        case  1: return "sr"; // F -- subroutine
+        case  0: return "t"; // T -- normal branch. also dbt
+        case  1: return "f"; // F -- subroutine. also dbf
         case  2: return "hi"; // higher
         case  3: return "ls"; // lower or same
         case  4: return "cc"; // carry clear
@@ -1163,8 +1163,8 @@ bool m68000::check_condition( uint16_t c )
 {
     switch( c )
     {
-        case  0: return true;                                        // T -- normal branch
-        case  1: return false;                                       // F -- subroutine
+        case  0: return true;                                        // T -- normal branch. also, dbt
+        case  1: return false;                                       // F -- subroutine. also, dbf
         case  2: return ! ( flag_c() || flag_z() );                  // higher
         case  3: return flag_c() || flag_z();                        // lower or same
         case  4: return ! flag_c();                                  // carry clear

@@ -14,7 +14,7 @@ if "%1" == "rvos" (
 )
 
 set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets ^
-           nqueens cpmenumd primes targs
+           nqueens nq1d cpmenumd primes targs
 
 ( for %%a in (%_clist%) do (
     echo building %%a

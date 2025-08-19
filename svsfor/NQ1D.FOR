@@ -11,7 +11,7 @@ C lr and lc -- local r and c
 
 C nqueens is too long for svs fortran, so use nqueen as program name
       program nqueen
-      integer*1 b(11,11), rstack(11)
+      integer*1 b(12), rstack(12)
       integer*1 n, c, r, safe, lc, lr
       integer*2 s
       common /area/ b,rstack,n,c,r,safe,lc,lr,s
@@ -19,10 +19,8 @@ C nqueens is too long for svs fortran, so use nqueen as program name
       write( 1, 1 )
    1  format( ' size     solutions' )
 
-      do 4 lr = 0, 10, 1
-          do 3 lc = 0, 10, 1
-              b(lr,lc) = 0
-   3      continue
+      do 4 r = 0, 10, 1
+          b(r) = -1
    4  continue
 
       n = 1
@@ -34,10 +32,10 @@ C nqueens is too long for svs fortran, so use nqueen as program name
   10      format( I5, I14 )
           n = n + 1
           go to 5
-  30    end
+  30  end
 
  100  subroutine solve
-      integer*1 b(11,11), rstack(11)
+      integer*1 b(12), rstack(12)
       integer*1 n, c, r, safe, lc, lr
       integer*2 s
       common /area/ b,rstack,n,c,r,safe,lc,lr,s
@@ -48,41 +46,37 @@ C nqueens is too long for svs fortran, so use nqueen as program name
  110  r = 0
  140  call issafe
       if ( safe .eq. 0 ) go to 300
-          b(r,c) = 1
+          b(r) = c
           rstack(c) = r
           c = c + 1
           go to 101
  160      c = c - 1
           r = rstack(c)
-          b(r,c) = 0
+          b(r) = -1
  300  r = r + 1
       if ( r .lt. n ) go to 140
       if ( c .ne. 0 ) go to 160
       end
 
  500  subroutine issafe
-      integer*1 b(11,11), rstack(11)
+      integer*1 b(12), rstack(12)
       integer*1 n, c, r, safe, lc, lr
       integer*2 s
       common /area/ b,rstack,n,c,r,safe,lc,lr,s
 
       safe = 0
-      lc = c - 1
- 510      if ( lc .lt. 0 ) go to 530
-          if ( b(r,lc) .eq. 1 ) return
-          lc = lc - 1
-          go to 510
+      if ( b(r) .ne. -1 ) return
  530  lr = r - 1
       lc = c - 1
  550      if ( ( lr .lt. 0 ) .or. ( lc .lt. 0 ) ) go to 600
-          if ( b(lr,lc) .eq. 1 ) return
+          if ( b(lr) .eq. lc ) return
           lr = lr - 1
           lc = lc - 1
           go to 550
  600  lr = r + 1
       lc = c - 1
  620      if ( ( lr .eq. n ) .or. ( lc .lt. 0 ) ) go to 670
-          if ( b(lr,lc) .eq. 1 ) return
+          if ( b(lr) .eq. lc ) return
           lr = lr + 1
           lc = lc - 1
           go to 620

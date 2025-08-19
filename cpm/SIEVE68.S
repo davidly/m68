@@ -35,38 +35,37 @@
 * #size d2
 
 size equ 8190               
+sizedw equ (size+2)/4
 .globl _flags
-.comm _flags,size+2           * multiple of 4 and includes 2 bonus bytes per algorithm and to stop inner loop
+.comm _flags,size+2         * multiple of 4 and includes 2 bonus bytes per algorithm and to stop inner loop
 
 .text
 _start:
     clr.l d6
   nextiter:
     movea.l #_flags, a2
-    movea.l a2, a3
-    add.l #size, a3
-    addq.l #2, a3
     move.l #$01010101, d0
+    move.l #sizedw-1, d1    * -1 because dbf loops until d1 is -1
 
   finit:                    * initialize _flags to true, 4 bytes at a time
     move.l d0, (a2)+
-    cmpa.l a3, a2
-    blt finit
+    dbf d1, finit
 
     movea.l #_flags, a2
     move.b #1, #size(a2)
     move.l #size, d2
-    moveq.l #-1, d5         * start the loop at -1, not 0 because the += 1 happens at the top of the loop
     clr.l d4
+    movea.l a2, a3
 
   outer:
-    addq.l #1, d5
-    tst.b (a2,d5)           * this may be offset 8191, beyond the array. but a non-zero beyond_flag resides there
+    tst.b (a3)+             * this may be offset 8191, beyond the array. but a non-zero beyond_flag resides there
     beq outer
+    move.l a3, d5           * find d5's array offset based on where a3 ended minus one
+    sub.l a2, d5
+    subq.l #1, d5           * a3 ends up pointing at the next entry, not the first non-zero entry
     cmp.l d2, d5
-    bgt alldone
+    bge alldone
 
-  _flagset:
     moveq.l #3, d3          * prime = 3
     add.l d5, d3            * prime += i
     add.l d5, d3            * prime += i
@@ -76,13 +75,13 @@ _start:
     bgt inccount
 
   inner:
-    clr.b (a2,d7)
-    add.l d3, d7
-    cmp.l d2, d7
+    clr.b (a2,d7)           * flags[k] = FALSE
+    add.l d3, d7            * k += prime
+    cmp.l d2, d7            * k <= SIZE
     ble inner
 
   inccount:
-    addq.l #1, d4
+    addq.l #1, d4           * count++
     bra outer
     
   alldone:

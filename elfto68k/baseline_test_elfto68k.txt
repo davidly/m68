@@ -1,4 +1,4 @@
-Fri 08/15/2025 14:49:26.04 
+Mon 08/18/2025 15:39:44.15 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -5490,6 +5490,18 @@ running nqueens
      6            4
      7           40
      8           92
+building nq1d 
+elfto68k successfully created NQ1D.68K
+running nq1d 
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
 building fopentst 
 elfto68k successfully created FOPENTST.68K
 running fopentst 
@@ -5587,4 +5599,4 @@ building ff
 elfto68k successfully created FF.68K
 running ff 
   rwxrwxrwx         384768  1970-01-01 00:00:00  /M68.68K
-Fri 08/15/2025 14:51:02.00 
+Mon 08/18/2025 15:41:22.06 

@@ -535,7 +535,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
 
             uint32_t remainder = fcb.current_offset % 128;
     
-            if ( ( 0 != remainder ) || ( remaining < 128 ) ) // read, update, then write a 128 byte record
+            if ( ( 0 != remainder ) || ( remaining < 128 ) )
             {
                 int result = bdos_cpm( 33, (long) & fcb ); // random read of record
                 if ( 0xff == ( result & 0xff ) )

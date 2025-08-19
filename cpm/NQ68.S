@@ -38,20 +38,15 @@ boardsize equ maxsize*maxsize
 
 .text
 _start:
-    clr.l a1
-    clr.l a2
-    clr.l a3
     move.l #header_string, d1
     bsr print_string
 
     movea.l #board, a0         * initialize board to all zeroes since no other code initializes bss
+    move.l #boardsize-1, d0
   init_next:
-    cmp.l #board+boardsize, a0
-    beq init_done
     clr.b (a0)+
-    bra init_next
+    dbf d0, init_next
 
-  init_done:
     movea.l #board, a6
     move.l #1, d7
   inc_board:
@@ -94,8 +89,9 @@ solve:
     move.l d5, d2              * move c to lc, a local copy
     subq.l #1, d2
   next_b:
-    subq.l #1, d3
-    bmi safe_c                 * if row < 0 move on to "C" tests
+    dbf d3, b_more             * decrement row and if row < 0 move on to "C" tests
+    bra safe_c
+  b_more:
     suba.l #maxsize+1, a4      * move to the next position to check. up and to left
     tst.b (a4)
     dbne d2, next_b            * if no queen is there, decrement d2.w and if d2.w isn't -1, loop. condition flags not set.
