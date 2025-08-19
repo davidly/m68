@@ -162,9 +162,10 @@ compiler and assembler benchmark performance:
     * source code, tools, and build scripts for all benchmarks are in this repo
     * DR = Digital Research
     * SVS = Silicon Valley Software
-    * g++ = GNU C++ cross compiler m68k-elf-gcc (GCC) 8.2.0
+    * g++ = GNU C++ cross compiler m68k-elf-gcc (GCC) 8.2.0. Optimization level -O2 (-O3 generates faster code but it's often much larger)
     * ms = milliseconds
     * DR C v1.3 has text in cp68.68k that indicates v1.2, but it ships with CP/M 68K v1.3
+    * Dr C v1.1 initializes all free RAM to 0 on app startup; other compilers don't generate such code. m68 has a minimum of 1MB of heap space it initializes.
     * times on the 68008 are with CP/M 68K and include significant (often relocatable) binary load times
     * much of the g++ e benchmark instruction count is consumed by division calculations on full 32-bit integers
     * Forth is interpreted, not compiled
