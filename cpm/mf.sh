@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -x
 
+# build a C app that uses Motorola's floating point format
+
 if [ "$1" = "" ]; then
   echo no file specified
   exit 1

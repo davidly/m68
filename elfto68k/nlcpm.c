@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/resource.h>
 #include <stdnoreturn.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -834,6 +835,14 @@ extern "C" int clock_gettime( clockid_t id, struct timespec * res )
     return 0;
 } //clock_gettime
 
+int getentropy( void *buffer, size_t length )
+{
+    uint8_t * p = (uint8_t *) buffer;
+    for ( size_t i = 0; i < length; i++ )
+        *p = i;
+    return 0;
+} //getentropy
+
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */
 /* 64-bit integers, or size_t %zd.                                                 */
@@ -1400,7 +1409,7 @@ static void copybyte( char byte )
     }
 } //copybyte
 
-extern int sprintf( char *buf, const char *fmt, ... )
+int __attribute__((weak)) sprintf( char *buf, const char *fmt, ... )
 {
     va_list listp;
     va_start( listp, fmt );
@@ -1412,7 +1421,7 @@ extern int sprintf( char *buf, const char *fmt, ... )
     return copybyte_full_len;
 } //sprintf
 
-extern int snprintf( char *buf, size_t n, const char *fmt, ... )
+int __attribute__((weak)) snprintf( char *buf, size_t n, const char *fmt, ... )
 {
     va_list listp;
     va_start( listp, fmt );
@@ -1424,7 +1433,7 @@ extern int snprintf( char *buf, size_t n, const char *fmt, ... )
     return copybyte_full_len;
 } //sprintf
 
-extern int fprintf( FILE * fp, const char *fmt, ... )
+int __attribute__((weak)) fprintf( FILE * fp, const char *fmt, ... )
 {
     g_fprintf_FILE = fp;
     va_list listp;
@@ -1435,7 +1444,18 @@ extern int fprintf( FILE * fp, const char *fmt, ... )
     return fprintf_full_len;
 } //fprintf
 
-extern int vfprintf( FILE * fp, const char * fmt, va_list args )
+int __attribute__((weak)) fiprintf( FILE * fp, const char *fmt, ... )
+{
+    g_fprintf_FILE = fp;
+    va_list listp;
+    va_start( listp, fmt );
+    fprintf_full_len = 0;
+    _doprnt( fmt, &listp, fprintf_putc, 16 );
+    va_end( listp );
+    return fprintf_full_len;
+} //fiprintf
+
+int __attribute__((weak)) vfprintf( FILE * fp, const char * fmt, va_list args )
 {
     g_fprintf_FILE = fp;
     fprintf_full_len = 0;

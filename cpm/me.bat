@@ -1,6 +1,8 @@
 @echo off
 setlocal
 
+rem build a C app that uses IEEE floating point format
+
 if "%M68Nested%" == "" (
   set _runit=..\m68
 ) ELSE (

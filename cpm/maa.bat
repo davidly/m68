@@ -1,6 +1,8 @@
 @echo off
 setlocal
 
+rem build an assembly app that doesn't link with the C runtime.
+
 if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )

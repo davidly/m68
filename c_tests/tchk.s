@@ -26,7 +26,7 @@ main:
     move.l #0xffffffed, %d3
 
     chk.w %d1, %d2
-    chk.l %d1, %d2
+# 68020+    chk.l %d1, %d2
 
     chk.w %d6, %d2
     chk.w %d2, %d6     | fail!
@@ -35,9 +35,9 @@ main:
     chk.w %d1, %d6
 
     chk.w %d1, %d0     | fail!
-    chk.l %d1, %d0     | fail!
+# 68020    chk.l %d1, %d0     | fail!
 
-    chk.l %d1, %d3     | fail!
+# 68020    chk.l %d1, %d3     | fail!
     chk.w %d0, %d6
 
     move.l %d7, -(%a7)
@@ -62,7 +62,7 @@ ex_vector: .word 6
 ex_new: .long 0
 ex_old: .long 0
 
-str_failures: .string "chk trap invocations (4 expected): %lu\n"
+str_failures: .string "chk trap invocations (2 expected): %lu\n"
 buffer: .string "tchk completed with great success\n"
 
 

@@ -1,3 +1,5 @@
+// this app converts 68000 elf binaries (with a CP/M 68K BSD) to the CP/M 68K .68K executable file format
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -x
 
+# build a C app without floating point support
+
 if [ "$1" = "" ]; then
   echo no file specified
   exit 1

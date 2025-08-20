@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -x
 
+# build an assembly app that doesn't link with the C runtime.
+
 if [ "$1" = "" ]; then
   echo no file specified
   exit 1

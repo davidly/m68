@@ -1,6 +1,8 @@
 @echo off
 setlocal
 
+rem build a C app without floating point support
+
 if "%_M68runcmd%" == "" (
   set _M68runcmd=..\m68
 )

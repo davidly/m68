@@ -1,3 +1,5 @@
+// gnu 13.2.0 targeting 68000 goes into an infinite loop when compiling this file!
+//
 // note: this test's purpose so to have compilers generate many unique instructions
 // so emulators can be validated. The test generates signed integer overflows which
 // have undefined behavior in C and C++, so results of the test will vary between
