@@ -8,6 +8,9 @@ on both Arm64 and AMD64 to build the GNU gcc 8.2.0 cross compiler. See [Building
 
 I've been unable to build the gcc 68000 cross compiler on macOS or Raspberry PI 5. I am able to run the 68000 gcc cross-compiler built on Ubutnu for Arm64 on a Raspberry PI 5. 
 
+I also tested with gcc 13.2.0 built from [https://github.com/haarer/toolchain68k](https://github.com/haarer/toolchain68k) on Windows. It's almost certainly work on other platforms as well.
+One thing that doesn't work with 13.2.0 is the test application ttypes.c, which causes gcc to go into an infinite loop. Lots of other compilers have no problem with ttypes.c.
+
 The build scripts m.bat and m.sh in the c_tests folder can be used to build samples on Windows, macOS, and Linux.
 mm68.bat and mm68.sh build the m68 emulator targeting the 68000 so the emulator can run itself recursively.
 mall.bat and mall.sh build all of the test apps.
