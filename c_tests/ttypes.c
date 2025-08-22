@@ -1,4 +1,5 @@
-// gnu 13.2.0 targeting 68000 goes into an infinite loop when compiling this file!
+// gnu 13.2.0 targeting 68000 goes into an infinite loop when compiling this file
+// with the two lines noted below aren't #ifdefed out.
 //
 // note: this test's purpose so to have compilers generate many unique instructions
 // so emulators can be validated. The test generates signed integer overflows which
@@ -17,6 +18,8 @@
 #include <typeinfo>
 #include <cstring>
 #include <type_traits>
+
+extern "C" long syscall( long, long, ... );
 
 typedef long double ldouble_t;
 
@@ -184,7 +187,7 @@ template <class T, class U, size_t size> T tstCasts( T t, U u )
         //printBytes( "array a:", a, size );
     }
 
-    //syscall( 0x2002, 1 );
+//    syscall( 0x2002, 1 );
     for ( int i = 0; i < _countof( a ); i++ )
     {
         //if ( 16 == sizeof( U ) && 16 == sizeof( T ) )
@@ -196,7 +199,7 @@ template <class T, class U, size_t size> T tstCasts( T t, U u )
         //printf( "b[%d] = %.12g, a = %.12g, absolute = %.12g\n", i, (double) b[i], (double) a[i], (double) absolute );
         //printf( "c[%d] = %.12g, a = %.12g, absolute = %.12g\n", i, (double) c[i], (double) a[i], (double) absolute );
     }
-    //syscall( 0x2002, 0 );
+//    syscall( 0x2002, 0 );
 
     T sumA = do_sum( a, _countof( a ) );
     //syscall( 0x2002, 1 );
@@ -403,15 +406,21 @@ int main( int argc, char * argv[], char * env[] )
     run_dimension( 5 );
     run_dimension( 6 );
     run_dimension( 15 );
+
     run_dimension( 16 );
     run_dimension( 17 );
     run_dimension( 31 );
     run_dimension( 32 );
-    run_dimension( 33 );
-    run_dimension( 128 );
+
+    // gcc 13.2.0 targeting 68000 hangs when compiling either of these two lines.
+    #if __GNUC__ != 13
+        run_dimension( 33 );
+        run_dimension( 128 );
+    #endif
+
 #else
     //run_dimensionz( 3 );
-    tst<float,uint32_t,2>( 0, 0 );
+    tst<uint32_t,int32_t,2>( 0, 0 );
     //tst<int128_t,int128_t,3>( 0, 0 );
 #endif
 

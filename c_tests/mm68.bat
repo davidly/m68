@@ -1,7 +1,10 @@
 @echo off
 setlocal
 
-set gccpath=..\gcc-8.2.0
+if "%1" == "" (set _optflag=3) else (set _optflag=%1)
+
+if "%2" == "" (set gccpath=..\gcc-8.2.0) else (set gccpath=%2)
+
 path=%gccpath%\bin;%path%
 
 set inc1=%gccpath%\lib\gcc\m68k-elf\8.2.0\include
@@ -16,7 +19,7 @@ set ldflags=-Wl,--section-start=.init=0x4000
 
 rem M68 means we're building the m68.elf binary (vs another emulator). M68K means we're using the M68K GCC compiler targeting 68000
 set defines=-DTARGET_BIG_ENDIAN -DM68 -DM68K -DNDEBUG
-set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O3
+set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag%
 
 rem generate .s files for debugging
 %gcc% %defines% %includes% %gccflags% ..\m68.cxx -S -fverbose-asm -o m68.s

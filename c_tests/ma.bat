@@ -3,8 +3,9 @@ setlocal
 
 if "%1" == "" (goto noargs)
 
-rem O3 and Ofast have at least 3 bugs in code generation that I've found
 if "%2" == "" (set _optflag=2) else (set _optflag=%2)
+
+if "%3" == "" (set gccpath=..\gcc-8.2.0) else (set gccpath=%3)
 
 set gccpath=..\gcc-8.2.0
 path=%gccpath%\bin;%path%

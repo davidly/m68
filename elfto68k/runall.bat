@@ -1,6 +1,11 @@
 @echo off
 setlocal
 
+if "%1" == "" (set _optflag=2) else (set _optflag=%1)
+
+rem note that ttypes.c produces difference results for gcc 8.2.0 vs gcc 13.2.0
+if "%2" == "" (set _gccfolder=..\gcc-8.2.0) else (set _gccfolder=%2)
+
 set outputfile=test_elfto68k.txt
 echo %date% %time% >%outputfile%
 
@@ -30,7 +35,7 @@ call m.bat >>%outputfile%
 
 echo building m68
 echo building m68 >>%outputfile%
-call mm68.bat >>%outputfile%
+call mm68.bat %_optflag% %_gccfolder% >>%outputfile%
 
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi ^
@@ -41,7 +46,7 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
     echo building %%a
     echo building %%a >>%outputfile%
     copy ..\c_tests\%%a.c . >nul
-    call mt.bat %%a >>%outputfile%
+    call mt.bat %%a %_optflag% %_gccfolder% >>%outputfile%
     echo running %%a
     echo running %%a >>%outputfile%
     %_M68runcmd% %%a.68K >>%outputfile%
@@ -60,7 +65,7 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 echo building ba
 echo building ba >>%outputfile%
 copy ..\c_tests\ba.c . >nul
-call mt.bat ba >>%outputfile%
+call mt.bat ba %_optflag% %_gccfolder% >>%outputfile%
 echo running ba
 echo running ba >>%outputfile%
 %_M68runcmd% ba.68K TP.BAS >>%outputfile%
@@ -71,7 +76,7 @@ del ba.68k 2>nul
 echo building an
 echo building an >>%outputfile%
 copy ..\c_tests\an.c . >nul
-call mt.bat an >>%outputfile%
+call mt.bat an %_optflag% %_gccfolder% >>%outputfile%
 echo running an
 echo running an >>%outputfile%
 %_M68runcmd% AN.68K david lee >>%outputfile%
@@ -84,7 +89,7 @@ echo building ff >>%outputfile%
 copy ..\c_tests\ff.c . >nul
 copy ..\c_tests\realpath.c . >nul
 copy ..\c_tests\fnmatch.c . >nul
-call mt.bat ff >>%outputfile%
+call mt.bat ff %_optflag% %_gccfolder% >>%outputfile%
 echo running ff
 echo running ff >>%outputfile%
 %_M68runcmd% FF.68K -i M*.68K >>%outputfile%
