@@ -21,7 +21,8 @@ set gcc=%gccpath%\bin\m68k-elf-gcc
 rem the linker makes the address space start at 0x2000 lower than the address of .init. Close enough
 set ldflags=-Wl,--section-start=.init=0x4000
 
-set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag%
+rem WIN_GCC_HANG is defined for the Windows version of gcc 13.2.0, which hangs compiling some normal C code in ttypes.c
+set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag% -DWIN_GCC_HANG
 
 rem generate .s files for debugging
 rem %gcc% %includes% %gccflags% %1.c -S -fverbose-asm -o %1.s

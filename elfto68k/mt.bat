@@ -24,7 +24,8 @@ rem The 68008-based SBC I have that runs CP/M 68K requires apps to be loaded pre
 rem machines from the 1980's. Set to load around 32k.
 set ldflags=-Wl,--section-start=.init=0xa000
 
-set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag%
+rem WIN_GCC_HANG is defined for the Windows version of gcc 13.2.0, which hangs compiling some normal C code in ttypes.c
+set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag% -DWIN_GCC_HANG
 
 rem generate .s files for debugging
 rem %gcc% %includes% %gccflags% %1.c -S -fverbose-asm -o %1.s

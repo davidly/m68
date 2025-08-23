@@ -412,8 +412,8 @@ int main( int argc, char * argv[], char * env[] )
     run_dimension( 31 );
     run_dimension( 32 );
 
-    // gcc 13.2.0 targeting 68000 hangs when compiling either of these two lines.
-    #if __GNUC__ != 13
+    // gcc 13.2.0 targeting 68000 on Windows hangs when compiling either of these two lines.
+    #if ( __GNUC__ != 13 ) || !defined( WIN_GCC_HANG )
         run_dimension( 33 );
         run_dimension( 128 );
     #endif
