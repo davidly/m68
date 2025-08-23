@@ -2247,7 +2247,7 @@ uint64_t m68000::run()
                                     continue;
                             }
                         }
-                        else // long. The documentation is ambiguous, but apparently only .w is supported. gnu as generates 0x4501 for chk.l so I guess it's real?
+                        else // long. The documentation is ambiguous, but apparently only .w is supported. long is a 68020+ instruction
                         {
                             op_size = 2;
                             int32_t val = (int32_t) effective_value32( effective_address() );

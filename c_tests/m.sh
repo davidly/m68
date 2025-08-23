@@ -1,9 +1,26 @@
 #!/bin/bash
 #set -x
 
-gccpath=../gcc-8.2.0-linux
-gcccmd=$gccpath/bin/m68k-elf-gcc
+if [ "$1" == "" ]; then
+    echo "Usage: m.sh <sourcefile> [optlevel] [gccpath]"
+    echo "  optlevel: 0, 1, 2 (default), 3, fast"
+    echo "  gccpath: path to gcc toolchain (default ../gcc-8.2.0-linux)"
+    exit 1
+fi
 
+if [ "$2" == "" ]; then
+    optflags="2"
+else
+    optflags="$2"
+fi
+
+if [ "$3" == "" ]; then
+    gccpath="../gcc-8.2.0-linux"
+else
+    gccpath=$3
+fi
+
+gcccmd=$gccpath/bin/m68k-elf-gcc
 
 inc1=$gccpath/lib/gcc/m68k-elf/8.2.0/include
 inc2=$gccpath/m68k-elf/include
@@ -11,7 +28,7 @@ inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
 ldflags="-Wl,--section-start=.init=0x4000"
-gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O2"
+gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags"
 
 # generate .s files for debugging
 #$gcccmd $incpaths $gccflags $1.c -S -fverbose-asm -o $1.s

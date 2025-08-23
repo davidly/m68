@@ -1,4 +1,5 @@
 #!/bin/bash
+#set -x
 
 if [ "$1" = "nested" ]; then
     _m68runcmd="../m68 -h:80 ../c_tests/m68.elf"
@@ -16,8 +17,24 @@ if [ "$1" = "rvos" ]; then
     _m68runcmd="../../rvos/rvos -h:80 ../../rvos/bin/m68.elf"
 fi
 
+if [ "$1" = "normal" ]; then
+    _m68runcmd="../m68"
+fi
+
 if [ "$_m68runcmd" = "" ]; then
     _m68runcmd="../m68"
+fi
+
+if [ "$2" == "" ]; then
+    optflags="2"
+else
+    optflags=$2
+fi
+
+if [ "$3" == "" ]; then
+    gccpath="../gcc-8.2.0-linux"
+else
+    gccpath=$3
 fi
 
 outputfile="test_elfto68k.txt"
@@ -30,7 +47,7 @@ m.sh >>$outputfile
 
 echo building m68
 echo building m68 >>$outputfile
-mm68.sh >>$outputfile
+mm68.sh $optflags $gccpath >>$outputfile
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi \
@@ -40,7 +57,7 @@ do
   echo building $arg
   echo building $arg >>$outputfile
   cp ../c_tests/$arg.c . >/dev/null
-  mt.sh $arg >>$outputfile
+  mt.sh $arg $optflags $gccpath >>$outputfile
   echo running $arg
   echo running $arg >>$outputfile
   argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
@@ -60,7 +77,7 @@ done
 echo building ba
 echo building ba >>$outputfile
 cp ../c_tests/ba.c . >/dev/null
-mt.sh ba >>$outputfile
+mt.sh ba $optflags $gccpath >>$outputfile
 echo running ba
 echo running ba >>$outputfile
 $_m68runcmd BA.68K TP.BAS >>$outputfile
@@ -71,7 +88,7 @@ rm BA.68K 2>/dev/null
 echo building an
 echo building an >>$outputfile
 cp ../c_tests/an.c . >/dev/null
-mt.sh an >>$outputfile
+mt.sh an $optflags $gccpath >>$outputfile
 echo running an
 echo running an >>$outputfile
 $_m68runcmd AN.68K david lee >>$outputfile
@@ -84,7 +101,7 @@ echo building ff >>$outputfile
 cp ../c_tests/ff.c . >/dev/null
 cp ../c_tests/realpath.c . >/dev/null
 cp ../c_tests/fnmatch.c . >/dev/null
-mt.sh ff >>$outputfile
+mt.sh ff $optflags $gccpath >>$outputfile
 echo running ff
 echo running ff >>$outputfile
 $_m68runcmd FF.68K -i "M*.68K" >>$outputfile
