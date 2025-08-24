@@ -25,7 +25,7 @@
 
 extern "C" void __libc_fini_array( void );
 extern "C" void __attribute__((noreturn)) exit_emulator( int status );
-extern "C" long syscall6( long number, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5 );
+extern "C" long syscall( long number, ... ); // up to 6 arguments after the number
 
 uint32_t * g_initial_sp = 0; // stack value at _start invocation. set by _start.
 
@@ -51,29 +51,6 @@ extern "C" uint32_t getauxval( uint32_t t )
     errno = ENOENT;
     return 0;
 } //getauxval
-
-extern "C" long syscall( long number, ... )
-{
-    va_list ap;
-    va_start( ap, number );
-
-    long arg0 = va_arg( ap, long );
-    long arg1 = va_arg( ap, long );
-    long arg2 = va_arg( ap, long );
-    long arg3 = va_arg( ap, long );
-    long arg4 = va_arg( ap, long );
-    long arg5 = va_arg( ap, long );
-
-    long result = syscall6( number, arg0, arg1, arg2, arg3, arg4, arg5 );
-    if ( ( result < 0 ) && ( result > -4096 ) )
-    {
-        errno = -result;
-        result = -1;
-    }
-
-    va_end( ap );
-    return result;
-} //syscall
 
 // The default implementation of these in newlib use time(), which has just 1-second resolution.
 // By overriding these functions and using gettimeofday() instead, resolution is in microseconds.
