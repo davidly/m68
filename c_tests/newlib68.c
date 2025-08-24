@@ -422,10 +422,7 @@ int closedir( DIR * dir )
 
 int getentropy( void *buffer, size_t length )
 {
-    uint8_t * p = (uint8_t *) buffer;
-    for ( size_t i = 0; i < length; i++ )
-        *p = i;
-    return 0;
+    return syscall( SYS_getrandom, buffer, length, 0 );
 } //getentropy
 
 /***********************************************************************************/

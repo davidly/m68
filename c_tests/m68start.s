@@ -20,7 +20,7 @@ _start:
     move.l %d1, %d2
     move.l %d0, %d3
     addi.l #1, %d3              /* +1 to get past the null final entry in argv */
-    lsl #2, %d3                 /* multiply by 4 bytes each */
+    lsl.l #2, %d3                 /* multiply by 4 bytes each */
     add.l %d3, %d2              /* d2 now points to the env array */
     move.l %d2, environ         /* update C global environment pointer */
 
@@ -47,7 +47,7 @@ _init:
     move.l %d0, -(%a7)
     jsr getauxval
     adda.l #4, %a7
-    tst %d0
+    tst.l %d0
     beq _init_done              /* any C++ exception frames to register? */
     move.l %d0, -(%a7)
     jsr __register_frame
@@ -81,19 +81,19 @@ exit_emulator:
   .global syscall
   .type syscall, @function
 syscall:
-    movem.l %d2/%d3/%d4/%d5/%d6/%a6, -(%a7)     /* save these registers. d0 and d1 aren't preserved */
-    lea 28(%a7), %a6                            /* point a6 at the syscall ID and arguments. 28 = 4 * ( 6 saved registers + 1 return address ) */
-    movem.l (%a6)+, %d0/%d1/%d2/%d3/%d4/%d5/%d6 /* put the syscall ID and arguments in regs d0..d6 */
+    lea 4(%a7), %a0                             /* point a0 at the syscall ID and arguments above the return address */
+    movem.l %d2/%d3/%d4/%d5/%d6, -(%a7)         /* save these registers. a0, d0, and d1 aren't preserved */
+    movem.l (%a0)+, %d0/%d1/%d2/%d3/%d4/%d5/%d6 /* put the syscall ID and arguments in regs d0..d6 */
     trap #0                                     /* linux syscall */
     cmp.l #-4095, %d0                           /* this really can be one compare then check the carry flag... */
-    jcs sc_just_return                          /* check for an error. if ( ( result < 0 ) && ( result > -4096 ) ) */
+    jcs syscall_return                          /* check for an error. if ( ( result < 0 ) && ( result > -4096 ) ) */
     move.l %d0, %d1                             /* there was an error, so update errno and return -1 */
-    jsr __errno                                 /* the address to errno is now in d0 */
+    jsr __errno                                 /* the address of errno is now in d0 */
     move.l %d0, %a0
     neg.l %d1
     move.l %d1, (%a0)                           /* errno = -result; */
     moveq #-1, %d0                              /* return -1 */
-  sc_just_return:
-    movem.l (%a7)+, %a6/%d6/%d5/%d4/%d3/%d2     /* restore saved registers */
+  syscall_return:
+    movem.l (%a7)+, %d6/%d5/%d4/%d3/%d2         /* restore saved registers */
     rts
 
