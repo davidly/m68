@@ -95,7 +95,7 @@ exit_cpm:
 bdos_cpm:
     move.l 4(%a7), %d0          /* cp/m syscall ID */
     move.l 8(%a7), %d1          /* the one and only argument */
-    trap #2
+    trap #2                     /* no errno-style errors are returned; layer above must set errno */
     rts
 
 .data

@@ -1,4 +1,4 @@
-# the bare minimum to start C apps that use syscall-less newlib on the 68000
+# the bare minimum to start C apps that use syscall-less newlib on the 68000.
 # per calling conventions, d0, d1, a0, and a1 are scratch. others must be preserved.
 
 .equ AT_EH_FRAME_BEGIN, 0x69690069
@@ -12,7 +12,7 @@ _start:
 
     # get argc, argv, and env onto the stack as arguments for main
     # the stack has argc, a 0-terminated array of args, and a 0-terminated array of environment variables
-    # main() needs argc and points to each array pushed onto the stack below that data
+    # main() needs argc and pointers to each array pushed onto the stack below that data
 
     move.l (%a7), %d0           /* put argc in d0 */
     move.l %a7, %d1
@@ -20,20 +20,17 @@ _start:
     move.l %d1, %d2
     move.l %d0, %d3
     addi.l #1, %d3              /* +1 to get past the null final entry in argv */
-    lsl.l #2, %d3                 /* multiply by 4 bytes each */
+    lsl.l #2, %d3               /* multiply by 4 bytes each */
     add.l %d3, %d2              /* d2 now points to the env array */
     move.l %d2, environ         /* update C global environment pointer */
 
     move.l %d2, -(%a7)          /* push the 3 arguments on the stack */
     move.l %d1, -(%a7)
     move.l %d0, -(%a7)
-
-    jsr main
+    jsr main                    /* run the actual app */
     adda.l #12, %a7
     move.l %d0, %d7             /* save app exit code */
-
     jsr __libc_fini_array
-
     move.l %d7, -(%a7)          /* push the exit code */
     jsr exit_emulator
 

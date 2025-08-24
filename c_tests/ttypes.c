@@ -52,7 +52,7 @@ template <typename T> bool is_signed_type()
 
 template <class T> T do_abs( T x )
 {
-    return ( x < 0 ) ? -x : x;
+    return ( is_signed_type<T>() && ( x < 0 ) ) ? -x : x;
 }
 
 const char * maptype( const char * p )
@@ -78,54 +78,70 @@ const char * maptype( const char * p )
     return "unknown";
 } //maptype
 
-template <class T, class U> T do_cast( U x )
+// this function gets a lot wrong, but again the point is to make compilers generate many unique instructions.
+
+template <class D, class S> D do_cast( S x )
 {
-    size_t cbU = sizeof( U );
-    size_t cbT = sizeof( T );
-    bool signedU = is_signed_type<U>();
-    bool signedT = is_signed_type<T>();
-    T result = 0;
+    size_t cbS = sizeof( S );
+    size_t cbD = sizeof( D );
+    bool signedS = is_signed_type<S>();
+    bool signedD = is_signed_type<D>();
+    D result = 0;
+
+//    printf( "do_case: cbS %zd, cbD %zd, signedS %d, signedD %u\n", cbS, cbD, signedS, signedD );
 
     if ( IS_FP( result ) )
     {
-        if ( 4 == cbT )
-            result = (T) ( ( x < FLT_MIN ) ? FLT_MIN : ( x > FLT_MAX ) ? FLT_MAX : x );
-        else if ( 8 == cbT )
-            result = (T) ( ( x < DBL_MIN ) ? DBL_MIN : ( x > DBL_MAX ) ? DBL_MAX : x );
-        else if ( 16 == cbT || 12 == cbT || 10 == cbT )
-            result = (T) ( ( x < LDBL_MIN ) ? LDBL_MIN : ( x > LDBL_MAX ) ? LDBL_MAX : x );
+        if ( 4 == cbD )
+            result = (D) ( ( x < FLT_MIN ) ? FLT_MIN : ( x > FLT_MAX ) ? FLT_MAX : x );
+        else if ( 8 == cbD )
+            result = (D) ( ( x < DBL_MIN ) ? DBL_MIN : ( x > DBL_MAX ) ? DBL_MAX : x );
+        else if ( 16 == cbD || 12 == cbD || 10 == cbD )
+            result = (D) ( ( x < LDBL_MIN ) ? LDBL_MIN : ( x > LDBL_MAX ) ? LDBL_MAX : x );
         else
             printf( "unknown floating point type\n" );
     }
     else
     {
-        if ( 1 == cbT )
+        if ( 1 == cbD )
         {
-            if ( signedT )
-                result = (T) ( ( x < INT8_MIN ) ? INT8_MIN : ( x > INT8_MAX ) ? INT8_MAX : x );
+            if ( signedD )
+                if ( signedS )
+                    result = (D) ( ( x < INT8_MIN ) ? INT8_MIN : ( x > INT8_MAX ) ? INT8_MAX : x );
+                else
+                    result = (D) ( ( (long double) x < (long double) INT8_MIN ) ? INT8_MIN : ( x > INT8_MAX ) ? INT8_MAX : x );
             else
-                result = (T) ( ( x < 0 ) ? 0 : ( x > UINT8_MAX ) ? UINT8_MAX : x );
+                result = (D) ( ( x < 0 ) ? 0 : ( x > UINT8_MAX ) ? UINT8_MAX : x );
         }
-        else if ( 2 == cbT )
+        else if ( 2 == cbD )
         {
-            if ( signedT )
-                result = (T) ( ( x < INT16_MIN ) ? INT16_MIN : ( x > INT16_MAX ) ? INT16_MAX : x );
+            if ( signedD )
+                if ( signedS )
+                    result = (D) ( ( x < INT16_MIN ) ? INT16_MIN : ( x > INT16_MAX ) ? INT16_MAX : x );
+                else
+                    result = (D) ( ( (long double) x < (long double) INT16_MIN ) ? INT16_MIN : ( x > INT16_MAX ) ? INT16_MAX : x );
             else
-                result = (T) ( ( x < 0 ) ? 0 : ( x > UINT16_MAX ) ? UINT16_MAX : x );
+                result = (D) ( ( x < 0 ) ? 0 : ( x > UINT16_MAX ) ? UINT16_MAX : x );
         }
-        else if ( 4 == cbT )
+        else if ( 4 == cbD )
         {
-            if ( signedT )
-                result = (T) ( ( x < INT32_MIN ) ? INT32_MIN : ( x > INT32_MAX ) ? INT32_MAX : x );
+            if ( signedD )
+                if ( signedS )
+                    result = (D) ( ( x < INT32_MIN ) ? INT32_MIN : ( x > INT32_MAX ) ? INT32_MAX : x );
+                else
+                    result = (D) ( ( (long double) x < (long double) INT32_MIN ) ? INT32_MIN : ( x > INT32_MAX ) ? INT32_MAX : x );
             else
-                result = (T) ( ( x < 0 ) ? 0 : ( x > UINT32_MAX ) ? UINT32_MAX : x );
+                result = (D) ( ( x < 0 ) ? 0 : ( x > UINT32_MAX ) ? UINT32_MAX : x );
         }
-        else if ( 8 == cbT )
+        else if ( 8 == cbD )
         {
-            if ( signedT )
-                result = (T) ( ( x < INT64_MIN ) ? INT64_MIN : ( x > INT64_MAX ) ? INT64_MAX : x );
+            if ( signedD )
+                if ( signedS )
+                    result = (D) ( ( x < INT64_MIN ) ? INT64_MIN : ( x > INT64_MAX ) ? INT64_MAX : x );
+                else
+                    result = (D) ( ( (long double) x < (long double) INT64_MIN ) ? INT64_MIN : ( x > INT64_MAX ) ? INT64_MAX : x );
             else
-                result = (T) ( ( x < 0 ) ? 0 : ( x > UINT64_MAX ) ? UINT64_MAX : x );
+                result = (D) ( ( x < 0 ) ? 0 : ( x > UINT64_MAX ) ? UINT64_MAX : x );
         }
         else
             printf( "unknown integer type\n" );
@@ -183,29 +199,30 @@ template <class T, class U, size_t size> T tstCasts( T t, U u )
         x = do_cast<T,double>( (double) x * 3.2f );
         u += do_cast<U,size_t>( ( rand() % ( i + 2000 ) ) / 3 );
         a[ i ] = ( x * do_cast<T,U>( u ) ) + ( x + do_cast<T,U>( u ) );
+        //printf( "bottom of loop, a[%d] is %lu\n", i, a[i] );
         //printf( "bottom of loop, a[%d] is %.12g, u %.12g, x %.12g\n", i, (double) a[ i ], (double) u, (double) x );
         //printBytes( "array a:", a, size );
     }
 
-//    syscall( 0x2002, 1 );
+    //syscall( 0x2002, 1 );
     for ( int i = 0; i < _countof( a ); i++ )
     {
-        //if ( 16 == sizeof( U ) && 16 == sizeof( T ) )
-        //    syscall( 0x2002, 1 );
-
         T absolute = do_abs( a[ i ] );
+        //printf( "absolute of %lu is %lu\n", a[i], absolute );
         b[ i ] = do_cast<U,T>( absolute * (T) 2.2 );
         c[ i ] = absolute * (T) 4.4;
+        //printf( "b[%d] is %ld\n", i, b[i] );
         //printf( "b[%d] = %.12g, a = %.12g, absolute = %.12g\n", i, (double) b[i], (double) a[i], (double) absolute );
         //printf( "c[%d] = %.12g, a = %.12g, absolute = %.12g\n", i, (double) c[i], (double) a[i], (double) absolute );
     }
-//    syscall( 0x2002, 0 );
+    //syscall( 0x2002, 0 );
 
     T sumA = do_sum( a, _countof( a ) );
     //syscall( 0x2002, 1 );
     U sumB = do_sum( b, _countof( b ) );
     T sumC = do_sum( c, _countof( c ) );
     //printf( "sumC: %f = %#x\n", sumC, * (uint32_t *) &sumC );
+    //printf( "sumB: %lu = %lx\n", sumB, sumB );
 
     x = sumA / 128;
 
@@ -239,6 +256,8 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
 
     srand( 0 );
 
+    // gcc 13.2.0 on Windows targeting 68000 goes into an infinite loop compiling this for loop for size 33 and 128
+
     for ( int i = 0; i < _countof( a ); i++ )
     {
         x += ( rand() % ( i + 1000 ) ) / 2;
@@ -249,7 +268,8 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
         x += (T) 1.02;
         x = (T) ( (double) x * 3.2 );
         u += ( rand() % ( i + 2000 ) ) / 3;
-        a[ i ] = ( x * (T) u ) + ( x + (T) u );
+        a[ i ] = x * (T) u;
+        a[ i ] += x + (T) u;
         //printf( "bottom of loop, a[%d] is %.12g, u %.12g, x %.12g\n", i, (double) a[ i ], (double) u, (double) x );
     }
 
@@ -264,7 +284,6 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
         c[ i ] = absolute * (T) 4.4;
         //printf( "b[%d] = %.12g, a = %.12g\n", i, (double) b[i], (double) a[i] );
     }
-    //syscall( 0x2002, 0 );
 
     T sumA = do_sum( a, _countof( a ) );
     //syscall( 0x2002, 1 );
@@ -280,65 +299,14 @@ template <class T, class U, size_t size> T tstOverflows( T t, U u )
     printf( "overflow: types %7s + %7s, size %d, sumA %.*lf, sumB %.*lf, sumC %.*lf\n",
             maptype( typeid(T).name() ), maptype( typeid(U).name() ),
             size, t_precision, (double) sumA, u_precision, (double) sumB, t_precision, (double) sumC );
-
-    //syscall( 0x2002, 0 );
-#if 0
-    for ( int i = 0; i < _countof( a ); i++ )
-    {
-        //printf( "a[%d] = %.12g %d\n", i, (double) a[i], (int) a[i] );
-        printf( "b[%d] = %.12g %d\n", i, (double) b[i], (int) b[i] );
-        //printf( "c[%d] = %.12g %d\n", i, (double) c[i], (int) c[i] );
-    }
-#endif
-
     return x;
 } //tstOverflows
-
-#if 0
-
-template <class T, class U, size_t size> T tstAssignments( T t, U u )
-{
-    T a[ size ] = { 0 };
-    U b[ _countof( a ) ] = { 0 };
-    U c[ _countof( a ) ] = { 0 };
-    srand( 0 );
-
-    memset( &a, 0x22, sizeof( a ) );
-    memset( &b, 0x66, sizeof( b ) );
-
-    for ( int i = 0; i < _countof( a ); i++ )
-    {
-        a[ i ] += do_cast<T,size_t>( ( rand() % 111 ) - 55 );
-        b[ i ] += do_cast<U,T>( a[ i ] );
-        c[ i ] = (U) a[ i ];
-    }
-
-    T sumA = do_sum( a, _countof( a ) );
-    U sumB = do_sum( b, _countof( b ) );
-    U sumC = do_sum( c, _countof( c ) );
-
-    T x = sumA / 128;
-
-    // use 6 digits of precision for float and 12 for everything else
-
-    int t_precision = std::is_same<T,float>::value ? 6 : 12;
-    int u_precision = std::is_same<U,float>::value ? 6 : 12;
-    printf( "assignment: types %7s + %7s, size %d, sumA %.*g, sumB %.*g, sumC %.*g\n",
-        maptype( typeid(T).name() ), maptype( typeid(U).name() ),
-        size, t_precision, (double) sumA, u_precision, (double) sumB, u_precision, (double) sumC );
-
-
-    return x;
-} //tstAssignments
-
-#endif
 
 template <class T, class U, size_t size> T tst( T t, U u )
 {
     T result = 0;
     result += tstCasts<T,U,size>( t, u );
     result += tstOverflows<T,U,size>( t, u );
-    //result += tstAssignments<T,U,size>( t, u );
     return result;
 }
 
