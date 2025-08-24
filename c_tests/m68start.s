@@ -79,18 +79,13 @@ exit_emulator:
     trap #0                     /* no coming back from this */ 
 
   .global syscall6
-  .type syscall6, @function
+  .type syscall6, @function                     /* make a linux syscall with up to 6 arguments */
 syscall6:
-    movem.l %d2/%d3/%d4/%d5/%d6, -(%a7)
-    move.l 24(%a7), %d0         /* linux syscall ID */
-    move.l 28(%a7), %d1         /* the first argument */
-    move.l 32(%a7), %d2         /* the second argument */
-    move.l 36(%a7), %d3         /* the third argument */
-    move.l 40(%a7), %d4         /* the fourth argument */
-    move.l 44(%a7), %d5         /* the fifth argument */
-    move.l 48(%a7), %d6         /* the sixth argument */
-    trap #0
-    movem.l (%a7)+, %d6/%d5/%d4/%d3/%d2
+    movem.l %d2/%d3/%d4/%d5/%d6/%a6, -(%a7)     /* save these registers. d0 and d1 aren't preserved */
+    lea 28(%a7), %a6                            /* point a6 at the syscall ID and arguments. 28 = 4 * ( 6 saved registers + 1 return address ) */
+    movem.l (%a6)+, %d0/%d1/%d2/%d3/%d4/%d5/%d6 /* put the syscall ID and arguments in regs d0..d6 */
+    trap #0                                     /* linux syscall */
+    movem.l (%a7)+, %a6/%d6/%d5/%d4/%d3/%d2     /* restore saved registers */
     rts
 
 #######################################################################
