@@ -169,14 +169,13 @@ compiler and assembler benchmark performance:
     * ms = milliseconds
     * DR C v1.3 has text in cp68.68k that indicates v1.2, but it ships with CP/M 68K v1.3
     * Dr C v1.1 initializes all free RAM to 0 on app startup; other compilers don't generate such code. m68 has a minimum of 1MB of heap space it initializes.
-    * times on the 68008 are with CP/M 68K and include significant (often relocatable) binary load times
-    * much of the g++ e benchmark instruction count is consumed by division calculations on full 32-bit integers
+    * times on the 68008 are with CP/M 68K and include significant (often relocatable) binary load times. These load times dominate overall runtimes.
+    * much of the g++ e benchmark instruction count is consumed by division calculations on full 32-bit integers. Other implementations use the 68000 div instruction for 32 over 16 bit quantities.
     * Forth is interpreted, not compiled
     * f83.68k won't load on my CP/M 68K device. The start address is 0x500, which is reserved on that machine. There is a documented hack available, but it changes performance.
-    * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance
-    * assembly code always wins
+    * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance.
+    * assembly code always wins, though on hardware it's especially true due to smaller binary sizes.
 
-<img width="1955" height="558" alt="table" src="https://github.com/user-attachments/assets/e0d36f7f-b422-4ee9-8529-3cc2b5280039" />
-
+<img width="2034" height="601" alt="table" src="https://github.com/user-attachments/assets/039149c1-8c68-4d67-b50b-4b374e5bfcea" />
 
    
