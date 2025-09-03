@@ -6,6 +6,8 @@
 #define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100
 #define EMULATOR_AT_REMOVEDIR 0x200 // this is 8 for newlib
 
+// some of these are just handy additions for the emulator. Some are ancient linux syscalls modern systems don't implement
+
 #define emulator_sys_rand               0x2000
 #define emulator_sys_print_double       0x2001
 #define emulator_sys_trace_instructions 0x2002
@@ -14,6 +16,9 @@
 #define emulator_sys_get_datetime       0x2005
 #define emulator_sys_print_int64        0x2006
 #define emulator_sys_print_char         0x2007
+#define emulator_sys__llseek            0x2008
+#define emulator_sys_readlink           0x2009
+#define emulator_sys_getdents           0x200a
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -44,6 +49,7 @@
 #define SYS_newfstat 80
 #define SYS_fsync 82
 #define SYS_fdatasync 83
+#define SYS_rmdir 84 // for AMD64, not RISC-V64 or Arm64
 #define SYS_exit 93
 #define SYS_exit_group 94
 #define SYS_set_tid_address 96
@@ -83,6 +89,7 @@
 #define SYS_getrandom 278
 #define SYS_statx 291
 #define SYS_rseq 293
+#define SYS_clock_gettime64 403
 
 // open apparently undefined for riscv? the old RISC-V64 g++ compiler/runtime uses these syscalls
 
@@ -211,6 +218,63 @@ struct stat_linux_syscall
     }
 };
 
+struct stat_linux_syscall32
+{
+    /*
+        struct stat info run on 32-bit systems
+        sizeof statbuf: 112,
+        offsetof st_dev: 0
+        offsetof st_ino: 8
+        offsetof st_mode: 16
+        offsetof st_nlink: 20
+        offsetof st_uid: 24
+        offsetof st_gid: 28
+        offsetof st_rdev: 32
+        offsetof st_size: 44
+        offsetof st_blksize: 48
+        offsetof st_blocks: 52
+        offsetof st_atime: 56
+        offsetof st_mtime: 72
+        offsetof st_ctime: 88
+    */
+
+    uint64_t   st_dev;      /* ID of device containing file */
+    uint64_t   st_ino;      /* Inode number */
+    uint32_t   st_mode;     /* File type and mode */
+    uint32_t   st_nlink;    /* Number of hard links */
+    uint32_t   st_uid;      /* User ID of owner */
+    uint32_t   st_gid;      /* Group ID of owner */
+    uint64_t   st_rdev;     /* Device ID (if special file) */
+    uint32_t   st_mystery_spot;
+    uint32_t   st_size;     /* Total size, in bytes */
+    uint32_t   st_blksize;  /* Block size for filesystem I/O */
+    uint32_t   st_blocks;   /* Number of 512 B blocks allocated */
+
+    struct timespec_syscall st_atim;  /* Time of last access */
+    struct timespec_syscall st_mtim;  /* Time of last modification */
+    struct timespec_syscall st_ctim;  /* Time of last status change */
+
+    uint64_t   st_mystery_spot_2;
+
+    void swap_endianness()
+    {
+        st_dev = swap_endian64( st_dev );
+        st_ino = swap_endian64( st_ino );
+        st_mode = swap_endian32( st_mode );
+        st_nlink = swap_endian32( st_nlink );
+        st_uid = swap_endian32( st_uid );
+        st_gid = swap_endian32( st_gid );
+        st_rdev = swap_endian64( st_rdev );
+        st_mystery_spot = swap_endian32( st_mystery_spot );
+        st_size = swap_endian32( st_size );
+        st_blksize = swap_endian32( st_blksize );
+        st_blocks = swap_endian32( st_blocks );
+        st_atim.swap_endianness();
+        st_mtim.swap_endianness();
+        st_ctim.swap_endianness();
+    }
+};
+
 #ifndef STATX_TYPE
 # define STATX_TYPE 0x0001U
 # define STATX_MODE 0x0002U
@@ -304,7 +368,48 @@ struct statx_linux_syscall
         stx_ctime.swap_endianness();
     }
 };
+
 #pragma pack(pop)
+
+struct statx_sparc_linux_syscall32
+{
+    uint8_t fillerA[ 4 ];
+    uint32_t stx_blksize;                    // 0x04
+    uint8_t fillerA2[ 8 ];                   // 0x08
+    uint32_t stx_nlink;                      // 0x10
+    uint32_t stx_uid;                        // 0x14
+    uint32_t stx_gid;                        // 0x18
+    uint16_t stx_mode;                       // 0x1c
+    uint8_t fillerB[ 2 ];                    // 0x1e
+    uint64_t stx_ino;                        // 0x20
+    uint8_t fillerB2[ 4 ];                   // 0x28
+    uint32_t stx_size;                       // 0x2c
+    uint8_t fillerC[ 4 ];                    // 0x30
+    uint32_t stx_blocks;                     // 0x34
+    uint8_t fillerC2[ 8 ];                   // 0x38
+    struct statx_timestamp_linux_syscall stx_atime;  /* Last access */            // 0x40
+    uint8_t fillerD[ 4 ];
+    struct statx_timestamp_linux_syscall stx_btime;  /* Creation */               // 0x50
+    uint8_t fillerE[ 4 ];
+    struct statx_timestamp_linux_syscall stx_ctime;  /* Last status change */     // 0x60
+    uint8_t fillerG[ 4 ];
+    struct statx_timestamp_linux_syscall stx_mtime;  /* Last modification */      // 0x70
+
+    void swap_endianness()
+    {
+        stx_blksize = swap_endian32( stx_blksize );
+        stx_nlink = swap_endian32( stx_nlink );
+        stx_uid = swap_endian32( stx_uid );
+        stx_gid = swap_endian32( stx_gid );
+        stx_mode = swap_endian16( stx_mode );
+        stx_ino = swap_endian64( stx_ino );
+        stx_size = swap_endian32( stx_size );
+        stx_blocks = swap_endian32( stx_blocks );
+        stx_atime.swap_endianness();
+        stx_mtime.swap_endianness();
+        stx_ctime.swap_endianness();
+    }
+};
 
 #pragma warning(disable: 4200) // 0-sized array
 struct linux_dirent64_syscall
@@ -326,6 +431,27 @@ struct linux_dirent64_syscall
         d_reclen = swap_endian16( d_reclen );
     }
 };
+
+#pragma pack( push, 1 )
+struct linux_dirent_syscall
+{
+    uint32_t d_ino;     /* Inode number */
+    uint32_t d_off;     /* Offset to next linux_dirent */
+    uint16_t d_reclen;  /* Length of this linux_dirent */
+    char     d_name[];
+    // char d_type // offset is (d_reclen - 1)
+
+    void settype( char t ) { ((char *) this )[ d_reclen - 1 ] = t; }
+    char gettype() { return ((char *) this)[ d_reclen - 1 ]; }
+
+    void swap_endianness()
+    {
+        d_ino = swap_endian32( d_ino );
+        d_off = swap_endian32( d_off );
+        d_reclen = swap_endian16( d_reclen );
+    }
+};
+#pragma pack(pop)
 
 struct linux_rusage_syscall
 {

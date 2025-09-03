@@ -16,8 +16,11 @@
     how to build a cross compiler for 68000 on Windows:
         http://www.aaldert.com/outrun/gcc-auto.html#:~:text=I've%20made%20the%2068000%20cross%20compiler%20build,have%20MinGW/MSYS%20installed%2C%20and%20have%20an%20internet
     It also runs some cp/m 68k v1.3 binaries. Tested with the C compiler, assembler, and linker. The apps they produce also run
+#elif defined( SPARCOS )
+    This emulates a SPARC V8 32-bit CPU running un usermode on Linux.
+    build a cross-compiler from here: https://gitlab.com/buildroot.org/buildroot/
 #else
-    #error one of ARMOS, RVOS, or M68 must be defined
+    #error one of ARMOS, RVOS, M68, or SPARCOS must be defined
 #endif
 */
 
@@ -32,6 +35,7 @@
 #include <vector>
 #include <chrono>
 #include <locale.h>
+#include <cstddef>
 
 #include <djl_os.hxx>
 #include "linuxem.h"
@@ -163,9 +167,32 @@ using namespace std::chrono;
     #define REG_ARG4 5
     #define REG_ARG5 6
 
+#elif defined( SPARCOS )
+
+    #include "sparc.hxx"
+
+    #define CPUClass Sparc
+    #define ELF_MACHINE_ISA 0x02
+    #define APP_NAME "SPARCOS"
+    #define LOGFILE_NAME L"sparcos.log"
+    #define REG_FORMAT "%d"
+    #define REG_TYPE uint32_t
+    #define SIGNED_REG_TYPE int32_t
+    #define ACCESS_REG( x ) cpu.Sparc_reg( x )
+    #define CPU_IS_LITTLE_ENDIAN false
+
+    #define REG_SYSCALL 1 // g1
+    #define REG_RESULT 8  // o0
+    #define REG_ARG0 8    // o0..o5
+    #define REG_ARG1 9
+    #define REG_ARG2 10
+    #define REG_ARG3 11
+    #define REG_ARG4 12
+    #define REG_ARG5 13
+
 #else
 
-    #error "One of ARMOS, RVOS, or M68 must be defined for compilation"
+    #error "One of ARMOS, RVOS, M68, or SPARCOS must be defined for compilation"
 
 #endif
 
@@ -194,9 +221,12 @@ REG_TYPE g_highwater_brk = 0;                  // highest brk seen during app; p
 REG_TYPE g_end_of_data = 0;                    // official end of the loaded app
 REG_TYPE g_bottom_of_stack = 0;                // just beyond where brk might move
 REG_TYPE g_top_of_stack = 0;                   // argc, argv, penv, aux records sit above this
+REG_TYPE g_tbss_address = 0;                   // where is the 0-initialized tls data?
+REG_TYPE g_tbss_size = 0;                      // how many bytes is the 0-initialized tls data?
 CMMap g_mmap;                                  // for mmap and munmap system calls
 bool g_hostIsLittleEndian = true;              // is the host little endian?
 bool g_addCRBeforeLF = false;                  // on Windows, a command-line argument can make this true
+
 
 // fake descriptors.
 // /etc/timezone is not implemented, so apps running in the emulator on Windows assume UTC
@@ -892,35 +922,36 @@ static int windows_translate_flags( int flags )
 /*
   Translate open() flags from Linux to Windows
 
-           DOS & Windows   Linux RISC-V64 & AMD64  Linux Arm32 & Arm64  macOS       newlib 68000  Watcom      Manx CP/M
-           -------------   ----------------------  -------------------  -----       ------------  ------      ---------
-  0x0      O_RDONLY        O_RDONLY                O_RDONLY             O_RDONLY    O_RDONLY      O_RDONLY    O_RDONLY
-  0x1      O_WRONLY        O_WRONLY                O_WRONLY             O_WRONLY    O_WRONLY      O_WRONLY    O_WRONLY
-  0x2      O_RDRW          O_RDRW                  O_RDRW               O_RDRW      O_RDRW        O_RDRW      O_RDRW
-  0x8      O_APPEND                                                     O_APPEND    O_APPEND              
-  0x10     O_RANDOM                                                     O_SHLOCK    O_SHLOCK      O_APPEND        
-  0x20     O_SEQUENTIAL                                                 O_EXLOCK    O_EXLOCK      O_CREAT 
-  0x40     O_TEMPORARY     O_CREAT                 O_CREAT                                        O_TRUNC 
-  0x80     O_NOINHERIT     O_EXCL                  O_EXCL                                         O_NOINHERIT     
-  0x100    O_CREAT                                                                                O_TEXT      O_CREAT
-  0x200    O_TRUNC         O_TRUNC                 O_TRUNC              O_CREAT     O_CREAT       O_BINARY        
-  0x400    O_EXCL          O_APPEND                O_APPEND             O_TRUNC     O_TRUNC       O_EXCL      O_EXCL
-  0x800                    O_EXCL  O_EXCL          O_APPEND
-  0x2000                   O_ASYNC                 O_ASYNC              O_SYNC      O_SYNC         
-  0x4000   O_TEXT          O_DIRECT                O_DIRECTORY          O_NONBLOCK  O_NONBLOCK             
-  0x8000   O_BINARY                                                
-  0x10000                  O_DIRECTORY             O_DIRECT                             
-  0x10100                  O_SYNC                  O_SYNC                       
-  0x80000                                                               O_DIRECT    O_DIRECT                
-  0x100000                                                              O_DIRECTORY                     
-  0x200000                                                                          O_DIRECTORY
+           DOS & Windows   Linux RISC-V64 & AMD64  Linux Arm32 & Arm64  macOS       Linux sparc  newlib 68000  Watcom      Manx CP/M
+           -------------   ----------------------  -------------------  -----       -----------  ------------  ------      ---------
+  0x0      O_RDONLY        O_RDONLY                O_RDONLY             O_RDONLY    O_RDONLY     O_RDONLY      O_RDONLY    O_RDONLY
+  0x1      O_WRONLY        O_WRONLY                O_WRONLY             O_WRONLY    O_WRONLY     O_WRONLY      O_WRONLY    O_WRONLY
+  0x2      O_RDRW          O_RDRW                  O_RDRW               O_RDRW      O_RDRW       O_RDRW        O_RDRW      O_RDRW
+  0x8      O_APPEND                                                     O_APPEND    O_APPEND     O_APPEND              
+  0x10     O_RANDOM                                                     O_SHLOCK                 O_SHLOCK      O_APPEND        
+  0x20     O_SEQUENTIAL                                                 O_EXLOCK                 O_EXLOCK      O_CREAT 
+  0x40     O_TEMPORARY     O_CREAT                 O_CREAT                          O_ASYNC                    O_TRUNC 
+  0x80     O_NOINHERIT     O_EXCL                  O_EXCL                                                      O_NOINHERIT     
+  0x100    O_CREAT                                                                                             O_TEXT      O_CREAT
+  0x200    O_TRUNC         O_TRUNC                 O_TRUNC              O_CREAT     O_CREAT      O_CREAT       O_BINARY        
+  0x400    O_EXCL          O_APPEND                O_APPEND             O_TRUNC     O_TRUNC      O_TRUNC       O_EXCL      O_EXCL
+  0x800                                                                 O_EXCL      O_EXCL       O_EXCL                    O_APPEND
+  0x2000                   O_ASYNC                 O_ASYNC              O_SYNC      O_SYNC       O_SYNC         
+  0x4000   O_TEXT          O_DIRECT                O_DIRECTORY          O_NONBLOCK               O_NONBLOCK             
+  0x8000   O_BINARY                                                                              
+  0x10000                  O_DIRECTORY             O_DIRECT                         O_DIRECTORY      
+  0x10100                  O_SYNC                  O_SYNC                                        
+  0x80000                                                               O_DIRECT                 O_DIRECT                
+  0x100000                                                              O_DIRECTORY O_DIRECT                         
+  0x200000                                                                                       O_DIRECTORY
+  0x2010000                                                                         O_TMPFILE
 */
 
     int f = flags & 3; // copy rd/wr/rdrw
 
     f |= O_BINARY; // this is assumed on Linux systems
 
-#ifdef M68
+#if defined( M68 ) || defined( SPARCOS )
 
     if ( 0x200 & flags )
         f |= O_CREAT;
@@ -1086,6 +1117,7 @@ static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat
         pstat->st_size = data.nFileSizeLow;
     }
 
+    pstat->st_mode |= 0x1ff;
     return 0;
 } //fill_pstat_windows
 
@@ -1184,9 +1216,14 @@ static int gettimeofday( linux_timeval * tp )
     return 0;
 } //gettimeofday
 
-#ifdef M68
+#ifndef _WIN32
+#if defined(M68) || defined(SPARCOS)
 static int linux_translate_flags( int flags )
 {
+#if defined( sparc ) && defined( SPARCOS )
+    return flags;
+#endif
+
     int f = flags & 3; // copy rd/wr/rdrw
 
     if ( 0x200 & flags )
@@ -1204,6 +1241,9 @@ static int linux_translate_flags( int flags )
 #if defined( __riscv ) || defined( __x86_64__ )
     if ( 0x200000 & flags )
         f |= 0x10000; // O_DIRECTORY
+#elif defined( sparc )
+    if ( 0x10000 & flags ) // same value on amd64, risc-v64, and sparc!
+        f |= 0x10000; // O_DIRECTORY
 #else
     if ( 0x200000 & flags )
         f |= 0x4000; // O_DIRECTORY
@@ -1212,7 +1252,8 @@ static int linux_translate_flags( int flags )
     tracer.Trace( "  flags translated from 68000 %x to linux %x\n", flags, f );
     return f;
 } //linux_translate_flags
-#endif //M68
+#endif
+#endif //M68 || SPARCOS
 
 #ifdef M68K
 static int translate_open_flags_to_68k( int flags )
@@ -1231,7 +1272,7 @@ static int translate_open_flags_to_68k( int flags )
     if ( 0x400 & flags )
         f |= 0x8; // O_APPEND
 
-#if defined( RVOS )
+#if defined( RVOS ) || defined( SPARCOS )
     if ( 0x10000 & flags )
         f |= 0x200000; // O_DIRECTORY
 #else // ARMOS, etc.
@@ -1491,6 +1532,7 @@ static const SysCall syscalls[] =
     { "SYS_newfstat", SYS_newfstat },
     { "SYS_fsync", SYS_fsync },
     { "SYS_fdatasync", SYS_fdatasync },
+    { "SYS_rmdir", SYS_rmdir },
     { "SYS_exit", SYS_exit },
     { "SYS_exit_group", SYS_exit_group },
     { "SYS_set_tid_address", SYS_set_tid_address },
@@ -1530,6 +1572,7 @@ static const SysCall syscalls[] =
     { "SYS_getrandom", SYS_getrandom },
     { "SYS_statx", SYS_statx },
     { "SYS_rseq", SYS_rseq },
+    { "SYS_clock_gettime64", SYS_clock_gettime64 },
     { "SYS_open", SYS_open }, // only called for older systems
     { "SYS_unlink", SYS_unlink }, // only called for older systems
     { "emulator_sys_rand", emulator_sys_rand },
@@ -1540,6 +1583,9 @@ static const SysCall syscalls[] =
     { "emulator_sys_get_datetime", emulator_sys_get_datetime },
     { "emulator_sys_print_int64", emulator_sys_print_int64 },
     { "emulator_sys_print_char", emulator_sys_print_char },
+    { "emulator_sys__llseek", emulator_sys__llseek }, // very old syscall not in modern Linux but it does exist as 236 for sparc
+    { "emulator_sys_readlink", emulator_sys_readlink }, // very old syscall not in modern Linux but it does exist as 58 for sparc
+    { "emulator_sys_getdents", emulator_sys_getdents }, // very old syscall not in modern Linux but it does exist as 174 for sparc
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -1652,6 +1698,77 @@ static const char * lookup_syscall( uint32_t x )
     return "unknown";
 } //lookup_syscall
 
+#ifdef SPARCOS
+
+struct StoRV { uint16_t s; uint16_t r; };
+static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html
+{
+    { 1, SYS_exit },
+    { 3, SYS_read },
+    { 4, SYS_write },
+    { 5, SYS_open },
+    { 6, SYS_close },
+    { 10, SYS_unlink },
+    { 12, SYS_chdir },
+    { 17, SYS_brk },
+    { 19, SYS_lseek },
+    { 20, SYS_getpid },
+    { 43, SYS_times },
+    { 54, SYS_ioctl },
+    { 58, emulator_sys_readlink },
+    { 71, SYS_mmap },
+    { 73, SYS_munmap },
+    { 92, SYS_fcntl },
+    { 95, SYS_fsync },
+    { 102, SYS_sigaction },
+    { 103, SYS_rt_sigprocmask },
+    { 117, SYS_getrusage },
+    { 119, SYS_getcwd },
+    { 136, SYS_mkdir },
+    { 137, SYS_rmdir },
+    { 143, SYS_gettid },
+    { 174, emulator_sys_getdents },
+    { 188, SYS_exit_group },
+    { 211, SYS_tgkill },
+    { 236, emulator_sys__llseek },
+    { 250, SYS_mremap },
+    { 253, SYS_fdatasync },
+    { 285, SYS_mkdirat },
+    { 290, SYS_unlinkat },
+    { 291, SYS_renameat },
+    { 294, SYS_readlinkat },
+    { 345, SYS_renameat2 },
+    { 360, SYS_statx },
+    { 403, SYS_clock_gettime }, // same value for both
+    { 407, SYS_clock_nanosleep }, // really, SYS_clock_nanosleep_time64, but here that's redundant
+    { 0x2002, emulator_sys_trace_instructions }, // same value
+};
+
+static int sparc_syscall_compare( const void * a, const void * b )
+{
+    StoRV & sa = * (StoRV *) a;
+    StoRV & sb = * (StoRV *) b;
+
+    if ( sa.s > sb.s )
+        return 1;
+
+    if ( sa.s < sb.s )
+        return -1;
+
+    return 0;
+} //sparc_syscall_compare
+
+uint16_t MapSparcToRiscV( REG_TYPE c )
+{
+    StoRV key = { (uint16_t) c, 0 };
+    StoRV * presult = (StoRV *) my_bsearch( &key, SparcToRiscV, _countof( SparcToRiscV ), sizeof( key ), sparc_syscall_compare );
+    if ( 0 != presult )
+        return presult->r;
+    return 0;
+} //MapSparcToRiscv
+
+#endif //SPARCOS
+
 static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
 {
     if ( result >= 0 || result <= -4096 ) // syscalls like write() return positive values to indicate success.
@@ -1661,8 +1778,14 @@ static void update_result_errno( CPUClass & cpu, SIGNED_REG_TYPE result )
     }
     else
     {
-        tracer.Trace( "  returning negative errno: %d\n", (int) -errno );
+#ifdef SPARCOS
+        cpu.setflag_c( 1 );
+        tracer.Trace( "  syscall failure, returning positive errno: %d\n", (int) errno );
+        ACCESS_REG( REG_RESULT ) = (REG_TYPE) errno; // it looks like sparc with embedded clib wants a *positive* error number
+#else
+        tracer.Trace( "  syscall failure, returning negative errno: %d\n", (int) -errno );
         ACCESS_REG( REG_RESULT ) = (REG_TYPE) -errno; // it looks like the g++ runtime copies the - of this value to errno
+#endif
     }
 } //update_result_errno
 
@@ -1694,22 +1817,35 @@ void emulator_invoke_svc( CPUClass & cpu )
     #endif
 #endif
 
+    REG_TYPE syscall_id = ACCESS_REG( REG_SYSCALL );
+
+#ifdef SPARCOS
+    cpu.setflag_c( 0 ); // Linux on Sparc uses the carry flag in addition to the result register to indicate success/failure
+    syscall_id = MapSparcToRiscV( syscall_id );
+    tracer.Trace( "mapped sparc syscall %u to %u\n", ACCESS_REG( REG_SYSCALL ), syscall_id );
+    if ( 0 == syscall_id )
+    {
+        printf( "unable to find a Sparc mapping for syscall %u\n", ACCESS_REG( REG_SYSCALL ) );
+        tracer.Trace( "unable to find a Sparc mapping for syscall %u\n", ACCESS_REG( REG_SYSCALL ) );
+    }
+#endif
+
     // Linux syscalls support up to 6 arguments
 
     if ( tracer.IsEnabled() )
-#ifdef M68
+#if defined( M68 ) || defined( SPARCOS )
         tracer.Trace( "syscall %s %x = %d, arg0 %x, arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x\n",
-                      lookup_syscall( ACCESS_REG( REG_SYSCALL ) ), ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_SYSCALL ),
+                      lookup_syscall( syscall_id ), syscall_id, syscall_id,
                       ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ), ACCESS_REG( REG_ARG3 ),
                       ACCESS_REG( REG_ARG4 ), ACCESS_REG( REG_ARG5 ) );
 #else
         tracer.Trace( "syscall %s %llx = %lld, arg0 %llx, arg1 %llx, arg2 %llx, arg3 %llx, arg4 %llx, arg5 %llx\n",
-                      lookup_syscall( (uint32_t) ACCESS_REG( REG_SYSCALL ) ), ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_SYSCALL ),
+                      lookup_syscall( (uint32_t) syscall_id ), syscall_id, syscall_id,
                       ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ), ACCESS_REG( REG_ARG3 ),
                       ACCESS_REG( REG_ARG4 ), ACCESS_REG( REG_ARG5 ) );
 #endif
 
-    switch ( ACCESS_REG( REG_SYSCALL ) )
+    switch ( syscall_id )
     {
         case emulator_sys_exit: // exit
         case SYS_exit:
@@ -1763,6 +1899,19 @@ void emulator_invoke_svc( CPUClass & cpu )
             snprintf( pdatetime, 80, "%02u:%02u:%02u.%03u", (uint32_t) plocal->tm_hour, (uint32_t) plocal->tm_min, (uint32_t) plocal->tm_sec, (uint32_t) ms );
             tracer.Trace( "  got datetime: '%s', pc: %llx\n", pdatetime, cpu.pc );
             update_result_errno( cpu, 0 );
+            break;
+        }
+        case emulator_sys__llseek: // old syscall ( unsigned int fd, unsigned long high, unsigned long low, int64_t * result, unsigned int whence )
+        {
+            int descriptor = (int) ACCESS_REG( REG_ARG0 );
+            uint32_t offset_hi = (uint32_t) ACCESS_REG( REG_ARG1 );
+            uint32_t offset_lo = (uint32_t) ACCESS_REG( REG_ARG2 );
+            uint64_t offset = ( ( (uint64_t) offset_hi ) << 32 ) | offset_lo;
+            int64_t * presult = (int64_t *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
+            int origin = (int) ACCESS_REG( REG_ARG4 );
+            long result = lseek( descriptor, (long) offset, origin );
+            *presult = swap_endian64( result );
+            update_result_errno( cpu, result );
             break;
         }
         case SYS_getcwd:
@@ -2050,15 +2199,62 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "  open flags %x, mode %x, file %s\n", flags, mode, pname );
 
 #ifdef _WIN32
+            int original_flags = flags;
             flags = windows_translate_flags( flags );
-#endif
+            // bugbug: directory ignored and assumed to be local (-100)
 
-#if defined(M68) && !defined(M68K)
+            strcpy( acPath, pname );
+            slash_to_backslash( acPath );
+
+            bool opendir = false;
+#if defined( M68 )
+            opendir = ( 0 != ( 0x200000 & original_flags ) );
+#elif defined( RVOS )
+            opendir = ( 0 != ( 0x10000 & original_flags ) );
+#else //RVOS
+            opendir = ( 0 != ( 0x4000 & original_flags ) );
+#endif //M68
+
+            int descriptor;
+            tracer.Trace( "  opendir: %u\n", opendir );
+            DWORD attr = GetFileAttributesA( acPath );
+            if ( opendir && ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
+            {
+                if ( INVALID_HANDLE_VALUE != g_hFindFirst )
+                {
+                    FindClose( g_hFindFirst );
+                    g_hFindFirst = INVALID_HANDLE_VALUE;
+                }
+                strcpy( g_acFindFirstPattern, acPath );
+                size_t len = strlen( g_acFindFirstPattern );
+                if ( '\\' != g_acFindFirstPattern[ len - 1 ] )
+                    strcat( g_acFindFirstPattern, "\\" );
+                strcat( g_acFindFirstPattern, "*.*" );
+                descriptor = findFirstDescriptor;
+            }
+            else
+            {
+#ifdef M68
+                if ( O_CREAT & flags )
+                    mode = _S_IREAD | _S_IWRITE; // m68k passes user-related flags that conflict with these flags
+#endif //M68
+                descriptor = _open( pname, flags, mode );
+            }
+#else // !_WIN32
+
+#if ( defined(M68) || defined(SPARCOS) ) && ( !defined(M68K) && !defined(SPARCOSBUILD) )
             flags = linux_translate_flags( flags );
 #endif
 
-            int descriptor = open( pname, flags, mode );
-            tracer.Trace( "  descriptor: %d\n", descriptor );
+            const char * pfilename = pname;
+
+            if ( 0 == ( O_CREAT & flags ) )
+                mode = 0; // mode is only defined if O_CREAT or O_TMPFILE are specified, and O_TMPFILE isn't defined for most platforms
+
+            int descriptor = open( pfilename, flags, mode );
+#endif //_WIN32
+
+            tracer.Trace( "  result of open: descriptor: %d, mode %#x\n", descriptor, mode );
             update_result_errno( cpu, descriptor );
             break;
         }
@@ -2111,6 +2307,169 @@ void emulator_invoke_svc( CPUClass & cpu )
                 result = close( descriptor );
                 update_result_errno( cpu, result );
             }
+            break;
+        }
+        case emulator_sys_getdents:
+        {
+            int result = 0;
+            REG_TYPE descriptor = ACCESS_REG( REG_ARG0 );
+            uint8_t * pentries = (uint8_t *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            REG_TYPE count = ACCESS_REG( REG_ARG2 );
+            tracer.Trace( "  pentries: %p, count %u\n", pentries, (uint32_t) count );
+            struct linux_dirent_syscall * pcur = (struct linux_dirent_syscall *) pentries;
+            memset( pentries, 0, count );
+
+#ifdef _WIN32
+            if ( ( findFirstDescriptor != descriptor ) || ( 0 == g_acFindFirstPattern[ 0 ] ) )
+            {
+                tracer.Trace( "  getdents on unexpected descriptor or FindFirst (%p) not open\n", g_hFindFirst );
+                errno = EBADF;
+                update_result_errno( cpu, -1 );
+                break;
+            }
+
+            WIN32_FIND_DATAA fd = {0};
+
+            if ( INVALID_HANDLE_VALUE == g_hFindFirst )
+            {
+                tracer.Trace( "findfirstfilea call, pattern '%s'\n", g_acFindFirstPattern );
+                g_hFindFirst = FindFirstFileA( g_acFindFirstPattern, &fd );
+                if ( INVALID_HANDLE_VALUE != g_hFindFirst )
+                {
+                    tracer.Trace( "  successfully opened FindFirst for pattern '%s'\n", g_acFindFirstPattern );
+
+                    size_t len = strlen( fd.cFileName );
+                    if ( ( count < sizeof( struct linux_dirent_syscall ) ) || ( len > ( count - sizeof( struct linux_dirent_syscall ) ) ) )
+                    {
+                        errno = EINVAL;
+                        result = -1;
+                    }
+                    else
+                    {
+                        pcur->d_ino = 100; // fake
+                        tracer.Trace( "  len: %zd, sizeof struct %zd\n", len, sizeof( struct linux_dirent_syscall ) );
+                        size_t dname_off = offsetof( struct linux_dirent_syscall, d_name );
+                        pcur->d_reclen = (uint16_t) ( dname_off + len + 1 + 1 ); // null termination on the string + file type
+                        pcur->d_off = pcur->d_reclen;
+                        strcpy( pcur->d_name, fd.cFileName );
+
+                        if ( ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes ) && ( FILE_ATTRIBUTE_REPARSE_POINT & fd.dwFileAttributes ) && is_dir_symbolic_link( fd.cFileName ) )
+                            pcur->settype( 10 ); // DT_LNK
+                        else if ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes )
+                            pcur->settype( 4 ); // DT_DIR
+                        else
+                            pcur->settype( 8 ); // DT_REG
+
+                        tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d, d_type %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off, pcur->gettype() );
+                        result = pcur->d_reclen;
+                        pcur->swap_endianness();
+                    }
+                }
+                else
+                {
+                    tracer.Trace( "find first failed error %d\n", GetLastError() );
+                    errno = EINVAL;
+                    result = -1;
+                }
+            }
+            else
+            {
+                // find next here
+
+                BOOL found = FindNextFileA( g_hFindFirst, &fd );
+                if ( found )
+                {
+                    size_t len = strlen( fd.cFileName );
+                    if ( ( count < sizeof( struct linux_dirent_syscall ) ) || ( len > ( count - sizeof( struct linux_dirent_syscall ) ) ) )
+                    {
+                        errno = ENOENT;
+                        result = -1;
+                    }
+                    else
+                    {
+                        pcur->d_ino = 100; // fake
+                        tracer.Trace( "  len: %zd, sizeof struct %zd\n", len, sizeof( struct linux_dirent_syscall ) );
+                        size_t dname_off = offsetof( struct linux_dirent_syscall, d_name );
+                        pcur->d_reclen = (uint16_t) ( dname_off + len + 1 + 1 );
+                        pcur->d_off = pcur->d_reclen;
+                        strcpy( pcur->d_name, fd.cFileName );
+
+                        if ( ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes ) && ( FILE_ATTRIBUTE_REPARSE_POINT & fd.dwFileAttributes ) && is_dir_symbolic_link( fd.cFileName ) )
+                            pcur->settype( 10 ); // DT_LNK
+                        else if ( FILE_ATTRIBUTE_DIRECTORY & fd.dwFileAttributes )
+                            pcur->settype( 4 ); // DT_DIR
+                        else
+                            pcur->settype( 8 ); // DT_REG
+
+                        tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d, d_type %d\n", pcur->d_name, pcur->d_reclen, pcur->d_off, pcur->gettype() );
+                        tracer.TraceBinaryData( (uint8_t *) pcur, pcur->d_reclen, 4 );
+                        result = pcur->d_reclen;
+                        pcur->swap_endianness();
+                    }
+                }
+                else
+                {
+                    tracer.Trace( "  out of next files\n" );
+                    FindClose( g_hFindFirst );
+                    g_hFindFirst = INVALID_HANDLE_VALUE;
+                    g_acFindFirstPattern[ 0 ] = 0;
+                    result = 0; // nothing left
+                }
+            }
+#else
+        #if !defined( OLDGCC )
+            tracer.Trace( "  g_FindFirstDescriptor: %d, g_FindFirst: %p\n", g_FindFirstDescriptor, g_FindFirst );
+
+            if ( -1 == g_FindFirstDescriptor )
+            {
+                g_FindFirstDescriptor = descriptor;
+                g_FindFirst = fdopendir( descriptor );
+            }
+
+            if ( 0 == g_FindFirst )
+            {
+                errno = EBADF;
+                g_FindFirstDescriptor = -1;
+                update_result_errno( cpu, -1 );
+                break;
+            }
+
+            struct dirent * pent = readdir( g_FindFirst );
+            if ( 0 != pent )
+            {
+                tracer.Trace( "  readdir returned '%s'\n", pent->d_name );
+                size_t len = strlen( pent->d_name );
+                if ( ( count < sizeof( struct linux_dirent_syscall ) ) || ( len > ( count - sizeof( struct linux_dirent_syscall ) ) ) )
+                {
+                    errno = EINVAL;
+                    result = -1;
+                }
+                else
+                {
+                    pcur->d_ino = 100; // fake
+                    tracer.Trace( "  len: %d, sizeof struct %d\n", (int) len, (int) sizeof( struct linux_dirent_syscall ) );
+                    size_t dname_off = offsetof( struct linux_dirent_syscall, d_name );
+                    tracer.Trace( "  d_name offset in the struct: %d\n", (int) dname_off );
+                    pcur->d_reclen = dname_off + len + 1 + 1;
+                    tracer.Trace( "  reclen in the struct: %d\n", (int) pcur->d_reclen );
+                    pcur->d_off = pcur->d_reclen;
+                    strcpy( pcur->d_name, pent->d_name );
+                    pcur->settype( pent->d_type );
+        
+                    tracer.Trace( "  wrote '%s' into the entry. d_reclen %d, d_off %d, d_type %#x\n", pcur->d_name, (int) pcur->d_reclen, (int) pcur->d_off, pcur->gettype() );
+                    tracer.TraceBinaryData( (uint8_t *) pcur, pcur->d_reclen, 4 );
+                    result = pcur->d_reclen;
+                    pcur->swap_endianness();
+                }
+            }
+            else
+            {
+                tracer.Trace( "  readdir returned 0, so there are no more files in the enumeration\n" );
+                result = 0;
+            }
+    #endif
+#endif
+            update_result_errno( cpu, result );
             break;
         }
         case SYS_getdents64:
@@ -2644,6 +3003,25 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, result );
             break;
         }
+        case SYS_mkdir:
+        {
+            int directory = -100;
+            const char * path = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+#ifdef _WIN32 // on windows ignore the directory and mode arguments
+            tracer.Trace( "  syscall command SYS_mkdir path %s\n", path );
+            int result = _mkdir( path );
+#else
+#ifdef __APPLE__
+            if ( -100 == directory )
+                directory = -2;
+#endif
+            mode_t mode = (mode_t) ACCESS_REG( REG_ARG1 );
+            tracer.Trace( "  syscall command SYS_mkdir dir %d, path %s, mode %x\n", directory, path, mode );
+            int result = mkdirat( directory, path, mode );
+#endif
+            update_result_errno( cpu, result );
+            break;
+        }
         case SYS_mkdirat:
         {
             int directory = (int) ACCESS_REG( REG_ARG0 );
@@ -2660,6 +3038,28 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "  syscall command SYS_mkdirat dir %d, path %s, mode %x\n", directory, path, mode );
             int result = mkdirat( directory, path, mode );
 #endif
+            update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_rmdir:
+        {
+            const char * path = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.Trace( "  syscall command SYS_rmdir path %s\n", path );
+
+#ifdef _WIN32 // on windows ignore the directory and flags arguments
+            int result = _rmdir( path ); // unlink will fail with error 13 "permission denied", so use rmdir instead
+#else
+            int directory = -100;
+            int flags = EMULATOR_AT_REMOVEDIR;
+#ifdef __APPLE__
+            if ( -100 == directory )
+                directory = -2;
+            if ( EMULATOR_AT_REMOVEDIR == flags )
+                flags = AT_REMOVEDIR;
+#endif
+            int result = unlinkat( directory, path, flags );
+#endif // _WIN32
+
             update_result_errno( cpu, result );
             break;
         }
@@ -2685,9 +3085,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 directory = -2;
             if ( EMULATOR_AT_REMOVEDIR == flags )
                 flags = AT_REMOVEDIR;
-#endif
+#endif // __APPLE__
             int result = unlinkat( directory, path, flags );
-#endif
+#endif //_WIN32
             update_result_errno( cpu, result );
             break;
         }
@@ -2745,7 +3145,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     prusage->ru_utime.tv_usec = (uint32_t) ( utotal % 1000000 );
                     prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
                     prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
-#else //M68
+#else //M68 // SPARCOS seems to use the 64 bit structures
                     prusage->ru_utime.tv_sec = utotal / 1000000;
                     prusage->ru_utime.tv_usec = utotal % 1000000;
                     prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
@@ -2847,18 +3247,18 @@ void emulator_invoke_svc( CPUClass & cpu )
             const struct iovec * pvec = (const struct iovec *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             if ( 1 == descriptor || 2 == descriptor )
 #ifdef M68
-                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( 0xffffffff & (uint64_t) pvec->iov_base ) );
+                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( 0xffffffff & (REG_TYPE) pvec->iov_base ) );
 #else
-                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( (uint64_t) pvec->iov_base ) );
+                tracer.Trace( "  desc %d: writing '%.*s'\n", descriptor, pvec->iov_len, cpu.getmem( (REG_TYPE) (uint64_t) pvec->iov_base ) );
 #endif
 
             REG_TYPE result = 0;
 
 #ifdef _WIN32
             if ( descriptor <= 2 )
-                result = WinWrite( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
+                result = (REG_TYPE) WinWrite( descriptor, cpu.getmem( (REG_TYPE) (uint64_t) pvec->iov_base ), (unsigned) (uint64_t) pvec->iov_len );
             else
-                result = write( descriptor, cpu.getmem( (uint64_t) pvec->iov_base ), (unsigned) pvec->iov_len );
+                result = (REG_TYPE) write( descriptor, cpu.getmem( (REG_TYPE) (uint64_t) pvec->iov_base ), (unsigned) (uint64_t) pvec->iov_len );
 #else //_WIN32
             struct iovec vec_local;
             vec_local.iov_base = cpu.getmem( (uint64_t) pvec->iov_base );
@@ -2873,7 +3273,6 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_clock_gettime:
         {
             clockid_t cid = (clockid_t) ACCESS_REG( REG_ARG0 );
-            struct timespec_syscall * ptimespec = (struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             #ifdef __APPLE__ // Linux vs MacOS
                 if ( 1 == cid )
                     cid = CLOCK_REALTIME;
@@ -2882,18 +3281,19 @@ void emulator_invoke_svc( CPUClass & cpu )
             #endif
 
 #ifdef _WIN32
-            int result = msc_clock_gettime( cid, ptimespec );
+            struct timespec_syscall local_ts = { 0 };
+            int result = msc_clock_gettime( cid, & local_ts );
 #else
             struct timespec local_ts; // this varies in size from platform to platform
             int result = clock_gettime( cid, & local_ts );
-            ptimespec->tv_sec = local_ts.tv_sec;
-            ptimespec->tv_nsec = local_ts.tv_nsec;
 #endif
 
-            ptimespec->tv_sec = swap_endian64( ptimespec->tv_sec );
-            ptimespec->tv_nsec = swap_endian64( ptimespec->tv_nsec );
+            struct timespec_syscall * ptimespec = (struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            ptimespec->tv_sec = local_ts.tv_sec;
+            ptimespec->tv_nsec = local_ts.tv_nsec;
+            ptimespec->swap_endianness();
 
-            tracer.Trace( "  tv_sec %llx, tv_nsec %llx\n", ptimespec->tv_sec, ptimespec->tv_nsec );
+            tracer.Trace( "  tv_sec %llx, tv_nsec %llx\n", ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
             update_result_errno( cpu, result );
             break;
         }
@@ -2934,11 +3334,11 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             // this function is long obsolete, but older apps call it and it's still supported on recent Linux builds
 
-#ifdef M68
+#if defined( M68 ) || defined( SPARCOS )
             struct linux_tms_syscall32 * ptms = ( 0 != ACCESS_REG( REG_ARG0 ) ) ? (struct linux_tms_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) : 0;
 #else
             struct linux_tms_syscall * ptms = ( 0 != ACCESS_REG( REG_ARG0 ) ) ? (struct linux_tms_syscall *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) : 0;
-#endif
+#endif //M68 or SPARCOS
 
             if ( 0 != ptms ) // 0 is legal if callers just want the return value
             {
@@ -2949,13 +3349,13 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     ptms->tms_utime = ( ( (uint64_t) ftUser.dwHighDateTime << 32) + ftUser.dwLowDateTime ) / 100000; // 100ns to hundredths of a second
                     ptms->tms_stime = ( ( (uint64_t) ftKernel.dwHighDateTime << 32 ) + ftKernel.dwLowDateTime ) / 100000;
-#if defined( M68 )
+#if defined( M68 ) || defined( SPARCOS )
                     ptms->tms_utime = swap_endian32( ptms->tms_utime );
                     ptms->tms_stime = swap_endian32( ptms->tms_stime );
 #else
                     ptms->tms_utime = swap_endian64( ptms->tms_utime );
                     ptms->tms_stime = swap_endian64( ptms->tms_stime );
-#endif
+#endif //M68 or SPARCOS
                 }
                 else
                     tracer.Trace( "  unable to GetProcessTimes, error %d\n", GetLastError() );
@@ -2966,7 +3366,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ptms->tms_stime = local_tms.tms_stime;
                 ptms->tms_cutime = local_tms.tms_cutime;
                 ptms->tms_cstime = local_tms.tms_cstime;
-#if defined( M68 )
+#if defined( M68 ) || defined( SPARCOS )
                 ptms->tms_utime = swap_endian32( ptms->tms_utime );
                 ptms->tms_stime = swap_endian32( ptms->tms_stime );
                 ptms->tms_cutime = swap_endian32( ptms->tms_cutime );
@@ -2976,7 +3376,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ptms->tms_stime = swap_endian64( ptms->tms_stime );
                 ptms->tms_cutime = swap_endian64( ptms->tms_cutime );
                 ptms->tms_cstime = swap_endian64( ptms->tms_cstime );
-#endif //M68
+#endif //M68 or SPARCOS
 #endif //_WIN32
             }
 
@@ -3021,7 +3421,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             const char * oldpath = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int newdirfd = (int) ACCESS_REG( REG_ARG2 );
             const char * newpath = (const char *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
-            unsigned int flags = ( SYS_renameat2 == ACCESS_REG( REG_SYSCALL ) ) ? (unsigned int) ACCESS_REG( REG_ARG4 ) : 0;
+            unsigned int flags = ( SYS_renameat2 == syscall_id ) ? (unsigned int) ACCESS_REG( REG_ARG4 ) : 0;
             tracer.Trace( "  renaming '%s' to '%s'\n", oldpath, newpath );
 #if defined( _WIN32 ) || defined( M68K )
             int result = rename( oldpath, newpath );
@@ -3030,7 +3430,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 olddirfd = -2;
             if ( -100 == newdirfd )
                 newdirfd = -2;
-            int result = renameat( olddirfd, oldpath, newdirfd, newpath ); // macos has no renameat2s
+            int result = renameat( olddirfd, oldpath, newdirfd, newpath ); // macos has no renameat2
+#elif defined( sparc )
+            int result = renameat( olddirfd, oldpath, newdirfd, newpath ); // sparc has no renameat2
 #else
             int result = renameat2( olddirfd, oldpath, newdirfd, newpath, flags );
 #endif
@@ -3086,9 +3488,27 @@ void emulator_invoke_svc( CPUClass & cpu )
             char ac[ EMULATOR_MAX_PATH ];
             strcpy( ac, pathname );
             slash_to_backslash( ac );
-            result = fill_pstat_windows( -1, & local_stat, ac );
+            result = fill_pstat_windows( ( dirfd > 1 ) ? dirfd : -1, & local_stat, ac );
             if ( 0 == result )
             {
+#ifdef SPARCOS
+                struct statx_sparc_linux_syscall32 * pout32 = (struct statx_sparc_linux_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
+                pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
+                pout32->stx_ino = local_stat.st_ino;
+                pout32->stx_nlink = local_stat.st_nlink;
+                pout32->stx_uid = local_stat.st_uid;
+                pout32->stx_gid = local_stat.st_gid;
+                pout32->stx_mode = (uint16_t) local_stat.st_mode;
+                pout32->stx_size = (uint32_t) local_stat.st_size;
+                pout32->stx_blocks = (uint32_t) local_stat.st_blocks;
+                pout32->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
+                pout32->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
+                pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
+                pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+                pout32->swap_endianness();
+#else
                 size_t cbStat = sizeof( struct stat_linux_syscall );
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
                 local_stat.swap_endianness();
@@ -3107,19 +3527,48 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+#endif
             }
             else
             {
                 errno = 2;
                 tracer.Trace( "  fill_pstat_windows failed\n" );
             }
-#else
+#else // _WIN32
             tracer.Trace( "  sizeof struct stat: %d\n", (int) sizeof( struct stat ) );
             struct stat local_stat = {0};
 
             result = fstatat( dirfd, pathname, & local_stat, flags );
             if ( 0 == result )
             {
+#ifdef SPARCOS
+                struct statx_sparc_linux_syscall32 * pout32 = (struct statx_sparc_linux_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
+                pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
+                pout32->stx_ino = local_stat.st_ino;
+                pout32->stx_nlink = local_stat.st_nlink;
+                pout32->stx_uid = local_stat.st_uid;
+                pout32->stx_gid = local_stat.st_gid;
+                pout32->stx_mode = local_stat.st_mode;
+                pout32->stx_size = local_stat.st_size;
+                pout32->stx_blocks = local_stat.st_blocks;
+#ifdef __APPLE__
+                pout32->stx_atime.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout32->stx_atime.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
+#else
+                pout32->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
+                pout32->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
+                pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
+                pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+#endif
+                pout32->swap_endianness();
+
+#else // SPARCOS
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
 
                 pout->stx_blksize = (uint32_t) local_stat.st_blksize;
@@ -3147,11 +3596,13 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
 #endif
+
                 pout->swap_endianness();
+#endif // SPARCOS
                 tracer.Trace( "  file size %d, isdir %s\n", (int) local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
             }
             else
-                tracer.Trace( "  fstat failed, error %d\n", errno );
+                tracer.Trace( "  fstatat failed, error %d\n", errno );
 #endif
 
             update_result_errno( cpu, result );
@@ -3205,6 +3656,16 @@ void emulator_invoke_svc( CPUClass & cpu )
             ACCESS_REG( REG_RESULT ) = 0;
             break;
         }
+        case emulator_sys_readlink:
+        {
+            // shift the arguments over to make room for dirfd then fall through to readlinkat
+
+            ACCESS_REG( REG_ARG3 ) = ACCESS_REG( REG_ARG2 );
+            ACCESS_REG( REG_ARG2 ) = ACCESS_REG( REG_ARG1 );
+            ACCESS_REG( REG_ARG1 ) = ACCESS_REG( REG_ARG0 );
+            ACCESS_REG( REG_ARG0 ) = (REG_TYPE) -100;
+            // fall through!
+        }
         case SYS_readlinkat:
         {
             int dirfd = (int) ACCESS_REG( REG_ARG0 );
@@ -3228,14 +3689,14 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_ioctl:
         {
             int fd = (int) ACCESS_REG( REG_ARG0 );
-            unsigned long request = (unsigned long) ACCESS_REG( REG_ARG1 );
+            unsigned long request = (unsigned long) ACCESS_REG( REG_ARG1 ) & 0xffff;
             tracer.Trace( "  ioctl fd %d, request %lx\n", fd, request );
             struct local_kernel_termios * pt = (struct local_kernel_termios *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
 
             if ( 0 == fd || 1 == fd || 2 == fd ) // stdin, stdout, stderr
             {
 #if defined( _WIN32 ) || defined( M68K )
-                if ( 0x5401 == request ) // TCGETS
+                if ( 0x5401 == request || 0x5408 == request ) // TCGETS. 5401 is newer, 5408 is older like Linux on sparc
                 {
                     memset( pt, 0, sizeof( *pt ) );
                     if ( isatty( fd ) )
@@ -3262,7 +3723,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else //defined( _WIN32 ) || defined( M68K )
                 // likely a TCGETS or TCSETS on stdin to check or enable non-blocking reads for a keystroke
 
-                if ( 0x5401 == request ) // TCGETS
+                if ( 0x5401 == request || 0x5408 == request ) // TCGETS
                 {
                     struct termios val;
                     int result = tcgetattr( fd, &val );
@@ -3301,8 +3762,13 @@ void emulator_invoke_svc( CPUClass & cpu )
                                   pt->c_iflag, IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK, ISTRIP, INLCR, IGNCR, ICRNL, IXON, IXOFF, IXANY, IMAXBEL, IUTF8 );
                     tracer.Trace( "  cflag %#x CSIZE %#x, CSTOPB %#x CREAD %#x PARENB %#x PARODD %#x CS5 %#x CS6 %#x CS7 %#x CS8 %#x HUPCL %#x CLOCAL %#x\n",
                                   CSIZE, CSTOPB, CREAD, PARENB, PARODD, CS5, CS6, CS7, CS8, HUPCL, CLOCAL );
+#ifdef sparc
+                    tracer.Trace( "  lflag %#x ECHOKE %#x ECHOE %#x ECHOK %#x ECHO %#x ECHONL %#x ECHOPRT %#x ECHOCTL %#x ICANON %#x ISIG %#x IEXTEN %#x TOSTOP %#x\n",
+                                  ECHOKE, ECHOE, ECHOK, ECHO, ECHONL, ECHOPRT, ECHOCTL, ICANON, ISIG, IEXTEN, TOSTOP );
+#else
                     tracer.Trace( "  lflag %#x ECHOKE %#x ECHOE %#x ECHOK %#x ECHO %#x ECHONL %#x ECHOPRT %#x ECHOCTL %#x ICANON %#x ISIG %#x IEXTEN %#x EXTPROC %#x TOSTOP %#x\n",
                                   ECHOKE, ECHOE, ECHOK, ECHO, ECHONL, ECHOPRT, ECHOCTL, ICANON, ISIG, IEXTEN, EXTPROC, TOSTOP );
+#endif
 
                     val.c_iflag = pt->c_iflag;
                     val.c_oflag = pt->c_oflag;
@@ -3327,9 +3793,9 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
             else if ( 1 == fd ) // stdout
             {
-                if ( 0x5401 == request ) // TCGETS
+                if ( 0x5401 == request || 0x5408 == request ) // TCGETS
                 {
-#if defined( _WIN32 ) || defined( M68K )
+#if defined( _WIN32 ) || defined( M68K ) || defined( sparc )
                     if ( isatty( fd ) )
                         update_result_errno( cpu, 0 );
                     else
@@ -3405,22 +3871,82 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         default:
         {
-#ifdef M68
+#if defined(M68) || defined(SPARCOS)
             printf( "error; ecall invoked with unknown command %u = %#x, a0 %#x, a1 %#x, a2 %#x\n",
-                    ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
+                    syscall_id, syscall_id, ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
             tracer.Trace( "error; ecall invoked with unknown command %u = %#x, a0 %#x, a1 %#x, a2 %#x\n",
-                          ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
+                          syscall_id, syscall_id, ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
 #else
             printf( "error; ecall invoked with unknown command %llu = %llx, a0 %#llx, a1 %#llx, a2 %#llx\n",
-                    ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
+                    syscall_id, syscall_id, ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
             tracer.Trace( "error; ecall invoked with unknown command %llu = %llx, a0 %#llx, a1 %#llx, a2 %#llx\n",
-                          ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_SYSCALL ), ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
+                          syscall_id, syscall_id, ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
 #endif
             fflush( stdout );
             //ACCESS_REG( REG_RESULT ] = -1;
         }
     }
 } //emulator_invoke_svc
+
+#ifdef SPARCOS
+
+void emulator_invoke_sparc_trap5( Sparc & cpu ) // called for trap #5 overflow of register window from save instrution
+{
+    // copy the new register window that's marked as invalid / in-use to the memory location pointed to by the stack pointer o6 / 14 in the current register window
+
+    cpu.set_cwp( cpu.next_save_cwp( cpu.get_cwp() ) ); // once because we're handling a trap
+    cpu.set_cwp( cpu.next_save_cwp( cpu.get_cwp() ) ); // again for the nested save
+
+    if ( 0 == cpu.Sparc_reg( 14 ) )
+        emulator_hard_termination( cpu, "sp is 0 in overflow trap from a save instruction", cpu.pc );
+
+    memcpy( cpu.getmem( cpu.Sparc_reg( 14 ) ), & cpu.Sparc_reg( 16 ), 64 ); // spill
+    //tracer.Trace( "  sp being spilled to: %#x from register address %p, cwp:%u\n", cpu.Sparc_reg( 14 ), & cpu.Sparc_reg( 16 ), cpu.get_cwp() );
+    //tracer.TraceBinaryData( cpu.getmem( cpu.Sparc_reg( 14 ) ), 64, 4 );
+    cpu.set_cwp( cpu.next_restore_cwp( cpu.get_cwp() ) );
+
+    // update the wim for the current register window to be valid so when save is retried it doesn't trap and
+    // the window following cwp_new to in-use, so subsequent SAVE instructions will spill it
+
+    cpu.wim = ( cpu.wim << ( cpu.NWINDOWS - 1 ) ) | ( cpu.wim >> 1 );
+    if ( 32 != cpu.NWINDOWS )
+        cpu.wim &= ( ( 1 << cpu.NWINDOWS ) - 1 ); // mask off unused high bits
+
+    cpu.set_cwp( cpu.next_restore_cwp( cpu.get_cwp() ) ); // the equivalent of a RETT instruction
+} //emulator_invoke_sparc_trap5
+
+void emulator_invoke_sparc_trap6( Sparc & cpu ) // called for trap #6 underflow of register window from restore instruction
+{
+    // copy the new register window that's marked as invalid / in-use to the current memory location pointed to by the stack pointer o6 / 14 in the current register window
+    // note: offsetting next_save and next_restore calls are #ifdef'ed out for performance
+
+#if CWP_REALITY // this isn't defined but could be to really match what would happen in an actual handler
+    cpu.set_cwp( cpu.next_save_cwp( cpu.get_cwp() ) ); // because we're handling a trap
+    cpu.set_cwp( cpu.next_restore_cwp( cpu.get_cwp() ) ); // restore twice to point at the frame to restore
+#endif
+    cpu.set_cwp( cpu.next_restore_cwp( cpu.get_cwp() ) );
+
+    if ( 0 == cpu.Sparc_reg( 14 ) )
+        emulator_hard_termination( cpu, "sp is 0 in underflow trap from a restore instruction", cpu.get_cwp() );
+
+    memcpy( & cpu.Sparc_reg( 16 ), cpu.getmem( cpu.Sparc_reg( 14 ) ), 64 ); // unspill
+    //tracer.Trace( "  sp being unspilled from: %#x to register address %p, cwp:%u\n", cpu.Sparc_reg( 14 ), & cpu.Sparc_reg( 16 ), cpu.get_cwp() );
+    //tracer.TraceBinaryData( cpu.getmem( cpu.Sparc_reg( 14 ) ), 64, 4 );
+    cpu.set_cwp( cpu.next_save_cwp( cpu.get_cwp() ) ); // restore the original cwp
+#if CWP_REALITY
+    cpu.set_cwp( cpu.next_save_cwp( cpu.get_cwp() ) );
+#endif
+
+    cpu.wim = ( cpu.wim >> ( cpu.NWINDOWS - 1 ) ) | ( cpu.wim << 1 );
+    if ( 32 != cpu.NWINDOWS )
+        cpu.wim &= ( ( 1 << cpu.NWINDOWS ) - 1 ); // mask off unused high bits
+
+#if CWP_REALITY
+    cpu.set_cwp( cpu.next_restore_cwp( cpu.get_cwp() ) ); // the equivalent of a RETT instruction
+#endif
+} //emulator_invoke_sparc_trap6
+
+#endif //SPARCOS
 
 #ifdef M68
 
@@ -3470,6 +3996,16 @@ static const char * riscv_register_names[ 32 ] =
 };
 #endif
 
+#ifdef SPARCOS
+static const char * sparc_register_names[ 32 ] =
+{
+    "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7",
+    "o0", "o1", "o2", "o3", "o4", "o5", "sp", "o7",
+    "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
+    "i0", "i1", "i2", "i3", "i4", "i5", "fp", "i7",
+};
+#endif
+
 void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t error_value )
 {
     g_consoleConfig.RestoreConsole( false );
@@ -3480,7 +4016,7 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     printf( "%s (%s) fatal error: %s %0llx\n", APP_NAME, target_platform(), pcerr, error_value );
 
     uint64_t offset = 0;
-#ifdef M68
+#if defined(M68) || defined(SPARCOS)
     uint32_t offset32 = 0;
     const char * psymbol = emulator_symbol_lookup( cpu.pc, offset32 );
     offset = offset32;
@@ -3551,6 +4087,9 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
 #ifdef ARMOS
         tracer.Trace( "%02zu: %16llx, ", i, ACCESS_REG( i ) );
         printf( "%02zu: %16llx, ", i, ACCESS_REG( i ) );
+#elif defined( SPARCOS )
+        tracer.Trace( "%4s: %8x, ", sparc_register_names[ i ], ACCESS_REG( (uint32_t) i ) );
+        printf( "%4s: %8x, ", sparc_register_names[ i ], ACCESS_REG( (uint32_t) i ) );
 #elif defined( RVOS )
         tracer.Trace( "%4s: %16llx, ", riscv_register_names[ i ], ACCESS_REG( i ) );
         printf( "%4s: %16llx, ", riscv_register_names[ i ], ACCESS_REG( i ) );
@@ -3568,8 +4107,11 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
         }
     }
 
+    cpu.trace_instructions( true );
 #ifdef ARMOS
     cpu.trace_vregs();
+#elif defined( SPARCOS )
+    cpu.trace_fregs();
 #endif
 
 #endif // M68
@@ -3582,7 +4124,7 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     exit( 1 );
 } //emulator_hard_termination
 
-#ifdef M68
+#if defined(M68) || defined(SPARCOS)
 
 const char * bdos_functions[] =
 {
@@ -3788,6 +4330,8 @@ static int symbol_find_compare32( const void * a, const void * b )
     return -1;
 } //symbol_find_compare32
 
+#ifdef M68
+
 static int symbol_find_compare_cpm( const void * a, const void * b )
 {
     SymbolEntryCPM & sa = * (SymbolEntryCPM *) a;
@@ -3810,6 +4354,8 @@ static int symbol_find_compare_cpm( const void * a, const void * b )
         return 1;
     return -1;
 } //symbol_find_compare_cpm
+
+#endif //M68
 
 #else
 
@@ -3842,7 +4388,7 @@ vector<ElfSymbol32> g_symbols32;  // symbols in the elf image
 
 // returns the best guess for a symbol name for the address
 
-#ifdef M68
+#if defined(M68) || defined(SPARCOS)
 
 const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
 {
@@ -3853,6 +4399,7 @@ const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
 
     if ( 0 == g_symbols32.size() )
     {
+#ifdef M68
         if ( 0 != g_cpmSymbols.size() )
         {
             SymbolEntryCPM key = {0};
@@ -3864,6 +4411,7 @@ const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
                 return psym->name;
             }
         }
+#endif
 
         return "";
     }
@@ -6128,6 +6676,10 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
     }
 } //emulator_invoke_68k_trap2
 
+#endif // M68
+
+#if defined( M68 ) || defined( SPARCOS )
+
 static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
 {
     ElfHeader32 ehead = {0};
@@ -6151,7 +6703,10 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     }
 
     if ( ELF_MACHINE_ISA != ehead.machine )
+    {
+        printf( "machine found: %#x\n", ehead.machine );
         usage( "elf image machine ISA doesn't match this emulator" );
+    }
 
     if ( 0 == ehead.entry_point )
         usage( "elf entry point is 0, which is invalid" );
@@ -6211,7 +6766,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     REG_TYPE elf_base_address = g_base_address;
 
-    if ( g_base_address < 0x10000 )
+    if ( g_base_address < 0x20000 ) // sparc v8 binaries load by default at 0x10000 using stock tools
         g_base_address = 0;
 
     memory_size -= g_base_address;
@@ -6286,6 +6841,12 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         tracer.Trace( "  info: %x\n", head.info );
         tracer.Trace( "  address_alignment: %x\n", head.address_alignment );
         tracer.Trace( "  entry_size: %x\n", head.entry_size );
+
+        if ( !strcmp( ".tbss", & section_names_string_table[ head.name_offset ] ) )
+        {
+            g_tbss_address = head.address;
+            g_tbss_size = head.size;
+        }
 
         if ( !strcmp( ".eh_frame", & section_names_string_table[ head.name_offset ] ) )
             the_EH_FRAME_BEGIN = head.address;
@@ -6364,8 +6925,6 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     //     initialized data (size & data read from the .elf file)
     //     code (read from the .elf file)
     //     g_base_address (offset read from the .elf file).
-
-    // stacks by convention on arm64 and risc-v are 16-byte aligned. make sure to start aligned. waste some space for 68000
 
     if ( memory_size & 0xf )
     {
@@ -6550,6 +7109,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         pstack--;
 
     pstack -= ( 10 * sizeof( AuxProcessStart32 ) ); // for 10 aux records
+    REG_TYPE aux_data_offset = (REG_TYPE) ( (uint8_t *) pstack - memory.data() );
     AuxProcessStart32 * paux = (AuxProcessStart32 *) pstack;
     paux[0].a_type = 25; // AT_RANDOM
     paux[0].a_un.a_val = prandom;
@@ -6575,9 +7135,11 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     paux[7].a_type = 14; // AT_EGID
     paux[7].a_un.a_val = 0x595a5449;
     paux[7].swap_endianness();
+#ifdef M68 // only needed for M68 because it uses newlib. In fact, on Sparc the C runtime infinte loops when it sees a value as large as AT_EH_FRAME_BEGIN
     paux[8].a_type = AT_EH_FRAME_BEGIN;
     paux[8].a_un.a_val = the_EH_FRAME_BEGIN;
     paux[8].swap_endianness();
+#endif
     paux[9].a_type = 0;  // 0 to signify the end of the list of AT aux records
     paux[9].a_un.a_val = 0;
 
@@ -6603,10 +7165,17 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         *pstack = aargs[ iarg ];
     }
 
+    REG_TYPE first_argv_at = (REG_TYPE) ( ( (uint8_t *) pstack - memory.data() ) + g_base_address );
+    tracer.Trace( "first argv value (app name) is at %lx\n", first_argv_at );
     pstack--;
     *pstack = swap_endian32( app_argc );
 
     g_top_of_stack = (REG_TYPE) ( ( (uint8_t *) pstack - memory.data() ) + g_base_address );
+#ifdef SPARCOS
+    // linux on sparc v8 reserves one register frame of space between argc and the actual top of the stack for the trap handler
+    g_top_of_stack -= 64;
+#endif
+
     REG_TYPE aux_data_size = top_of_aux - (REG_TYPE) ( (uint8_t *) pstack - memory.data() );
     tracer.Trace( "stack at start (beginning with argc) -- %u bytes at address %p:\n", aux_data_size, pstack );
     tracer.TraceBinaryData( (uint8_t *) pstack, (uint32_t) aux_data_size, 2 );
@@ -6620,7 +7189,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     tracer.Trace( "  <argv data, pointed to by argv array below>         (%ld == %lx bytes)\n", g_arg_data_commit, g_arg_data_commit );
     tracer.Trace( "  start of argv data:                                 %lx\n", g_base_address + arg_data_offset );
 
-    tracer.Trace( "  start of aux data:                                  %lx\n", g_top_of_stack + aux_data_size );
+    tracer.Trace( "  start of aux data:                                  %lx\n", g_base_address + aux_data_offset );
     tracer.Trace( "  <random, alignment, aux recs, env, argv>            (%ld == %lx bytes)\n", aux_data_size, aux_data_size );
     tracer.Trace( "  initial stack pointer g_top_of_stack:               %lx\n", g_top_of_stack );
     REG_TYPE stack_bytes = g_stack_commit - aux_data_size;
@@ -6644,6 +7213,8 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     return true;
 } //load_image32
+
+#ifdef M68
 
 static bool load_68000_hex( const char * pimage )
 {
@@ -6760,7 +7331,9 @@ static bool load_68000_hex( const char * pimage )
     return true;
 } //load_68000_hex
 
-#endif
+#endif //M68
+
+#endif // defined( M68 ) || defined( SPARCOS )
 
 static bool load_image( const char * pimage, const char * app_args )
 {
@@ -6791,7 +7364,7 @@ static bool load_image( const char * pimage, const char * app_args )
     if ( 0x464c457f != ehead.magic && 0x7f454c46 != ehead.magic )
         usage( "elf image file's magic header is invalid" );
 
-#ifdef M68
+#if defined( M68 ) || defined( SPARCOS )
     if ( 1 == ehead.bit_width )
         return load_image32( fp, pimage, app_args );
 #endif
@@ -6799,7 +7372,7 @@ static bool load_image( const char * pimage, const char * app_args )
     bool big_endian = ( 2 == ehead.endianness );
     tracer.Trace( "image is %s endian\n", big_endian ? "big" : "little" );
 
-#ifndef M68
+#if defined( RVOS ) || defined( ARMOS )
     ehead.swap_endianness();
 
     if ( 2 != ehead.type )
@@ -7517,7 +8090,7 @@ static void elf_info( const char * pimage, bool verbose )
     printf( "  section offset: %llu == %llx\n", ehead.section_header_table, ehead.section_header_table );
     printf( "  flags: %x\n", ehead.flags );
 
-    g_execution_address = ehead.entry_point;
+    g_execution_address = (REG_TYPE) ehead.entry_point;
     g_compressed_rvc = 0 != ( ehead.flags & 1 ); // 2-byte compressed RVC instructions, not 4-byte default risc-v instructions
     REG_TYPE memory_size = 0;
 
@@ -7548,12 +8121,12 @@ static void elf_info( const char * pimage, bool verbose )
 
         uint64_t just_past = head.physical_address + head.memory_size;
         if ( just_past > memory_size )
-            memory_size = just_past;
+            memory_size = (REG_TYPE) just_past;
 
         if ( 0 != head.physical_address )
         {
             if ( ( 0 == g_base_address ) || ( g_base_address > head.physical_address ) )
-                g_base_address = head.physical_address;
+                g_base_address = (REG_TYPE) head.physical_address;
         }
     }
 
@@ -7850,6 +8423,19 @@ int main( int argc, char * argv[] )
         if ( ok )
         {
             unique_ptr<CPUClass> cpu( new CPUClass( memory, g_base_address, g_execution_address, g_stack_commit, g_top_of_stack ) );
+
+#ifdef SPARCOS // sparc is uniquely needy
+            cpu->Sparc_tbr() = 0; // put trap vectors at address 0
+            // bits not set: usermode, no coprocessor, previous supervisor, conditions
+            //               impl            version       enable FP     enable traps current window pointer is 0
+            cpu->Sparc_psr() = (REG_TYPE) ( ( 0xd << 28 ) | ( 1 << 24 ) | ( 1 << 12 ) | ( 1 << 5 ) | 0 );
+            cpu->Sparc_reg( 7 ) = g_tbss_address + g_tbss_size; // put a fake TCB in g7. backward offsets go into the TLS. Just one thread.
+            cpu->Sparc_wim() = 2; // wim bit 1 is turned on
+            cpu->Sparc_reg( 30 ) = g_top_of_stack - 64; // setup fp for cwp 0
+            tracer.Trace( "storing SP in register window on stack at %#x, value %#x\n", g_top_of_stack - 8, g_top_of_stack );
+            cpu->setui32( g_top_of_stack - 8, swap_endian32( g_top_of_stack ) ); // store the sp for cwp 0 in the highest window that's cwp N-1
+#endif
+
             cpu->trace_instructions( traceInstructions );
             high_resolution_clock::time_point tStart = high_resolution_clock::now();
 

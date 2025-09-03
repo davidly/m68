@@ -199,6 +199,8 @@ inline const char * target_platform()
         return "arm32";
     #elif defined( __mc68000__ )
         return "m68000";
+    #elif defined( sparc )
+        return "sparc";
     #else
         return "(other)";
     #endif
@@ -359,4 +361,34 @@ inline char printable( uint8_t x )
     } //flip_endian16
 
 #endif
+
+#ifdef sparc // If using buildroot and wide strings weren't included...
+    inline size_t wcstombs( char * dst, const wchar_t * src, size_t len ) // simplistic ascii-only version
+    {
+        if ( 0 == dst || 0 == src )
+            return -1;
+
+        size_t i = 0;
+        while ( ( i < ( len - 1 ) ) && src[i] )
+        {
+            dst[ i ] = (char) src[ i ];
+            i++;
+        }
+
+        dst[ i ] = 0;
+        return i;
+    } //wcstombs
+
+    inline size_t wcslen(const wchar_t *str)
+    {
+        size_t len = 0;
+        while ( *str )
+        {
+            len++;
+            str++;
+        }
+        return len;
+    } //wcslen
+#endif
+
 
