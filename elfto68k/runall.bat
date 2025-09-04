@@ -1,33 +1,42 @@
 @echo off
 setlocal
 
-if "%1" == "" (set _optflag=2) else (set _optflag=%1)
-
-rem note that ttypes.c produces difference results for gcc 8.2.0 vs gcc 13.2.0
-if "%2" == "" (set _gccfolder=..\gcc-8.2.0) else (set _gccfolder=%2)
-
 set outputfile=test_elfto68k.txt
 echo %date% %time% >%outputfile%
 
 if "%1" == "nested" (
-  set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
+    set _M68rutdncmd=..\m68 -h:80 ..\c_tests\m68.elf
+    shift
 )
 
 if "%1" == "nested68k" (
-  set _M68runcmd=..\m68 -h:80 m68.68k
+    set _M68runcmd=..\m68 -h:80 m68.68k
+    shift
 )
 
 if "%1" == "armos" (
-  set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+    shift
 )
 
 if "%1" == "rvos" (
-  set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+    shift
+)
+
+if "%_M68runcmd%" == "normal" (
+    set _M68runcmd=..\m68
+    shift
 )
 
 if "%_M68runcmd%" == "" (
-  set _M68runcmd=..\m68
+    set _M68runcmd=..\m68
 )
+
+if "%1" == "" (set _optflag=2) else (set _optflag=%1)
+
+rem note that ttypes.c produces difference results for gcc 8.2.0 vs gcc 13.2.0
+if "%2" == "" (set _gccfolder=..\gcc-8.2.0) else (set _gccfolder=%2)
 
 echo building elfto68k
 echo building elfto68k >>%outputfile%

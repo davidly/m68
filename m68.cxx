@@ -1238,18 +1238,28 @@ static int linux_translate_flags( int flags )
     if ( 0x8 & flags )
         f |= 0x400; // O_APPEND
 
-#if defined( __riscv ) || defined( __x86_64__ )
-    if ( 0x200000 & flags )
-        f |= 0x10000; // O_DIRECTORY
-#elif defined( sparc )
-    if ( 0x10000 & flags ) // same value on amd64, risc-v64, and sparc!
-        f |= 0x10000; // O_DIRECTORY
+#if defined( M68 )
+    int flag_o_directory = 0x200000;
+#elif defined( SPARCOS )
+    int flag_o_directory = 0x10000;
 #else
-    if ( 0x200000 & flags )
-        f |= 0x4000; // O_DIRECTORY
+    #error what emulator is this?
 #endif
 
-    tracer.Trace( "  flags translated from 68000 %x to linux %x\n", flags, f );
+#if defined( __riscv ) || defined( __amd64 ) || defined( __x86_64__ ) || defined( sparc )
+    if ( flag_o_directory & flags )
+        f |= 0x10000; // O_DIRECTORY
+#elif defined( __aarch64__ ) || defined( __ARM_32BIT_STATE )
+    if ( flag_o_directory & flags )
+        f |= 0x4000; // O_DIRECTORY
+#elif defined( __mc68000__ )
+    if ( flag_o_directory & flags )
+        f |= 0x200000; // O_DIRECTORY
+#else
+    #error what platform is this?
+#endif
+
+    tracer.Trace( "  flags translated from 68000/sparc %x to linux %x\n", flags, f );
     return f;
 } //linux_translate_flags
 #endif
@@ -1733,14 +1743,17 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 236, emulator_sys__llseek },
     { 250, SYS_mremap },
     { 253, SYS_fdatasync },
+    { 284, SYS_openat },
     { 285, SYS_mkdirat },
     { 290, SYS_unlinkat },
     { 291, SYS_renameat },
     { 294, SYS_readlinkat },
     { 345, SYS_renameat2 },
+    { 347, SYS_getrandom },
     { 360, SYS_statx },
     { 403, SYS_clock_gettime }, // same value for both
     { 407, SYS_clock_nanosleep }, // really, SYS_clock_nanosleep_time64, but here that's redundant
+    { 413, SYS_pselect6 }, // SYS_pselect6_time64, which is the same here
     { 0x2002, emulator_sys_trace_instructions }, // same value
 };
 
@@ -2209,7 +2222,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             bool opendir = false;
 #if defined( M68 )
             opendir = ( 0 != ( 0x200000 & original_flags ) );
-#elif defined( RVOS )
+#elif defined( RVOS ) || defined( SPARCOS )
             opendir = ( 0 != ( 0x10000 & original_flags ) );
 #else //RVOS
             opendir = ( 0 != ( 0x4000 & original_flags ) );
@@ -2242,7 +2255,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
 #else // !_WIN32
 
-#if ( defined(M68) || defined(SPARCOS) ) && ( !defined(M68K) && !defined(SPARCOSBUILD) )
+#if ( defined(M68) || defined(SPARCOS) ) && ( !defined(M68K) && !defined(sparc) )
             flags = linux_translate_flags( flags );
 #endif
 
@@ -2837,7 +2850,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             bool opendir = false;
 #if defined( M68 )
             opendir = ( 0 != ( 0x200000 & original_flags ) );
-#elif defined( RVOS )
+#elif defined( RVOS ) || defined( SPARCOS )
             opendir = ( 0 != ( 0x10000 & original_flags ) );
 #else //RVOS
             opendir = ( 0 != ( 0x4000 & original_flags ) );

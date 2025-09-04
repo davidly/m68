@@ -6,8 +6,8 @@ struct m68000;
 
 extern void emulator_invoke_svc( m68000 & cpu );                                                // called when the linux-style syscall instruction is executed
 extern void emulator_invoke_68k_trap15( m68000 & cpu );                                         // called when trap #15 is invoked for an IDE68K emulator system call
-extern void emulator_invoke_68k_trap2( m68000 & cpu );                                          // called when trap #2 for digital research cp/m 68k bdos calls
-extern void emulator_invoke_68k_trap3( m68000 & cpu );                                          // called when trap #3 for digital research cp/m 68k bios calls
+extern void emulator_invoke_68k_trap2( m68000 & cpu );                                          // called for trap #2 for digital research cp/m 68k bdos calls
+extern void emulator_invoke_68k_trap3( m68000 & cpu );                                          // called for trap #3 for digital research cp/m 68k bios calls
 extern const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset );              // returns the best guess for a symbol name and offset for the address
 extern void emulator_hard_termination( m68000 & cpu, const char *pcerr, uint64_t error_value ); // show an error and exit
 
@@ -44,7 +44,7 @@ struct m68000
         stack_top = top_of_stack;                  // where the stack started
         base = base_address;                       // lowest valid address in the app's address space, maps to offset 0 in mem. If not 0, can't update trap vectors.
         mem = memory.data();                       // save the pointer, but don't take ownership
-        mem_size = (uint32_t) memory.size();       // how much RAM is allocated ror the 68000
+        mem_size = (uint32_t) memory.size();       // how much RAM is allocated for the 68000
         beyond_mem = mem + memory.size();          // addresses beyond and later are illegal
         membase = mem - base;                      // real pointer to the start of the app's memory (prior to offset)
         sr = 0x2300;                               // set supervisor mode and irq level of 3. all other flags are off
