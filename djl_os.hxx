@@ -72,6 +72,7 @@
     #endif
 
 #ifdef __mc68000__
+#define truncl trunc
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem );
 #endif
 

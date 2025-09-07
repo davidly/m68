@@ -17,9 +17,13 @@ if "%1" == "rvos" (
     set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
     set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 ) else (
+if "%1" == "sparcos" (
+    set _runcmd=..\sparcos\sparcos -h:80 ..\sparcos\bin\m68-sparc
+    set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc
+) else (
     echo invalid argument
     goto :eof
-))))
+)))))
 
 set outputfile=test_m68.txt
 echo %date% %time% >%outputfile%

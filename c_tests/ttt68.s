@@ -133,7 +133,7 @@ minmax_max:
     bge _max_restore_value      | beta pruning
 
     move.l %d0, %d2             | update value with score
-    cmp.b %d4, %d2              | compre value with alpha
+    cmp.b %d4, %d2              | compare value with alpha
     ble _max_loop
 
     move.l %d2, %d4             | update alpha with value
@@ -198,7 +198,7 @@ minmax_min:
     ble _min_restore_value      | alpha pruning
 
     move.l %d0, %d2             | update value with score
-    cmp.b %d3, %d2              | compre value with beta
+    cmp.b %d3, %d2              | comapre value with beta
     bge _min_loop
 
     move.l %d2, %d3             | update beta with value
