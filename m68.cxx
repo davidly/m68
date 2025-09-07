@@ -6165,7 +6165,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
                         fclose( fp );
                 }
 
-                int removeok = ( 0 == remove( acFilename ) );
+                int removeok = ( 0 == unlink( acFilename ) );
                 tracer.Trace( "  attempt to remove file '%s' result ok: %d\n", acFilename, removeok );
                 if ( removeok )
                     ACCESS_REG( REG_RESULT ) = 0;
