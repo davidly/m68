@@ -13,6 +13,10 @@ if "%1" == "rvos" (
   set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
+if "%1" == "sparcos" (
+  set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc.elf
+)
+
 set _intlist=e sieve ttt mm nqueens nq1d
 ( for %%a in (%_intlist%) do (
     echo building %%a

@@ -13,6 +13,10 @@ if "%1" == "rvos" (
   set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
 )
 
+if "%1" == "sparcos" (
+  set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc.elf
+)
+
 rem it appears tmuldiv and fileops fail due to corruption in t C runtime file object. tpi won't link
 set _clist=e sieve ttt tm t_setjmp mm
 
