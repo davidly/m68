@@ -2843,12 +2843,13 @@ void emulator_invoke_svc( CPUClass & cpu )
             struct stat local_stat = {0};
             struct stat_linux_syscall local_stat_syscall = {0};
             int flags = (int) ACCESS_REG( REG_ARG3 );
-            tracer.Trace( "  flag AT_SYMLINK_NOFOLLOW: %llx, flags %x", AT_SYMLINK_NOFOLLOW, flags );
 #ifdef __APPLE__
             if ( -100 == descriptor ) // current directory
                 descriptor = -2;
             if ( EMULATOR_AT_SYMLINK_NOFOLLOW & flags )
                 flags = AT_SYMLINK_NOFOLLOW; // 0x20 instead of 0x100 on macOS
+            else if ( EMULATOR_AT_SYMLINK_FOLLOW & flags )
+                flags = AT_SYMLINK_FOLLOW; // 0x40 instead of 0x400 on macOS
             else
                 flags = 0; // no other flags are supported on macOS
             tracer.Trace( "  translated flags for MacOS: %x\n", flags );
@@ -3374,16 +3375,6 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "  dirfd: %d\n", dirfd );
             const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int flags = (int) ACCESS_REG( REG_ARG2 );
-            tracer.Trace( "  flags: %#x, EMULATOR_AT_SYMLINK_NOFOLLOW: %x\n", flags, EMULATOR_AT_SYMLINK_NOFOLLOW );
-#ifdef AT_SYMLINK_NOFOLLOW
-            tracer.Trace( "  AT_SYMLINK_NOFOLLOW: %x\n", AT_SYMLINK_NOFOLLOW );
-            if ( flags & EMULATOR_AT_SYMLINK_NOFOLLOW )
-            {
-                flags &= ~EMULATOR_AT_SYMLINK_NOFOLLOW;
-                flags |= AT_SYMLINK_NOFOLLOW;
-            }
-#endif //AT_SYMLINK_NOFOLLOW
-
             tracer.Trace( "  statx on path '%s'\n", pathname );
             int mask = (int) ACCESS_REG( REG_ARG3 );
 
@@ -3457,10 +3448,14 @@ void emulator_invoke_svc( CPUClass & cpu )
 #if defined( __APPLE__ )
             if ( -100 == dirfd )
                 dirfd = -2;
+
             if ( EMULATOR_AT_SYMLINK_NOFOLLOW & flags )
                 flags = AT_SYMLINK_NOFOLLOW; // 0x20 instead of 0x100 on macOS
+            else if ( EMULATOR_AT_SYMLINK_FOLLOW & flags )
+                flags = AT_SYMLINK_FOLLOW; // 0x40 instead of 0x400 on macOS
             else
                 flags = 0; // no other flags are supported on macOS
+            tracer.Trace( "  translated flags for MacOS: %x\n", flags );
 
             tracer.Trace( "  statx calling fstatat with dirfd %d, flags %#x\n", dirfd, flags );
             if ( 0 == pathname[ 0 ] )
