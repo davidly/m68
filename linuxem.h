@@ -3,7 +3,8 @@
 // the emulator only supports paths and filenames up to this length across all platforms
 
 #define EMULATOR_MAX_PATH 2048
-#define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100
+#define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100    // just macOS is different with 0x20
+#define EMULATOR_AT_SYMLINK_FOLLOW 0x400      // just macOS is different with 0x40
 #define EMULATOR_AT_REMOVEDIR 0x200 // this is 8 for newlib
 
 // some of these are just handy additions for the emulator. Some are ancient linux syscalls modern systems don't implement

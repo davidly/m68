@@ -25,7 +25,8 @@ if "%1" == "rvos" (
 )
 
 if "%1" == "sparcos" (
-  set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc.elf
+    set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc.elf
+    shift
 )
 
 if "%_M68runcmd%" == "normal" (

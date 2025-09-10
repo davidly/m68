@@ -2847,10 +2847,10 @@ void emulator_invoke_svc( CPUClass & cpu )
 #ifdef __APPLE__
             if ( -100 == descriptor ) // current directory
                 descriptor = -2;
-            if ( 0x100 == flags ) // AT_SYMLINK_NOFOLLOW
-                flags = 0x20; // Apple's value for this flag
+            if ( EMULATOR_AT_SYMLINK_NOFOLLOW & flags )
+                flags = AT_SYMLINK_NOFOLLOW; // 0x20 instead of 0x100 on macOS
             else
-                flags = 0; // no other flags are supported on MacOS
+                flags = 0; // no other flags are supported on macOS
             tracer.Trace( "  translated flags for MacOS: %x\n", flags );
             if ( 0 == path[ 0 ] )
                 result = fstat( descriptor, & local_stat );
@@ -3457,10 +3457,21 @@ void emulator_invoke_svc( CPUClass & cpu )
 #if defined( __APPLE__ )
             if ( -100 == dirfd )
                 dirfd = -2;
-#endif // __APPLE__
+            if ( EMULATOR_AT_SYMLINK_NOFOLLOW & flags )
+                flags = AT_SYMLINK_NOFOLLOW; // 0x20 instead of 0x100 on macOS
+            else
+                flags = 0; // no other flags are supported on macOS
 
             tracer.Trace( "  statx calling fstatat with dirfd %d, flags %#x\n", dirfd, flags );
+            if ( 0 == pathname[ 0 ] )
+                result = fstat( dirfd, & local_stat );
+            else
+                result = fstatat( dirfd, pathname, & local_stat, flags );
+#else
+            tracer.Trace( "  statx calling fstatat with dirfd %d, flags %#x\n", dirfd, flags );
             result = fstatat( dirfd, pathname, & local_stat, flags );
+
+#endif // __APPLE__
             if ( 0 == result )
             {
 #ifdef SPARCOS
