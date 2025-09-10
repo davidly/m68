@@ -920,6 +920,8 @@ em_platform build_target_platform()
         return dos_win;
     #elif defined( sparc )
         return linux_sparc;
+    #elif defined( __APPLE__ )
+        return macos;
     #elif defined( __mc68000__ )
         return newlib_68k;
     #elif defined( __riscv ) || defined( __amd64 )
@@ -3373,6 +3375,15 @@ void emulator_invoke_svc( CPUClass & cpu )
             const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int flags = (int) ACCESS_REG( REG_ARG2 );
             tracer.Trace( "  flags: %#x, EMULATOR_AT_SYMLINK_NOFOLLOW: %x\n", flags, EMULATOR_AT_SYMLINK_NOFOLLOW );
+#ifdef AT_SYMLINK_NOFOLLOW
+            tracer.Trace( "  AT_SYMLINK_NOFOLLOW: %x\n", AT_SYMLINK_NOFOLLOW );
+            if ( flags & EMULATOR_AT_SYMLINK_NOFOLLOW )
+            {
+                flags &= ~EMULATOR_AT_SYMLINK_NOFOLLOW;
+                flags |= AT_SYMLINK_NOFOLLOW;
+            }
+#endif //AT_SYMLINK_NOFOLLOW
+
             tracer.Trace( "  statx on path '%s'\n", pathname );
             int mask = (int) ACCESS_REG( REG_ARG3 );
 
@@ -3443,6 +3454,12 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "  sizeof struct stat: %d\n", (int) sizeof( struct stat ) );
             struct stat local_stat = {0};
 
+#if defined( __APPLE__ )
+            if ( -100 == dirfd )
+                dirfd = -2;
+#endif // __APPLE__
+
+            tracer.Trace( "  statx calling fstatat with dirfd %d, flags %#x\n", dirfd, flags );
             result = fstatat( dirfd, pathname, & local_stat, flags );
             if ( 0 == result )
             {
@@ -3591,9 +3608,13 @@ void emulator_invoke_svc( CPUClass & cpu )
             errno = EINVAL; // no symbolic links on Windows as far as this emulator is concerned
             result = -1;
 #else
+    #if defined( __APPLE__ )
+            if ( -100 == dirfd )
+                dirfd = -2;
+    #endif //__APPLE__
             result = readlinkat( dirfd, pathname, buf, bufsiz );
             tracer.Trace( "  result of readlinkat(): %d\n", result );
-#endif
+#endif // _WIN32 || M68K
 
             update_result_errno( cpu, result );
             break;
