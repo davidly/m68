@@ -157,6 +157,7 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
 
 extern "C" int lstat( const char * path, struct stat * statbuf )
 {
+    // AT_SYMLINK_NOFOLLOW is 2 and AT_SYMLINK_FOLLOW is 4 for newlib on 68000. Use emulator flag(s) which have more standard values.
     struct statx_linux_syscall statx = {0};
     int result = (int) syscall( SYS_statx, LINUX_AT_FDCWD, path, EMULATOR_AT_SYMLINK_NOFOLLOW, STATX_BASIC_STATS, & statx );
     if ( -1 == result )
