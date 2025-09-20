@@ -120,6 +120,7 @@ extern "C" int clock_gettime( clockid_t id, struct timespec * res )
     int result = (int) syscall( SYS_clock_gettime, 0 /*realtime*/, & tsc );
     if ( 0 == result )
     {
+        //printf( "from newlib68 made an m68 sys_clock_gettime, sec: %#llx\n", tsc.tv_sec );        
         res->tv_sec = tsc.tv_sec;
         res->tv_nsec = (uint32_t) tsc.tv_nsec;
     }
@@ -257,6 +258,11 @@ extern "C" int select( int nfds, fd_set * readfds, fd_set * writefds, fd_set * e
     // map to pselect6 which means timespec no timeval and 0 sigset
     return (int) syscall( SYS_pselect6, nfds, readfds, writefds, exceptfds, 0, 0 );
 } //select
+
+ssize_t readlinkat( int dirfd, const char * pathname, char * buf, size_t bufsiz )
+{
+    return (ssize_t) syscall( SYS_readlinkat, dirfd, pathname, buf, bufsiz );
+} //readlinkat
 
 extern "C" int unlink( const char * path )
 {
