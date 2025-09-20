@@ -227,7 +227,6 @@ CMMap g_mmap;                                  // for mmap and munmap system cal
 bool g_hostIsLittleEndian = true;              // is the host little endian?
 bool g_addCRBeforeLF = false;                  // on Windows, a command-line argument can make this true
 
-
 // fake descriptors.
 // /etc/timezone is not implemented, so apps running in the emulator on Windows assume UTC
 
@@ -982,7 +981,7 @@ int translate_open_flags( int f )
     for ( uint32_t i = 0; i < _countof( flagmap[ 0 ] ); i++ )
     {
         int fromflag = flagmap[ pfrom ][ i ];
-        if ( ( f & fromflag ) == fromflag )
+        if ( fromflag && ( ( f & fromflag ) == fromflag ) )
             result |= flagmap[ pto ][ i ];
     }
 
@@ -1564,7 +1563,7 @@ const void * my_bsearch( const void * key, const void * vbase, size_t num, unsig
             hi = k - 1;
         else
             lo = k + 1;
-      } while ( hi >= lo );
+   } while ( hi >= lo );
 
    return 0;
 } //my_bsearch
@@ -1680,7 +1679,9 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 143, SYS_gettid },
     { 174, emulator_sys_getdents },
     { 188, SYS_exit_group },
+    { 189, SYS_uname },
     { 211, SYS_tgkill },
+    { 214, SYS_sysinfo },
     { 236, emulator_sys__llseek },
     { 250, SYS_mremap },
     { 253, SYS_fdatasync },
@@ -2871,7 +2872,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_nlink = local_stat.st_nlink;
                 pout->st_uid = local_stat.st_uid;
                 pout->st_gid = local_stat.st_gid;
-                pout->st_rdev = local_stat.st_rdev;
+                if ( 2 == sizeof( local_stat.st_rdev ) )
+                    pout->st_rdev = (uint16_t) local_stat.st_rdev; // on 68000 rdev is an int16_t. avoid sign extension
+                else if ( 4 == sizeof( local_stat.st_rdev ) )
+                    pout->st_rdev = (uint32_t) local_stat.st_rdev;
+                else
+                    pout->st_rdev = local_stat.st_rdev;
                 pout->st_size = local_stat.st_size;
                 pout->st_blksize = local_stat.st_blksize;
                 pout->st_blocks = local_stat.st_blocks;
@@ -3148,7 +3154,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ACCESS_REG( REG_RESULT ) = (REG_TYPE) -1; // fail this until/unless there is a real-world use
             break;
         }
-#if !defined(M68) && !defined(M68K)// lots of 64/32 interop issues with this
+#if !defined( M68 ) && !defined( M68K )// lots of 64/32 interop issues with this
         case SYS_writev:
         {
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
@@ -3610,7 +3616,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "  readlinkat pathname %p == '%s', buf %p, bufsiz %zd, dirfd %d\n", pathname, pathname, buf, bufsiz, dirfd );
             int result = -1;
 
-#if defined( _WIN32 ) || defined( M68K )
+#if defined( _WIN32 )
             errno = EINVAL; // no symbolic links on Windows as far as this emulator is concerned
             result = -1;
 #else
@@ -3619,7 +3625,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 dirfd = -2;
     #endif //__APPLE__
             result = readlinkat( dirfd, pathname, buf, bufsiz );
-            tracer.Trace( "  result of readlinkat(): %d\n", result );
+            tracer.Trace( "  result of readlinkat(): %d, %s\n", result, buf );
 #endif // _WIN32 || M68K
 
             update_result_errno( cpu, result );
@@ -3810,7 +3816,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         default:
         {
-#if defined(M68) || defined(SPARCOS)
+#if defined( M68 ) || defined( SPARCOS )
             printf( "error; ecall invoked with unknown command %u = %#x, a0 %#x, a1 %#x, a2 %#x\n",
                     syscall_id, syscall_id, ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
             tracer.Trace( "error; ecall invoked with unknown command %u = %#x, a0 %#x, a1 %#x, a2 %#x\n",
@@ -3828,6 +3834,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 } //emulator_invoke_svc
 
 #ifdef SPARCOS
+
+#pragma warning(disable: 4127) // conditional expression is constant
 
 void emulator_invoke_sparc_trap5( Sparc & cpu ) // called for trap #5 overflow of register window from save instrution
 {
@@ -3963,7 +3971,7 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     printf( "%s (%s) fatal error: %s %0llx\n", APP_NAME, target_platform(), pcerr, error_value );
 
     uint64_t offset = 0;
-#if defined(M68) || defined(SPARCOS)
+#if defined( M68 ) || defined( SPARCOS )
     uint32_t offset32 = 0;
     const char * psymbol = emulator_symbol_lookup( cpu.pc, offset32 );
     offset = offset32;
@@ -4071,7 +4079,7 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     exit( 1 );
 } //emulator_hard_termination
 
-#if defined(M68) || defined(SPARCOS)
+#if defined( M68 )
 
 const char * bdos_functions[] =
 {
@@ -4256,29 +4264,6 @@ struct SymbolEntryCPM
 
 static vector<SymbolEntryCPM> g_cpmSymbols;
 
-static int symbol_find_compare32( const void * a, const void * b )
-{
-    ElfSymbol32 & sa = * (ElfSymbol32 *) a;
-    ElfSymbol32 & sb = * (ElfSymbol32 *) b;
-
-    if ( 0 == sa.size ) // a is the key
-    {
-        if ( ( sa.value == sb.value ) || ( sa.value > sb.value && sa.value < ( sb.value + sb.size ) ) )
-            return 0;
-    }
-    else // b is the key
-    {
-        if ( ( sb.value == sa.value ) || ( sb.value > sa.value && sb.value < ( sa.value + sa.size ) ) )
-            return 0;
-    }
-
-    if ( sa.value > sb.value )
-        return 1;
-    return -1;
-} //symbol_find_compare32
-
-#ifdef M68
-
 static int symbol_find_compare_cpm( const void * a, const void * b )
 {
     SymbolEntryCPM & sa = * (SymbolEntryCPM *) a;
@@ -4304,7 +4289,30 @@ static int symbol_find_compare_cpm( const void * a, const void * b )
 
 #endif //M68
 
-#else
+#if defined( M68 ) || defined( SPARCOS )
+
+static int symbol_find_compare32( const void * a, const void * b )
+{
+    ElfSymbol32 & sa = * (ElfSymbol32 *) a;
+    ElfSymbol32 & sb = * (ElfSymbol32 *) b;
+
+    if ( 0 == sa.size ) // a is the key
+    {
+        if ( ( sa.value == sb.value ) || ( sa.value > sb.value && sa.value < ( sb.value + sb.size ) ) )
+            return 0;
+    }
+    else // b is the key
+    {
+        if ( ( sb.value == sa.value ) || ( sb.value > sa.value && sb.value < ( sa.value + sa.size ) ) )
+            return 0;
+    }
+
+    if ( sa.value > sb.value )
+        return 1;
+    return -1;
+} //symbol_find_compare32
+
+#else // M68 || SPARCOS
 
 static int symbol_find_compare( const void * a, const void * b )
 {
@@ -4327,7 +4335,7 @@ static int symbol_find_compare( const void * a, const void * b )
     return -1;
 } //symbol_find_compare
 
-#endif
+#endif // M68 || SPARCOS
 
 vector<char> g_string_table;      // strings in the elf image
 vector<ElfSymbol64> g_symbols;    // symbols in the elf image
@@ -4335,7 +4343,7 @@ vector<ElfSymbol32> g_symbols32;  // symbols in the elf image
 
 // returns the best guess for a symbol name for the address
 
-#if defined(M68) || defined(SPARCOS)
+#if defined( M68 ) || defined( SPARCOS )
 
 const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
 {
@@ -7342,7 +7350,7 @@ static bool load_image( const char * pimage, const char * app_args )
     tracer.Trace( "  section entries: %u\n", ehead.section_header_table_entries );
     tracer.Trace( "  section header entry size: %u\n", ehead.section_header_table_size );
     tracer.Trace( "  section offset: %llu == %llx\n", ehead.section_header_table, ehead.section_header_table );
-    tracer.Trace( "  section with section names: %llu == %llx\n", ehead.section_with_section_names, ehead.section_with_section_names );
+    tracer.Trace( "  section with section names: %u == %x\n", ehead.section_with_section_names, ehead.section_with_section_names );
     tracer.Trace( "  flags: %x\n", ehead.flags );
     g_execution_address = (REG_TYPE) ehead.entry_point;
     g_compressed_rvc = 0 != ( ehead.flags & 1 ); // 2-byte compressed RVC instructions, not 4-byte default risc-v instructions
