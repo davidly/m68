@@ -605,6 +605,19 @@ extern "C" int unlink( const char * pathname )
     return 0;
 } //unlink
 
+extern "C" ssize_t readlinkat( int dirfd, const char * pathname, char * buf, size_t bufsiz )
+{
+    ssize_t len = strlen( pathname );
+    if ( len < bufsiz )
+    {
+        strcpy( buf, pathname );
+        return len;
+    }
+
+    errno = EINVAL;
+    return -1;
+} //readlinkat
+
 extern "C" int unlinkat( int dirfd, const char * path, int flags )
 {
     if ( !ValidCPMFilename( path ) )
