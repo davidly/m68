@@ -1,12 +1,22 @@
 #!/bin/bash
+#set -x
 
 _runcmd="m68"
 _m68runcmd="../m68"
 
-if [ "$1" != "" ]; then
+if [ "$1" = "nested" ]; then
     _runcmd="m68 -h:80 c_tests/m68.elf"
     _m68runcmd="../m68 -h:80 ../c_tests/m68.elf"
-fi
+elif [ "$1" = "armos" ]; then
+    _runcmd="../ArmOS/armos -h:80 ../ArmOS/bin/m68"
+    _m68runcmd="../../ArmOS/armos -h:80 ../../ArmOS/bin/m68"
+elif [ "$1" = "sparcos" ]; then
+    _runcmd="../sparcos/sparcos -h:80 ../sparcos/bin/m68"
+    _m68runcmd="../../sparcos/sparcos -h:80 ../../sparcos/bin/m68 "
+elif [ "$1" = "rvos" ]; then
+    _runcmd="../rvos/rvos -h:80 ../rvos/bin/m68 "
+    _m68runcmd="../../rvos/rvos -h:80 ../../rvos/bin/m68 "
+fi    
 
 export _m68runcmd
 
