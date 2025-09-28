@@ -1,4 +1,4 @@
-Sun 09/14/2025  8:36:01.90 
+Sat 09/27/2025 20:40:51.35 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-38.558998 milliseconds
+22.624001 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 9, day 14, hour 15, min 36, sec 12
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 9, day 14, hour 10, min 36, sec 12
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 9, day 14, hour 7, min 36, sec 12
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 9, day 14, hour 7, min 36, sec 12
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 9, day 28, hour 3, min 40, sec 59
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 9, day 27, hour 22, min 40, sec 59
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 9, day 27, hour 19, min 40, sec 59
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 9, day 27, hour 19, min 40, sec 59
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6292,7 +6292,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 9, day 14, hour 7, min 36, sec 22
+tz: 'PST+8', year: 2025, month 9, day 27, hour 19, min 41, sec 7
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6465,6 +6465,8 @@ building nq1d
 building cpmenumd
 building primes
 building targs
+building trw
+building trw2
 building floating point app floata
 building floating point app mandle
 building floating point app tap
@@ -6960,11 +6962,13 @@ finding 68K files
   file  40:        TP.68K     37376
   file  41:      TPHI.68K     31744
   file  42:       TPI.68K     27904
-  file  43:        TS.68K     38272
-  file  44:    TSHIFT.68K     39168
-  file  45:       TTT.68K     39680
-  file  46:    TTT68U.68K      5120
-  file  47:  T_SETJMP.68K     27008
+  file  43:       TRW.68K     34048
+  file  44:      TRW2.68K     34176
+  file  45:        TS.68K     38272
+  file  46:    TSHIFT.68K     39168
+  file  47:       TTT.68K     39680
+  file  48:    TTT68U.68K      5120
+  file  49:  T_SETJMP.68K     27008
 finding XYZ files
 finding TXT files
   file   0:  FOPENTST.TXT       128
@@ -7182,6 +7186,22 @@ running NQ681D
        6       4
        7      40
        8      92
+running TRW
+trw completed with great success
+running TRW2
+pass 0 with element count 1
+pass 1 with element count 7
+pass 2 with element count 20
+pass 3 with element count 32
+pass 4 with element count 63
+pass 5 with element count 64
+pass 6 with element count 65
+pass 7 with element count 77
+pass 8 with element count 127
+pass 9 with element count 128
+pass 10 with element count 129
+pass 11 with element count 701
+trw2 completed with great success
 running tgets with redirected stdin
 Baby DONT Cry
 read: 'B' == 66 == 42
@@ -9156,17 +9176,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     390
-  dictionary: 385
-  generate:   4
+total ms:     252
+  dictionary: 248
+  generate:   3
   render:     0
 test ba tp.bas 
-340 ms for 1 iterations
+216 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-481.388 milliseconds
+334.164001 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9190,4 +9210,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sun 09/14/2025  8:36:48.55 
+Sat 09/27/2025 20:41:28.87 

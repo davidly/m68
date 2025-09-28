@@ -1,0 +1,165 @@
+#include <stdio.h>
+
+long lseek();
+
+int show_error( str ) char * str;
+{
+    printf( "error: %s\n", str );
+    exit( 1 );
+}
+
+int elem_counts[] = { 1, 7, 20, 32, 63, 64, 65, 77, 127, 128, 129, 701 };
+
+static short buf[ 1024 ];
+
+#define RW_LOOPS 1024
+
+#define TRW_FILE "trw2.dat"
+
+char * memset( p, v, c ) char * p; int v; int c;
+{
+    int i;
+    char * orig = p;
+
+    for ( i = 0; i < c; i++ )
+        *p++ = (char) v;
+    return orig;
+}
+
+int main()
+{
+    int e, i, j, result, fd;
+    long int seek_offset, file_offset;
+    int BUF_BYTES, BUF_ELEMENTS;
+
+    for ( e = 0; e < ( sizeof( elem_counts ) / sizeof( elem_counts[ 0 ] ) ); e++ )
+    {
+        BUF_ELEMENTS = elem_counts[ e ];
+        BUF_BYTES = BUF_ELEMENTS * sizeof( buf[ 0 ] );
+        printf( "pass %d with element count %d\n", e, BUF_ELEMENTS );
+
+        fd = creatb( TRW_FILE, 2 );
+        if ( -1 == fd )
+            show_error( "unable to create data file" );
+
+        for ( i = 0; i < RW_LOOPS; i++ )
+        {
+            for ( j = 0; j < BUF_ELEMENTS; j++ )
+                buf[ j ] = i;
+
+            result = write( fd, (char *) buf, BUF_BYTES );
+            if ( BUF_BYTES != result )
+                show_error( "unable to write to file" );
+        }
+
+        result = fflush( fd );
+        if ( 0 != result )
+            show_error( "fflush of file descriptor at point A failed\n" );
+    
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "close of file descriptor at point A failed\n" );
+
+        fd = openb( TRW_FILE, 0 );
+        if ( -1 == fd )
+            show_error( "unable to open data file read only" );
+
+        for ( i = 0; i < RW_LOOPS; i++ )
+        {
+            memset( buf, 0x69, BUF_BYTES );
+            result = read( fd, (char *) buf, BUF_BYTES );
+            if ( BUF_BYTES != result )
+            {
+                printf( "result: %d, i %d\n", result, i );
+                show_error( "unable to read from file at point A" );
+            }
+
+            for ( j = 0; j < BUF_ELEMENTS; j++ )
+            {
+                if ( buf[ j ] != i )
+                {
+                    printf( "i %x, j %x, buf[j] %04x\n", i, j, buf[j] );
+                    show_error( "data read from file isn't what was expected (should be i) at point A" );
+                }
+            }
+        }
+
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "close of file descriptor at point B failed\n" );
+
+        fd = openb( TRW_FILE, 2 );
+        if ( -1 == fd )
+            show_error( "unable to open data file read/write" );
+
+        for ( i = 0; i < RW_LOOPS; i++ )
+        {
+            if ( 0 == ( i % 8 ) )
+            {
+                seek_offset = (long int) i * BUF_BYTES;
+                file_offset = lseek( fd, seek_offset, 0 );
+                if ( file_offset != seek_offset )
+                {
+                    printf( "file_offset %ld, seek_offset %ld\n", file_offset, seek_offset );
+                    show_error( "lseek location not as expected" );
+                }
+
+                for ( j = 0; j < BUF_ELEMENTS; j++ )
+                    buf[ j ] = i + 0x4000;
+
+                result = write( fd, (char *) buf, BUF_BYTES );
+                if ( BUF_BYTES != result )
+                    show_error( "unable to write to file after lseek" );
+            }
+        }
+
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "close of file descriptor at point C failed\n" );
+
+        fd = openb( TRW_FILE, 0 );
+        if ( -1 == fd )
+            show_error( "unable to open data file read only" );
+
+        for ( i = RW_LOOPS-1; i >= 0; i-- )
+        {
+            seek_offset = (long int) i * BUF_BYTES;
+            file_offset = lseek( fd, seek_offset, 0 );
+            if ( file_offset != seek_offset )
+            {
+                printf( "file_offset %ld, seek_offset %ld\n", file_offset, seek_offset );
+                show_error( "lseek location not as expected" );
+            }
+
+            result = read( fd, (char *) buf, BUF_BYTES );
+            if ( BUF_BYTES != result )
+                show_error( "unable to read from file after lseek" );
+
+            for ( j = 0; j < BUF_ELEMENTS; j++ )
+            {
+                if ( 0 == ( i % 8 ) )
+                {
+                    if ( buf[ j ] != i + 0x4000 )
+                        show_error( "data read from file isn't what was expected at point B" );
+                }
+                else
+                {
+                    if ( buf[ j ] != i )
+                        show_error( "data read from file isn't what was expected at point C" );
+                }
+            }
+        }
+
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "close of file descriptor at point D failed\n" );
+    }
+
+    result = unlink( TRW_FILE );
+    if ( 0 != result )
+        show_error( "can't unlink test file" );
+
+    printf( "trw2 completed with great success\n" );
+    return 0;
+}
+
