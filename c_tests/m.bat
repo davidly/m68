@@ -5,11 +5,13 @@ if "%1" == "" (goto noargs)
 
 if "%2" == "" (set _optflag=2) else (set _optflag=%2)
 
-if "%3" == "" (set gccpath=..\gcc-8.2.0) else (set gccpath=%3)
+if "%3" == "" (set gccver=8.2.0) else (set gccver=%3)
+
+set gccpath=..\gcc-%gccver%
 
 path=%gccpath%\bin;%path%
 
-set inc1=%gccpath%\lib\gcc\m68k-elf\8.2.0\include
+set inc1=%gccpath%\lib\gcc\m68k-elf\%gccver%\include
 set inc2=%gccpath%\m68k-elf\include
 set inc3=..\
 set inc4=.

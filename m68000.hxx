@@ -333,24 +333,39 @@ private:
         return result;
     } //pop16
 
-    inline void set_nzcv8( uint8_t val )
+    inline void set_nz8( uint8_t val )
     {
         setflag_n( 0 != ( 0x80 & val ) );
         setflag_z( 0 == val );
+    } //set_nz8
+
+    inline void set_nz16( uint16_t val )
+    {
+        setflag_n( 0 != ( 0x8000 & val ) );
+        setflag_z( 0 == val );
+    } //set_nz16
+
+    inline void set_nz32( uint32_t val )
+    {
+        setflag_n( 0 != ( 0x80000000 & val ) );
+        setflag_z( 0 == val );
+    } //set_nz32
+
+    inline void set_nzcv8( uint8_t val )
+    {
+        set_nz8( val );
         clearflags_cv();
     } //set_nzcv8
 
     inline void set_nzcv16( uint16_t val )
     {
-        setflag_n( 0 != ( 0x8000 & val ) );
-        setflag_z( 0 == val );
+        set_nz16( val );
         clearflags_cv();
     } //set_nzcv16
 
     inline void set_nzcv32( uint32_t val )
     {
-        setflag_n( 0 != ( 0x80000000 & val ) );
-        setflag_z( 0 == val );
+        set_nz32( val );
         clearflags_cv();
     } //set_nzcv32
 };

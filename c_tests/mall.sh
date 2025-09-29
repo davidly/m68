@@ -8,9 +8,9 @@ else
 fi
 
 if [ "$2" == "" ]; then
-    gccpath="../gcc-8.2.0-linux"
+    gccver="8.2.0"
 else
-    gccpath=$2
+    gccver=$2
 fi
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
@@ -19,16 +19,16 @@ for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
              nqueens nq1d tdir fopentst lenum tgets tex trename
 do
     echo $arg
-    m.sh $arg $optflags $gccpath
+    m.sh $arg $optflags $gccver
 done
 
 echo build m68.elf
-mm68.sh $optflags $gccpath
+mm68.sh $optflags $gccver
 
 for arg in tbcd tshift taddsubm tea ttt68 ttt68u tchk
 do
     echo $arg
-    ma.sh $arg $optflags $gccpath
+    ma.sh $arg $optflags $gccver
 done
 
 

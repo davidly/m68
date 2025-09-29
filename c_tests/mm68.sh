@@ -2,20 +2,22 @@
 #set -x
 
 if [ "$1" == "" ]; then
-    optflags="2"
+    optflags="3"
 else
     optflags="$1"
 fi
 
 if [ "$2" == "" ]; then
-    gccpath="../gcc-8.2.0-linux"
+    gccver="13.2.0"
 else
-    gccpath=$2
+    gccver=$2
 fi
+
+gccpath=../gcc-$gccver-linux
 
 gcccmd=$gccpath/bin/m68k-elf-gcc
 
-inc1=$gccpath/lib/gcc/m68k-elf/8.2.0/include
+inc1=$gccpath/lib/gcc/m68k-elf/$gccver/include
 inc2=$gccpath/m68k-elf/include
 inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"

@@ -1533,33 +1533,32 @@ uint64_t m68000::run()
                 }
                 else if ( 0xc == bits11_8 ) // cmpi
                 {
+                    pc += 2;
                     if ( 0 == op_size )
                     {
-                        pc += 2;
                         uint8_t imm = getui16( pc ) & 0xff;
                         uint8_t val = effective_value8( effective_address() ); // mode 7 reg 4 imm is illegal
                         sub8( val, imm, true, false, false );
                     }
                     else if ( 1 == op_size )
                     {
-                        pc += 2;
                         uint16_t imm = getui16( pc );
                         uint16_t val = effective_value16( effective_address() ); // mode 7 reg 4 imm is illegal
                         sub16( val, imm, true, false, false );
                     }
                     else
                     {
-                        uint32_t imm = getui32( pc + 2 );
-                        pc += 4;
+                        uint32_t imm = getui32( pc );
+                        pc += 2;
                         uint32_t val = effective_value32( effective_address() );
                         sub32( val, imm, true, false, false );
                     }
                 }
                 else if ( 4 == bits11_8 ) // subi
                 {
+                    pc += 2;
                     if ( 0 == op_size )
                     {
-                        pc += 2;
                         uint8_t imm = getui16( pc ) & 0xff;
                         uint32_t address = effective_address();
                         uint8_t val = effective_value8( address );
@@ -1571,7 +1570,6 @@ uint64_t m68000::run()
                     }
                     else if ( 1 == op_size )
                     {
-                        pc += 2;
                         uint16_t imm = getui16( pc );
                         uint32_t address = effective_address();
                         uint16_t val = effective_value16( address );
@@ -1583,8 +1581,8 @@ uint64_t m68000::run()
                     }
                     else
                     {
-                        uint32_t imm = getui32( pc + 2 );
-                        pc += 4;
+                        uint32_t imm = getui32( pc );
+                        pc += 2;
                         uint32_t address = effective_address();
                         uint32_t val = effective_value32( address );
                         uint32_t result = sub32( val, imm, true, true, false );
@@ -1596,9 +1594,9 @@ uint64_t m68000::run()
                 }
                 else if ( 6 == bits11_8 ) // addi
                 {
+                    pc += 2;
                     if ( 0 == op_size )
                     {
-                        pc += 2;
                         uint8_t imm = getui16( pc ) & 0xff;
                         uint32_t address = effective_address();
                         uint8_t val = effective_value8( address );
@@ -1610,7 +1608,6 @@ uint64_t m68000::run()
                     }
                     else if ( 1 == op_size )
                     {
-                        pc += 2;
                         uint16_t imm = getui16( pc );
                         uint32_t address = effective_address();
                         uint16_t val = effective_value16( address );
@@ -1622,8 +1619,8 @@ uint64_t m68000::run()
                     }
                     else
                     {
-                        uint32_t imm = getui32( pc + 2 );
-                        pc += 4;
+                        uint32_t imm = getui32( pc );
+                        pc += 2;
                         uint32_t address = effective_address();
                         uint32_t val = effective_value32( address );
                         uint32_t result = add32( val, imm, true, true, false );
@@ -1707,7 +1704,7 @@ uint64_t m68000::run()
                         pc += 2;
                         bitnum = getui16( pc ) & 0xff;;
                     }
-                   else
+                    else
                         bitnum = dregs[ op_reg ].l;
 
                     if ( 0 == ea_mode )
@@ -1736,7 +1733,7 @@ uint64_t m68000::run()
                         pc += 2;
                         bitnum = getui16( pc ) & 0xff;;
                     }
-                   else
+                    else
                         bitnum = dregs[ op_reg ].l;
 
                     if ( 0 == ea_mode )
@@ -1771,7 +1768,7 @@ uint64_t m68000::run()
                         pc += 2;
                         bitnum = getui16( pc ) & 0xff;;
                     }
-                   else
+                    else
                         bitnum = dregs[ op_reg ].l;
 
                     if ( 0 == ea_mode )
@@ -2389,8 +2386,7 @@ uint64_t m68000::run()
                         }
 
                         setflag_c( false );
-                        setflag_z( 0 == dregs[ dq ].l );
-                        setflag_n( sign32( dregs[ dq ].l ) );
+                        set_nz32( dregs[ dq ].l );
                     }
                     else if ( 0xe6 == bits11_4 ) // move usp
                     {
@@ -2591,8 +2587,7 @@ uint64_t m68000::run()
                             setflag_v( false );
                             uint16_t remainder = (uint16_t) ( dividend % divisor );
                             dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
-                            setflag_z( 0 == quotient );
-                            setflag_n( sign16( (uint16_t) quotient ) );
+                            set_nz16( (uint16_t) quotient );
                         }
                     }
                     setflag_c( false );
@@ -2619,8 +2614,7 @@ uint64_t m68000::run()
                             setflag_v( false );
                             int16_t remainder = ( dividend % (int32_t) divisor );
                             dregs[ op_reg ].l = ( quotient & 0xffff ) | ( ( (uint32_t) remainder ) << 16 );
-                            setflag_z( 0 == quotient );
-                            setflag_n( sign16( (uint16_t) quotient ) );
+                            set_nz16( (uint16_t) quotient );
                         }
                     }
                     setflag_c( false );
@@ -3097,8 +3091,7 @@ uint64_t m68000::run()
                         setflag_v( false );
                     }
 
-                    setflag_n( sign16( value ) );
-                    setflag_z( 0 == value );
+                    set_nz16( value );
                     setui16( address, value );
                 }
                 else // register rotate
@@ -3127,8 +3120,7 @@ uint64_t m68000::run()
                                     if ( start_sign != sign8( dregs[ ea_reg ].b ) )
                                         sign_changed = true;
                                 }
-                                setflag_n( sign8( dregs[ ea_reg ].b ) );
-                                setflag_z( 0 == dregs[ ea_reg ].b );
+                                set_nz8( dregs[ ea_reg ].b );
                             }
                             else if ( 1 == op_size )
                             {
@@ -3140,8 +3132,7 @@ uint64_t m68000::run()
                                     if ( start_sign != sign16( dregs[ ea_reg ].w ) )
                                         sign_changed = true;
                                 }
-                                setflag_n( sign16( dregs[ ea_reg ].w ) );
-                                setflag_z( 0 == dregs[ ea_reg ].w );
+                                set_nz16( dregs[ ea_reg ].w );
                             }
                             else
                             {
@@ -3153,8 +3144,7 @@ uint64_t m68000::run()
                                     if ( start_sign != sign32( dregs[ ea_reg ].l ) )
                                         sign_changed = true;
                                 }
-                                setflag_n( sign32( dregs[ ea_reg ].l ) );
-                                setflag_z( 0 == dregs[ ea_reg ].l );
+                                set_nz32( dregs[ ea_reg ].l );
                             }
                         }
                         else // right. ASR / LSR register
@@ -3171,8 +3161,7 @@ uint64_t m68000::run()
                                     if ( start_sign != sign8( dregs[ ea_reg ].b ) )
                                         sign_changed = true;
                                 }
-                                setflag_n( sign8( dregs[ ea_reg ].b ) );
-                                setflag_z( 0 == dregs[ ea_reg ].b );
+                                set_nz8( dregs[ ea_reg ].b );
                             }
                             else if ( 1 == op_size )
                             {
@@ -3186,8 +3175,7 @@ uint64_t m68000::run()
                                     if ( start_sign != sign16( dregs[ ea_reg ].w ) )
                                         sign_changed = true;
                                 }
-                                setflag_n( sign16( dregs[ ea_reg ].w ) );
-                                setflag_z( 0 == dregs[ ea_reg ].w );
+                                set_nz16( dregs[ ea_reg ].w );
                             }
                             else
                             {
@@ -3201,8 +3189,7 @@ uint64_t m68000::run()
                                     if ( start_sign != sign32( dregs[ ea_reg ].l ) )
                                         sign_changed = true;
                                 }
-                                setflag_n( sign32( dregs[ ea_reg ].l ) );
-                                setflag_z( 0 == dregs[ ea_reg ].l );
+                                set_nz32( dregs[ ea_reg ].l );
                             }
                         }
                         setflag_v( is_arithmetic ? sign_changed : false );
@@ -3217,37 +3204,31 @@ uint64_t m68000::run()
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
-                                    uint8_t xset = flag_x();
+                                    uint8_t xval = flag_x();
                                     setflags_cx( sign8( dregs[ ea_reg ].b ) );
-                                    dregs[ ea_reg ].b <<= 1;
-                                    dregs[ ea_reg ].b |= xset;
+                                    dregs[ ea_reg ].b = ( dregs[ ea_reg ].b << 1 ) | xval;
                                 }
-                                setflag_n( sign8( dregs[ ea_reg ].b ) );
-                                setflag_z( 0 == dregs[ ea_reg ].b );
+                                set_nz8( dregs[ ea_reg ].b );
                             }
                             else if ( 1 == op_size )
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
-                                    uint16_t xset = flag_x();
+                                    uint16_t xval = flag_x();
                                     setflags_cx( sign16( dregs[ ea_reg ].w ) );
-                                    dregs[ ea_reg ].w <<= 1;
-                                    dregs[ ea_reg ].w |= xset;
+                                    dregs[ ea_reg ].w = ( dregs[ ea_reg ].w << 1 ) | xval;
                                 }
-                                setflag_n( sign16( dregs[ ea_reg ].w ) );
-                                setflag_z( 0 == dregs[ ea_reg ].w );
+                                set_nz16( dregs[ ea_reg ].w );
                             }
                             else
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
-                                    uint32_t xset = flag_x();
+                                    uint32_t xval = flag_x();
                                     setflags_cx( sign32( dregs[ ea_reg ].l ) );
-                                    dregs[ ea_reg ].l <<= 1;
-                                    dregs[ ea_reg ].l |= xset;
+                                    dregs[ ea_reg ].l = ( dregs[ ea_reg ].l << 1 ) | xval;
                                 }
-                                setflag_n( sign32( dregs[ ea_reg ].l ) );
-                                setflag_z( 0 == dregs[ ea_reg ].l );
+                                set_nz32( dregs[ ea_reg ].l );
                             }
                         }
                         else // right. ROXR register
@@ -3256,37 +3237,31 @@ uint64_t m68000::run()
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
-                                    uint8_t xset = flag_x() ? 0x80 : 0;
+                                    uint8_t xval = flag_x() ? 0x80 : 0;
                                     setflags_cx( dregs[ ea_reg ].b & 1 );
-                                    dregs[ ea_reg ].b >>= 1;
-                                    dregs[ ea_reg ].b |= xset;
+                                    dregs[ ea_reg ].b = ( dregs[ ea_reg ].b >> 1 ) | xval;
                                 }
-                                setflag_n( sign8( dregs[ ea_reg ].b ) );
-                                setflag_z( 0 == dregs[ ea_reg ].b );
+                                set_nz8( dregs[ ea_reg ].b );
                             }
                             else if ( 1 == op_size )
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
-                                    uint16_t xset = flag_x() ? 0x8000 : 0;
+                                    uint16_t xval = flag_x() ? 0x8000 : 0;
                                     setflags_cx( dregs[ ea_reg ].w & 1 );
-                                    dregs[ ea_reg ].w >>= 1;
-                                    dregs[ ea_reg ].w |= xset;
+                                    dregs[ ea_reg ].w = ( dregs[ ea_reg ].w >> 1 ) | xval;
                                 }
-                                setflag_n( sign16( dregs[ ea_reg ].w ) );
-                                setflag_z( 0 == dregs[ ea_reg ].w );
+                                set_nz16( dregs[ ea_reg ].w );
                             }
                             else
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
-                                    uint32_t xset = flag_x() ? 0x80000000 : 0;
+                                    uint32_t xval = flag_x() ? 0x80000000 : 0;
                                     setflags_cx( dregs[ ea_reg ].l & 1 );
-                                    dregs[ ea_reg ].l >>= 1;
-                                    dregs[ ea_reg ].l |= xset;
+                                    dregs[ ea_reg ].l = ( dregs[ ea_reg ].l >> 1 ) | xval;
                                 }
-                                setflag_n( sign32( dregs[ ea_reg ].l ) );
-                                setflag_z( 0 == dregs[ ea_reg ].l );
+                                set_nz32( dregs[ ea_reg ].l );
                             }
                         }
 
@@ -3304,33 +3279,27 @@ uint64_t m68000::run()
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
                                     setflag_c( sign8( dregs[ ea_reg ].b ) );
-                                    dregs[ ea_reg ].b <<= 1;
-                                    dregs[ ea_reg ].b |= (uint8_t) flag_c();
+                                    dregs[ ea_reg ].b = ( dregs[ ea_reg ].b << 1 ) | (uint8_t) flag_c();
                                 }
-                                setflag_n( sign8( dregs[ ea_reg ].b ) );
-                                setflag_z( 0 == dregs[ ea_reg ].b );
+                                set_nz8( dregs[ ea_reg ].b );
                             }
                             else if ( 1 == op_size )
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
                                     setflag_c( sign16( dregs[ ea_reg ].w ) );
-                                    dregs[ ea_reg ].w <<= 1;
-                                    dregs[ ea_reg ].w |= (uint16_t) flag_c();
+                                    dregs[ ea_reg ].w = ( dregs[ ea_reg ].w << 1 ) | (uint16_t) flag_c();
                                 }
-                                setflag_n( sign16( dregs[ ea_reg ].w ) );
-                                setflag_z( 0 == dregs[ ea_reg ].w );
+                                set_nz16( dregs[ ea_reg ].w );
                             }
                             else
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
                                     setflag_c( sign32( dregs[ ea_reg ].l ) );
-                                    dregs[ ea_reg ].l <<= 1;
-                                    dregs[ ea_reg ].l |= (uint32_t) flag_c();
+                                    dregs[ ea_reg ].l = ( dregs[ ea_reg ].l << 1 ) | (uint32_t) flag_c();
                                 }
-                                setflag_n( sign32( dregs[ ea_reg ].l ) );
-                                setflag_z( 0 == dregs[ ea_reg ].l );
+                                set_nz32( dregs[ ea_reg ].l );
                             }
                         }
                         else // right. ROR register
@@ -3340,36 +3309,27 @@ uint64_t m68000::run()
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
                                     setflag_c( dregs[ ea_reg ].b & 1 );
-                                    dregs[ ea_reg ].b >>= 1;
-                                    if ( flag_c() )
-                                        dregs[ ea_reg ].b |= 0x80;
+                                    dregs[ ea_reg ].b = ( dregs[ ea_reg ].b >> 1 ) | ( flag_c() ? 0x80 : 0 );
                                 }
-                                setflag_n( sign8( dregs[ ea_reg ].b ) );
-                                setflag_z( 0 == dregs[ ea_reg ].b );
+                                set_nz8( dregs[ ea_reg ].b );
                             }
                             else if ( 1 == op_size )
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
                                     setflag_c( dregs[ ea_reg ].w & 1 );
-                                    dregs[ ea_reg ].w >>= 1;
-                                    if ( flag_c() )
-                                        dregs[ ea_reg ].w |= 0x8000;
+                                    dregs[ ea_reg ].w = ( dregs[ ea_reg ].w >> 1 ) | ( flag_c() ? 0x8000 : 0 );
                                 }
-                                setflag_n( sign16( dregs[ ea_reg ].w ) );
-                                setflag_z( 0 == dregs[ ea_reg ].w );
+                                set_nz16( dregs[ ea_reg ].w );
                             }
                             else
                             {
                                 for ( uint16_t i = 0; i < shift; i++ )
                                 {
                                     setflag_c( dregs[ ea_reg ].l & 1 );
-                                    dregs[ ea_reg ].l >>= 1;
-                                    if ( flag_c() )
-                                        dregs[ ea_reg ].l |= 0x80000000;
+                                    dregs[ ea_reg ].l = ( dregs[ ea_reg ].l >> 1 ) | ( flag_c() ? 0x80000000 : 0 );
                                 }
-                                setflag_n( sign32( dregs[ ea_reg ].l ) );
-                                setflag_z( 0 == dregs[ ea_reg ].l );
+                                set_nz32( dregs[ ea_reg ].l );
                             }
                         }
                         if ( 0 == shift )

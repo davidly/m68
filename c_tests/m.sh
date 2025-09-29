@@ -4,7 +4,7 @@
 if [ "$1" == "" ]; then
     echo "Usage: m.sh <sourcefile> [optlevel] [gccpath]"
     echo "  optlevel: 0, 1, 2 (default), 3, fast"
-    echo "  gccpath: path to gcc toolchain (default ../gcc-8.2.0-linux)"
+    echo "  gccver: version of gcc toolchain (e.g. 8.2.0 for ../gcc-8.2.0-linux)"
     exit 1
 fi
 
@@ -15,14 +15,15 @@ else
 fi
 
 if [ "$3" == "" ]; then
-    gccpath="../gcc-8.2.0-linux"
+    gccver="8.2.0"
 else
-    gccpath=$3
+    gccver=$3
 fi
 
+gccpath=../gcc-$gccver-linux
 gcccmd=$gccpath/bin/m68k-elf-gcc
 
-inc1=$gccpath/lib/gcc/m68k-elf/8.2.0/include
+inc1=$gccpath/lib/gcc/m68k-elf/$gccver/include
 inc2=$gccpath/m68k-elf/include
 inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
