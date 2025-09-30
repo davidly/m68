@@ -6,7 +6,7 @@ if [ "$1" = "nested" ]; then
 fi
 
 if [ "$1" = "nested68k" ]; then
-    _m68runcmd="../m68 -h:120 m68.68k"
+    _m68runcmd="../m68 -h:120 M68.68K"
 fi
 
 if [ "$1" = "armos" ]; then
