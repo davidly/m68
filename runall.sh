@@ -1,95 +1,124 @@
 #!/bin/bash
 #set -x
 
-_runcmd="m68"
-_m68runcmd="../m68"
-
 if [ "$1" = "nested" ]; then
-    _runcmd="m68 -h:120 c_tests/m68.elf"
     _m68runcmd="../m68 -h:120 ../c_tests/m68.elf"
-elif [ "$1" = "armos" ]; then
-    _runcmd="../ArmOS/armos -h:120 ../ArmOS/bin/m68"
+fi
+
+if [ "$1" = "nested68k" ]; then
+    _m68runcmd="../m68 -h:120 m68.68k"
+fi
+
+if [ "$1" = "armos" ]; then
     _m68runcmd="../../ArmOS/armos -h:120 ../../ArmOS/bin/m68"
-elif [ "$1" = "sparcos" ]; then
-    _runcmd="../sparcos/sparcos -h:120 ../sparcos/bin/m68"
-    _m68runcmd="../../sparcos/sparcos -h:120 ../../sparcos/bin/m68 "
-elif [ "$1" = "rvos" ]; then
-    _runcmd="../rvos/rvos -h:120 ../rvos/bin/m68 "
-    _m68runcmd="../../rvos/rvos -h:120 ../../rvos/bin/m68 "
-fi    
+fi
 
-export _m68runcmd
+if [ "$1" = "sparcos" ]; then
+    _m68runcmd="../../sparcos/sparcos -h:120 ../../sparcos/bin/m68"
+fi
 
-outputfile="test_m68.txt"
+if [ "$1" = "rvos" ]; then
+    _m68runcmd="../../rvos/rvos -h:120 ../../rvos/bin/m68.elf"
+fi
+
+if [ "$1" = "normal" ]; then
+    _m68runcmd="../m68"
+fi
+
+if [ "$_m68runcmd" = "" ]; then
+    _m68runcmd="../m68"
+fi
+
+if [ "$2" == "" ]; then
+    optflags="2"
+else
+    optflags=$2
+fi
+
+if [ "$3" == "" ]; then
+    gccpath="../gcc-8.2.0-linux"
+else
+    gccpath=$3
+fi
+
+outputfile="test_elfto68k.txt"
 date_time=$(date)
 echo "$date_time" >$outputfile
 
-for arg in sieve e ttt tm ts tpi tmuldiv tstr mm tprintf tshift
-do
-    echo test $arg.hex
-    echo test $arg.hex >>$outputfile
-    $_runcmd hexapps/$arg.hex >>$outputfile
-done
+echo building elfto68k
+echo building elfto68k >>$outputfile
+m.sh >>$outputfile
+
+echo building m68
+echo building m68 >>$outputfile
+mm68.sh $optflags $gccpath >>$outputfile
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
-           tcmp ttypes tarray trw trw2 terrno mm_old ttime fileops tpi \
-           t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm \
-           nqueens nq1d tdir fopentst lenum tex trename tmmap \
-           tbcd tshift taddsubm tea ttt68 ttt68u tchk;
+           tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi \
+           t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
+           nqueens nq1d fopentst lenum tex trename
 do
-    echo $arg
-    echo test $arg >>$outputfile
-    $_runcmd c_tests/$arg.elf >>$outputfile
+  echo building $arg
+  echo building $arg >>$outputfile
+  cp ../c_tests/$arg.c . >/dev/null
+  mt.sh $arg $optflags $gccpath >>$outputfile
+  echo running $arg
+  echo running $arg >>$outputfile
+  argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
+  $_m68runcmd $argu.68K >>$outputfile
+
+  if [ "$argu" = "TRW" ]; then
+    echo running trw in m68.68k
+    echo running trw in m68.68k >>$outputfile
+    $_m68runcmd M68.68K -h:4 TRW.68K >>$outputfile
+  fi
+
+  rm $arg.s 2>/dev/null
+  rm $arg.c 2>/dev/null
+  rm $argu.68K 2>/dev/null
 done
 
-for arg in cpm mtpascal cb68 cpmcv11 cpmcv12 svspas svsfor forth83
-do
-    echo compiler test $arg
-    echo compiler test $arg >>$outputfile
-    pushd $arg 1>/dev/null
-    mall.sh >>../$outputfile
-    runall.sh >>../$outputfile
-    popd 1>/dev/null
-done
+echo building ba
+echo building ba >>$outputfile
+cp ../c_tests/ba.c . >/dev/null
+mt.sh ba $optflags $gccpath >>$outputfile
+echo running ba
+echo running ba >>$outputfile
+$_m68runcmd BA.68K TP.BAS >>$outputfile
+rm ba.s 2>/dev/null
+rm ba.c 2>/dev/null
+rm BA.68K 2>/dev/null
 
-echo test an
-echo test an -t david lee >>$outputfile
-$_runcmd c_tests/an.elf -t david lee >>$outputfile
+echo building an
+echo building an >>$outputfile
+cp ../c_tests/an.c . >/dev/null
+mt.sh an $optflags $gccpath >>$outputfile
+echo running an
+echo running an >>$outputfile
+$_m68runcmd AN.68K david lee >>$outputfile
+rm an.s 2>/dev/null
+rm an.c 2>/dev/null
+rm AN.68K 2>/dev/null
 
-echo test ba
-echo test ba tp.bas >>$outputfile
-$_runcmd c_tests/ba.elf -q c_tests/tp.bas >>$outputfile
-
-echo test m68.elf ttt.elf 1
-echo test m68.elf ttt.elf 1 >>$outputfile
-$_runcmd -h:120 c_tests/m68.elf c_tests/ttt.elf 1 >>$outputfile
-
-echo test m68.elf ttt.68k 1
-echo test m68.elf ttt.68k 1 >>$outputfile
-$_runcmd -h:120 c_tests/m68.elf cpm/TTT.68K 1 >>$outputfile
-
-echo test com cp/m 2.2 emulator
-echo test com cp/m 2.2 emulator >>$outputfile
-pushd com 1>/dev/null
-$_m68runcmd -h:1 COM.68K MBASIC.COM HELLO.BAS >>../$outputfile
-popd 1>/dev/null
-
-for codegen in 6 8 a d 3 i I m o r x;
-do
-    $_runcmd c_tests/ba.elf -a:$codegen -q -x c_tests/tp.bas >>$outputfile
-done
-
-# run app with redirected input
-echo running tgets with redirected stdin
-echo running tgets with redirected stdin >>$outputfile
-$_runcmd c_tests/tgets <c_tests/tgets.txt >>$outputfile
-
-echo test ff . ff.c
-echo test ff . ff.c >>$outputfile
-$_runcmd c_tests/ff . ff.c >>$outputfile
+echo building ff
+echo building ff >>$outputfile
+cp ../c_tests/ff.c . >/dev/null
+cp ../c_tests/realpath.c . >/dev/null
+cp ../c_tests/fnmatch.c . >/dev/null
+mt.sh ff $optflags $gccpath >>$outputfile
+echo running ff
+echo running ff >>$outputfile
+$_m68runcmd FF.68K -i "M*.68K" >>$outputfile
+rm ff.s 2>/dev/null
+rm ff.c 2>/dev/null
+rm realpath.s 2>/dev/null
+rm realpath.c 2>/dev/null
+rm fnmatch.s 2>/dev/null
+rm fnmatch.c 2>/dev/null
+rm FF.68K 2>/dev/null
 
 date_time=$(date)
 echo "$date_time" >>$outputfile
-unix2dos -f $outputfile
-#
+
 diff --ignore-all-space baseline_$outputfile $outputfile
+
