@@ -6,20 +6,20 @@ if "%1" == "" (
     set _M68runcmd=..\m68
 ) else (
 if "%1" == "nested" (
-    set _runcmd=m68 -h:80 c_tests\m68.elf
-    set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
+    set _runcmd=m68 -h:120 c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:120 ..\c_tests\m68.elf
 ) else (
 if "%1" == "armos" (
-    set _runcmd=..\armos\armos -h:80 ..\armos\bin\m68
-    set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+    set _runcmd=..\armos\armos -h:120 ..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:120 ..\..\armos\bin\m68
 ) else (
 if "%1" == "rvos" (
-    set _runcmd=..\rvos\rvos -h:80 ..\rvos\linux\m68
-    set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+    set _runcmd=..\rvos\rvos -h:120 ..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:120 ..\..\rvos\linux\m68
 ) else (
 if "%1" == "sparcos" (
-    set _runcmd=..\sparcos\sparcos -h:80 ..\sparcos\bin\m68-sparc
-    set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc
+    set _runcmd=..\sparcos\sparcos -h:120 ..\sparcos\bin\m68-sparc
+    set _M68runcmd=..\..\sparcos\sparcos -h:120 ..\..\sparcos\bin\m68-sparc
 ) else (
     echo invalid argument
     goto :eof
@@ -44,7 +44,7 @@ rem for example, the old gcc for m68k has a different value for infinity for flo
 set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
              tcmp ttypes tarray trw trw2 terrno mm_old ttime fileops tpi ^
              t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm ^
-             nqueens nq1d tdir fopentst lenum tex trename ^
+             nqueens nq1d tdir fopentst lenum tex trename tmmap ^
              tbcd tshift taddsubm tea ttt68 ttt68u tchk
 
 ( for %%a in (%_elflist%) do (
@@ -81,11 +81,11 @@ set _genlist=6 8 a d 3 i I m o r x
 
 echo test m68.elf ttt.elf 1
 echo test m68.elf ttt.elf 1 >>%outputfile%
-%_runcmd% -h:60 c_tests\m68.elf c_tests\ttt.elf 1 >>%outputfile%
+%_runcmd% -h:120 c_tests\m68.elf c_tests\ttt.elf 1 >>%outputfile%
 
 echo test m68.elf ttt.68k 1
 echo test m68.elf ttt.68k 1 >>%outputfile%
-%_runcmd% -h:60 c_tests\m68.elf cpm\ttt.68k 1 >>%outputfile%
+%_runcmd% -h:120 c_tests\m68.elf cpm\ttt.68k 1 >>%outputfile%
 
 echo test com cp/m 2.2 emulator
 echo test com cp/m 2.2 emulator >>%outputfile%

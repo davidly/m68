@@ -1,4 +1,4 @@
-Sat 09/27/2025 20:40:51.35 
+Tue 09/30/2025  9:24:30.42 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-22.624001 milliseconds
+24.164000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 9, day 28, hour 3, min 40, sec 59
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 9, day 27, hour 22, min 40, sec 59
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 9, day 27, hour 19, min 40, sec 59
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 9, day 27, hour 19, min 40, sec 59
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 9, day 30, hour 16, min 24, sec 39
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 9, day 30, hour 11, min 24, sec 39
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 9, day 30, hour 8, min 24, sec 39
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 9, day 30, hour 8, min 24, sec 39
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6254,6 +6254,7 @@ test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
+getrusage user time in ms: 1031, system time 0
 sleepy time ended with great success
 test nqueens 
   size    solutions
@@ -6292,7 +6293,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 9, day 27, hour 19, min 41, sec 7
+tz: 'PST+8', year: 2025, month 9, day 30, hour 8, min 24, sec 47
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6305,10 +6306,17 @@ I am unwound, x should be 44: 44
 caught exception exceptional
 attempting large allocations
 caught a standard execption: std::bad_alloc
-  after 2 1 megabyte allocations
+  after 9 1 megabyte allocations
 test exceptions completed with great success
 test trename 
 trename completed with great success
+test tmmap 
+MAP_PRIVATE: 0x2
+MAP_ANONYMOUS: 0x20
+MREMAP_MAYMOVE: 0x1
+PROT_READ: 0x1
+PROT_WRITE: 0x2
+mmap test completed with great success
 test tbcd 
 result is 0x7 flags 0
 result is 0x8 flags 0
@@ -7229,11 +7237,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 ++
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 
-REMAINING MEMORY: 1047704
+REMAINING MEMORY: 4193432
 RELEASE 3.3 -- PHASE 2
 MT+68K
 E               4    SIZE:   396
@@ -7261,11 +7269,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 +
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 
-REMAINING MEMORY: 1047696
+REMAINING MEMORY: 4193424
 RELEASE 3.3 -- PHASE 2
 MT+68K
 SIEVE           4    SIZE:   380
@@ -7293,11 +7301,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 ++++++++++++++++++
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 #####
-REMAINING MEMORY: 1047572
+REMAINING MEMORY: 4193300
 RELEASE 3.3 -- PHASE 2
 MT+68K
 WINNER2        24    SIZE:  1388
@@ -7330,11 +7338,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 ++++
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 #####
-REMAINING MEMORY: 1047620
+REMAINING MEMORY: 4193348
 RELEASE 3.3 -- PHASE 2
 MT+68K
 FILLA          24    SIZE:   142
@@ -7367,11 +7375,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 +++++++
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 ##
-REMAINING MEMORY: 1047652
+REMAINING MEMORY: 4193380
 RELEASE 3.3 -- PHASE 2
 MT+68K
 ISSAFE         12    SIZE:   406
@@ -7401,11 +7409,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 ++++++
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 ##
-REMAINING MEMORY: 1047660
+REMAINING MEMORY: 4193388
 RELEASE 3.3 -- PHASE 2
 MT+68K
 ISSAFE         12    SIZE:   344
@@ -7435,11 +7443,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 +
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 
-REMAINING MEMORY: 1047710
+REMAINING MEMORY: 4193438
 RELEASE 3.3 -- PHASE 2
 MT+68K
 TPHI            4    SIZE:   336
@@ -7467,11 +7475,11 @@ PASTEMP.TOK ROUTED TO DISK: @
 +++++
 SYNTAX SCAN COMPLETE
 SYMBOL TABLE INITIALIZATION
-AVAILABLE MEMORY: 1048421
-USER TABLE SPACE: 1047745
+AVAILABLE MEMORY: 4194149
+USER TABLE SPACE: 4193473
 RELEASE 3.3 -- PHASE 1
 ###
-REMAINING MEMORY: 1047626
+REMAINING MEMORY: 4193354
 RELEASE 3.3 -- PHASE 2
 MT+68K
 GCD            16    SIZE:   136
@@ -9176,17 +9184,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     252
-  dictionary: 248
+total ms:     263
+  dictionary: 259
   generate:   3
   render:     0
 test ba tp.bas 
-216 ms for 1 iterations
+230 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-334.164001 milliseconds
+346.794006 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9210,4 +9218,4 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Sat 09/27/2025 20:41:28.87 
+Tue 09/30/2025  9:25:13.79 

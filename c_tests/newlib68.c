@@ -203,6 +203,21 @@ extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int fl
     return result;
 } //fstatat
 
+extern "C" void * mmap( void * address, size_t length, int prot, int flags, int fd, off_t offset )
+{
+    return (void *) syscall( SYS_mmap, address, length, prot, flags, fd, offset );
+} //mmap
+
+extern "C" int munmap( void * address, size_t length )
+{
+    return syscall( SYS_munmap, address, length );
+} //munmap
+
+extern "C" void * mremap( void * old_address, size_t old_size, size_t new_size, int flags, ... )
+{
+    return (void *) syscall( SYS_mremap, old_address, old_size, new_size, flags );
+} //mremap
+
 int getrusage( int who, struct rusage *usage )
 {
     return (int) syscall( SYS_getrusage, who, usage );

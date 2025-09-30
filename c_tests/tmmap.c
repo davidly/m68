@@ -1,10 +1,25 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <sys/mman.h>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+
+//#include <sys/mman.h>
+
+#ifndef MAP_PRIVATE
+
+#define MAP_PRIVATE 0x2
+#define MAP_ANONYMOUS 0x20
+#define MREMAP_MAYMOVE 0x1
+#define PROT_READ 0x1
+#define PROT_WRITE 0x2
+
+extern "C" void * mmap( void * address, size_t length, int prot, int flags, int fd, off_t offset );
+extern "C" int munmap( void * address, size_t length );
+extern "C" void * mremap( void * old_address, size_t old_size, size_t new_size, int flags, ... );
+
+#endif
 
 void validate( void * amaps[], size_t i, size_t size )
 {

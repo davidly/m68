@@ -202,13 +202,8 @@ bool g_compressed_rvc = false;                 // is the app compressed risc-v?
 const REG_TYPE g_arg_data_commit = 1024;       // storage spot for command-line arguments and environment variables
 REG_TYPE g_stack_commit = 128 * 1024;          // RAM to allocate for the fixed stack. the top of this has argv data
 
-#ifdef M68
-REG_TYPE g_brk_commit = 10 * 1024 * 1024;      // RAM to reserve if the app calls brk to allocate space. 10 meg default
-REG_TYPE g_mmap_commit = 0 * 1024 * 1024;      // RAM to reserve if the app calls mmap to allocate space. 0 meg default
-#else
 REG_TYPE g_brk_commit = 40 * 1024 * 1024;      // RAM to reserve if the app calls brk to allocate space. 40 meg default
 REG_TYPE g_mmap_commit = 40 * 1024 * 1024;     // RAM to reserve if the app calls mmap to allocate space. 40 meg default
-#endif
 
 bool g_terminate = false;                      // has the app asked to shut down?
 int g_exit_code = 0;                           // exit code of the app in the vm
@@ -789,7 +784,7 @@ static void usage( char const * perror = 0 )
 #ifdef _WIN32
     printf( "                 -l     when a LF (10) is output, allow Windows to add a CR (13) beforehand\n" );
 #endif
-    printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40. 0 for CP/M\n" );
+    printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40.\n" );
     printf( "                 -p     shows performance information at app exit\n" );
     printf( "                 -s:X   # of KB for stack space. 1..1024 are valid. default is 128.\n" );
     printf( "                 -t     enable debug tracing to %ls\n", LOGFILE_NAME );

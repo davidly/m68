@@ -5,17 +5,17 @@ _runcmd="m68"
 _m68runcmd="../m68"
 
 if [ "$1" = "nested" ]; then
-    _runcmd="m68 -h:80 c_tests/m68.elf"
-    _m68runcmd="../m68 -h:80 ../c_tests/m68.elf"
+    _runcmd="m68 -h:120 c_tests/m68.elf"
+    _m68runcmd="../m68 -h:120 ../c_tests/m68.elf"
 elif [ "$1" = "armos" ]; then
-    _runcmd="../ArmOS/armos -h:80 ../ArmOS/bin/m68"
-    _m68runcmd="../../ArmOS/armos -h:80 ../../ArmOS/bin/m68"
+    _runcmd="../ArmOS/armos -h:120 ../ArmOS/bin/m68"
+    _m68runcmd="../../ArmOS/armos -h:120 ../../ArmOS/bin/m68"
 elif [ "$1" = "sparcos" ]; then
-    _runcmd="../sparcos/sparcos -h:80 ../sparcos/bin/m68"
-    _m68runcmd="../../sparcos/sparcos -h:80 ../../sparcos/bin/m68 "
+    _runcmd="../sparcos/sparcos -h:120 ../sparcos/bin/m68"
+    _m68runcmd="../../sparcos/sparcos -h:120 ../../sparcos/bin/m68 "
 elif [ "$1" = "rvos" ]; then
-    _runcmd="../rvos/rvos -h:80 ../rvos/bin/m68 "
-    _m68runcmd="../../rvos/rvos -h:80 ../../rvos/bin/m68 "
+    _runcmd="../rvos/rvos -h:120 ../rvos/bin/m68 "
+    _m68runcmd="../../rvos/rvos -h:120 ../../rvos/bin/m68 "
 fi    
 
 export _m68runcmd
@@ -34,7 +34,7 @@ done
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 terrno mm_old ttime fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm \
-           nqueens nq1d tdir fopentst lenum tex trename \
+           nqueens nq1d tdir fopentst lenum tex trename tmmap \
            tbcd tshift taddsubm tea ttt68 ttt68u tchk;
 do
     echo $arg
@@ -62,11 +62,11 @@ $_runcmd c_tests/ba.elf -q c_tests/tp.bas >>$outputfile
 
 echo test m68.elf ttt.elf 1
 echo test m68.elf ttt.elf 1 >>$outputfile
-$_runcmd -h:60 c_tests/m68.elf c_tests/ttt.elf 1 >>$outputfile
+$_runcmd -h:120 c_tests/m68.elf c_tests/ttt.elf 1 >>$outputfile
 
 echo test m68.elf ttt.68k 1
 echo test m68.elf ttt.68k 1 >>$outputfile
-$_runcmd -h:60 c_tests/m68.elf cpm/TTT.68K 1 >>$outputfile
+$_runcmd -h:120 c_tests/m68.elf cpm/TTT.68K 1 >>$outputfile
 
 echo test com cp/m 2.2 emulator
 echo test com cp/m 2.2 emulator >>$outputfile
