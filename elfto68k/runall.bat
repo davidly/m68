@@ -5,7 +5,7 @@ set outputfile=test_elfto68k.txt
 echo %date% %time% >%outputfile%
 
 if "%1" == "nested" (
-    set _M68rutdncmd=..\m68 -h:80 ..\c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
     shift
 )
 
