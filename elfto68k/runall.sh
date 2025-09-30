@@ -2,23 +2,23 @@
 #set -x
 
 if [ "$1" = "nested" ]; then
-    _m68runcmd="../m68 -h:80 ../c_tests/m68.elf"
+    _m68runcmd="../m68 -h:120 ../c_tests/m68.elf"
 fi
 
 if [ "$1" = "nested68k" ]; then
-    _m68runcmd="../m68 -h:80 m68.68k"
+    _m68runcmd="../m68 -h:120 m68.68k"
 fi
 
 if [ "$1" = "armos" ]; then
-    _m68runcmd="../../ArmOS/armos -h:80 ../../ArmOS/bin/m68"
+    _m68runcmd="../../ArmOS/armos -h:120 ../../ArmOS/bin/m68"
 fi
 
 if [ "$1" = "sparcos" ]; then
-    _m68runcmd="../../sparcos/sparcos -h:80 ../../sparcos/bin/m68"
+    _m68runcmd="../../sparcos/sparcos -h:120 ../../sparcos/bin/m68"
 fi
 
 if [ "$1" = "rvos" ]; then
-    _m68runcmd="../../rvos/rvos -h:80 ../../rvos/bin/m68.elf"
+    _m68runcmd="../../rvos/rvos -h:120 ../../rvos/bin/m68.elf"
 fi
 
 if [ "$1" = "normal" ]; then

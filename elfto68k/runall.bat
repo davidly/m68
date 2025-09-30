@@ -5,27 +5,27 @@ set outputfile=test_elfto68k.txt
 echo %date% %time% >%outputfile%
 
 if "%1" == "nested" (
-    set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:120 ..\c_tests\m68.elf
     shift
 )
 
 if "%1" == "nested68k" (
-    set _M68runcmd=..\m68 -h:80 m68.68k
+    set _M68runcmd=..\m68 -h:120 m68.68k
     shift
 )
 
 if "%1" == "armos" (
-    set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:120 ..\..\armos\bin\m68
     shift
 )
 
 if "%1" == "rvos" (
-    set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:120 ..\..\rvos\linux\m68
     shift
 )
 
 if "%1" == "sparcos" (
-    set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc.elf
+    set _M68runcmd=..\..\sparcos\sparcos -h:120 ..\..\sparcos\bin\m68-sparc.elf
     shift
 )
 
