@@ -6,20 +6,20 @@ if "%1" == "" (
     set _M68runcmd=..\m68
 ) else (
 if "%1" == "nested" (
-    set _runcmd=m68 -h:160 c_tests\m68.elf
-    set _M68runcmd=..\m68 -h:160 ..\c_tests\m68.elf
+    set _runcmd=m68 -h:180 c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:180 ..\c_tests\m68.elf
 ) else (
 if "%1" == "armos" (
-    set _runcmd=..\armos\armos -h:160 ..\armos\bin\m68
-    set _M68runcmd=..\..\armos\armos -h:160 ..\..\armos\bin\m68
+    set _runcmd=..\armos\armos -h:180 ..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:180 ..\..\armos\bin\m68
 ) else (
 if "%1" == "rvos" (
-    set _runcmd=..\rvos\rvos -h:160 ..\rvos\linux\m68
-    set _M68runcmd=..\..\rvos\rvos -h:160 ..\..\rvos\linux\m68
+    set _runcmd=..\rvos\rvos -h:180 ..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:180 ..\..\rvos\linux\m68
 ) else (
 if "%1" == "sparcos" (
-    set _runcmd=..\sparcos\sparcos -h:160 ..\sparcos\bin\m68-sparc
-    set _M68runcmd=..\..\sparcos\sparcos -h:160 ..\..\sparcos\bin\m68-sparc
+    set _runcmd=..\sparcos\sparcos -h:180 ..\sparcos\bin\m68-sparc
+    set _M68runcmd=..\..\sparcos\sparcos -h:180 ..\..\sparcos\bin\m68-sparc
 ) else (
     echo invalid argument
     goto :eof

@@ -5,27 +5,27 @@ set outputfile=test_elfto68k.txt
 echo %date% %time% >%outputfile%
 
 if "%1" == "nested" (
-    set _M68runcmd=..\m68 -h:120 ..\c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:180 ..\c_tests\m68.elf
     shift
 )
 
 if "%1" == "nested68k" (
-    set _M68runcmd=..\m68 -h:120 m68.68k
+    set _M68runcmd=..\m68 -h:180 m68.68k
     shift
 )
 
 if "%1" == "armos" (
-    set _M68runcmd=..\..\armos\armos -h:120 ..\..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:180 ..\..\armos\bin\m68
     shift
 )
 
 if "%1" == "rvos" (
-    set _M68runcmd=..\..\rvos\rvos -h:120 ..\..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:180 ..\..\rvos\linux\m68
     shift
 )
 
 if "%1" == "sparcos" (
-    set _M68runcmd=..\..\sparcos\sparcos -h:120 ..\..\sparcos\bin\m68-sparc.elf
+    set _M68runcmd=..\..\sparcos\sparcos -h:180 ..\..\sparcos\bin\m68-sparc.elf
     shift
 )
 
@@ -68,7 +68,7 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
     if "%%a" == "trw" (
         echo running trw in m68.68k
         echo running trw in m68.68k >>%outputfile%
-        %_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
+        %_M68runcmd% -h:120 M68.68K -h:4 trw.68k >>%outputfile%
     )
     
     del %%a.s 2>nul

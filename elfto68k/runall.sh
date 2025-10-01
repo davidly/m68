@@ -2,23 +2,23 @@
 #set -x
 
 if [ "$1" = "nested" ]; then
-    _m68runcmd="../m68 -h:120 ../c_tests/m68.elf"
+    _m68runcmd="../m68 -h:180 ../c_tests/m68.elf"
 fi
 
 if [ "$1" = "nested68k" ]; then
-    _m68runcmd="../m68 -h:120 M68.68K"
+    _m68runcmd="../m68 -h:180 M68.68K"
 fi
 
 if [ "$1" = "armos" ]; then
-    _m68runcmd="../../ArmOS/armos -h:120 ../../ArmOS/bin/m68"
+    _m68runcmd="../../ArmOS/armos -h:180 ../../ArmOS/bin/m68"
 fi
 
 if [ "$1" = "sparcos" ]; then
-    _m68runcmd="../../sparcos/sparcos -h:120 ../../sparcos/bin/m68"
+    _m68runcmd="../../sparcos/sparcos -h:180 ../../sparcos/bin/m68"
 fi
 
 if [ "$1" = "rvos" ]; then
-    _m68runcmd="../../rvos/rvos -h:120 ../../rvos/bin/m68.elf"
+    _m68runcmd="../../rvos/rvos -h:180 ../../rvos/bin/m68.elf"
 fi
 
 if [ "$1" = "normal" ]; then
@@ -70,7 +70,7 @@ do
   if [ "$argu" = "TRW" ]; then
     echo running trw in m68.68k
     echo running trw in m68.68k >>$outputfile
-    $_m68runcmd M68.68K -h:4 TRW.68K >>$outputfile
+    $_m68runcmd -h:120 M68.68K -h:4 TRW.68K >>$outputfile
   fi
 
   rm $arg.s 2>/dev/null

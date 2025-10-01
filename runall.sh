@@ -5,17 +5,17 @@ _runcmd="m68"
 _m68runcmd="../m68"
 
 if [ "$1" = "nested" ]; then
-    _runcmd="m68 -h:160 c_tests/m68.elf"
-    _m68runcmd="../m68 -h:160 ../c_tests/m68.elf"
+    _runcmd="m68 -h:180 c_tests/m68.elf"
+    _m68runcmd="../m68 -h:180 ../c_tests/m68.elf"
 elif [ "$1" = "armos" ]; then
-    _runcmd="../ArmOS/armos -h:160 ../ArmOS/bin/m68"
-    _m68runcmd="../../ArmOS/armos -h:160 ../../ArmOS/bin/m68"
+    _runcmd="../ArmOS/armos -h:180 ../ArmOS/bin/m68"
+    _m68runcmd="../../ArmOS/armos -h:180 ../../ArmOS/bin/m68"
 elif [ "$1" = "sparcos" ]; then
-    _runcmd="../sparcos/sparcos -h:160 ../sparcos/bin/m68"
-    _m68runcmd="../../sparcos/sparcos -h:160 ../../sparcos/bin/m68 "
+    _runcmd="../sparcos/sparcos -h:180 ../sparcos/bin/m68"
+    _m68runcmd="../../sparcos/sparcos -h:180 ../../sparcos/bin/m68 "
 elif [ "$1" = "rvos" ]; then
-    _runcmd="../rvos/rvos -h:160 ../rvos/bin/m68 "
-    _m68runcmd="../../rvos/rvos -h:160 ../../rvos/bin/m68 "
+    _runcmd="../rvos/rvos -h:180 ../rvos/bin/m68 "
+    _m68runcmd="../../rvos/rvos -h:180 ../../rvos/bin/m68 "
 fi    
 
 export _m68runcmd
