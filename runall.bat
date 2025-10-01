@@ -1,120 +1,108 @@
 @echo off
 setlocal
 
-set outputfile=test_elfto68k.txt
+if "%1" == "" (
+    set _runcmd=m68
+    set _M68runcmd=..\m68
+) else (
+if "%1" == "nested" (
+    set _runcmd=m68 -h:120 c_tests\m68.elf
+    set _M68runcmd=..\m68 -h:120 ..\c_tests\m68.elf
+) else (
+if "%1" == "armos" (
+    set _runcmd=..\armos\armos -h:120 ..\armos\bin\m68
+    set _M68runcmd=..\..\armos\armos -h:120 ..\..\armos\bin\m68
+) else (
+if "%1" == "rvos" (
+    set _runcmd=..\rvos\rvos -h:120 ..\rvos\linux\m68
+    set _M68runcmd=..\..\rvos\rvos -h:120 ..\..\rvos\linux\m68
+) else (
+if "%1" == "sparcos" (
+    set _runcmd=..\sparcos\sparcos -h:120 ..\sparcos\bin\m68-sparc
+    set _M68runcmd=..\..\sparcos\sparcos -h:120 ..\..\sparcos\bin\m68-sparc
+) else (
+    echo invalid argument
+    goto :eof
+)))))
+
+set outputfile=test_m68.txt
 echo %date% %time% >%outputfile%
 
-if "%1" == "nested" (
-    set _M68runcmd=..\m68 -h:120 ..\c_tests\m68.elf
-    shift
-)
+rem note that tmuldiv results are incorrect due to compiler bugs but consistent with m68k
 
-if "%1" == "nested68k" (
-    set _M68runcmd=..\m68 -h:120 m68.68k
-    shift
-)
+set _hexlist=sieve e ttt tm ts tpi tmuldiv tstr mm tprintf tshift
 
-if "%1" == "armos" (
-    set _M68runcmd=..\..\armos\armos -h:120 ..\..\armos\bin\m68
-    shift
-)
+( for %%a in (%_hexlist%) do (
+    echo test %%a.hex
+    echo test %%a.hex >>%outputfile%
+    %_runcmd% hexapps\%%a.hex >>%outputfile%
+))
 
-if "%1" == "rvos" (
-    set _M68runcmd=..\..\rvos\rvos -h:120 ..\..\rvos\linux\m68
-    shift
-)
+rem many tests including nantst produce different results than other compiler/ISA implementations.
+rem for example, the old gcc for m68k has a different value for infinity for floating point numbers.
 
-if "%1" == "sparcos" (
-    set _M68runcmd=..\..\sparcos\sparcos -h:120 ..\..\sparcos\bin\m68-sparc.elf
-    shift
-)
+set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
+             tcmp ttypes tarray trw trw2 terrno mm_old ttime fileops tpi ^
+             t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm ^
+             nqueens nq1d tdir fopentst lenum tex trename tmmap ^
+             tbcd tshift taddsubm tea ttt68 ttt68u tchk
 
-if "%_M68runcmd%" == "normal" (
-    set _M68runcmd=..\m68
-    shift
-)
+( for %%a in (%_elflist%) do (
+    echo test %%a
+    echo test %%a >>%outputfile%
+    %_runcmd% c_tests\%%a >>%outputfile%
+))
 
-if "%_M68runcmd%" == "" (
-    set _M68runcmd=..\m68
-)
+set _compList=cpm mtpascal cb68 cpmcv11 cpmcv12 svspas svsfor forth83
 
-if "%1" == "" (set _optflag=2) else (set _optflag=%1)
+( for %%a in (%_compList%) do (
+    echo compiler test %%a
+    echo compiler test %%a >>%outputfile%
+    pushd %%a
+    call mall.bat >>..\%outputfile%
+    call runall.bat >>..\%outputfile%
+    popd
+))
 
-rem note that ttypes.c produces difference results for gcc 8.2.0 vs gcc 13.2.0
-if "%2" == "" (set _gccfolder=..\gcc-8.2.0) else (set _gccfolder=%2)
+rem 1-off tests
 
-echo building elfto68k
-echo building elfto68k >>%outputfile%
-call m.bat >>%outputfile%
+echo test an -t david lee
+echo test an -t david lee >>%outputfile%
+%_runcmd% c_tests\an -t david lee >>%outputfile%
 
-echo building m68
-echo building m68 >>%outputfile%
-call mm68.bat %_optflag% %_gccfolder% >>%outputfile%
+echo test ba tp.bas
+echo test ba tp.bas >>%outputfile%
+%_runcmd% c_tests\ba -q c_tests\tp.bas >>%outputfile%
 
-set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
-           tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi ^
-           t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
-           nqueens nq1d fopentst lenum tex trename
+set _genlist=6 8 a d 3 i I m o r x
+( for %%g in (%_genlist%) do (
+    %_runcmd% c_tests\ba -a:%%g -x -q c_tests\tp.bas >>%outputfile%
+))
 
-( for %%a in (%_clist%) do (
-    echo building %%a
-    echo building %%a >>%outputfile%
-    copy ..\c_tests\%%a.c . >nul
-    call mt.bat %%a %_optflag% %_gccfolder% >>%outputfile%
-    echo running %%a
-    echo running %%a >>%outputfile%
-    %_M68runcmd% %%a.68K >>%outputfile%
-    
-    if "%%a" == "trw" (
-        echo running trw in m68.68k
-        echo running trw in m68.68k >>%outputfile%
-        %_M68runcmd% M68.68K -h:4 trw.68k >>%outputfile%
-    )
-    
-    del %%a.s 2>nul
-    del %%a.c 2>nul
-    del %%a.68k 2>nul
-) )
+echo test m68.elf ttt.elf 1
+echo test m68.elf ttt.elf 1 >>%outputfile%
+%_runcmd% -h:120 c_tests\m68.elf c_tests\ttt.elf 1 >>%outputfile%
 
-echo building ba
-echo building ba >>%outputfile%
-copy ..\c_tests\ba.c . >nul
-call mt.bat ba %_optflag% %_gccfolder% >>%outputfile%
-echo running ba
-echo running ba >>%outputfile%
-%_M68runcmd% ba.68K TP.BAS >>%outputfile%
-del ba.s 2>nul
-del ba.c 2>nul
-del ba.68k 2>nul
+echo test m68.elf ttt.68k 1
+echo test m68.elf ttt.68k 1 >>%outputfile%
+%_runcmd% -h:120 c_tests\m68.elf cpm\ttt.68k 1 >>%outputfile%
 
-echo building an
-echo building an >>%outputfile%
-copy ..\c_tests\an.c . >nul
-call mt.bat an %_optflag% %_gccfolder% >>%outputfile%
-echo running an
-echo running an >>%outputfile%
-%_M68runcmd% AN.68K david lee >>%outputfile%
-del an.s 2>nul
-del an.c 2>nul
-del an.68k 2>nul
+echo test com cp/m 2.2 emulator
+echo test com cp/m 2.2 emulator >>%outputfile%
+pushd com
+%_M68runcmd% -h:1 COM.68K MBASIC.COM HELLO.BAS >>..\%outputfile%
+popd
 
-echo building ff
-echo building ff >>%outputfile%
-copy ..\c_tests\ff.c . >nul
-copy ..\c_tests\realpath.c . >nul
-copy ..\c_tests\fnmatch.c . >nul
-call mt.bat ff %_optflag% %_gccfolder% >>%outputfile%
-echo running ff
-echo running ff >>%outputfile%
-%_M68runcmd% FF.68K -i M*.68K >>%outputfile%
-del ff.s 2>nul
-del ff.c 2>nul
-del realpath.s 2>nul
-del realpath.c 2>nul
-del fnmatch.s 2>nul
-del fnmatch.c 2>nul
-del ff.68k 2>nul
+echo running tgets with redirected stdin
+echo running tgets with redirected stdin >>%outputfile%
+%_runcmd% c_tests\tgets <c_tests\tgets.txt >>%outputfile%
+
+echo test ff . ff.c
+echo test ff . ff.c >>%outputfile%
+%_runcmd% c_tests\ff . ff.c >>%outputfile%
 
 echo %date% %time% >>%outputfile%
 diff baseline_%outputfile% %outputfile%
+
+:eof
 
