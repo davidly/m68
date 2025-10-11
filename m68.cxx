@@ -3039,7 +3039,12 @@ void emulator_invoke_svc( CPUClass & cpu )
             struct linux_rusage_syscall32 *prusage = (struct linux_rusage_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
 #else //M68
             struct linux_rusage_syscall *prusage = (struct linux_rusage_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            tracer.Trace( "  sizeof linux_rusage_syscall: %zd\n", sizeof( struct linux_rusage_syscall ) );
+#ifdef SPARCOS            
+            memset( prusage, 0, 88 ); // 32-bit sparc binaries use fulls-sized times but are only 88 bytes long; through ru_majflt, not starting with ru_nswap
+#else            
             memset( prusage, 0, sizeof( struct linux_rusage_syscall ) );
+#endif //SPARCOS
 #endif //M68
 
             if ( 0 == who ) // RUSAGE_SELF
@@ -3103,6 +3108,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_isrss = local_rusage.ru_isrss;
                 prusage->ru_minflt = local_rusage.ru_minflt;
                 prusage->ru_majflt = local_rusage.ru_majflt;
+#ifndef SPARCOS // SPARC on Linux seems to use a structure that ends at ru_majflt                
                 prusage->ru_nswap = local_rusage.ru_nswap;
                 prusage->ru_inblock = local_rusage.ru_inblock;
                 prusage->ru_oublock = local_rusage.ru_oublock;
@@ -3111,6 +3117,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_nsignals = local_rusage.ru_nsignals;
                 prusage->ru_nvcsw = local_rusage.ru_nvcsw;
                 prusage->ru_nivcsw = local_rusage.ru_nivcsw;
+#endif //SPARCOS                
 #endif //M68K
 #endif //M68
 #endif //_WIN32
@@ -6368,6 +6375,22 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             if ( ok )
             {
                 FILE * fp = FindFileEntry( acFilename );
+                if ( !fp )
+                {
+                    // dxforth 4.56 relies on this cp/m 2.2 behavior: open / close / read should work.
+                    tracer.Trace( "  in random read but the file isn't opened. trying to open it now\n" );
+                    fp = fopen( acFilename, "r+b" );
+                    if ( fp )
+                    {
+                        FileEntry fe;
+                        strcpy( fe.acName, acFilename );
+                        fe.fp = fp;
+                        g_fileEntries.push_back( fe );
+                        tracer.Trace( "  file opened successfully for random read\n" );
+                    }
+                    else
+                        tracer.Trace( "  file open failed for random read\n" );
+                }
                 if ( fp )
                 {
                     uint32_t record = pfcb->GetRandomIOOffset();
