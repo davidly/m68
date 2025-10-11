@@ -29,7 +29,7 @@ Trap 0 is used for linux-style syscalls, trap 2 and trap 3 are used for CP/M 68K
 
 I've built and tested m68 on Amd64 on Windows and Ubuntu as well as Arm64 on Raspberry PI OS, Ubuntu, and macOS. It also builds with GCC targeting 68000 (mm68.bat/mm68.sh in c_tests) and that runs in any other build of m68 recursively. I've also tested on RISC-V 64 on hardware running Debian and in the RVOS emulator.
 
-M68 can run the NTVAO 6502 + Apple 1 emulator built for 68000 targeting Linux. Same for NTVCM (Z80 + CP/M 2.2) and RVOS (RISC-V + Linux).
+M68 can run the NTVAO 6502 + Apple 1 emulator built for 68000 targeting Linux. Same for NTVCM (Z80 + CP/M 2.2), ARMOS (Arm64 + Linux), and RVOS (RISC-V + Linux). All of these can be found in sister repos.
 
 All test cases can run with plain m68, m68 nested in itself, or m68 running in ARMOS or RVOS for versions built for Arm64 or RISC-V 64.
 
@@ -51,7 +51,7 @@ files:
     * m68000.cxx:   Emulates a 68000
     * m68000.hxx:   Header for the 68000
     * djl_con.hxx:  Console / terminal related functionality
-    * djl_mmap.hxx: Support for mmap syscalls. Newlib doesn't use it so currently unused.
+    * djl_mmap.hxx: Support for mmap syscalls.
     * djl_os.hxx:   Abstracts various OS, CPU, and compiler-specific concepts
     * djltrace.hxx: Used for tracing status and instructions
     * m.bat/mmac.sh/m.sh: Builds debug versions of m68 on Windows/macOS/Linux
@@ -73,6 +73,7 @@ c_tests folder (test apps + newlib stubs with Linux syscall support)
     * ma.bat/ma.sh: builds .s 68000 assembly file apps
     * *.c:         various test apps in C and C++. All are built as C++.
     * tbcd.s:      validates the 3 68000 BCD instructions
+    * tshift.s, taddsubm.s, tea.s, tt68.s, ttt68u.s, tchk.s: other test cases written in assembly, generally for when C can't validate instrutcions.
 
 cpm folder:
 
@@ -82,7 +83,9 @@ cpm folder:
     * e68.s and sieve68.s: 68000 assembly versions of these benchmarks
     * tchk.s: validates the chk instruction since I can't get the compilers to generate code using it
     * m.bat/m.sh: builds C apps
-    * ma.bat/ma.sh: builds .s assembly apps
+    * ma.bat/ma.sh: builds .s assembly apps that link with the C runtime
+    * maa.bat/maa.sh: builds .s assembly apps that don't require the C runtime
+    * mf.bat/mf.sh: builds C apps that use floating point
     * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
 
 cpmcv11 and cpmcv12 folders:
@@ -111,7 +114,7 @@ com folder:
     * MBASIC.COM: Microsoft BASIC interpreter
     * TTT.BAS/E.BAS/ASCIIART.BAS/SIEVE.BAS/HELLO.BAS: various test programs for mbasic.
     * TTTCPM.COM: cp/m 2.2 app to prove you can't win at tic-tac-toe  
-    * com.68k running in m68 was tested with Wordstar as well.
+    * COM.68K running in m68 was tested with Wordstar as well.
 
 ntvcm folder:
 
