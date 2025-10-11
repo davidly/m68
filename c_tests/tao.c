@@ -155,6 +155,13 @@ template <class T> T do_abs( T x )
             printf( " %.0lf", (double) A_##ftype##dim[ i ] ); \
         printf( "\n" ); \
     } \
+    _perhaps_inline void print_array_B_##ftype##dim() \
+    { \
+        printf( "arrayB:" ); \
+        for ( int i = 0; i < dim; i++ ) \
+            printf( " %.0lf", (double) B_##ftype##dim[ i ] ); \
+        printf( "\n" ); \
+    } \
     _perhaps_inline void print_array_C_##ftype##dim() \
     { \
         printf( "arrayC:" ); \
@@ -283,12 +290,21 @@ template <class T> T do_abs( T x )
     _perhaps_inline void add_div_ABC_##ftype##dim() \
     { \
         for ( int i = 0; i < dim; i++ ) \
+        { \
+            if ( 0 == A_##ftype##dim[ i ] ) \
+                continue; \
             C_##ftype##dim[ i ] += B_##ftype##dim[ i ] / A_##ftype##dim[ i ]; \
+            /*printf( "i: %d, C %d, A %d B %d\n", i, C_##ftype##dim[i], A_##ftype##dim[ i ], B_##ftype##dim[ i ] );*/ \
+        } \
     } \
     _perhaps_inline void sub_div_ABC_##ftype##dim() \
     { \
         for ( int i = 0; i < dim; i++ ) \
+        { \
+            if ( 0 == A_##ftype##dim[ i ] ) \
+                continue; \
             C_##ftype##dim[ i ] -= B_##ftype##dim[ i ] / A_##ftype##dim[ i ]; \
+        } \
     } \
     ftype run_##ftype##dim() \
     { \
@@ -317,7 +333,7 @@ template <class T> T do_abs( T x )
         printf( "type %s size %d, sum %.0lf, magnitude %.0lf min, %.0lf max %.0lf\n", #ftype, dim, (double) sum, (double) magnitude, \
                 (double) min_##ftype##dim(), (double) max_##ftype##dim() ); \
         fillA_##ftype##dim( -10 ); \
-        /* printf( "initial_n: " ); print_array_##ftype##dim(); */  \
+        /* printf( "initial_n: " ); print_array_##ftype##dim(); */ \
         shift_left_n_##ftype##dim(); \
         /* printf( "left n: " ); print_array_##ftype##dim(); */  \
         shift_right_n_##ftype##dim(); \
@@ -399,6 +415,8 @@ template <class T> T do_abs( T x )
             printf( "ERROR! after mul div2b sumC %.01f, sumD %.01f\n", (double) sumC, (double) sumD ); \
             exit( 1 ); \
         } \
+        /*print_array_##ftype##dim();*/ \
+        /*print_array_B_##ftype##dim();*/ \
         /*print_array_C_##ftype##dim();*/ \
         add_div_ABC_##ftype##dim(); \
         /*print_array_C_##ftype##dim();*/ \
@@ -476,7 +494,7 @@ declare_array_operations_tests( uint64_t );
     run_##type##20();
 
 #define run_this_test( type ) \
-    run_##type##4();
+    run_##type##12();
 
 int main( int argc, char * argv[] )
 {
@@ -493,7 +511,7 @@ int main( int argc, char * argv[] )
         run_tests( int64_t );
         run_tests( uint64_t );
 #else
-        run_this_test( int32_t );
+        run_this_test( int8_t );
 #endif
     }
 
