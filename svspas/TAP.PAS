@@ -48,7 +48,7 @@ begin
     end;
 end;
 
-{ svs Pascal has to Random(), so use this hack }
+{ svs Pascal has no Random(), so use this hack }
 
 function Random : longint;
 begin

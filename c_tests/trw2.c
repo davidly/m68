@@ -22,14 +22,14 @@ static short buf[ 1024 ];
 int main( int argc, char * argv[] )
 {
     int e, i, j, result;
-    long int seek_offset, file_offset;
-    int BUF_BYTES, BUF_ELEMENTS;
+    long int seek_offset, file_offset, current_offset;
+    int buf_bytes, buf_elements;
 
     for ( e = 0; e < ( sizeof( elem_counts ) / sizeof( elem_counts[ 0 ] ) ); e++ )
     {
-        BUF_ELEMENTS = elem_counts[ e ];
-        BUF_BYTES = BUF_ELEMENTS * sizeof( buf[ 0 ] );
-        printf( "pass %d with element count %d\n", e, BUF_ELEMENTS );
+        buf_elements = elem_counts[ e ];
+        buf_bytes = buf_elements * sizeof( buf[ 0 ] );
+        printf( "pass %d with element count %d\n", e, buf_elements );
 
         int fd = open( TRW_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO );
         if ( -1 == fd )
@@ -37,17 +37,19 @@ int main( int argc, char * argv[] )
 
         for ( i = 0; i < RW_LOOPS; i++ )
         {
-            for ( j = 0; j < BUF_ELEMENTS; j++ )
+            for ( j = 0; j < buf_elements; j++ )
                 buf[ j ] = i;
 
-            result = write( fd, (char *) buf, BUF_BYTES );
-            if ( BUF_BYTES != result )
+            result = write( fd, (char *) buf, buf_bytes );
+            if ( buf_bytes != result )
                 show_error( "unable to write to file" );
         }
 
         fdatasync( fd );
         fsync( fd );
-        close( fd );
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "unable to close file at point A" );
 
         fd = open( TRW_FILE, O_RDONLY );
         if ( -1 == fd )
@@ -55,15 +57,15 @@ int main( int argc, char * argv[] )
 
         for ( i = 0; i < RW_LOOPS; i++ )
         {
-            memset( buf, 0x69, BUF_BYTES );
-            result = read( fd, (char *) buf, BUF_BYTES );
-            if ( BUF_BYTES != result )
+            memset( buf, 0x69, buf_bytes );
+            result = read( fd, (char *) buf, buf_bytes );
+            if ( buf_bytes != result )
             {
                 printf( "result: %d, i %d\n", result, i );
                 show_error( "unable to read from file at point A" );
             }
 
-            for ( j = 0; j < BUF_ELEMENTS; j++ )
+            for ( j = 0; j < buf_elements; j++ )
             {
                 if ( buf[ j ] != i )
                 {
@@ -73,7 +75,9 @@ int main( int argc, char * argv[] )
             }
         }
 
-        close( fd );
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "unable to close file at point B" );
 
         fd = open( TRW_FILE, O_RDWR );
         if ( -1 == fd )
@@ -83,7 +87,7 @@ int main( int argc, char * argv[] )
         {
             if ( 0 == ( i % 8 ) )
             {
-                seek_offset = (long int) i * BUF_BYTES;
+                seek_offset = (long int) i * buf_bytes;
                 file_offset = lseek( fd, seek_offset, 0 );
                 if ( file_offset != seek_offset )
                 {
@@ -91,16 +95,25 @@ int main( int argc, char * argv[] )
                     show_error( "lseek location not as expected" );
                 }
 
-                for ( j = 0; j < BUF_ELEMENTS; j++ )
+                current_offset = lseek( fd, 0, SEEK_CUR );
+                if ( current_offset != seek_offset )
+                {
+                    printf( "current_offset %ld, seek_offset %ld\n", current_offset, seek_offset );
+                    show_error( "queried location not as expected point A" );
+                }
+
+                for ( j = 0; j < buf_elements; j++ )
                     buf[ j ] = i + 0x4000;
 
-                result = write( fd, (char *) buf, BUF_BYTES );
-                if ( BUF_BYTES != result )
+                result = write( fd, (char *) buf, buf_bytes );
+                if ( buf_bytes != result )
                     show_error( "unable to write to file after lseek" );
             }
         }
 
-        close( fd );
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "unable to close file at point C" );
 
         fd = open( TRW_FILE, O_RDONLY );
         if ( -1 == fd )
@@ -108,7 +121,7 @@ int main( int argc, char * argv[] )
 
         for ( i = RW_LOOPS-1; i >= 0; i-- )
         {
-            seek_offset = (long int) i * BUF_BYTES;
+            seek_offset = (long int) i * buf_bytes;
             file_offset = lseek( fd, seek_offset, 0 );
             if ( file_offset != seek_offset )
             {
@@ -116,11 +129,18 @@ int main( int argc, char * argv[] )
                 show_error( "lseek location not as expected" );
             }
 
-            result = read( fd, (char *) buf, BUF_BYTES );
-            if ( BUF_BYTES != result )
+            current_offset = lseek( fd, 0, SEEK_CUR );
+            if ( current_offset != seek_offset )
+            {
+                printf( "current_offset %ld, seek_offset %ld\n", current_offset, seek_offset );
+                show_error( "queried location not as expected point B" );
+            }
+
+            result = read( fd, (char *) buf, buf_bytes );
+            if ( buf_bytes != result )
                 show_error( "unable to read from file after lseek" );
 
-            for ( j = 0; j < BUF_ELEMENTS; j++ )
+            for ( j = 0; j < buf_elements; j++ )
             {
                 if ( 0 == ( i % 8 ) )
                 {
@@ -135,10 +155,12 @@ int main( int argc, char * argv[] )
             }
         }
 
-        close( fd );
+        result = close( fd );
+        if ( 0 != result )
+            show_error( "unable to close file at point D" );
     }
 
-    result = remove( TRW_FILE );
+    result = unlink( TRW_FILE );
     if ( 0 != result )
         show_error( "can't unlink test file" );
 
