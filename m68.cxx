@@ -19,6 +19,8 @@
 #elif defined( SPARCOS )
     This emulates a SPARC V8 32-bit CPU running un usermode on Linux.
     build a cross-compiler from here: https://gitlab.com/buildroot.org/buildroot/
+#elif defined( X64OS )
+    This emulates an AMD64 CPU in Long Mode + 64-bit mode. No other modes are supported
 #else
     #error one of ARMOS, RVOS, M68, or SPARCOS must be defined
 #endif
@@ -112,6 +114,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ]
     #define CPU_IS_LITTLE_ENDIAN true
 
+    #define REG_PC cpu.pc
     #define REG_SYSCALL 8
     #define REG_RESULT 0
     #define REG_ARG0 0
@@ -135,6 +138,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ]
     #define CPU_IS_LITTLE_ENDIAN true
 
+    #define REG_PC cpu.pc
     #define REG_SYSCALL RiscV::a7
     #define REG_RESULT RiscV::a0
     #define REG_ARG0 RiscV::a0
@@ -158,6 +162,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.dregs[ x ].l
     #define CPU_IS_LITTLE_ENDIAN false
 
+    #define REG_PC cpu.pc
     #define REG_SYSCALL 0
     #define REG_RESULT 0
     #define REG_ARG0 1
@@ -181,6 +186,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.Sparc_reg( x )
     #define CPU_IS_LITTLE_ENDIAN false
 
+    #define REG_PC cpu.pc
     #define REG_SYSCALL 1 // g1
     #define REG_RESULT 8  // o0
     #define REG_ARG0 8    // o0..o5
@@ -189,6 +195,30 @@ using namespace std::chrono;
     #define REG_ARG3 11
     #define REG_ARG4 12
     #define REG_ARG5 13
+
+#elif defined( X64OS )
+
+    #include "x64.hxx"
+
+    #define CPUClass x64
+    #define ELF_MACHINE_ISA 0x3e
+    #define APP_NAME "X64OS"
+    #define LOGFILE_NAME L"x64os.log"
+    #define REG_FORMAT "%lld"
+    #define REG_TYPE uint64_t
+    #define SIGNED_REG_TYPE int64_t
+    #define ACCESS_REG( x ) cpu.regs[ x ].q
+    #define CPU_IS_LITTLE_ENDIAN true
+
+    #define REG_PC cpu.rip
+    #define REG_SYSCALL x64::rax
+    #define REG_RESULT x64::rax
+    #define REG_ARG0 x64::rdi
+    #define REG_ARG1 x64::rsi
+    #define REG_ARG2 x64::rdx
+    #define REG_ARG3 x64::r10
+    #define REG_ARG4 x64::r8
+    #define REG_ARG5 x64::r9
 
 #else
 
@@ -216,8 +246,6 @@ REG_TYPE g_highwater_brk = 0;                  // highest brk seen during app; p
 REG_TYPE g_end_of_data = 0;                    // official end of the loaded app
 REG_TYPE g_bottom_of_stack = 0;                // just beyond where brk might move
 REG_TYPE g_top_of_stack = 0;                   // argc, argv, penv, aux records sit above this
-REG_TYPE g_tbss_address = 0;                   // where is the 0-initialized tls data?
-REG_TYPE g_tbss_size = 0;                      // how many bytes is the 0-initialized tls data?
 CMMap g_mmap;                                  // for mmap and munmap system calls
 bool g_hostIsLittleEndian = true;              // is the host little endian?
 bool g_addCRBeforeLF = false;                  // on Windows, a command-line argument can make this true
@@ -925,11 +953,11 @@ em_platform build_target_platform()
     #else
         #error what platform is this build targeting?
     #endif
-} //build_targe_pltform
+} //build_target_platform
 
 em_platform emulated_app_platform()
 {
-    #if defined( RVOS )
+    #if defined( RVOS ) || defined( X64OS )
         return linux_rv64_amd64;
     #elif defined( SPARCOS )
         return linux_sparc;
@@ -1080,33 +1108,37 @@ static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat
     pstat->st_nlink = 1;
     pstat->st_uid = 1000;
     pstat->st_gid = 5;
-    pstat->st_rdev = 1024; // this is st_blksize on linux. larger than Blair's Disk Block
+    pstat->st_rdev = 1024;
     pstat->st_size = 0;
+    pstat->st_blksize = 0x400;
 
     if ( descriptor >= 0 && descriptor <= 2 ) // stdin / stdout / stderr
     {
         if ( isatty( descriptor ) )
+        {
             pstat->st_mode = S_IFCHR;
+            pstat->st_rdev = 0x8800;
+        }
         else
         {
             pstat->st_mode = S_IFREG;
-            pstat->st_rdev = 4096; // this is st_blksize on linux
+            pstat->st_rdev = 4096;
         }
     }
     else if ( findFirstDescriptor == descriptor )
     {
         pstat->st_mode = S_IFDIR;
-        pstat->st_rdev = 4096; // this is st_blksize on linux
+        pstat->st_rdev = 4096;
     }
     else if ( timebaseFrequencyDescriptor == descriptor )
     {
         pstat->st_mode = S_IFREG;
-        pstat->st_rdev = 4096; // this is st_blksize on linux
+        pstat->st_rdev = 4096;
     }
     else if ( osreleaseDescriptor == descriptor )
     {
         pstat->st_mode = S_IFREG;
-        pstat->st_rdev = 4096; // this is st_blksize on linux
+        pstat->st_rdev = 4096;
     }
     else
     {
@@ -1143,7 +1175,7 @@ static int fill_pstat_windows( int descriptor, struct stat_linux_syscall * pstat
             pstat->st_mtim.tv_sec = SystemTime_to_esecs( st );
         }
 
-        pstat->st_rdev = 4096; // this is st_blksize on linux
+        pstat->st_rdev = 4096;
 
         if ( !ok && ( descriptor > 0 ) )
         {
@@ -1531,6 +1563,11 @@ static const SysCall syscalls[] =
     { "emulator_sys__llseek", emulator_sys__llseek }, // very old syscall not in modern Linux but it does exist as 236 for sparc
     { "emulator_sys_readlink", emulator_sys_readlink }, // very old syscall not in modern Linux but it does exist as 58 for sparc
     { "emulator_sys_getdents", emulator_sys_getdents }, // very old syscall not in modern Linux but it does exist as 174 for sparc
+    { "emulator_sys_access", emulator_sys_access }, // very old syscall not in modern Linux but it does exist as 33 for sparc/68k and 21 for x86/x64
+    { "emulator_sys_x64_arch_prctl", emulator_sys_x64_arch_prctl }, // only exists on x64 as syscall 158
+    { "emulator_sys_rename", emulator_sys_rename }, // exists on x64 but not most other platforms
+    { "emulator_sys_time", emulator_sys_time }, // exists on x64 but not most other platforms
+    { "emulator_sys_poll", emulator_sys_poll }, // "
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -1643,6 +1680,101 @@ static const char * lookup_syscall( uint32_t x )
     return "unknown";
 } //lookup_syscall
 
+#if defined( X64OS ) || defined( SPARCOS )
+
+struct SyscalltoRV { uint16_t s; uint16_t r; };
+
+static int syscall_compare( const void * a, const void * b )
+{
+    SyscalltoRV & sa = * (SyscalltoRV *) a;
+    SyscalltoRV & sb = * (SyscalltoRV *) b;
+
+    if ( sa.s > sb.s )
+        return 1;
+
+    if ( sa.s < sb.s )
+        return -1;
+
+    return 0;
+} //syscall_compare
+
+#endif
+
+#ifdef X64OS
+
+static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html
+{
+    { 0, SYS_read },
+    { 1, SYS_write },
+    { 3, SYS_close },
+    { 7, emulator_sys_poll },
+    { 8, SYS_lseek },
+    { 9, SYS_mmap },
+    { 10, SYS_mprotect },
+    { 11, SYS_munmap },
+    { 12, SYS_brk },
+    { 13, SYS_sigaction },
+    { 14, SYS_rt_sigprocmask },
+    { 16, SYS_ioctl },
+    { 20, SYS_writev },
+    { 21, emulator_sys_access },
+    { 25, SYS_mremap },
+    { 39, SYS_getpid },
+    { 60, SYS_exit },
+    { 63, SYS_uname },
+    { 72, SYS_fcntl },
+    { 74, SYS_fsync },
+    { 75, SYS_fdatasync },
+    { 79, SYS_getcwd },
+    { 80, SYS_chdir },
+    { 82, emulator_sys_rename },
+    { 83, SYS_mkdir },
+    { 84, SYS_rmdir },
+    { 87, SYS_unlink },
+    { 89, emulator_sys_readlink },
+    { 96, SYS_gettimeofday },
+    { 98, SYS_getrusage },
+    { 99, SYS_sysinfo },
+    { 100, SYS_times },
+    { 102, SYS_getuid },
+    { 104, SYS_getgid },
+    { 107, SYS_geteuid },
+    { 108, SYS_getegid },
+    { 158, emulator_sys_x64_arch_prctl },
+    { 186, SYS_gettid },
+    { 201, emulator_sys_time },
+    { 204, SYS_sched_getaffinity },
+    { 217, SYS_getdents64 },
+    { 218, SYS_set_tid_address },
+    { 228, SYS_clock_gettime },
+    { 230, SYS_clock_nanosleep }, // really, SYS_clock_nanosleep_time64, but here that's redundant
+    { 231, SYS_exit_group },
+    { 234, SYS_tgkill },
+    { 257, SYS_openat },
+    { 258, SYS_mkdirat },
+    { 262, SYS_newfstatat },
+    { 263, SYS_unlinkat },
+    { 264, SYS_renameat },
+    { 267, SYS_readlinkat },
+    { 270, SYS_pselect6 },
+    { 273, SYS_set_robust_list },
+    { 302, SYS_prlimit64 },
+    { 318, SYS_getrandom },
+    { 334, SYS_rseq },
+    { 0x2002, emulator_sys_trace_instructions }, // same value
+};
+
+uint16_t MapX64ToRiscV( REG_TYPE c )
+{
+    SyscalltoRV key = { (uint16_t) c, 0 };
+    SyscalltoRV * presult = (SyscalltoRV *) my_bsearch( &key, X64ToRiscV, _countof( X64ToRiscV ), sizeof( key ), syscall_compare );
+    if ( 0 != presult )
+        return presult->r;
+    return 0;
+} //MapX64ToRiscv
+
+#endif //X64OS
+
 #ifdef SPARCOS
 
 struct StoRV { uint16_t s; uint16_t r; };
@@ -1694,24 +1826,10 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 0x2002, emulator_sys_trace_instructions }, // same value
 };
 
-static int sparc_syscall_compare( const void * a, const void * b )
-{
-    StoRV & sa = * (StoRV *) a;
-    StoRV & sb = * (StoRV *) b;
-
-    if ( sa.s > sb.s )
-        return 1;
-
-    if ( sa.s < sb.s )
-        return -1;
-
-    return 0;
-} //sparc_syscall_compare
-
 uint16_t MapSparcToRiscV( REG_TYPE c )
 {
-    StoRV key = { (uint16_t) c, 0 };
-    StoRV * presult = (StoRV *) my_bsearch( &key, SparcToRiscV, _countof( SparcToRiscV ), sizeof( key ), sparc_syscall_compare );
+    SyscalltoRV key = { (uint16_t) c, 0 };
+    SyscalltoRV * presult = (SyscalltoRV *) my_bsearch( &key, SparcToRiscV, _countof( SparcToRiscV ), sizeof( key ), syscall_compare );
     if ( 0 != presult )
         return presult->r;
     return 0;
@@ -1778,6 +1896,14 @@ void emulator_invoke_svc( CPUClass & cpu )
         printf( "unable to find a Sparc mapping for syscall %u\n", ACCESS_REG( REG_SYSCALL ) );
         tracer.Trace( "unable to find a Sparc mapping for syscall %u\n", ACCESS_REG( REG_SYSCALL ) );
     }
+#elif defined( X64OS )
+    syscall_id = MapX64ToRiscV( syscall_id );
+    tracer.Trace( "mapped x64 syscall %llu to %llu\n", ACCESS_REG( REG_SYSCALL ), syscall_id );
+    if ( 0 == syscall_id )
+    {
+        printf( "unable to find an X64 mapping for syscall %llu\n", ACCESS_REG( REG_SYSCALL ) );
+        tracer.Trace( "unable to find an X64 mapping for syscall %llu\n", ACCESS_REG( REG_SYSCALL ) );
+    }
 #endif
 
     // Linux syscalls support up to 6 arguments
@@ -1809,6 +1935,30 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, 0 );
             break;
         }
+#ifdef X64OS
+        case emulator_sys_x64_arch_prctl:
+        {
+            uint64_t arch = ACCESS_REG( REG_ARG0 );
+            uint64_t pbase = ACCESS_REG( REG_ARG1 );
+            SIGNED_REG_TYPE result = 0;
+
+            if ( 0x1001 == arch ) // ARCH_SET_GS
+                cpu.reg_gs() = pbase;
+            else if ( 0x1002 == arch ) // ARCH_SET_FS
+                cpu.reg_fs() = pbase;
+            else if ( 0x1003 == arch ) // ARCH_GET_FS
+                * (uint64_t *) cpu.getmem( pbase ) = cpu.reg_fs();
+            else if ( 0x1004 == arch ) // ARCH_GET_GS
+                * (uint64_t *) cpu.getmem( pbase ) = cpu.reg_gs();
+            else  // this cpu doesn't support shadow stacks or CET generally
+            {
+                errno = EINVAL;
+                result = -1;
+            }
+            update_result_errno( cpu, result );
+            break;
+        }
+#endif
         case SYS_signalstack:
         {
             update_result_errno( cpu, 0 );
@@ -1847,7 +1997,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             time_t time_now = system_clock::to_time_t( now );
             struct tm * plocal = localtime( & time_now );
             snprintf( pdatetime, 80, "%02u:%02u:%02u.%03u", (uint32_t) plocal->tm_hour, (uint32_t) plocal->tm_min, (uint32_t) plocal->tm_sec, (uint32_t) ms );
-            tracer.Trace( "  got datetime: '%s', pc: %llx\n", pdatetime, cpu.pc );
+            tracer.Trace( "  got datetime: '%s'\n", pdatetime );
             update_result_errno( cpu, 0 );
             break;
         }
@@ -1862,6 +2012,20 @@ void emulator_invoke_svc( CPUClass & cpu )
             long result = lseek( descriptor, (long) offset, origin );
             *presult = swap_endian64( result );
             update_result_errno( cpu, result );
+            break;
+        }
+        case emulator_sys_poll:
+        {
+            update_result_errno( cpu, 0 );
+            break;
+        }
+        case emulator_sys_access: // old syscall int access(const char *path, int mode);
+        {
+            char * path = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            REG_TYPE mode = ACCESS_REG( REG_ARG1 );
+            tracer.Trace( "  emulator_sys_access path '%s', mode %#x\n", path, mode );
+            errno = EACCES;
+            update_result_errno( cpu, -1 );
             break;
         }
         case SYS_getcwd:
@@ -2420,6 +2584,12 @@ void emulator_invoke_svc( CPUClass & cpu )
             struct linux_dirent64_syscall * pcur = (struct linux_dirent64_syscall *) pentries;
             memset( pentries, 0, count );
 
+            if ( 0 == count ) // glibc does this on amd64. it's a success case
+            {
+                update_result_errno( cpu, 0 );
+                break;
+            }
+
 #ifdef _WIN32
             if ( ( findFirstDescriptor != descriptor ) || ( 0 == g_acFindFirstPattern[ 0 ] ) )
             {
@@ -2586,6 +2756,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                     g_brk_offset = cpu.getoffset( ask );
                     if ( g_brk_offset > g_highwater_brk )
                         g_highwater_brk = g_brk_offset;
+#ifdef X64OS // as far as I can tell x64 is the only platform that requires the ask to be in the result on return
+                    ACCESS_REG( REG_RESULT ) = ask;
+#endif
                 }
                 else
                 {
@@ -2827,8 +3000,22 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 0 == result )
             {
                 size_t cbStat = sizeof( struct stat_linux_syscall );
+#ifndef X64OS
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
+#endif
                 tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
+                tracer.Trace( "  offsetof st_mode: %d\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
+                tracer.Trace( "  offsetof st_blksize: %d\n", (int) offsetof( struct stat_linux_syscall, st_blksize ) );
+                tracer.Trace( "  st_dev: %#lx\n", local_stat.st_dev );
+                tracer.Trace( "  st_ino: %#lx\n", local_stat.st_ino );
+                tracer.Trace( "  st_mode: %#x\n", local_stat.st_mode );
+                tracer.Trace( "  st_nlink: %#x\n", local_stat.st_nlink );
+                tracer.Trace( "  st_uid: %#x\n", local_stat.st_uid );
+                tracer.Trace( "  st_gid: %#x\n", local_stat.st_gid );
+                tracer.Trace( "  st_rdev: %#lx\n", local_stat.st_rdev );
+                tracer.Trace( "  st_size: %#lx\n", local_stat.st_size );
+                tracer.Trace( "  st_blksize: %#llx\n", local_stat.st_blksize );
+
                 local_stat.swap_endianness();
                 memcpy( cpu.getmem( ACCESS_REG( REG_ARG2 ) ), & local_stat, cbStat );
             }
@@ -3040,9 +3227,9 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else //M68
             struct linux_rusage_syscall *prusage = (struct linux_rusage_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             tracer.Trace( "  sizeof linux_rusage_syscall: %zd\n", sizeof( struct linux_rusage_syscall ) );
-#ifdef SPARCOS            
+#ifdef SPARCOS
             memset( prusage, 0, 88 ); // 32-bit sparc binaries use fulls-sized times but are only 88 bytes long; through ru_majflt, not starting with ru_nswap
-#else            
+#else
             memset( prusage, 0, sizeof( struct linux_rusage_syscall ) );
 #endif //SPARCOS
 #endif //M68
@@ -3108,7 +3295,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_isrss = local_rusage.ru_isrss;
                 prusage->ru_minflt = local_rusage.ru_minflt;
                 prusage->ru_majflt = local_rusage.ru_majflt;
-#ifndef SPARCOS // SPARC on Linux seems to use a structure that ends at ru_majflt                
+#ifndef SPARCOS // SPARC on Linux seems to use a structure that ends at ru_majflt
                 prusage->ru_nswap = local_rusage.ru_nswap;
                 prusage->ru_inblock = local_rusage.ru_inblock;
                 prusage->ru_oublock = local_rusage.ru_oublock;
@@ -3117,7 +3304,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_nsignals = local_rusage.ru_nsignals;
                 prusage->ru_nvcsw = local_rusage.ru_nvcsw;
                 prusage->ru_nivcsw = local_rusage.ru_nivcsw;
-#endif //SPARCOS                
+#endif //SPARCOS
 #endif //M68K
 #endif //M68
 #endif //_WIN32
@@ -3246,6 +3433,17 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, 0 );
             break;
         }
+        case emulator_sys_time: // returns the time as number of seconds since the epoch 1970-01-01 0 UTC. time_t time(time_t *_Nullable tloc);
+        {
+            time_t t = time( 0 );
+            if ( 0 != ACCESS_REG( REG_ARG0 ) )
+            {
+                uint64_t * ptime = (uint64_t *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+                *ptime = swap_endian64( t );
+            }
+            update_result_errno( cpu, (REG_TYPE) t );
+            break;
+        }
         case SYS_times:
         {
             // this function is long obsolete, but older apps call it and it's still supported on recent Linux builds
@@ -3329,6 +3527,19 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             ACCESS_REG( REG_RESULT ) = 1;
             break;
+        }
+        case emulator_sys_rename:
+        {
+            // set
+            REG_TYPE oldname = ACCESS_REG( REG_ARG0 );
+            REG_TYPE newname = ACCESS_REG( REG_ARG1 );
+            ACCESS_REG( REG_ARG0 ) = (REG_TYPE) (SIGNED_REG_TYPE) -100;
+            ACCESS_REG( REG_ARG1 ) = oldname;
+            ACCESS_REG( REG_ARG2 ) = (REG_TYPE) (SIGNED_REG_TYPE) -100;
+            ACCESS_REG( REG_ARG3 ) = newname;
+            ACCESS_REG( REG_ARG4 ) = 0; // flags
+
+            // fall through!!!!
         }
         case SYS_renameat:
         case SYS_renameat2:
@@ -3430,7 +3641,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 
                 pout->stx_blksize = (uint32_t) local_stat.st_blksize;
                 pout->stx_ino = local_stat.st_ino;
-                pout->stx_nlink = local_stat.st_nlink;
+                pout->stx_nlink = (uint32_t) local_stat.st_nlink;
                 pout->stx_uid = local_stat.st_uid;
                 pout->stx_gid = local_stat.st_gid;
                 pout->stx_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
@@ -3953,6 +4164,10 @@ static const char * riscv_register_names[ 32 ] =
 };
 #endif
 
+#ifdef X64OS
+static const char * x64_register_names[16] = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" };
+#endif
+
 #ifdef SPARCOS
 static const char * sparc_register_names[ 32 ] =
 {
@@ -3975,21 +4190,21 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     uint64_t offset = 0;
 #if defined( M68 ) || defined( SPARCOS )
     uint32_t offset32 = 0;
-    const char * psymbol = emulator_symbol_lookup( cpu.pc, offset32 );
+    const char * psymbol = emulator_symbol_lookup( REG_PC, offset32 );
     offset = offset32;
 #else
-    const char * psymbol = emulator_symbol_lookup( cpu.pc, offset );
+    const char * psymbol = emulator_symbol_lookup( REG_PC, offset );
 #endif
 
     if ( psymbol[ 0 ] )
     {
-        tracer.Trace( "pc: %llx %s + %llx\n", cpu.pc, psymbol, offset );
-        printf( "pc: %llx %s + %llx\n", (uint64_t) cpu.pc, psymbol, offset );
+        tracer.Trace( "pc: %llx %s + %llx\n", REG_PC, psymbol, offset );
+        printf( "pc: %llx %s + %llx\n", (uint64_t) REG_PC, psymbol, offset );
     }
     else
     {
-        tracer.Trace( "pc: %llx\n", cpu.pc );
-        printf( "pc: %llx\n", (uint64_t) cpu.pc );
+        tracer.Trace( "pc: %llx\n", REG_PC );
+        printf( "pc: %llx\n", (uint64_t) REG_PC );
     }
 
     tracer.Trace( "address space %llx to %llx\n", (uint64_t) g_base_address, (uint64_t) g_base_address + memory.size() );
@@ -4037,6 +4252,24 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
         }
     }
 
+#elif defined( X64OS )
+
+    for ( size_t i = 0; i < 16; i++ )
+    {
+        tracer.Trace( "%4s: %16llx, ", x64_register_names[ i ], ACCESS_REG( i ) );
+        printf( "%4s: %16llx, ", x64_register_names[ i ], ACCESS_REG( i ) );
+
+        if ( 3 == ( i & 3 ) )
+        {
+            tracer.Trace( "\n" );
+            printf( "\n" );
+            if ( 31 != i )
+            {
+                tracer.Trace( "  " );
+                printf( "  " );
+            }
+        }
+    }
 #else
 
     for ( size_t i = 0; i < 32; i++ )
@@ -4352,7 +4585,7 @@ const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
     if ( address < g_base_address || address > ( g_base_address + memory.size() ) )
         return "";
 
-    // if no elf symbols, try CPM symbols
+    // if no elf symbols, try CP/M symbols
 
     if ( 0 == g_symbols32.size() )
     {
@@ -6816,10 +7049,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         tracer.Trace( "  entry_size: %x\n", head.entry_size );
 
         if ( !strcmp( ".tbss", & section_names_string_table[ head.name_offset ] ) )
-        {
-            g_tbss_address = head.address;
-            g_tbss_size = head.size;
-        }
+            tracer.Trace( "tbss: %#x, size %#x\n", head.address, head.size );
 
         if ( !strcmp( ".eh_frame", & section_names_string_table[ head.name_offset ] ) )
             the_EH_FRAME_BEGIN = head.address;
@@ -7342,7 +7572,7 @@ static bool load_image( const char * pimage, const char * app_args )
         return load_image32( fp, pimage, app_args );
     else
         usage( "elf image isn't 32-bit" );
-#elif  defined( RVOS ) || defined( ARMOS )
+#elif  defined( RVOS ) || defined( ARMOS ) || defined( X64OS )
     bool big_endian = ( 2 == ehead.endianness );
     tracer.Trace( "image is %s endian\n", big_endian ? "big" : "little" );
 
@@ -7484,6 +7714,9 @@ static bool load_image( const char * pimage, const char * app_args )
         tracer.Trace( "  info: %x\n", head.info );
         tracer.Trace( "  address_alignment: %llx\n", head.address_alignment );
         tracer.Trace( "  entry_size: %llx\n", head.entry_size );
+
+        if ( !strcmp( ".tbss", & section_names_string_table[ head.name_offset ] ) )
+            tracer.Trace( "tbss: %#llx, size %#llx\n", head.address, head.size );
 
         if ( 2 == head.type )
         {
@@ -8048,6 +8281,8 @@ static void elf_info( const char * pimage, bool verbose )
 
     ehead.swap_endianness();
 
+    printf( "machine isa: %#x\n", ehead.machine );
+
     if ( ELF_MACHINE_ISA != ehead.machine )
         printf( "image machine ISA isn't a match for %s; continuing anyway. machine type is %x\n", APP_NAME, ehead.machine );
 
@@ -8408,7 +8643,7 @@ int main( int argc, char * argv[] )
                 g_tAppStart = tStart;
             #endif
 
-            uint64_t cycles = cpu->run();
+            uint64_t instructions = cpu->run();
 
             char ac[ 100 ];
             if ( showPerformance )
@@ -8417,9 +8652,9 @@ int main( int argc, char * argv[] )
                 int64_t totalTime = duration_cast<std::chrono::milliseconds>( tDone - tStart ).count();
 
                 printf( "elapsed milliseconds:  %15s\n", CDJLTrace::RenderNumberWithCommas( totalTime, ac ) );
-                printf( "cycles:                %15s\n", CDJLTrace::RenderNumberWithCommas( cycles, ac ) );
+                printf( "instructions:          %15s\n", CDJLTrace::RenderNumberWithCommas( instructions, ac ) );
                 if ( 0 != totalTime )
-                    printf( "effective clock rate:  %15s\n", CDJLTrace::RenderNumberWithCommas( cycles / totalTime, ac ) );
+                    printf( "effective clock rate:  %15s\n", CDJLTrace::RenderNumberWithCommas( instructions / totalTime, ac ) );
                 printf( "app exit code:         %15d\n", g_exit_code );
             }
 
@@ -8431,7 +8666,7 @@ int main( int argc, char * argv[] )
     }
     catch ( bad_alloc & e )
     {
-        printf( "caught exception bad_alloc -- out of RAM. If in RVOS/ARMOS/M68 use -h or -m to add RAM. %s\n", e.what() );
+        printf( "caught exception bad_alloc -- out of RAM. If in RVOS/ARMOS/M68/SPARCOS/X64OS use -h or -m to add RAM. %s\n", e.what() );
     }
     catch ( exception & e )
     {

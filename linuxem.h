@@ -20,6 +20,11 @@
 #define emulator_sys__llseek            0x2008
 #define emulator_sys_readlink           0x2009
 #define emulator_sys_getdents           0x200a
+#define emulator_sys_access             0x200b
+#define emulator_sys_x64_arch_prctl     0x200c // only exists on x64 as syscall 158
+#define emulator_sys_rename             0x200d // exists on x64 but isn't used on most others
+#define emulator_sys_time               0x200e // exists on x64 but isn't used on most others
+#define emulator_sys_poll               0x200f // "
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -27,6 +32,7 @@
 // https://github.com/westerndigitalcorporation/RISC-V-Linux/blob/master/linux/arch/s390/kernel/syscalls/syscall.tbl
 // https://blog.xhyeax.com/2022/04/28/arm64-syscall-table/
 // https://syscalls.mebeim.net/?table=arm64/64/aarch64/latest
+// https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html
 
 #define SYS_getcwd 17
 #define SYS_fcntl 25
@@ -180,12 +186,19 @@ struct stat_linux_syscall
 
     uint64_t   st_dev;      /* ID of device containing file */
     uint64_t   st_ino;      /* Inode number */
+#ifdef X64OS
+    uint64_t   st_nlink;    /* Number of hard links */
+    uint32_t   st_mode;     /* File type and mode */
+#else
     uint32_t   st_mode;     /* File type and mode */
     uint32_t   st_nlink;    /* Number of hard links */
+#endif
     uint32_t   st_uid;      /* User ID of owner */
     uint32_t   st_gid;      /* Group ID of owner */
     uint64_t   st_rdev;     /* Device ID (if special file) */
+#ifndef X64OS
     uint64_t   st_mystery_spot;
+#endif
     uint64_t   st_size;     /* Total size, in bytes */
     uint64_t   st_blksize;  /* Block size for filesystem I/O */
     uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
@@ -205,11 +218,17 @@ struct stat_linux_syscall
         st_dev = swap_endian64( st_dev );
         st_ino = swap_endian64( st_ino );
         st_mode = swap_endian32( st_mode );
+#ifdef X64OS
+        st_nlink = swap_endian64( st_nlink );
+#else
         st_nlink = swap_endian32( st_nlink );
+#endif
         st_uid = swap_endian32( st_uid );
         st_gid = swap_endian32( st_gid );
         st_rdev = swap_endian64( st_rdev );
+#ifndef X64OS
         st_mystery_spot = swap_endian64( st_mystery_spot );
+#endif
         st_size = swap_endian64( st_size );
         st_blksize = swap_endian64( st_blksize );
         st_blocks = swap_endian64( st_blocks );
