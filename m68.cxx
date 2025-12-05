@@ -22,7 +22,7 @@
 #elif defined( X64OS )
     This emulates an AMD64 CPU in Long Mode + 64-bit mode. No other modes are supported
 #else
-    #error one of ARMOS, RVOS, M68, or SPARCOS must be defined
+    #error one of ARMOS, RVOS, M68, SPARCOS, X64OS, or X32OS must be defined
 #endif
 */
 
@@ -59,7 +59,9 @@
         uint64_t tms_cstime;
     };
 
+#ifndef _SIZE_T_DEFINED
     typedef SSIZE_T ssize_t;
+#endif
 
 #else
     #include <unistd.h>
@@ -153,7 +155,7 @@ using namespace std::chrono;
     #include "m68000.hxx"
 
     #define CPUClass m68000
-    #define ELF_MACHINE_ISA 0x04
+    #define ELF_MACHINE_ISA 4
     #define APP_NAME "M68"
     #define LOGFILE_NAME L"m68.log"
     #define REG_FORMAT "%d"
@@ -177,7 +179,7 @@ using namespace std::chrono;
     #include "sparc.hxx"
 
     #define CPUClass Sparc
-    #define ELF_MACHINE_ISA 0x02
+    #define ELF_MACHINE_ISA 2
     #define APP_NAME "SPARCOS"
     #define LOGFILE_NAME L"sparcos.log"
     #define REG_FORMAT "%d"
@@ -210,7 +212,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ].q
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PC cpu.rip
+    #define REG_PC cpu.rip.q
     #define REG_SYSCALL x64::rax
     #define REG_RESULT x64::rax
     #define REG_ARG0 x64::rdi
@@ -220,9 +222,33 @@ using namespace std::chrono;
     #define REG_ARG4 x64::r8
     #define REG_ARG5 x64::r9
 
+#elif defined( X32OS )
+
+    #include "x64.hxx"
+
+    #define CPUClass x64
+    #define ELF_MACHINE_ISA 3
+    #define APP_NAME "X32OS"
+    #define LOGFILE_NAME L"x32os.log"
+    #define REG_FORMAT "%d"
+    #define REG_TYPE uint32_t
+    #define SIGNED_REG_TYPE int32_t
+    #define ACCESS_REG( x ) cpu.regs[ x ].d
+    #define CPU_IS_LITTLE_ENDIAN true
+
+    #define REG_PC cpu.rip.d
+    #define REG_SYSCALL x64::rax
+    #define REG_RESULT x64::rax
+    #define REG_ARG0 x64::rbx
+    #define REG_ARG1 x64::rcx
+    #define REG_ARG2 x64::rdx
+    #define REG_ARG3 x64::rsi
+    #define REG_ARG4 x64::rdi
+    #define REG_ARG5 x64::rbp
+
 #else
 
-    #error "One of ARMOS, RVOS, M68, or SPARCOS must be defined for compilation"
+    #error "One of ARMOS, RVOS, M68, SPARCOS, X64OS, or X32OS must be defined for compilation"
 
 #endif
 
@@ -896,32 +922,32 @@ class SetBinaryMode
 
 /*
   what whas their childhood trauma?
-           DOS & Windows   Linux RISC-V64 & AMD64  Linux Arm32 & Arm64  macOS       Linux sparc  newlib 68000  Watcom      Manx CP/M
-           -------------   ----------------------  -------------------  -----       -----------  ------------  ------      ---------
-  0x0      O_RDONLY        O_RDONLY                O_RDONLY             O_RDONLY    O_RDONLY     O_RDONLY      O_RDONLY    O_RDONLY
-  0x1      O_WRONLY        O_WRONLY                O_WRONLY             O_WRONLY    O_WRONLY     O_WRONLY      O_WRONLY    O_WRONLY
-  0x2      O_RDRW          O_RDRW                  O_RDRW               O_RDRW      O_RDRW       O_RDRW        O_RDRW      O_RDRW
-  0x8      O_APPEND                                                     O_APPEND    O_APPEND     O_APPEND
-  0x10     O_RANDOM                                                     O_SHLOCK                 O_SHLOCK      O_APPEND
-  0x20     O_SEQUENTIAL                                                 O_EXLOCK                 O_EXLOCK      O_CREAT
-  0x40     O_TEMPORARY     O_CREAT                 O_CREAT                          O_ASYNC                    O_TRUNC
-  0x80     O_NOINHERIT     O_EXCL                  O_EXCL                                                      O_NOINHERIT
-  0x100    O_CREAT                                                                                             O_TEXT      O_CREAT
-  0x200    O_TRUNC         O_TRUNC                 O_TRUNC              O_CREAT     O_CREAT      O_CREAT       O_BINARY
-  0x400    O_EXCL          O_APPEND                O_APPEND             O_TRUNC     O_TRUNC      O_TRUNC       O_EXCL      O_EXCL
-  0x800                                                                 O_EXCL      O_EXCL       O_EXCL                    O_APPEND
-  0x2000                   O_ASYNC                 O_ASYNC              O_SYNC      O_SYNC       O_SYNC
-  0x4000   O_TEXT          O_DIRECT                O_DIRECTORY          O_NONBLOCK               O_NONBLOCK
-  0x8000   O_BINARY
-  0x10000                  O_DIRECTORY             O_DIRECT                         O_DIRECTORY
-  0x10100                  O_SYNC                  O_SYNC
-  0x80000                                                               O_DIRECT                 O_DIRECT
-  0x100000                                                              O_DIRECTORY O_DIRECT
-  0x200000                                                                                       O_DIRECTORY
-  0x2010000                                                                         O_TMPFILE
+            DOS & Windows   Linux RISC-V64, AMD64, X32  Linux Arm32 & Arm64  macOS       Linux sparc  newlib 68000  Watcom      Manx CP/M
+            -------------   --------------------------  -------------------  -----       -----------  ------------  ------      ---------
+  0x0       O_RDONLY        O_RDONLY                    O_RDONLY             O_RDONLY    O_RDONLY     O_RDONLY      O_RDONLY    O_RDONLY
+  0x1       O_WRONLY        O_WRONLY                    O_WRONLY             O_WRONLY    O_WRONLY     O_WRONLY      O_WRONLY    O_WRONLY
+  0x2       O_RDRW          O_RDRW                      O_RDRW               O_RDRW      O_RDRW       O_RDRW        O_RDRW      O_RDRW
+  0x8       O_APPEND                                                         O_APPEND    O_APPEND     O_APPEND
+  0x10      O_RANDOM                                                         O_SHLOCK                 O_SHLOCK      O_APPEND
+  0x20      O_SEQUENTIAL                                                     O_EXLOCK                 O_EXLOCK      O_CREAT
+  0x40      O_TEMPORARY     O_CREAT                     O_CREAT                          O_ASYNC                    O_TRUNC
+  0x80      O_NOINHERIT     O_EXCL                      O_EXCL                                                      O_NOINHERIT
+  0x100     O_CREAT                                                                                                 O_TEXT      O_CREAT
+  0x200     O_TRUNC         O_TRUNC                     O_TRUNC              O_CREAT     O_CREAT      O_CREAT       O_BINARY
+  0x400     O_EXCL          O_APPEND                    O_APPEND             O_TRUNC     O_TRUNC      O_TRUNC       O_EXCL      O_EXCL
+  0x800                                                                      O_EXCL      O_EXCL       O_EXCL                    O_APPEND
+  0x2000                    O_ASYNC                     O_ASYNC              O_SYNC      O_SYNC       O_SYNC
+  0x4000    O_TEXT          O_DIRECT                    O_DIRECTORY          O_NONBLOCK               O_NONBLOCK
+  0x8000    O_BINARY                                    
+  0x10000                   O_DIRECTORY                 O_DIRECT                         O_DIRECTORY
+  0x10100                   O_SYNC                      O_SYNC
+  0x80000                                                                    O_DIRECT                 O_DIRECT
+  0x100000                                                                   O_DIRECTORY O_DIRECT
+  0x200000                                                                                            O_DIRECTORY
+  0x2010000                                                                              O_TMPFILE
 */
 
-enum em_platform { dos_win = 0, linux_rv64_amd64, linux_arm, macos, linux_sparc, newlib_68k };
+enum em_platform { dos_win = 0, linux_rv64_amd64_x32, linux_arm, macos, linux_sparc, newlib_68k };
 enum open_flags { o_append = 0, o_creat, o_trunc, o_excl, o_direct, o_directory, o_async, o_sync };
 
 static const int flagmap[ 6 ][ 8 ] =
@@ -929,7 +955,7 @@ static const int flagmap[ 6 ][ 8 ] =
     //0          1         2         3        4          5            6        7
     //O_APPEND   O_CREAT   O_TRUNC   O_EXCL   O_DIRECT   O_DIRECTORY  O_ASYNC  O_SYNC
     { 0x8,       0x100,    0x200,    0x400,   0,         0,           0,       0 },                  // DOS + Windows
-    { 0x400,     0x40,     0x200,    0x80,    0x4000,    0x10000,     0x2000,  0x10100 },            // Linux on RISC-V64 and AMD64
+    { 0x400,     0x40,     0x200,    0x80,    0x4000,    0x10000,     0x2000,  0x10100 },            // Linux on RISC-V64, AMD64, X32
     { 0x400,     0x40,     0x200,    0x80,    0x10000,   0x4000,      0x2000,  0x10100 },            // Linux on ARM32 and ARM64
     { 0x8,       0x200,    0x400,    0x800,   0x80000,   0x100000,    0,       0x2000 },             // macOS
     { 0x8,       0x200,    0x400,    0x800,   0x100000,  0x10000,     0x40,    0x2000 },             // Linux on Sparc
@@ -946,8 +972,8 @@ em_platform build_target_platform()
         return macos;
     #elif defined( __mc68000__ )
         return newlib_68k;
-    #elif defined( __riscv ) || defined( __amd64 )
-        return linux_rv64_amd64;;
+    #elif defined( __riscv ) || defined( __amd64__ ) || defined( __i386__ )
+        return linux_rv64_amd64_x32;
     #elif defined( __aarch64__ ) || defined ( __ARM_32BIT_STATE )
         return linux_arm;
     #else
@@ -957,8 +983,8 @@ em_platform build_target_platform()
 
 em_platform emulated_app_platform()
 {
-    #if defined( RVOS ) || defined( X64OS )
-        return linux_rv64_amd64;
+    #if defined( RVOS ) || defined( X64OS ) || defined( X32OS )
+        return linux_rv64_amd64_x32;
     #elif defined( SPARCOS )
         return linux_sparc;
     #elif defined( M68 )
@@ -1552,6 +1578,10 @@ static const SysCall syscalls[] =
     { "SYS_clock_gettime64", SYS_clock_gettime64 },
     { "SYS_open", SYS_open }, // only called for older systems
     { "SYS_unlink", SYS_unlink }, // only called for older systems
+    { "SYS_mkdir", SYS_mkdir }, // only called for older systems
+    { "SYS_stat", SYS_stat }, // only called for older systems
+    { "SYS_lstat", SYS_lstat }, // only called for older systems
+    { "SYS_time", SYS_time }, // only called for older systems
     { "emulator_sys_rand", emulator_sys_rand },
     { "emulator_sys_print_double", emulator_sys_print_double },
     { "emulator_sys_trace_instructions", emulator_sys_trace_instructions },
@@ -1564,10 +1594,13 @@ static const SysCall syscalls[] =
     { "emulator_sys_readlink", emulator_sys_readlink }, // very old syscall not in modern Linux but it does exist as 58 for sparc
     { "emulator_sys_getdents", emulator_sys_getdents }, // very old syscall not in modern Linux but it does exist as 174 for sparc
     { "emulator_sys_access", emulator_sys_access }, // very old syscall not in modern Linux but it does exist as 33 for sparc/68k and 21 for x86/x64
-    { "emulator_sys_x64_arch_prctl", emulator_sys_x64_arch_prctl }, // only exists on x64 as syscall 158
+    { "emulator_sys_x32_x64_arch_prctl", emulator_sys_x32_x64_arch_prctl }, // only exists on x32 + x64 as syscalls 384 + 158
     { "emulator_sys_rename", emulator_sys_rename }, // exists on x64 but not most other platforms
     { "emulator_sys_time", emulator_sys_time }, // exists on x64 but not most other platforms
     { "emulator_sys_poll", emulator_sys_poll }, // "
+    { "emulator_sys_set_thread_area", emulator_sys_set_thread_area }, // exists on x32 and some other platforms
+    { "emulator_sys_get_thread_area", emulator_sys_get_thread_area },
+    { "emulator_sys_ugetrlimit", emulator_sys_ugetrlimit },
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -1680,7 +1713,7 @@ static const char * lookup_syscall( uint32_t x )
     return "unknown";
 } //lookup_syscall
 
-#if defined( X64OS ) || defined( SPARCOS )
+#if defined( X64OS ) || defined( SPARCOS ) || defined( X32OS )
 
 struct SyscalltoRV { uint16_t s; uint16_t r; };
 
@@ -1740,7 +1773,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 104, SYS_getgid },
     { 107, SYS_geteuid },
     { 108, SYS_getegid },
-    { 158, emulator_sys_x64_arch_prctl },
+    { 158, emulator_sys_x32_x64_arch_prctl },
     { 186, SYS_gettid },
     { 201, emulator_sys_time },
     { 204, SYS_sched_getaffinity },
@@ -1774,6 +1807,78 @@ uint16_t MapX64ToRiscV( REG_TYPE c )
 } //MapX64ToRiscv
 
 #endif //X64OS
+
+#ifdef X32OS
+
+static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html
+{
+    { 1, SYS_exit },
+    { 3, SYS_read },
+    { 4, SYS_write },
+    { 6, SYS_close },
+    { 10, SYS_unlink },
+    { 12, SYS_chdir },
+    { 20, SYS_getpid },
+    { 33, emulator_sys_access },
+    { 38, emulator_sys_rename },
+    { 39, SYS_mkdir },
+    { 40, SYS_rmdir },
+    { 43, SYS_times },
+    { 45, SYS_brk },
+    { 54, SYS_ioctl },
+    { 55, SYS_fcntl },
+    { 77, SYS_getrusage },
+    { 85, emulator_sys_readlink },
+    { 91, SYS_munmap },
+    { 116, SYS_sysinfo },
+    { 118, SYS_fsync },
+    { 122, SYS_uname },
+    { 125, SYS_mprotect },
+    { 140, emulator_sys__llseek },
+    { 148, SYS_fdatasync },
+    { 163, SYS_mremap },
+    { 174, SYS_sigaction },
+    { 175, SYS_rt_sigprocmask },
+    { 183, SYS_getcwd },
+    { 191, emulator_sys_ugetrlimit },
+    { 192, SYS_mmap }, // really mmap2, but just map to mmap because we don't suppor the last parameter anyway
+    { 199, SYS_getuid }, // actually getuid32
+    { 200, SYS_getgid }, // actually getgid32
+    { 201, SYS_geteuid }, // actually geteuid32
+    { 202, SYS_getegid }, // actually getegid32
+    { 220, SYS_getdents64 },
+    { 221, SYS_fcntl }, // actually fcntl64
+    { 224, SYS_gettid },
+    { 243, emulator_sys_set_thread_area },
+    { 244, emulator_sys_set_thread_area },
+    { 252, SYS_exit_group },
+    { 258, SYS_set_tid_address },
+    { 267, SYS_clock_nanosleep },
+    { 270, SYS_tgkill },
+    { 295, SYS_openat },
+    { 296, SYS_mkdirat },
+    { 301, SYS_unlinkat },
+    { 305, SYS_readlinkat },
+    { 308, SYS_pselect6 },
+    { 311, SYS_set_robust_list },
+    { 355, SYS_getrandom },
+    { 383, SYS_statx },
+    { 384, emulator_sys_x32_x64_arch_prctl },
+    { 386, SYS_rseq },
+    { 403, SYS_clock_gettime },
+    { 0x2002, emulator_sys_trace_instructions }, // same value
+};
+
+uint16_t MapX32ToRiscV( REG_TYPE c )
+{
+    SyscalltoRV key = { (uint16_t) c, 0 };
+    SyscalltoRV * presult = (SyscalltoRV *) my_bsearch( &key, X32ToRiscV, _countof( X32ToRiscV ), sizeof( key ), syscall_compare );
+    if ( 0 != presult )
+        return presult->r;
+    return 0;
+} //MapX32ToRiscv
+
+#endif //X32OS
 
 #ifdef SPARCOS
 
@@ -1863,6 +1968,8 @@ void send_character( uint8_t c )
     printf( "%c", c );
 } //send_character
 
+static struct linux_user_desc g_user_desc;
+
 #ifdef M68K
 extern "C" long syscall( long number, ... );
 #endif
@@ -1881,7 +1988,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
     #if !defined( OLDGCC )
         static DIR * g_FindFirst = 0;
-        static uint64_t g_FindFirstDescriptor = -1;
+        static REG_TYPE g_FindFirstDescriptor = -1;
     #endif
 #endif
 
@@ -1904,12 +2011,20 @@ void emulator_invoke_svc( CPUClass & cpu )
         printf( "unable to find an X64 mapping for syscall %llu\n", ACCESS_REG( REG_SYSCALL ) );
         tracer.Trace( "unable to find an X64 mapping for syscall %llu\n", ACCESS_REG( REG_SYSCALL ) );
     }
+#elif defined( X32OS )
+    syscall_id = MapX32ToRiscV( syscall_id );
+    tracer.Trace( "mapped x32 syscall %u to %u\n", ACCESS_REG( REG_SYSCALL ), syscall_id );
+    if ( 0 == syscall_id )
+    {
+        printf( "unable to find an X32 mapping for syscall %u\n", ACCESS_REG( REG_SYSCALL ) );
+        tracer.Trace( "unable to find an X32 mapping for syscall %u\n", ACCESS_REG( REG_SYSCALL ) );
+    }
 #endif
 
     // Linux syscalls support up to 6 arguments
 
     if ( tracer.IsEnabled() )
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
         tracer.Trace( "syscall %s %x = %d, arg0 %x, arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x\n",
                       lookup_syscall( syscall_id ), syscall_id, syscall_id,
                       ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ), ACCESS_REG( REG_ARG3 ),
@@ -1935,11 +2050,42 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, 0 );
             break;
         }
-#ifdef X64OS
-        case emulator_sys_x64_arch_prctl:
+#if defined( X32OS )
+        case emulator_sys_ugetrlimit:
         {
-            uint64_t arch = ACCESS_REG( REG_ARG0 );
-            uint64_t pbase = ACCESS_REG( REG_ARG1 );
+            errno = EINVAL;
+            update_result_errno( cpu, -1 );
+            break;
+        }
+        case emulator_sys_set_thread_area:
+        {
+            struct linux_user_desc * pud = (linux_user_desc *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.Trace( "  entry number: %d\n", pud->entry_number );
+            tracer.Trace( "  sizeof the struct: %u\n", sizeof( struct linux_user_desc ) );
+            tracer.Trace( "  base_addr: %#x\n", pud->base_addr );
+            tracer.Trace( "  limit: %#x\n", pud->limit );
+            if ( -1 == pud->entry_number )
+            {
+                pud->entry_number = 1;
+                cpu.reg_gs() = pud->base_addr;
+            }
+            memcpy( & g_user_desc, pud, sizeof( *pud ) );
+            update_result_errno( cpu, 0 );
+            break;
+        }
+#endif
+        case emulator_sys_get_thread_area:
+        {
+            struct linux_user_desc * pud = (linux_user_desc *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            memcpy( pud, & g_user_desc, sizeof( *pud ) );
+            update_result_errno( cpu, 0 );
+            break;
+        }
+#if defined( X64OS ) || defined( X32OS )
+        case emulator_sys_x32_x64_arch_prctl:
+        {
+            REG_TYPE arch = ACCESS_REG( REG_ARG0 );
+            REG_TYPE pbase = ACCESS_REG( REG_ARG1 );
             SIGNED_REG_TYPE result = 0;
 
             if ( 0x1001 == arch ) // ARCH_SET_GS
@@ -1947,9 +2093,9 @@ void emulator_invoke_svc( CPUClass & cpu )
             else if ( 0x1002 == arch ) // ARCH_SET_FS
                 cpu.reg_fs() = pbase;
             else if ( 0x1003 == arch ) // ARCH_GET_FS
-                * (uint64_t *) cpu.getmem( pbase ) = cpu.reg_fs();
+                * (REG_TYPE *) cpu.getmem( pbase ) = cpu.reg_fs();
             else if ( 0x1004 == arch ) // ARCH_GET_GS
-                * (uint64_t *) cpu.getmem( pbase ) = cpu.reg_gs();
+                * (REG_TYPE *) cpu.getmem( pbase ) = cpu.reg_gs();
             else  // this cpu doesn't support shadow stacks or CET generally
             {
                 errno = EINVAL;
@@ -2068,6 +2214,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( 1 == op ) // F_GETFD
                 ACCESS_REG( REG_RESULT ) = 1; // FD_CLOEXEC
+            else if ( 3 == op )
+                ACCESS_REG( REG_RESULT ) = 2; // O_RDWR
             else
                 tracer.Trace( "unhandled SYS_fcntl operation %d\n", op );
             break;
@@ -2083,13 +2231,18 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( 0 != ACCESS_REG( REG_ARG3 ) )
                 remain = (struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
 
+#ifdef X32OS
+            struct timespec_syscall_x32 local_request = * (struct timespec_syscall_x32 *) request;
+            local_request.tv_sec = swap_endian32( local_request.tv_sec );
+            local_request.tv_nsec = swap_endian32( local_request.tv_nsec );
+#else
             struct timespec_syscall local_request = * request;
-
             local_request.tv_sec = swap_endian64( local_request.tv_sec );
             local_request.tv_nsec = swap_endian64( local_request.tv_nsec );
+#endif
 
             uint64_t ms = local_request.tv_sec * 1000 + local_request.tv_nsec / 1000000;
-            tracer.Trace( "  nanosleep sec %llu, nsec %llu == %llu ms\n", local_request.tv_sec, local_request.tv_nsec, ms );
+            tracer.Trace( "  nanosleep sec %llu, nsec %llu == %llu ms\n", (uint64_t) local_request.tv_sec, (uint64_t) local_request.tv_nsec, ms );
             sleep_ms( ms ); // ignore remain argument because there are no signals to wake the thread
             update_result_errno( cpu, 0 );
             break;
@@ -2580,7 +2733,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             REG_TYPE descriptor = ACCESS_REG( REG_ARG0 );
             uint8_t * pentries = (uint8_t *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             REG_TYPE count = ACCESS_REG( REG_ARG2 );
-            tracer.Trace( "  pentries: %p, count %u\n", pentries, (uint32_t) count );
+            tracer.Trace( "  pentries: %p, count %u, descriptor %p\n", pentries, (uint32_t) count, descriptor );
             struct linux_dirent64_syscall * pcur = (struct linux_dirent64_syscall *) pentries;
             memset( pentries, 0, count );
 
@@ -2687,7 +2840,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
 #else
         #if !defined( OLDGCC )
-            tracer.Trace( "  g_FindFirstDescriptor: %d, g_FindFirst: %p\n", g_FindFirstDescriptor, g_FindFirst );
+            tracer.Trace( "  g_FindFirstDescriptor: %d, g_FindFirst: %p, descriptor: %p\n", g_FindFirstDescriptor, g_FindFirst, descriptor );
 
             if ( -1 == g_FindFirstDescriptor )
             {
@@ -2697,6 +2850,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( 0 == g_FindFirst )
             {
+                tracer.Trace( "  no g_FindFirst\n" );
                 errno = EBADF;
                 g_FindFirstDescriptor = -1;
                 update_result_errno( cpu, -1 );
@@ -2756,7 +2910,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     g_brk_offset = cpu.getoffset( ask );
                     if ( g_brk_offset > g_highwater_brk )
                         g_highwater_brk = g_brk_offset;
-#ifdef X64OS // as far as I can tell x64 is the only platform that requires the ask to be in the result on return
+#if defined( X64OS ) || defined( X32OS ) // as far as I can tell x32 and x64 are the only platforms that requires the ask to be in the result on return
                     ACCESS_REG( REG_RESULT ) = ask;
 #endif
                 }
@@ -3222,17 +3376,19 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_getrusage:
         {
             int who = (int) ACCESS_REG( REG_ARG0 );
-#ifdef M68
+#if defined( M68 )
             struct linux_rusage_syscall32 *prusage = (struct linux_rusage_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-#else //M68
+#elif defined( X32OS )
+            struct linux_rusage_syscall_x32 *prusage = (struct linux_rusage_syscall_x32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+#else //M68 || X32OS
             struct linux_rusage_syscall *prusage = (struct linux_rusage_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             tracer.Trace( "  sizeof linux_rusage_syscall: %zd\n", sizeof( struct linux_rusage_syscall ) );
-#ifdef SPARCOS
+#if defined( SPARCOS ) || defined( X32OS )
             memset( prusage, 0, 88 ); // 32-bit sparc binaries use fulls-sized times but are only 88 bytes long; through ru_majflt, not starting with ru_nswap
 #else
             memset( prusage, 0, sizeof( struct linux_rusage_syscall ) );
 #endif //SPARCOS
-#endif //M68
+#endif //M68 || X32OS
 
             if ( 0 == who ) // RUSAGE_SELF
             {
@@ -3241,10 +3397,15 @@ void emulator_invoke_svc( CPUClass & cpu )
                 if ( GetProcessTimes( GetCurrentProcess(), &ftCreation, &ftExit, &ftKernel, &ftUser ) )
                 {
                     uint64_t utotal = ( ( (uint64_t) ftUser.dwHighDateTime << 32 ) + ftUser.dwLowDateTime ) / 10; // 100ns to microseconds
-#ifdef M68
+#if defined( M68 )
                     prusage->ru_utime.tv_sec = utotal / 1000000;
                     prusage->ru_utime.tv_usec = (uint32_t) ( utotal % 1000000 );
                     prusage->ru_utime.tv_sec = swap_endian64( prusage->ru_utime.tv_sec );
+                    prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
+#elif defined( X32OS )
+                    prusage->ru_utime.tv_sec = (uint32_t) ( utotal / 1000000 );
+                    prusage->ru_utime.tv_usec = (uint32_t) ( utotal % 1000000 );
+                    prusage->ru_utime.tv_sec = swap_endian32( prusage->ru_utime.tv_sec );
                     prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
 #else //M68 // SPARCOS seems to use the 64 bit structures
                     prusage->ru_utime.tv_sec = utotal / 1000000;
@@ -3258,7 +3419,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                     prusage->ru_stime.tv_usec = (uint32_t) ( stotal % 1000000 );
                     prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
                     prusage->ru_stime.tv_usec = swap_endian32( prusage->ru_stime.tv_usec );
-#else //M68
+#elif defined( X32OS )
+                    prusage->ru_stime.tv_sec = (uint32_t) ( stotal / 1000000 );
+                    prusage->ru_stime.tv_usec = (uint32_t) ( stotal % 1000000 );
+                    prusage->ru_stime.tv_sec = swap_endian32( prusage->ru_stime.tv_sec );
+                    prusage->ru_stime.tv_usec = swap_endian32( prusage->ru_stime.tv_usec );
+#else //M68 or X32OS
                     prusage->ru_stime.tv_sec = stotal / 1000000;
                     prusage->ru_stime.tv_usec = stotal % 1000000;
                     prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
@@ -3270,7 +3436,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else //_WIN32
                 struct rusage local_rusage;
                 getrusage( who, &local_rusage ); // on 32-bit systems fields are 32 bit
-#ifdef M68
+#if defined( M68 )
                 prusage->ru_utime.tv_sec = local_rusage.ru_utime.tv_sec;
                 prusage->ru_utime.tv_usec = (uint32_t) local_rusage.ru_utime.tv_usec;
                 prusage->ru_stime.tv_sec = local_rusage.ru_stime.tv_sec;
@@ -3279,7 +3445,16 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
                 prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
                 prusage->ru_stime.tv_usec = swap_endian32( prusage->ru_stime.tv_usec );
-#else //M68
+#elif defined( X32OS )
+                prusage->ru_utime.tv_sec = (uint32_t) local_rusage.ru_utime.tv_sec;
+                prusage->ru_utime.tv_usec = (uint32_t) local_rusage.ru_utime.tv_usec;
+                prusage->ru_stime.tv_sec = (uint32_t) local_rusage.ru_stime.tv_sec;
+                prusage->ru_stime.tv_usec = (uint32_t) local_rusage.ru_stime.tv_usec;
+                prusage->ru_utime.tv_sec = swap_endian32( prusage->ru_utime.tv_sec );
+                prusage->ru_utime.tv_usec = swap_endian32( prusage->ru_utime.tv_usec );
+                prusage->ru_stime.tv_sec = swap_endian32( prusage->ru_stime.tv_sec );
+                prusage->ru_stime.tv_usec = swap_endian32( prusage->ru_stime.tv_usec );
+#else //M68 or X32OS
                 prusage->ru_utime.tv_sec = local_rusage.ru_utime.tv_sec;
                 prusage->ru_utime.tv_usec = local_rusage.ru_utime.tv_usec;
                 prusage->ru_stime.tv_sec = local_rusage.ru_stime.tv_sec;
@@ -3288,7 +3463,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_utime.tv_usec = swap_endian64( prusage->ru_utime.tv_usec );
                 prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
                 prusage->ru_stime.tv_usec = swap_endian64( prusage->ru_stime.tv_usec );
-#ifndef M68K
+#if ! ( defined( M68K ) || defined( X32OS ) )
                 prusage->ru_maxrss = local_rusage.ru_maxrss;
                 prusage->ru_ixrss = local_rusage.ru_ixrss;
                 prusage->ru_idrss = local_rusage.ru_idrss;
@@ -3448,7 +3623,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             // this function is long obsolete, but older apps call it and it's still supported on recent Linux builds
 
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
             struct linux_tms_syscall32 * ptms = ( 0 != ACCESS_REG( REG_ARG0 ) ) ? (struct linux_tms_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) : 0;
 #else
             struct linux_tms_syscall * ptms = ( 0 != ACCESS_REG( REG_ARG0 ) ) ? (struct linux_tms_syscall *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) : 0;
@@ -3463,7 +3638,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     ptms->tms_utime = ( ( (uint64_t) ftUser.dwHighDateTime << 32) + ftUser.dwLowDateTime ) / 100000; // 100ns to hundredths of a second
                     ptms->tms_stime = ( ( (uint64_t) ftKernel.dwHighDateTime << 32 ) + ftKernel.dwLowDateTime ) / 100000;
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
                     ptms->tms_utime = swap_endian32( ptms->tms_utime );
                     ptms->tms_stime = swap_endian32( ptms->tms_stime );
 #else
@@ -3480,7 +3655,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ptms->tms_stime = local_tms.tms_stime;
                 ptms->tms_cutime = local_tms.tms_cutime;
                 ptms->tms_cstime = local_tms.tms_cstime;
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
                 ptms->tms_utime = swap_endian32( ptms->tms_utime );
                 ptms->tms_stime = swap_endian32( ptms->tms_stime );
                 ptms->tms_cutime = swap_endian32( ptms->tms_cutime );
@@ -3530,16 +3705,9 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         case emulator_sys_rename:
         {
-            // set
-            REG_TYPE oldname = ACCESS_REG( REG_ARG0 );
-            REG_TYPE newname = ACCESS_REG( REG_ARG1 );
-            ACCESS_REG( REG_ARG0 ) = (REG_TYPE) (SIGNED_REG_TYPE) -100;
-            ACCESS_REG( REG_ARG1 ) = oldname;
-            ACCESS_REG( REG_ARG2 ) = (REG_TYPE) (SIGNED_REG_TYPE) -100;
-            ACCESS_REG( REG_ARG3 ) = newname;
-            ACCESS_REG( REG_ARG4 ) = 0; // flags
-
-            // fall through!!!!
+            int result = rename( (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ), (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) ) );
+            update_result_errno( cpu, result );
+            break;
         }
         case SYS_renameat:
         case SYS_renameat2:
@@ -3614,10 +3782,10 @@ void emulator_invoke_svc( CPUClass & cpu )
             char ac[ EMULATOR_MAX_PATH ];
             strcpy( ac, pathname );
             slash_to_backslash( ac );
-            result = fill_pstat_windows( ( dirfd > 1 ) ? dirfd : -1, & local_stat, ac );
+            result = fill_pstat_windows( ( dirfd > 0 ) ? dirfd : -1, & local_stat, ac );
             if ( 0 == result )
             {
-#ifdef SPARCOS
+#if defined( SPARCOS )
                 struct statx_sparc_linux_syscall32 * pout32 = (struct statx_sparc_linux_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
                 pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
                 pout32->stx_ino = local_stat.st_ino;
@@ -3634,6 +3802,50 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
                 pout32->swap_endianness();
+
+                tracer.Trace( "statx data:\n" );
+                tracer.Trace( "  gid: %#x\n", pout32->stx_gid );
+                tracer.Trace( "  mode: %#x\n", pout32->stx_mode );
+                tracer.Trace( "  ino: %#x\n", pout32->stx_ino );
+                tracer.Trace( "  size: %#x\n", pout32->stx_size );
+                tracer.Trace( "  blocks: %#x\n", pout32->stx_blocks );
+                tracer.TraceBinaryData( (uint8_t *) pout32, sizeof( *pout32 ), 5 );
+#elif defined( X32OS )
+                struct statx_linux_syscall_x32 * pout32 = (struct statx_linux_syscall_x32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
+                size_t cbStat = sizeof( struct statx_linux_syscall_x32 );
+                local_stat.swap_endianness();
+
+                pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
+                pout32->stx_ino = local_stat.st_ino;
+                pout32->stx_nlink = (uint32_t) local_stat.st_nlink;
+                pout32->stx_uid = local_stat.st_uid;
+                pout32->stx_gid = local_stat.st_gid;
+                pout32->stx_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout32->stx_size = local_stat.st_size;
+                pout32->stx_blocks = local_stat.st_blocks;
+                pout32->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
+                pout32->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
+                pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
+                pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+
+                tracer.Trace( "statx data:\n" );
+                tracer.Trace( "  gid: %#x\n", pout32->stx_gid );
+                tracer.Trace( "  mode: %#x\n", pout32->stx_mode );
+                tracer.Trace( "  ino: %#llx\n", pout32->stx_ino );
+                tracer.Trace( "  size: %#llx\n", pout32->stx_size );
+                tracer.Trace( "  blocks: %#llx\n", pout32->stx_blocks );
+                tracer.Trace( "  attrib_mask: %#llx\n", pout32->stx_attributes_mask );
+                tracer.Trace( "  atime sec %#llx\n", pout32->stx_atime.tv_sec );
+                tracer.Trace( "  atime nsec %#lx\n", pout32->stx_atime.tv_nsec );
+                tracer.Trace( "  btime sec %#llx\n", pout32->stx_btime.tv_sec );
+                tracer.Trace( "  btime nsec %#lx\n", pout32->stx_btime.tv_nsec );
+                tracer.Trace( "  ctime sec %#llx\n", pout32->stx_ctime.tv_sec );
+                tracer.Trace( "  ctime nsec %#lx\n", pout32->stx_ctime.tv_nsec );
+                tracer.Trace( "  mtime sec %#llx\n", pout32->stx_mtime.tv_sec );
+                tracer.Trace( "  mtime nsec %#lx\n", pout32->stx_mtime.tv_nsec );
+                //tracer.TraceBinaryData( (uint8_t *) pout32, cbStat, 5 );
 #else
                 size_t cbStat = sizeof( struct stat_linux_syscall );
                 assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
@@ -3653,6 +3865,26 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+
+                pout->stx_blksize = 0xbbbbbbbb;
+                pout->stx_attributes = 0xaaaaaaaaaaaaaaaa;
+                pout->stx_nlink = 0x11111111;
+                pout->stx_uid = 0x22222222;
+                pout->stx_gid = 0x33333333;
+                pout->stx_mode = 0x4444;
+                pout->stx_ino = 0x5555555555555555;
+                pout->stx_size = 0x6666666666666666;
+                pout->stx_blocks = 0x7777777777777777;
+
+
+                tracer.Trace( "statx data:\n" );
+                tracer.Trace( "  gid: %#x\n", pout->stx_gid );
+                tracer.Trace( "  mode: %#x\n", pout->stx_mode );
+                tracer.Trace( "  ino: %#llx\n", pout->stx_ino );
+                tracer.Trace( "  size: %#llx\n", pout->stx_size );
+                tracer.Trace( "  blocks: %#llx\n", pout->stx_blocks );
+                tracer.Trace( "  attrib_mask: %#llx\n", pout->stx_attributes_mask );
+                tracer.TraceBinaryData( (uint8_t *) pout, (uint32_t) cbStat, 5 );
 #endif
             }
             else
@@ -3688,7 +3920,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif // __APPLE__
             if ( 0 == result )
             {
-#ifdef SPARCOS
+#if defined( SPARCOS )
                 struct statx_sparc_linux_syscall32 * pout32 = (struct statx_sparc_linux_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
                 pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
                 pout32->stx_ino = local_stat.st_ino;
@@ -3721,6 +3953,60 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
 #endif
                 pout32->swap_endianness();
+
+#elif defined( X32OS )
+                struct statx_linux_syscall_x32 * pout32 = (struct statx_linux_syscall_x32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
+                size_t cbStat = sizeof( struct statx_linux_syscall_x32 );
+
+                pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
+                pout32->stx_ino = local_stat.st_ino;
+                pout32->stx_nlink = (uint32_t) local_stat.st_nlink;
+                pout32->stx_uid = local_stat.st_uid;
+                pout32->stx_gid = local_stat.st_gid;
+                pout32->stx_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout32->stx_size = local_stat.st_size;
+                pout32->stx_blocks = local_stat.st_blocks;
+
+#if defined( __APPLE__ )
+                pout32->stx_atime.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout32->stx_atime.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
+#elif defined( M68K )
+                pout32->stx_atime.tv_sec = local_stat.st_atime;
+                pout32->stx_atime.tv_nsec = 0;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtime;
+                pout32->stx_mtime.tv_nsec = 0;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctime;
+                pout32->stx_ctime.tv_nsec = 0;
+#else
+                pout32->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
+                pout32->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout32->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
+                pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
+                pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+#endif
+
+                pout32->swap_endianness();
+                tracer.Trace( "statx data:\n" );
+                tracer.Trace( "  gid: %#x\n", pout32->stx_gid );
+                tracer.Trace( "  mode: %#x\n", pout32->stx_mode );
+                tracer.Trace( "  ino: %#llx\n", pout32->stx_ino );
+                tracer.Trace( "  size: %#llx\n", pout32->stx_size );
+                tracer.Trace( "  blocks: %#llx\n", pout32->stx_blocks );
+                tracer.Trace( "  attrib_mask: %#llx\n", pout32->stx_attributes_mask );
+                tracer.Trace( "  atime sec %#llx\n", pout32->stx_atime.tv_sec );
+                tracer.Trace( "  atime nsec %#lx\n", pout32->stx_atime.tv_nsec );
+                tracer.Trace( "  btime sec %#llx\n", pout32->stx_btime.tv_sec );
+                tracer.Trace( "  btime nsec %#lx\n", pout32->stx_btime.tv_nsec );
+                tracer.Trace( "  ctime sec %#llx\n", pout32->stx_ctime.tv_sec );
+                tracer.Trace( "  ctime nsec %#lx\n", pout32->stx_ctime.tv_nsec );
+                tracer.Trace( "  mtime sec %#llx\n", pout32->stx_mtime.tv_sec );
+                tracer.Trace( "  mtime nsec %#lx\n", pout32->stx_mtime.tv_nsec );
+                //tracer.TraceBinaryData( (uint8_t *) pout32, cbStat, 5 );
 
 #else // SPARCOS
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
@@ -4029,7 +4315,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         default:
         {
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
             printf( "error; ecall invoked with unknown command %u = %#x, a0 %#x, a1 %#x, a2 %#x\n",
                     syscall_id, syscall_id, ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ) );
             tracer.Trace( "error; ecall invoked with unknown command %u = %#x, a0 %#x, a1 %#x, a2 %#x\n",
@@ -4168,6 +4454,10 @@ static const char * riscv_register_names[ 32 ] =
 static const char * x64_register_names[16] = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" };
 #endif
 
+#ifdef X32OS
+static const char * x32_register_names[16] = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi" };
+#endif
+
 #ifdef SPARCOS
 static const char * sparc_register_names[ 32 ] =
 {
@@ -4188,7 +4478,7 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     printf( "%s (%s) fatal error: %s %0llx\n", APP_NAME, target_platform(), pcerr, error_value );
 
     uint64_t offset = 0;
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
     uint32_t offset32 = 0;
     const char * psymbol = emulator_symbol_lookup( REG_PC, offset32 );
     offset = offset32;
@@ -4270,6 +4560,26 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
             }
         }
     }
+
+#elif defined( X32OS )
+
+    for ( size_t i = 0; i < 8; i++ )
+    {
+        tracer.Trace( "%4s: %8x, ", x32_register_names[ i ], ACCESS_REG( i ) );
+        printf( "%4s: %8x, ", x32_register_names[ i ], ACCESS_REG( i ) );
+
+        if ( 3 == ( i & 3 ) )
+        {
+            tracer.Trace( "\n" );
+            printf( "\n" );
+            if ( 15 != i )
+            {
+                tracer.Trace( "  " );
+                printf( "  " );
+            }
+        }
+    }
+
 #else
 
     for ( size_t i = 0; i < 32; i++ )
@@ -4524,7 +4834,7 @@ static int symbol_find_compare_cpm( const void * a, const void * b )
 
 #endif //M68
 
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
 
 static int symbol_find_compare32( const void * a, const void * b )
 {
@@ -4547,7 +4857,7 @@ static int symbol_find_compare32( const void * a, const void * b )
     return -1;
 } //symbol_find_compare32
 
-#else // M68 || SPARCOS
+#else // M68 || SPARCOS || X32OS
 
 static int symbol_find_compare( const void * a, const void * b )
 {
@@ -4570,7 +4880,7 @@ static int symbol_find_compare( const void * a, const void * b )
     return -1;
 } //symbol_find_compare
 
-#endif // M68 || SPARCOS
+#endif // M68 || SPARCOS || X32OS
 
 vector<char> g_string_table;      // strings in the elf image
 vector<ElfSymbol64> g_symbols;    // symbols in the elf image
@@ -4578,7 +4888,17 @@ vector<ElfSymbol32> g_symbols32;  // symbols in the elf image
 
 // returns the best guess for a symbol name for the address
 
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
+
+#ifdef X32OS
+const char * emulator_symbol_lookup( uint64_t address, uint64_t & offset )
+{
+    uint32_t offset32;
+    const char * result = emulator_symbol_lookup( (uint32_t) address, offset32 );
+    offset = offset32;
+    return result;
+} //emulator_symbol_lookup
+#endif
 
 const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
 {
@@ -4601,7 +4921,7 @@ const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
                 return psym->name;
             }
         }
-#endif
+#endif //M68
 
         return "";
     }
@@ -4633,7 +4953,7 @@ static int symbol_compare32( const void * a, const void * b )
     return -1;
 } //symbol_compare32
 
-#else //M68
+#else // M68 || SPARCOS || X32OS
 
 const char * emulator_symbol_lookup( uint64_t address, uint64_t & offset )
 {
@@ -6884,7 +7204,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
 
 #endif // M68
 
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
 
 static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
 {
@@ -7536,7 +7856,7 @@ static bool load_68000_hex( const char * pimage )
 
 #endif //M68
 
-#endif // defined( M68 ) || defined( SPARCOS )
+#endif // defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
 
 static bool load_image( const char * pimage, const char * app_args )
 {
@@ -7567,12 +7887,14 @@ static bool load_image( const char * pimage, const char * app_args )
     if ( 0x464c457f != ehead.magic && 0x7f454c46 != ehead.magic )
         usage( "elf image file's magic header is invalid" );
 
-#if defined( M68 ) || defined( SPARCOS )
+#if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
     if ( 1 == ehead.bit_width )
         return load_image32( fp, pimage, app_args );
     else
         usage( "elf image isn't 32-bit" );
-#elif  defined( RVOS ) || defined( ARMOS ) || defined( X64OS )
+#endif
+
+#if defined( RVOS ) || defined( ARMOS ) || defined( X64OS )
     bool big_endian = ( 2 == ehead.endianness );
     tracer.Trace( "image is %s endian\n", big_endian ? "big" : "little" );
 
@@ -7585,7 +7907,10 @@ static bool load_image( const char * pimage, const char * app_args )
     }
 
     if ( ELF_MACHINE_ISA != ehead.machine )
+    {
+        printf( "machine found: %#x\n", ehead.machine );
         usage( "elf image machine ISA doesn't match this emulator" );
+    }
 
     if ( 0 == ehead.entry_point )
         usage( "elf entry point is 0, which is invalid" );
@@ -8615,7 +8940,7 @@ int main( int argc, char * argv[] )
                 appExists = file_exists( acApp );
             }
         }
-#endif
+#endif //M68
 
         if ( !appExists )
             usage( "input executable file not found" );
@@ -8632,8 +8957,10 @@ int main( int argc, char * argv[] )
         {
             unique_ptr<CPUClass> cpu( new CPUClass( memory, g_base_address, g_execution_address, g_stack_commit, g_top_of_stack ) );
 
-#ifdef SPARCOS
+#if defined( SPARCOS )
             cpu->Sparc_wim() = 2; // wim bit 1 is turned on. The OS owns management of WIM. By default on reset it's set to 0xffffffff
+#elif defined( X32OS )
+            cpu->Mode32( true ); // flip the cpu into 32-bit mode from 64-bit mode
 #endif
 
             cpu->trace_instructions( traceInstructions );

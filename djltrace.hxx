@@ -263,6 +263,19 @@ class CDJLTrace
             }
         } //TraceQuiet
 
+        void TraceIt( const char * format, ... )
+        {
+#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( M68K )
+            lock_guard<mutex> lock( mtx );
+#endif
+            va_list args;
+            va_start( args, format );
+            vfprintf( fp, format, args );
+            va_end( args );
+            if ( flush )
+                fflush( fp );
+        } //TraceIt
+
         void TraceDebug( bool condition, const char * format, ... )
         {
             #ifdef DEBUG
@@ -343,4 +356,3 @@ class CDJLTrace
 }; //CDJLTrace
 
 extern CDJLTrace tracer;
-

@@ -21,10 +21,13 @@
 #define emulator_sys_readlink           0x2009
 #define emulator_sys_getdents           0x200a
 #define emulator_sys_access             0x200b
-#define emulator_sys_x64_arch_prctl     0x200c // only exists on x64 as syscall 158
+#define emulator_sys_x32_x64_arch_prctl 0x200c // only exists on x32 + x64 as syscall 384 + 158
 #define emulator_sys_rename             0x200d // exists on x64 but isn't used on most others
 #define emulator_sys_time               0x200e // exists on x64 but isn't used on most others
 #define emulator_sys_poll               0x200f // "
+#define emulator_sys_set_thread_area    0x2010 // exists for x32 and some other platforms
+#define emulator_sys_get_thread_area    0x2011 // exists for x32 and some other platforms
+#define emulator_sys_ugetrlimit         0x2012 // exists for x32 and some other platforms
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -128,6 +131,12 @@ struct linux_timeval32
 };
 #pragma pack(pop)
 
+struct linux_timeval_x32
+{
+    uint32_t tv_sec;       // time_t
+    uint32_t tv_usec;
+};
+
 struct timespec_syscall
 {
     uint64_t tv_sec;
@@ -137,6 +146,18 @@ struct timespec_syscall
     {
         tv_sec = swap_endian64( tv_sec );
         tv_nsec = swap_endian64( tv_nsec );
+    }
+};
+
+struct timespec_syscall_x32
+{
+    uint32_t tv_sec;
+    uint32_t tv_nsec;
+
+    void swap_endianness()
+    {
+        tv_sec = swap_endian32( tv_sec );
+        tv_nsec = swap_endian32( tv_nsec );
     }
 };
 
@@ -369,7 +390,7 @@ struct statx_linux_syscall
     uint32_t stx_atomic_write_segments_max;
 
     /* File offset alignment for direct I/O reads */
-    uint32_t   stx_dio_read_offset_align;
+    uint32_t stx_dio_read_offset_align;
 
     void swap_endianness()
     {
@@ -390,6 +411,73 @@ struct statx_linux_syscall
 };
 
 #pragma pack(pop)
+
+struct statx_linux_syscall_x32 // for 32-bit intel. note the timestamps should not be packed
+{
+    uint32_t stx_mask;        /* Mask of bits indicating filled fields */
+    uint32_t stx_blksize;     /* Block size for filesystem I/O */
+    uint64_t stx_attributes;  /* Extra file attribute indicators */
+    uint32_t stx_nlink;       /* Number of hard links */
+    uint32_t stx_uid;         /* User ID of owner */
+    uint32_t stx_gid;         /* Group ID of owner */
+    uint16_t stx_mode;        /* File type and mode */
+    uint16_t stx_filler_A;
+    uint64_t stx_ino;         /* Inode number */
+    uint64_t stx_size;        /* Total size in bytes */
+    uint64_t stx_blocks;      /* Number of 512B blocks allocated */
+    uint64_t stx_attributes_mask; /* Mask to show what's supported in stx_attributes */
+
+    /* The following fields are file timestamps */
+    struct statx_timestamp_linux_syscall stx_atime;  /* Last access */
+    uint32_t stx_filler_B;
+    struct statx_timestamp_linux_syscall stx_btime;  /* Creation */
+    uint32_t stx_filler_C;
+    struct statx_timestamp_linux_syscall stx_ctime;  /* Last status change */
+    uint32_t stx_filler_D;
+    struct statx_timestamp_linux_syscall stx_mtime;  /* Last modification */
+    uint32_t stx_filler_E;
+
+    /* If this file represents a device, then the next two fields contain the ID of the device */
+    uint32_t stx_rdev_major;  /* Major ID */
+    uint32_t stx_rdev_minor;  /* Minor ID */
+
+    /* The next two fields contain the ID of the device containing the filesystem where the file resides */
+    uint32_t stx_dev_major;   /* Major ID */
+    uint32_t stx_dev_minor;   /* Minor ID */
+
+    uint64_t stx_mnt_id;      /* Mount ID */
+
+    /* Direct I/O alignment restrictions */
+    uint32_t stx_dio_mem_align;
+    uint32_t stx_dio_offset_align;
+
+    uint64_t stx_subvol;      /* Subvolume identifier */
+
+    /* Direct I/O atomic write limits */
+    uint32_t stx_atomic_write_unit_min;
+    uint32_t stx_atomic_write_unit_max;
+    uint32_t stx_atomic_write_segments_max;
+
+    /* File offset alignment for direct I/O reads */
+    uint32_t stx_dio_read_offset_align;
+
+    void swap_endianness()
+    {
+        stx_mask = swap_endian32( stx_mask );
+        stx_blksize = swap_endian32( stx_blksize );
+        stx_attributes = swap_endian64( stx_attributes );
+        stx_nlink = swap_endian32( stx_nlink );
+        stx_uid = swap_endian32( stx_uid );
+        stx_gid = swap_endian32( stx_gid );
+        stx_mode = swap_endian16( stx_mode );
+        stx_ino = swap_endian64( stx_ino );
+        stx_size = swap_endian64( stx_size );
+        stx_blocks = swap_endian64( stx_blocks );
+        stx_atime.swap_endianness();
+        stx_mtime.swap_endianness();
+        stx_ctime.swap_endianness();
+    }
+};
 
 struct statx_sparc_linux_syscall32
 {
@@ -513,6 +601,26 @@ struct linux_rusage_syscall32
     long   ru_nivcsw;        /* involuntary context switches */
 };
 
+struct linux_rusage_syscall_x32
+{
+    struct linux_timeval_x32 ru_utime; /* user CPU time used */
+    struct linux_timeval_x32 ru_stime; /* system CPU time used */
+    long   ru_maxrss;        /* maximum resident set size */
+    long   ru_ixrss;         /* integral shared memory size */
+    long   ru_idrss;         /* integral unshared data size */
+    long   ru_isrss;         /* integral unshared stack size */
+    long   ru_minflt;        /* page reclaims (soft page faults) */
+    long   ru_majflt;        /* page faults (hard page faults) */
+    long   ru_nswap;         /* swaps */
+    long   ru_inblock;       /* block input operations */
+    long   ru_oublock;       /* block output operations */
+    long   ru_msgsnd;        /* IPC messages sent */
+    long   ru_msgrcv;        /* IPC messages received */
+    long   ru_nsignals;      /* signals received */
+    long   ru_nvcsw;         /* voluntary context switches */
+    long   ru_nivcsw;        /* involuntary context switches */
+};
+
 struct pollfd_syscall
 {
     int fd;
@@ -602,4 +710,18 @@ struct AuxProcessStart32
     }
 };
 
-
+struct linux_user_desc
+{
+    unsigned int  entry_number;
+    unsigned int  base_addr;
+    unsigned int  limit;
+    unsigned int  seg_32bit:1;
+    unsigned int  contents:2;
+    unsigned int  read_exec_only:1;
+    unsigned int  limit_in_pages:1;
+    unsigned int  seg_not_present:1;
+    unsigned int  useable:1;
+    #ifdef __x86_64__
+        unsigned int  lm:1;
+    #endif
+};
