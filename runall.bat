@@ -21,13 +21,17 @@ if "%1" == "x64os" (
     set _runcmd=..\x64os\x64os -h:180 ..\x64os\bin\m68
     set _M68runcmd=..\..\x64os\x64os -h:180 ..\..\x64os\bin\m68
 ) else (
+if "%1" == "x32os" (
+    set _runcmd=..\x64os\x32os -h:180 ..\x64os\x32bin\m68
+    set _M68runcmd=..\..\x64os\x32os -h:180 ..\..\x64os\x32bin\m68
+) else (
 if "%1" == "sparcos" (
     set _runcmd=..\sparcos\sparcos -h:180 ..\sparcos\bin\m68-sparc
     set _M68runcmd=..\..\sparcos\sparcos -h:180 ..\..\sparcos\bin\m68-sparc
 ) else (
     echo invalid argument
     goto :eof
-))))))
+)))))))
 
 set outputfile=test_m68.txt
 echo %date% %time% >%outputfile%

@@ -21,6 +21,8 @@
     build a cross-compiler from here: https://gitlab.com/buildroot.org/buildroot/
 #elif defined( X64OS )
     This emulates an AMD64 CPU in Long Mode + 64-bit mode. No other modes are supported
+#elif defined( X32OS )
+    This emulates an Intel x86 CPU in 32-bit real mode.
 #else
     #error one of ARMOS, RVOS, M68, SPARCOS, X64OS, or X32OS must be defined
 #endif
@@ -109,7 +111,7 @@ using namespace std::chrono;
     #define CPUClass Arm64
     #define ELF_MACHINE_ISA 0xb7
     #define APP_NAME "ARMOS"
-    #define LOGFILE_NAME L"armos.log"
+    #define LOGFILE_NAME "armos.log"
     #define REG_FORMAT "%lld"
     #define REG_TYPE uint64_t
     #define SIGNED_REG_TYPE int64_t
@@ -133,7 +135,7 @@ using namespace std::chrono;
     #define CPUClass RiscV
     #define ELF_MACHINE_ISA 0xf3
     #define APP_NAME "RVOS"
-    #define LOGFILE_NAME L"rvos.log"
+    #define LOGFILE_NAME "rvos.log"
     #define REG_FORMAT "%lld"
     #define REG_TYPE uint64_t
     #define SIGNED_REG_TYPE int64_t
@@ -157,7 +159,7 @@ using namespace std::chrono;
     #define CPUClass m68000
     #define ELF_MACHINE_ISA 4
     #define APP_NAME "M68"
-    #define LOGFILE_NAME L"m68.log"
+    #define LOGFILE_NAME "m68.log"
     #define REG_FORMAT "%d"
     #define REG_TYPE uint32_t
     #define SIGNED_REG_TYPE int32_t
@@ -181,7 +183,7 @@ using namespace std::chrono;
     #define CPUClass Sparc
     #define ELF_MACHINE_ISA 2
     #define APP_NAME "SPARCOS"
-    #define LOGFILE_NAME L"sparcos.log"
+    #define LOGFILE_NAME "sparcos.log"
     #define REG_FORMAT "%d"
     #define REG_TYPE uint32_t
     #define SIGNED_REG_TYPE int32_t
@@ -205,7 +207,7 @@ using namespace std::chrono;
     #define CPUClass x64
     #define ELF_MACHINE_ISA 0x3e
     #define APP_NAME "X64OS"
-    #define LOGFILE_NAME L"x64os.log"
+    #define LOGFILE_NAME "x64os.log"
     #define REG_FORMAT "%lld"
     #define REG_TYPE uint64_t
     #define SIGNED_REG_TYPE int64_t
@@ -229,7 +231,7 @@ using namespace std::chrono;
     #define CPUClass x64
     #define ELF_MACHINE_ISA 3
     #define APP_NAME "X32OS"
-    #define LOGFILE_NAME L"x32os.log"
+    #define LOGFILE_NAME "x32os.log"
     #define REG_FORMAT "%d"
     #define REG_TYPE uint32_t
     #define SIGNED_REG_TYPE int32_t
@@ -251,6 +253,9 @@ using namespace std::chrono;
     #error "One of ARMOS, RVOS, M68, SPARCOS, X64OS, or X32OS must be defined for compilation"
 
 #endif
+
+#define CONCATENATE(e1, e2) e1 ## e2
+#define PREFIX_L(s) CONCATENATE(L, s)
 
 CDJLTrace tracer;
 ConsoleConfiguration g_consoleConfig;
@@ -841,7 +846,7 @@ static void usage( char const * perror = 0 )
     printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40.\n" );
     printf( "                 -p     shows performance information at app exit\n" );
     printf( "                 -s:X   # of KB for stack space. 1..1024 are valid. default is 128.\n" );
-    printf( "                 -t     enable debug tracing to %ls\n", LOGFILE_NAME );
+    printf( "                 -t     enable debug tracing to %s\n", LOGFILE_NAME );
     printf( "                 -v     used with -e shows verbose information (e.g. symbols)\n" );
     printf( "  %s\n", build_string() );
     exit( 1 );
@@ -1858,6 +1863,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 295, SYS_openat },
     { 296, SYS_mkdirat },
     { 301, SYS_unlinkat },
+    { 302, SYS_renameat },
     { 305, SYS_readlinkat },
     { 308, SYS_pselect6 },
     { 311, SYS_set_robust_list },
@@ -2060,6 +2066,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         case emulator_sys_set_thread_area:
         {
             struct linux_user_desc * pud = (linux_user_desc *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            pud->swap_endianness();
             tracer.Trace( "  entry number: %d\n", pud->entry_number );
             tracer.Trace( "  sizeof the struct: %u\n", sizeof( struct linux_user_desc ) );
             tracer.Trace( "  base_addr: %#x\n", pud->base_addr );
@@ -2069,7 +2076,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pud->entry_number = 1;
                 cpu.reg_gs() = pud->base_addr;
             }
+            pud->swap_endianness();
             memcpy( & g_user_desc, pud, sizeof( *pud ) );
+
             update_result_errno( cpu, 0 );
             break;
         }
@@ -3142,6 +3151,17 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         case SYS_newfstatat:
         {
+#if 0
+            tracer.Trace( "  offsetof st_dev: %d\n", (int) offsetof( struct stat_linux_syscall, st_dev ) );
+            tracer.Trace( "  offsetof st_ino: %d\n", (int) offsetof( struct stat_linux_syscall, st_ino ) );
+            tracer.Trace( "  offsetof st_nlink: %d\n", (int) offsetof( struct stat_linux_syscall, st_nlink ) );
+            tracer.Trace( "  offsetof st_mode: %d\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
+            tracer.Trace( "  offsetof st_uid: %d\n", (int) offsetof( struct stat_linux_syscall, st_uid ) );
+            tracer.Trace( "  offsetof st_gid: %d\n", (int) offsetof( struct stat_linux_syscall, st_gid ) );
+            tracer.Trace( "  offsetof st_rdev: %d\n", (int) offsetof( struct stat_linux_syscall, st_rdev ) );
+            tracer.Trace( "  offsetof st_size: %d\n", (int) offsetof( struct stat_linux_syscall, st_size ) );
+#endif
+
             const char * path = (char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             tracer.Trace( "  syscall command SYS_newfstatat, id %lld, path '%s', flags %llx\n", (uint64_t) ACCESS_REG( REG_ARG0 ), path, (uint64_t) ACCESS_REG( REG_ARG3 ) );
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
@@ -3201,6 +3221,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             {
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
 
+                tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
                 struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
                 pout->st_dev = local_stat.st_dev;
                 pout->st_ino = local_stat.st_ino;
@@ -3236,6 +3257,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif //__APPLE__
                 tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
                 pout->swap_endianness();
+                tracer.Trace( "  post-swap file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
             }
 #endif //_WIN32
             update_result_errno( cpu, result );
@@ -3785,6 +3807,8 @@ void emulator_invoke_svc( CPUClass & cpu )
             result = fill_pstat_windows( ( dirfd > 0 ) ? dirfd : -1, & local_stat, ac );
             if ( 0 == result )
             {
+                tracer.Trace( "  result in local stat_linux_syscall, offset of mode %u, mode: %#x\n", offsetof( struct stat_linux_syscall, st_mode ), local_stat.st_mode );
+                tracer.TraceBinaryData( (uint8_t *) &local_stat, sizeof( stat_linux_syscall ), 5 );
 #if defined( SPARCOS )
                 struct statx_sparc_linux_syscall32 * pout32 = (struct statx_sparc_linux_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
                 pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
@@ -3803,6 +3827,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
                 pout32->swap_endianness();
 
+                tracer.Trace( "offsetof mode: %u\n", (int) offsetof( struct statx_sparc_linux_syscall32, stx_mode ) );
                 tracer.Trace( "statx data:\n" );
                 tracer.Trace( "  gid: %#x\n", pout32->stx_gid );
                 tracer.Trace( "  mode: %#x\n", pout32->stx_mode );
@@ -3830,6 +3855,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_mtime.tv_sec = local_stat.st_mtim.tv_sec;
                 pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
 
+                tracer.Trace( "offsetof mode: %u\n", (int) offsetof( struct statx_linux_syscall_x32, stx_mode ) );
                 tracer.Trace( "statx data:\n" );
                 tracer.Trace( "  gid: %#x\n", pout32->stx_gid );
                 tracer.Trace( "  mode: %#x\n", pout32->stx_mode );
@@ -3876,7 +3902,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_size = 0x6666666666666666;
                 pout->stx_blocks = 0x7777777777777777;
 
-
+                tracer.Trace( "offsetof mode: %u\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
                 tracer.Trace( "statx data:\n" );
                 tracer.Trace( "  gid: %#x\n", pout->stx_gid );
                 tracer.Trace( "  mode: %#x\n", pout->stx_mode );
@@ -3916,11 +3942,14 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             tracer.Trace( "  statx calling fstatat with dirfd %d, flags %#x\n", dirfd, flags );
             result = fstatat( dirfd, pathname, & local_stat, flags );
-
 #endif // __APPLE__
             if ( 0 == result )
             {
+                tracer.Trace( "  result in local_stat, offset of mode %u, mode: %#x\n", offsetof( struct stat, st_mode ), local_stat.st_mode );
+                tracer.TraceBinaryData( (uint8_t *) &local_stat, sizeof( local_stat ), 5 );
+
 #if defined( SPARCOS )
+                tracer.Trace( "  offsetof mode: %u\n", (int) offsetof( struct statx_sparc_linux_syscall32, stx_mode ) );
                 struct statx_sparc_linux_syscall32 * pout32 = (struct statx_sparc_linux_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
                 pout32->stx_blksize = (uint32_t) local_stat.st_blksize;
                 pout32->stx_ino = local_stat.st_ino;
@@ -3955,6 +3984,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->swap_endianness();
 
 #elif defined( X32OS )
+                tracer.Trace( "  offsetof mode: %u\n", (int) offsetof( struct statx_linux_syscall_x32, stx_mode ) );
                 struct statx_linux_syscall_x32 * pout32 = (struct statx_linux_syscall_x32 *) cpu.getmem( ACCESS_REG( REG_ARG4 ) );
                 size_t cbStat = sizeof( struct statx_linux_syscall_x32 );
 
@@ -3963,7 +3993,10 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_nlink = (uint32_t) local_stat.st_nlink;
                 pout32->stx_uid = local_stat.st_uid;
                 pout32->stx_gid = local_stat.st_gid;
-                pout32->stx_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                tracer.Trace( "sizeof local_stat.st_mode: %u\n", (int) sizeof( local_stat.st_mode ) );
+                tracer.Trace( "sizeof pout32->st_mode: %u\n", (int) sizeof( pout32->stx_mode ) );
+                pout32->stx_mode = (uint16_t) local_stat.st_mode;
+                tracer.Trace( "mode from %#x, mode to %#x\n", local_stat.st_mode, pout32->stx_mode );
                 pout32->stx_size = local_stat.st_size;
                 pout32->stx_blocks = local_stat.st_blocks;
 
@@ -3988,7 +4021,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
-#endif
+#endif // __APPLE__ || M68K || (other)
 
                 pout32->swap_endianness();
                 tracer.Trace( "statx data:\n" );
@@ -4011,6 +4044,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else // SPARCOS
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
 
+                tracer.Trace( "offsetof mode: %u\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
                 pout->stx_blksize = (uint32_t) local_stat.st_blksize;
                 pout->stx_ino = local_stat.st_ino;
                 pout->stx_nlink = local_stat.st_nlink;
@@ -4043,7 +4077,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
             else
                 tracer.Trace( "  fstatat failed, error %d\n", errno );
-#endif
+#endif // !_WIN32
 
             update_result_errno( cpu, result );
             break;
@@ -7267,12 +7301,12 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         head.swap_endianness();
 
         tracer.Trace( "  type: %x / %s\n", head.type, head.show_type() );
-        tracer.Trace( "  offset in image: %llx\n", head.offset_in_image );
-        tracer.Trace( "  virtual address: %llx\n", head.virtual_address );
-        tracer.Trace( "  physical address: %llx\n", head.physical_address );
-        tracer.Trace( "  file size: %llx\n", head.file_size );
-        tracer.Trace( "  memory size: %llx\n", head.memory_size );
-        tracer.Trace( "  alignment: %llx\n", head.alignment );
+        tracer.Trace( "  offset in image: %x\n", head.offset_in_image );
+        tracer.Trace( "  virtual address: %x\n", head.virtual_address );
+        tracer.Trace( "  physical address: %x\n", head.physical_address );
+        tracer.Trace( "  file size: %x\n", head.file_size );
+        tracer.Trace( "  memory size: %x\n", head.memory_size );
+        tracer.Trace( "  alignment: %x\n", head.alignment );
 
         if ( 2 == head.type )
         {
@@ -7549,7 +7583,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     }
 
     REG_TYPE env_offset = args_len + 1;
-    tracer.Trace( "env_offset: %llx\n", (uint64_t) env_offset );
+    tracer.Trace( "env_offset: %x\n", env_offset );
     char * penv_data = (char *) ( buffer_args + env_offset );
     strcpy( penv_data, "OS=" );
     strcat( penv_data, APP_NAME );
@@ -7718,7 +7752,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     REG_TYPE stack_bytes = g_stack_commit - aux_data_size;
     tracer.Trace( "  <stack>                                             (%ld == %lx bytes)\n", stack_bytes, stack_bytes );
     tracer.Trace( "  last byte stack can use (g_bottom_of_stack):        %lx\n", g_base_address + g_bottom_of_stack );
-    tracer.Trace( "  <unallocated space between brk and the stack>       (%ld == %llx bytes)\n", g_brk_commit, g_brk_commit );
+    tracer.Trace( "  <unallocated space between brk and the stack>       (%ld == %lx bytes)\n", g_brk_commit, g_brk_commit );
     tracer.Trace( "  end_of_data / current brk:                          %lx\n", g_base_address + g_end_of_data );
     REG_TYPE uninitialized_bytes = g_end_of_data - first_uninitialized_data;
     tracer.Trace( "  <uninitialized data per the .elf file>              (%ld == %lx bytes)\n", uninitialized_bytes, uninitialized_bytes );
@@ -8883,7 +8917,7 @@ int main( int argc, char * argv[] )
             }
         }
 
-        tracer.Enable( trace, LOGFILE_NAME, true );
+        tracer.Enable( trace, PREFIX_L( LOGFILE_NAME ), true );
         tracer.SetQuiet( true );
         tracer.Trace( "host is little endian: %d, emulated cpu is little endian: %d\n", g_hostIsLittleEndian, CPU_IS_LITTLE_ENDIAN );
 
