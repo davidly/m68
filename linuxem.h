@@ -1,5 +1,10 @@
 #pragma once
 
+// for linux syscalls, various structures are different per platform.
+//   in emulator syscall implementations when parsing input and responding, use structs based on the emulator e.g. X64OS, RVOS, etc.
+//   in code that's invoking the C runtime use structs for that C runtime, not from this header file or any form of syscall structs.
+//   in code that's invoking a syscall (e.g. in a C runtime implementation) use structs based on the build platform e.g. __amd64__, __riscv__, etc.
+
 // the emulator only supports paths and filenames up to this length across all platforms
 
 #define EMULATOR_MAX_PATH 2048
@@ -203,7 +208,48 @@ struct stat_linux_syscall
           88        16 st_mtim
          104        16 st_ctim
          120         8 st_mystery_spot_2
+    */
 
+    uint64_t   st_dev;      /* ID of device containing file */
+    uint64_t   st_ino;      /* Inode number */
+    uint32_t   st_mode;     /* File type and mode */
+    uint32_t   st_nlink;    /* Number of hard links */
+    uint32_t   st_uid;      /* User ID of owner */
+    uint32_t   st_gid;      /* Group ID of owner */
+    uint64_t   st_rdev;     /* Device ID (if special file) */
+    uint64_t   st_mystery_spot;
+    uint64_t   st_size;     /* Total size, in bytes */
+    uint64_t   st_blksize;  /* Block size for filesystem I/O */
+    uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
+
+    struct timespec_syscall st_atim;  /* Time of last access */
+    struct timespec_syscall st_mtim;  /* Time of last modification */
+    struct timespec_syscall st_ctim;  /* Time of last status change */
+
+    uint64_t   st_mystery_spot_2;
+
+    void swap_endianness()
+    {
+        st_dev = swap_endian64( st_dev );
+        st_ino = swap_endian64( st_ino );
+        st_mode = swap_endian32( st_mode );
+        st_nlink = swap_endian32( st_nlink );
+        st_uid = swap_endian32( st_uid );
+        st_gid = swap_endian32( st_gid );
+        st_rdev = swap_endian64( st_rdev );
+        st_mystery_spot = swap_endian64( st_mystery_spot );
+        st_size = swap_endian64( st_size );
+        st_blksize = swap_endian64( st_blksize );
+        st_blocks = swap_endian64( st_blocks );
+        st_atim.swap_endianness();
+        st_mtim.swap_endianness();
+        st_ctim.swap_endianness();
+    }
+}; //stat_linux_sycall
+
+struct stat_linux_syscall_x64
+{
+    /*
       for AMD64:
       offset      size field
            0         8 st_dev
@@ -224,29 +270,15 @@ struct stat_linux_syscall
 
     uint64_t   st_dev;      /* ID of device containing file */
     uint64_t   st_ino;      /* Inode number */
-#ifdef X64OS
     uint64_t   st_nlink;    /* Number of hard links */
     uint32_t   st_mode;     /* File type and mode */
-#else
-    uint32_t   st_mode;     /* File type and mode */
-    uint32_t   st_nlink;    /* Number of hard links */
-#endif
     uint32_t   st_uid;      /* User ID of owner */
     uint32_t   st_gid;      /* Group ID of owner */
-#ifdef X64OS
     uint32_t   st_PADDING;  /* the default packing is different for gcc on Windows vs Linux, so be explicit with this padding */
-#endif
-    uint64_t   st_rdev;     /* Device ID (if special file) */
-#ifndef X64OS
-    uint64_t   st_mystery_spot;
-#endif
+    uint64_t   st_rdev;
     uint64_t   st_size;     /* Total size, in bytes */
     uint64_t   st_blksize;  /* Block size for filesystem I/O */
     uint64_t   st_blocks;   /* Number of 512 B blocks allocated */
-
-    /* Since POSIX.1-2008, this structure supports nanosecond
-       precision for the following timestamp fields.
-       For the details before POSIX.1-2008, see VERSIONS. */
 
     struct timespec_syscall st_atim;  /* Time of last access */
     struct timespec_syscall st_mtim;  /* Time of last modification */
@@ -258,18 +290,11 @@ struct stat_linux_syscall
     {
         st_dev = swap_endian64( st_dev );
         st_ino = swap_endian64( st_ino );
-        st_mode = swap_endian32( st_mode );
-#ifdef X64OS
         st_nlink = swap_endian64( st_nlink );
-#else
-        st_nlink = swap_endian32( st_nlink );
-#endif
+        st_mode = swap_endian32( st_mode );
         st_uid = swap_endian32( st_uid );
         st_gid = swap_endian32( st_gid );
         st_rdev = swap_endian64( st_rdev );
-#ifndef X64OS
-        st_mystery_spot = swap_endian64( st_mystery_spot );
-#endif
         st_size = swap_endian64( st_size );
         st_blksize = swap_endian64( st_blksize );
         st_blocks = swap_endian64( st_blocks );
@@ -277,7 +302,7 @@ struct stat_linux_syscall
         st_mtim.swap_endianness();
         st_ctim.swap_endianness();
     }
-};
+}; //stat_linux_syscall_x64
 
 struct stat_linux_syscall32
 {
@@ -334,7 +359,7 @@ struct stat_linux_syscall32
         st_mtim.swap_endianness();
         st_ctim.swap_endianness();
     }
-};
+}; //stat_linux_syscall32
 
 #ifndef STATX_TYPE
 # define STATX_TYPE 0x0001U

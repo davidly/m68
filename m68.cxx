@@ -2286,27 +2286,54 @@ void emulator_invoke_svc( CPUClass & cpu )
             result = fill_pstat_windows( descriptor, & local_stat, 0 );
             if ( 0 == result )
             {
-                size_t cbStat = sizeof( struct stat_linux_syscall );
-                assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
-                local_stat.swap_endianness();
-                memcpy( cpu.getmem( ACCESS_REG( REG_ARG1 ) ), & local_stat, cbStat );
-                tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
+                #ifdef X64OS
+                    struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                    pout->st_dev = local_stat.st_dev;
+                    pout->st_ino = local_stat.st_ino;
+                    pout->st_mode = local_stat.st_mode;
+                    pout->st_nlink = local_stat.st_nlink;
+                    pout->st_uid = local_stat.st_uid;
+                    pout->st_gid = local_stat.st_gid;
+                    pout->st_rdev = local_stat.st_rdev;
+                    pout->st_size = local_stat.st_size;
+                    pout->st_blksize = local_stat.st_blksize;
+                    pout->st_blocks = local_stat.st_blocks;
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) pout->st_size, (int) offsetof( struct stat_linux_syscall_x64, st_size ) );
+                    pout->swap_endianness();
+                    tracer.Trace( "post-swap mode: %#x\n", pout->st_mode );
+                #else // X64OS
+                    size_t cbStat = sizeof( struct stat_linux_syscall );
+                    assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
+                    local_stat.swap_endianness();
+                    memcpy( cpu.getmem( ACCESS_REG( REG_ARG1 ) ), & local_stat, cbStat );
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
+                #endif // X64OS
             }
             else
             {
                 errno = 2;
                 tracer.Trace( "  fill_pstat_windows failed\n" );
             }
-#else
+#else // _WIN32
             tracer.Trace( "  sizeof struct stat: %d\n", (int) sizeof( struct stat ) );
             struct stat local_stat = {0};
-            struct stat_linux_syscall local_stat_syscall = {0};
             result = fstat( descriptor, & local_stat );
             if ( 0 == result )
             {
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
 
-                struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #ifdef X64OS
+                    struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #else
+                    struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #endif
+
                 pout->st_dev = local_stat.st_dev;
                 pout->st_ino = local_stat.st_ino;
                 pout->st_mode = local_stat.st_mode;
@@ -2317,29 +2344,31 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_size = local_stat.st_size;
                 pout->st_blksize = local_stat.st_blksize;
                 pout->st_blocks = local_stat.st_blocks;
-#ifdef __APPLE__
-                pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
-                pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
-                pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
-                pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
-                pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
-                pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
-#elif defined( OLDGCC ) || defined( M68K )
-                // no time on old gcc intended for embedded systems
-#else
-                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
-                pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
-                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
-                pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
-                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
-                pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
-#endif
-                tracer.Trace( "  file size %d, isdir %s\n", (int) local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+
+                #ifdef __APPLE__
+                    pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
+                #elif defined( OLDGCC ) || defined( M68K )
+                    // no time on old gcc intended for embedded systems
+                #else
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                #endif // !__APPLE__
+
+                tracer.Trace( "  file size %d, mode %#x, isdir %s\n", (int) local_stat.st_size, local_stat.st_mode, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
                 pout->swap_endianness();
             }
             else
                 tracer.Trace( "  fstat failed, error %d\n", errno );
-#endif
+#endif // !_WIN32
 
             update_result_errno( cpu, result );
             break;
@@ -3173,91 +3202,127 @@ void emulator_invoke_svc( CPUClass & cpu )
             result = fill_pstat_windows( descriptor, & local_stat, path );
             if ( 0 == result )
             {
-                size_t cbStat = sizeof( struct stat_linux_syscall );
-#ifndef X64OS
-                assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
-#endif
-                tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
-                tracer.Trace( "  offsetof st_mode: %d\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
-                tracer.Trace( "  offsetof st_blksize: %d\n", (int) offsetof( struct stat_linux_syscall, st_blksize ) );
-                tracer.Trace( "  st_dev: %#lx\n", local_stat.st_dev );
-                tracer.Trace( "  st_ino: %#lx\n", local_stat.st_ino );
-                tracer.Trace( "  st_mode: %#x\n", local_stat.st_mode );
-                tracer.Trace( "  st_nlink: %#x\n", local_stat.st_nlink );
-                tracer.Trace( "  st_uid: %#x\n", local_stat.st_uid );
-                tracer.Trace( "  st_gid: %#x\n", local_stat.st_gid );
-                tracer.Trace( "  st_rdev: %#lx\n", local_stat.st_rdev );
-                tracer.Trace( "  st_size: %#lx\n", local_stat.st_size );
-                tracer.Trace( "  st_blksize: %#llx\n", local_stat.st_blksize );
-
-                local_stat.swap_endianness();
-                memcpy( cpu.getmem( ACCESS_REG( REG_ARG2 ) ), & local_stat, cbStat );
+                #ifdef X64OS
+                    struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+                    pout->st_dev = local_stat.st_dev;
+                    pout->st_ino = local_stat.st_ino;
+                    pout->st_mode = local_stat.st_mode;
+                    pout->st_nlink = local_stat.st_nlink;
+                    pout->st_uid = local_stat.st_uid;
+                    pout->st_gid = local_stat.st_gid;
+                    pout->st_rdev = local_stat.st_rdev;
+                    pout->st_size = local_stat.st_size;
+                    pout->st_blksize = local_stat.st_blksize;
+                    pout->st_blocks = local_stat.st_blocks;
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) pout->st_size, (int) offsetof( struct stat_linux_syscall_x64, st_size ) );
+                    pout->swap_endianness();
+                    tracer.Trace( "post-swap mode: %#x\n", pout->st_mode );
+                #else // X64OS
+                    size_t cbStat = sizeof( struct stat_linux_syscall );
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
+                    tracer.Trace( "  offsetof st_mode: %d\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
+                    tracer.Trace( "  offsetof st_blksize: %d\n", (int) offsetof( struct stat_linux_syscall, st_blksize ) );
+                    tracer.Trace( "  st_dev: %#lx\n", local_stat.st_dev );
+                    tracer.Trace( "  st_ino: %#lx\n", local_stat.st_ino );
+                    tracer.Trace( "  st_mode: %#x\n", local_stat.st_mode );
+                    tracer.Trace( "  st_nlink: %#x\n", local_stat.st_nlink );
+                    tracer.Trace( "  st_uid: %#x\n", local_stat.st_uid );
+                    tracer.Trace( "  st_gid: %#x\n", local_stat.st_gid );
+                    tracer.Trace( "  st_rdev: %#lx\n", local_stat.st_rdev );
+                    tracer.Trace( "  st_size: %#lx\n", local_stat.st_size );
+                    tracer.Trace( "  st_blksize: %#llx\n", local_stat.st_blksize );
+    
+                    local_stat.swap_endianness();
+                    memcpy( cpu.getmem( ACCESS_REG( REG_ARG2 ) ), & local_stat, cbStat );
+                #endif // X64OS
             }
             else
                 tracer.Trace( "  fill_pstat_windows failed\n" );
 #else //_WIN32
             tracer.Trace( "  sizeof struct stat: %zd\n", sizeof( struct stat ) );
             struct stat local_stat = {0};
-            struct stat_linux_syscall local_stat_syscall = {0};
             int flags = (int) ACCESS_REG( REG_ARG3 );
-#ifdef __APPLE__
-            if ( -100 == descriptor ) // current directory
-                descriptor = -2;
-            if ( EMULATOR_AT_SYMLINK_NOFOLLOW & flags )
-                flags = AT_SYMLINK_NOFOLLOW; // 0x20 instead of 0x100 on macOS
-            else if ( EMULATOR_AT_SYMLINK_FOLLOW & flags )
-                flags = AT_SYMLINK_FOLLOW; // 0x40 instead of 0x400 on macOS
-            else
-                flags = 0; // no other flags are supported on macOS
-            tracer.Trace( "  translated flags for MacOS: %x\n", flags );
-            if ( 0 == path[ 0 ] )
-                result = fstat( descriptor, & local_stat );
-            else
+            #ifdef __APPLE__
+                if ( -100 == descriptor ) // current directory
+                    descriptor = -2;
+                if ( EMULATOR_AT_SYMLINK_NOFOLLOW & flags )
+                    flags = AT_SYMLINK_NOFOLLOW; // 0x20 instead of 0x100 on macOS
+                else if ( EMULATOR_AT_SYMLINK_FOLLOW & flags )
+                    flags = AT_SYMLINK_FOLLOW; // 0x40 instead of 0x400 on macOS
+                else
+                    flags = 0; // no other flags are supported on macOS
+                tracer.Trace( "  translated flags for MacOS: %x\n", flags );
+                if ( 0 == path[ 0 ] )
+                    result = fstat( descriptor, & local_stat );
+                else
+                    result = fstatat( descriptor, path, & local_stat, flags );
+            #else //__APPLE__
                 result = fstatat( descriptor, path, & local_stat, flags );
-#else //__APPLE__
-            result = fstatat( descriptor, path, & local_stat, flags );
-#endif //__APPLE__
+            #endif //__APPLE__
+
             if ( 0 == result )
             {
                 // the syscall version of stat has similar fields but a different layout, so copy fields one by one
 
                 tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
-                struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+                tracer.Trace( "  local mode: %#x\n", local_stat.st_mode );
+
+                #ifdef X64OS
+                    struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+                    tracer.Trace( "  using struct stat_linux_syscall_x64\n" );
+                #else
+                    struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+                    tracer.Trace( "  using struct stat_linux_syscall\n" );
+                #endif
+
                 pout->st_dev = local_stat.st_dev;
                 pout->st_ino = local_stat.st_ino;
                 pout->st_mode = local_stat.st_mode;
                 pout->st_nlink = local_stat.st_nlink;
                 pout->st_uid = local_stat.st_uid;
                 pout->st_gid = local_stat.st_gid;
-                if ( 2 == sizeof( local_stat.st_rdev ) )
-                    pout->st_rdev = (uint16_t) local_stat.st_rdev; // on 68000 rdev is an int16_t. avoid sign extension
-                else if ( 4 == sizeof( local_stat.st_rdev ) )
-                    pout->st_rdev = (uint32_t) local_stat.st_rdev;
-                else
-                    pout->st_rdev = local_stat.st_rdev;
+
+                #ifndef X64OS
+                    if ( 2 == sizeof( local_stat.st_rdev ) )
+                        pout->st_rdev = (uint16_t) local_stat.st_rdev; // on 68000 rdev is an int16_t. avoid sign extension
+                    else if ( 4 == sizeof( local_stat.st_rdev ) )
+                        pout->st_rdev = (uint32_t) local_stat.st_rdev;
+                    else
+                        pout->st_rdev = local_stat.st_rdev;
+                #endif
+
                 pout->st_size = local_stat.st_size;
                 pout->st_blksize = local_stat.st_blksize;
                 pout->st_blocks = local_stat.st_blocks;
-#ifdef __APPLE__
-                pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
-                pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
-                pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
-                pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
-                pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
-                pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
-#else
-#ifndef M68K
-                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
-                pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
-                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
-                pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
-                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
-                pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
-#endif // M68K
-#endif //__APPLE__
+                #ifdef __APPLE__
+                    pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
+                #else
+                    #ifndef M68K
+                        pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                        pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                        pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                        pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                        pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                        pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                    #endif // M68K
+                #endif //__APPLE__
+
+                tracer.Trace( "  sizeof output structure: %u\n", (int) sizeof( *pout ) );
                 tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+                tracer.Trace( "  pre-swap file size %d, mode %#x, isdir %s\n", (int) local_stat.st_size, local_stat.st_mode, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
                 pout->swap_endianness();
-                tracer.Trace( "  post-swap file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+                tracer.Trace( "  post-swap file size %d, mode %#x\n", (int) pout->st_size, pout->st_mode );
             }
 #endif //_WIN32
             update_result_errno( cpu, result );
@@ -3366,7 +3431,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_unlink:
         {
             const char * path = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            tracer.Trace( "  syscall command SYS_unlink path %s\n", path );
+            tracer.Trace( "  syscall command SYS_unlink path %#llx '%s'\n", (uint64_t) path, path );
 #ifdef _WIN32
             DWORD attr = GetFileAttributesA( path );
             int result = 0;

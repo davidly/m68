@@ -507,6 +507,12 @@ static void print_ui64( uint64_t u, int base, void (*putc)(char) )
         (*putc)( *p );
 } //print_ui64
 
+static const uint64_t g_NAN = 0x7ff8000000000000;
+#define MY_NAN ( * (double *) & g_NAN )
+template <typename T> bool my_isnan( T x ) { return ( FP_NAN == fpclassify( x ) ); } // fpclassify instead of isnan because isnan() takes a double and we don't want type conversions here from long double
+template <typename T> bool my_isinf( T x ) { return ( FP_INFINITE == fpclassify( x ) ); }
+template <typename T> bool my_issubnormal( T x ) { return ( FP_SUBNORMAL == fpclassify( x ) ); }
+
 static double set_d_sign( double d, bool sign )
 {
     uint64_t val = sign ? ( ( * (uint64_t *) &d ) | 0x8000000000000000 ) : ( ( * (uint64_t *) &d ) & 0x7fffffffffffffff );
@@ -552,7 +558,7 @@ static void print_double( double d, int precision, void (*putc)(char) )
         d = set_d_sign( d, false );
     }
 
-    if ( isnan( d ) )
+    if ( my_isnan( d ) )
     {
         (*putc)( 'n' );
         (*putc)( 'a' );
@@ -560,7 +566,7 @@ static void print_double( double d, int precision, void (*putc)(char) )
         return;
     }
 
-    if ( isinf( d ) )
+    if ( my_isinf( d ) )
     {
         (*putc)( 'i' );
         (*putc)( 'n' );
