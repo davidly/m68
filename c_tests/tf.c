@@ -2,10 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#define _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES 
 #include <math.h>
 #include <float.h>
 #include <stdint.h>
+
+#if defined(__SIZEOF_INT128__)
+typedef unsigned __int128 uint128_t;
+typedef __int128 int128_t;
+#endif
 
 char *floattoa( char *buffer, double d, int precision )
 {
@@ -47,28 +52,42 @@ char *floattoa( char *buffer, double d, int precision )
 // less than full precision because libc only provides this much precision in trig functions
 
 #define TRIG_FLT_EPSILON 0.00002  /* 0.00000011920928955078 */
-#define TRIG_DBL_EPSILON 0.00000002 /* 0.00000000000000022204 */
+#define TRIG_DBL_EPSILON 0.000002 /* 0.00000000000000022204 */
 #define TRIG_LDBL_EPSILON 0.0000000000000002 /* 0.0000000000000000000000000000000001925930 */
 
-void check_same_f( const char * operation, float a, float b )
+void check_same_f( const char * operation, float a, float b, float dbgval )
 {
     float diff = a - b;
     float abs_diff = fabsf( diff );
     bool eq = ( abs_diff <= TRIG_FLT_EPSILON );
     if ( !eq )
+    {
         printf( "operation %s: float %.20f is not the same as float %.20f\n", operation, a, b );
+        printf( "  original value: %.20f\n", dbgval );
+        exit( 0 );
+    }
 } //check_same_f
 
-void check_same_d( const char * operation, double a, double b )
+void check_same_d( const char * operation, double a, double b, double dbgval )
 {
     double diff = a - b;
     double abs_diff = fabs( diff );
     bool eq = ( abs_diff <= TRIG_DBL_EPSILON );
     if ( !eq )
+    {
         printf( "operation %s: double %.20lf is not the same as double %.20lf\n", operation, a, b );
+        printf( "  original value: %.20lf\n", dbgval );
+        exit( 0 );
+    }
 } //check_same_d
 
-int64_t factorial( int64_t n )
+#if defined(__SIZEOF_INT128__)
+const int max_N_Iterations = 17; // limited by factorial size for int128_t
+int128_t factorial( int128_t n )
+#else
+const int max_N_Iterations = 10; // limited by factorial size for int64_t
+int64_t factorial( int64_t n ) // should work for up to n=20
+#endif
 {
     if ( 0 == n )
         return 1;
@@ -76,12 +95,12 @@ int64_t factorial( int64_t n )
     return n * factorial( n - 1 );
 } //factorial
 
-double my_sin_d( double x, int n = 18 )
+double my_sin_d( double x, int n = max_N_Iterations )
 {
     double result = 0;
-    int64_t sign = 1;
+    int sign = 1;
 
-    for ( int64_t i = 1; i <= n; i++ )
+    for ( int64_t i = 1; i <= n; i++ ) 
     {
         result += sign * pow( x, ( 2 * i - 1 ) ) / factorial( 2 * i - 1 );
         sign *= -1;
@@ -90,12 +109,12 @@ double my_sin_d( double x, int n = 18 )
     return result;
 } //my_sin_d
 
-float my_sin_f( float x, int n = 18 )
+float my_sin_f( float x, int n = max_N_Iterations )
 {
     float result = 0;
-    int64_t sign = 1;
+    int sign = 1;
 
-    for ( int64_t i = 1; i <= n; i++ )
+    for ( int64_t i = 1; i <= n; i++ ) 
     {
         result += sign * powf( x, ( 2 * i - 1 ) ) / factorial( 2 * i - 1 );
         sign *= -1;
@@ -106,7 +125,10 @@ float my_sin_f( float x, int n = 18 )
 
 void many_trigonometrics()
 {
-    float f = ( -M_PI / 2 ) + 0.000001; // want to be >= negative half pi.
+    long double ldresult, ldback;
+    double dresult, dback;
+    float fresult, fback;
+    float f = 0.01 - ( M_PI / 2 ); // want to be >= negative half pi.
 
     //printf( "float epsilon: %.40lf\n", (double) FLT_EPSILON );
     //printf( "double epsilon: %.40lf\n", (double) DBL_EPSILON );
@@ -114,41 +136,54 @@ void many_trigonometrics()
 
     while ( f < ( M_PI / 2 ) )
     {
-        float fresult = tanf( f );
-        float fback = atanf( fresult );
-        check_same_f( "tan", f, fback );
+        fresult = tanf( f );
+        fback = atanf( fresult );
+        check_same_f( "tan", f, fback, fresult );
 
-        double dresult = tan( (double) f );
-        double dback = atan( dresult );
-        check_same_d( "tan", (double) f, dback );
+        dresult = tan( (double) f );
+        dback = atan( dresult );
+        check_same_d( "tan", (double) f, dback, fresult );
+
+        fresult = sinf( f );
+        fback = my_sin_f( f );
+        check_same_f( "sin vs my_sin", fresult, fback, f );
 
         fresult = sinf( f );
         fback = asinf( fresult );
-        check_same_f( "sin", f, fback );
+        check_same_f( "sin", f, fback, fresult );
 
         fresult = my_sin_f( f );
         fback = asinf( fresult );
-        check_same_f( "my sin", f, fback );
+        check_same_f( "my sin", f, fback, fresult );
 
         dresult = sin( (double) f );
         dback = asin( dresult );
-        check_same_d( "sin", (double) f, dback );
+        check_same_d( "sin", (double) f, dback, dresult );
 
         dresult = my_sin_d( (double) f );
         dback = asin( dresult );
-        check_same_d( "my sin", (double) f, dback );
+        check_same_d( "my sin", (double) f, dback, dresult );
+
+        float f_cos = f + ( M_PI / 2 );
+        fresult = cosf( f_cos );
+        fback = acosf( fresult );
+        check_same_f( "cos", f_cos, fback, fresult );
+
+        dresult = cos( (double) f_cos );
+        dback = acos( dresult );
+        check_same_d( "cos", (double) f_cos, dback, dresult );
 
         f += .01f;
     }
 } //many_trignometrics
 
-float square_root_f( float num )
+float square_root_f( float num ) 
 {
-    float x = num;
+    float x = num; 
     float y = 1;
     const float e =  10.0f * FLT_EPSILON;
 
-    while ( ( x - y ) > e )
+    while ( ( x - y ) > e ) 
     {
         x = ( x + y ) / 2;
         y = num / x;
@@ -156,13 +191,13 @@ float square_root_f( float num )
     return x;
 } //square_root_f
 
-double square_root_d( double num )
+double square_root_d( double num ) 
 {
-    double x = num;
+    double x = num; 
     double y = 1;
     const double e =  10.0f * DBL_EPSILON;
 
-    while ( ( x - y ) > e )
+    while ( ( x - y ) > e ) 
     {
         x = ( x + y ) / 2;
         y = num / x;
@@ -170,13 +205,15 @@ double square_root_d( double num )
     return x;
 } //square_root_d
 
-long double square_root_ld( long double num )
+long double square_root_ld( long double num ) 
 {
-    long double x = num;
+    long double x = num; 
     long double y = 1;
-    const long double e =  10.0f * LDBL_EPSILON;
 
-    while ( ( x - y ) > e )
+    // the x64os emulator uses double precision for long double, so using DBL_EPSILON here
+    const long double e =  10.0f * DBL_EPSILON; // LDBL_EPSILON;
+
+    while ( ( x - y ) > e ) 
     {
         x = ( x + y ) / 2;
         y = num / x;
@@ -195,19 +232,19 @@ int fl_cl_test()
 
     f = floor( f1_1 );
     x = (int32_t) f;
-    printf( "floor of 1.1: %f == %ld\n", f, x );
+    printf( "floor of 1.1: %f == %d\n", f, x );
 
     f = ceil( f1_1 );
     x = (int32_t) f;
-    printf( "ceil of 1.1: %f == %ld\n", f, x );
+    printf( "ceil of 1.1: %f == %d\n", f, x );
 
     f = floor( -f1_8 );
     x = (int32_t) f;
-    printf( "floor of -1.8: %f == %ld\n", f, x );
+    printf( "floor of -1.8: %f == %d\n", f, x );
 
     f = ceil( -f1_8 );
     x = (int32_t) f;
-    printf( "ceil of -1.8: %f == %ld\n", f, x );
+    printf( "ceil of -1.8: %f == %d\n", f, x );
 
     return 0;
 }
@@ -215,7 +252,7 @@ int fl_cl_test()
 extern "C" int main()
 {
     char ac[ 100 ];
-
+    
     floattoa( ac, -1.234567, 8 );
     printf( "float converted by floattoa: %s\n", ac );
     floattoa( ac, 1.234567, 8 );
@@ -276,13 +313,13 @@ extern "C" int main()
 
     f = tanhf( 2.2 );
     printf( "tanhf of 2.2 is %lf\n", s );
-
+    
     f = logf( 0.3 );
     printf( "logf of 0.3: %lf\n", f );
 
     f = log10f( 300.0 );
     printf( "log10f of 300: %lf\n", f );
-
+    
     int exponent;
     float mantissa = frexpf( pi, &exponent );
     printf( "pi has mantissa: %lf, exponent %d\n", mantissa, exponent );
@@ -308,10 +345,10 @@ extern "C" int main()
     many_trigonometrics();
 
     for ( float f = 1.0f; f < 100.0f; f += 1.38f )
-        check_same_f( "square root float", square_root_f( f ), sqrtf( f ) );
+        check_same_f( "square root float", square_root_f( f ), sqrtf( f ), f );
 
     for ( double d = 1.0; d < 100.0; d += 1.38 )
-        check_same_d( "square root double", square_root_d( d ), sqrt( d ) );
+        check_same_d( "square root double", square_root_d( d ), sqrt( d ), d );
 
     printf( "test tf completed with great success\n" );
     exit( 0 );
