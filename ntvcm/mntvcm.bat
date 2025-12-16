@@ -37,4 +37,5 @@ rem build the assembly portion with _start and syscalls
 rem actually build the app
 %gcc% %defines% %includes% %gccflags% -O%_optflag% ntvcm.cxx x80.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o ntvcm.elf
 
+copy ntvcm.elf ..\bin
 

@@ -109,6 +109,10 @@ echo test ff . ff.c
 echo test ff . ff.c >>%outputfile%
 %_runcmd% c_tests\ff . ff.c >>%outputfile%
 
+echo test targs
+echo test targs a bb ccc dddd >>%outputfile%
+%_runcmd% c_tests\targs a bb ccc dddd >>%outputfile%
+
 echo %date% %time% >>%outputfile%
 diff baseline_%outputfile% %outputfile%
 

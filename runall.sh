@@ -88,6 +88,10 @@ echo test ff . ff.c
 echo test ff . ff.c >>$outputfile
 $_runcmd c_tests/ff . ff.c >>$outputfile
 
+echo test targs
+echo test targs a bb ccc dddd >>$outputfile
+$_runcmd c_tests/targs.elf a bb ccc dddd >>$outputfile
+
 date_time=$(date)
 echo "$date_time" >>$outputfile
 unix2dos -f $outputfile

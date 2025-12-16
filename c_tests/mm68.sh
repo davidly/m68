@@ -37,4 +37,5 @@ $gccpath/bin/m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 $gcccmd $defines $incpaths $gccflags ../m68.cxx ../m68000.cxx newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o m68.elf $ldflags
 
+cp m68.elf ../bin
 

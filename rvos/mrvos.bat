@@ -38,4 +38,5 @@ rem build the assembly portion with _start and syscalls
 rem actually build the app
 %gcc% %defines% %includes% %gccflags% rvos.cxx riscv.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o rvos.elf %ldflags%
 
+copy rvos.elf ..\bin
 

@@ -1,4 +1,4 @@
-Tue 09/30/2025  9:24:30.42 
+Tue 12/16/2025 12:02:40.89 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-24.164000 milliseconds
+34.209000 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -683,7 +683,7 @@ test targs
 argc: 1
 argv[ 0 ]: 'c_tests/targs.elf'
 penv[ 0 ]: 'OS=M68'
-penv[ 1 ]: 'TZ=PacificDaylightTime+8'
+penv[ 1 ]: 'TZ=PacificStandardTime+8'
 test tbits 
 uint8_t:
   and 3, or 7, xor 4, nota f8, notb fc
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2025, month 9, day 30, hour 16, min 24, sec 39
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 9, day 30, hour 11, min 24, sec 39
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 9, day 30, hour 8, min 24, sec 39
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 9, day 30, hour 8, min 24, sec 39
+before TZ is set: tz: 'PacificStandardTime+8', year: 2025, month 12, day 16, hour 20, min 2, sec 51
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2025, month 12, day 16, hour 15, min 2, sec 51
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2025, month 12, day 16, hour 12, min 2, sec 51
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2025, month 12, day 16, hour 12, min 2, sec 51
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6254,7 +6254,6 @@ test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
-getrusage user time in ms: 1031, system time 0
 sleepy time ended with great success
 test nqueens 
   size    solutions
@@ -6293,7 +6292,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2025, month 9, day 30, hour 8, min 24, sec 47
+tz: 'PST+8', year: 2025, month 12, day 16, hour 12, min 3, sec 1
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -9184,17 +9183,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     263
-  dictionary: 259
-  generate:   3
-  render:     0
+total ms:     361
+  dictionary: 355
+  generate:   4
+  render:     1
 test ba tp.bas 
-230 ms for 1 iterations
+318 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-346.794006 milliseconds
+451.713989 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9218,4 +9217,13 @@ read: 'a' == 97 == 0x61
 tgets completed with great success
 test ff . ff.c 
 /Users/david/OneDrive/m68/c_tests/ff.c
-Tue 09/30/2025  9:25:13.79 
+test targs a bb ccc dddd 
+argc: 5
+argv[ 0 ]: 'c_tests/targs.elf'
+argv[ 1 ]: 'a'
+argv[ 2 ]: 'bb'
+argv[ 3 ]: 'ccc'
+argv[ 4 ]: 'dddd'
+penv[ 0 ]: 'OS=M68'
+penv[ 1 ]: 'TZ=PacificStandardTime+8'
+Tue 12/16/2025 12:03:32.92 
