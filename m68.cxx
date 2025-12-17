@@ -69,11 +69,11 @@
     #include <unistd.h>
 
     #ifndef OLDGCC      // the several-years-old Gnu C compilers for the RISC-V development boards
-#ifndef M68K
+#ifndef __mc68000__
         #include <termios.h>
         #include <sys/random.h>
 #endif
-        #ifdef M68K
+        #ifdef __mc68000__
             #include <time.h>
         #else
             #include <sys/uio.h>
@@ -81,11 +81,11 @@
         #include <dirent.h>
         #include <sys/times.h>
         #include <sys/resource.h>
-        #if !defined( __APPLE__ ) && !defined( M68K )
+        #if !defined( __APPLE__ ) && !defined( __mc68000__ )
             #include <sys/sysinfo.h>
         #endif
 
-        #ifdef M68K
+        #ifdef __mc68000__
             DIR * fdopendir( int fd );
             extern "C" int lstat( const char * path, struct stat * statbuf );
         #endif
@@ -872,7 +872,7 @@ static void backslash_to_slash( char * p )
     }
 } //backslash_to_slash
 
-#ifdef M68K
+#ifdef __mc68000__
 extern "C" bool _setbinarymode( bool binmode );
 #endif
 
@@ -896,7 +896,7 @@ class SetBinaryMode
                 }
             #endif
 
-            #ifdef M68K
+            #ifdef __mc68000__
                 if ( set && !g_addCRBeforeLF )
                 {
                     prevmodeout = _setbinarymode( true );
@@ -918,7 +918,7 @@ class SetBinaryMode
                 }
             #endif
 
-            #ifdef M68K
+            #ifdef __mc68000__
                 if ( modeset )
                     _setbinarymode( prevmodeout );
             #endif
@@ -1289,7 +1289,7 @@ static int msc_clock_gettime( clockid_t clockid, struct timespec_syscall * tv )
 
 #endif
 
-#ifdef M68K
+#ifdef __mc68000__
 extern "C" int clock_gettime( clockid_t id, struct timespec * res );
 #endif
 
@@ -1976,7 +1976,7 @@ void send_character( uint8_t c )
 
 static struct linux_user_desc g_user_desc;
 
-#ifdef M68K
+#ifdef __mc68000__
 extern "C" long syscall( long number, ... );
 #endif
 
@@ -2352,8 +2352,10 @@ void emulator_invoke_svc( CPUClass & cpu )
                     pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
                     pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
                     pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
-                #elif defined( OLDGCC ) || defined( M68K )
-                    // no time on old gcc intended for embedded systems
+                #elif defined( __mc68000__ )
+                    pout->st_atim.tv_sec = local_stat.st_atime;
+                    pout->st_mtim.tv_sec = local_stat.st_mtime;
+                    pout->st_ctim.tv_sec = local_stat.st_ctime;
                 #else
                     pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
                     pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
@@ -2533,7 +2535,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             {
 #ifdef M68
                 if ( is_o_creat_set( original_flags ) )
-                    mode = _S_IREAD | _S_IWRITE; // m68k passes user-related flags that conflict with these flags
+                    mode = _S_IREAD | _S_IWRITE; // __mc68000__ passes user-related flags that conflict with these flags
 #endif //M68
                 descriptor = _open( pname, flags, mode );
             }
@@ -3154,7 +3156,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             {
 #ifdef M68
                 if ( is_o_creat_set( original_flags ) )
-                    mode = _S_IREAD | _S_IWRITE; // m68k passes user-related flags that conflict with these flags
+                    mode = _S_IREAD | _S_IWRITE; // __mc68000__ passes user-related flags that conflict with these flags
 #endif //M68
                 tracer.Trace( "  final name %s, flags %#x, mode %#x\n", pname, flags, mode );
                 descriptor = _open( pname, flags, mode );
@@ -3169,13 +3171,13 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         case SYS_sysinfo:
         {
-#if defined(_WIN32) || defined(__APPLE__) || defined( M68K )
+#if defined(_WIN32) || defined(__APPLE__) || defined( __mc68000__ )
             errno = EACCES;
             update_result_errno( cpu, -1 );
 #else
             int result = sysinfo( (struct sysinfo *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ) );
             update_result_errno( cpu, result );
-#endif // defined(_WIN32) || defined(__APPLE__) || defined( M68K )
+#endif // defined(_WIN32) || defined(__APPLE__) || defined( __mc68000__ )
             break;
         }
         case SYS_newfstatat:
@@ -3300,23 +3302,27 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_size = local_stat.st_size;
                 pout->st_blksize = local_stat.st_blksize;
                 pout->st_blocks = local_stat.st_blocks;
-                #ifdef __APPLE__
+
+                #if defined( __APPLE__ )
                     pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
                     pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
                     pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
                     pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
                     pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
                     pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
+                #elif defined( __mc68000__ )
+                    pout->st_atim.tv_sec = local_stat.st_atime;
+                    pout->st_mtim.tv_sec = local_stat.st_mtime;
+                    pout->st_ctim.tv_sec = local_stat.st_ctime;
                 #else
-                    #ifndef M68K
-                        pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
-                        pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
-                        pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
-                        pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
-                        pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
-                        pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
-                    #endif // M68K
-                #endif //__APPLE__
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                #endif // __APPLE__ || __mc68000__
 
                 tracer.Trace( "  sizeof output structure: %u\n", (int) sizeof( *pout ) );
                 tracer.Trace( "  file size %zd, isdir %s\n", local_stat.st_size, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
@@ -3550,7 +3556,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_utime.tv_usec = swap_endian64( prusage->ru_utime.tv_usec );
                 prusage->ru_stime.tv_sec = swap_endian64( prusage->ru_stime.tv_sec );
                 prusage->ru_stime.tv_usec = swap_endian64( prusage->ru_stime.tv_usec );
-#if ! ( defined( M68K ) || defined( X32OS ) )
+#if ! ( defined( __mc68000__ ) || defined( X32OS ) )
                 prusage->ru_maxrss = local_rusage.ru_maxrss;
                 prusage->ru_ixrss = local_rusage.ru_ixrss;
                 prusage->ru_idrss = local_rusage.ru_idrss;
@@ -3567,7 +3573,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 prusage->ru_nvcsw = local_rusage.ru_nvcsw;
                 prusage->ru_nivcsw = local_rusage.ru_nivcsw;
 #endif //SPARCOS
-#endif //M68K
+#endif //__mc68000__
 #endif //M68
 #endif //_WIN32
             }
@@ -3605,7 +3611,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 ACCESS_REG( REG_RESULT ) = (REG_TYPE) -1; // fail this until/unless there is a real-world use
             break;
         }
-#if !defined( M68 ) && !defined( M68K )// lots of 64/32 interop issues with this
+#if !defined( M68 ) && !defined( __mc68000__ )// lots of 64/32 interop issues with this
         case SYS_writev:
         {
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
@@ -3805,7 +3811,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             const char * newpath = (const char *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
             unsigned int flags = ( SYS_renameat2 == syscall_id ) ? (unsigned int) ACCESS_REG( REG_ARG4 ) : 0;
             tracer.Trace( "  renaming '%s' to '%s'\n", oldpath, newpath );
-#if defined( _WIN32 ) || defined( M68K )
+#if defined( _WIN32 ) || defined( __mc68000__ )
             int result = rename( oldpath, newpath );
 #elif defined( __APPLE__ )
             if ( -100 == olddirfd )
@@ -3828,7 +3834,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             unsigned int flags = (unsigned int) ACCESS_REG( REG_ARG2 );
             SIGNED_REG_TYPE result = 0;
 
-#if defined(_WIN32) || defined(__APPLE__) || defined( M68K )
+#if defined(_WIN32) || defined(__APPLE__) || defined( __mc68000__ )
             int * pbuf = (int *) buf;
             size_t count = buflen / sizeof( int );
             for ( size_t i = 0; i < count; i++ )
@@ -4031,7 +4037,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
                 pout32->stx_ctime.tv_sec = local_stat.st_ctimespec.tv_sec;
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
-#elif defined( M68K )
+#elif defined( __mc68000__ )
                 pout32->stx_atime.tv_sec = local_stat.st_atime;
                 pout32->stx_atime.tv_nsec = 0;
                 pout32->stx_mtime.tv_sec = local_stat.st_mtime;
@@ -4072,7 +4078,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
                 pout32->stx_ctime.tv_sec = local_stat.st_ctimespec.tv_sec;
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
-#elif defined( M68K )
+#elif defined( __mc68000__ )
                 pout32->stx_atime.tv_sec = local_stat.st_atime;
                 pout32->stx_atime.tv_nsec = 0;
                 pout32->stx_mtime.tv_sec = local_stat.st_mtime;
@@ -4086,7 +4092,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout32->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout32->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout32->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
-#endif // __APPLE__ || M68K || (other)
+#endif // __APPLE__ || __mc68000__ || (other)
 
                 pout32->swap_endianness();
                 tracer.Trace( "statx data:\n" );
@@ -4118,15 +4124,17 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_mode = (uint16_t) local_stat.st_mode;
                 pout->stx_size = local_stat.st_size;
                 pout->stx_blocks = local_stat.st_blocks;
-#ifdef __APPLE__
+#if defined( __APPLE__ )
                 pout->stx_atime.tv_sec = local_stat.st_atimespec.tv_sec;
                 pout->stx_atime.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
                 pout->stx_mtime.tv_sec = local_stat.st_mtimespec.tv_sec;
                 pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
                 pout->stx_ctime.tv_sec = local_stat.st_ctimespec.tv_sec;
                 pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
-#elif defined( OLDGCC ) || defined( M68K )
-                // no time on old gcc intended for embedded systems
+#elif defined( __mc68000__ )
+                pout->stx_atime.tv_sec = local_stat.st_atime;
+                pout->stx_mtime.tv_sec = local_stat.st_mtime;
+                pout->stx_ctime.tv_sec = local_stat.st_ctime;
 #else
                 pout->stx_atime.tv_sec = local_stat.st_atim.tv_sec;
                 pout->stx_atime.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
@@ -4134,7 +4142,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
-#endif
+#endif // __APPLE__ || __mc68000__
 
                 pout->swap_endianness();
 #endif // SPARCOS
@@ -4224,7 +4232,7 @@ void emulator_invoke_svc( CPUClass & cpu )
     #endif //__APPLE__
             result = readlinkat( dirfd, pathname, buf, bufsiz );
             tracer.Trace( "  result of readlinkat(): %d, %s\n", result, buf );
-#endif // _WIN32 || M68K
+#endif // _WIN32 || __mc68000__
 
             update_result_errno( cpu, result );
             break;
@@ -4238,7 +4246,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( 0 == fd || 1 == fd || 2 == fd ) // stdin, stdout, stderr
             {
-#if defined( _WIN32 ) || defined( M68K )
+#if defined( _WIN32 ) || defined( __mc68000__ )
                 if ( 0x5401 == request || 0x5408 == request ) // TCGETS. 5401 is newer, 5408 is older like Linux on sparc
                 {
                     memset( pt, 0, sizeof( *pt ) );
@@ -4263,7 +4271,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     // kbhit() works without all this fuss on Windows
                 }
-#else //defined( _WIN32 ) || defined( M68K )
+#else //defined( _WIN32 ) || defined( __mc68000__ )
                 // likely a TCGETS or TCSETS on stdin to check or enable non-blocking reads for a keystroke
 
                 if ( 0x5401 == request || 0x5408 == request ) // TCGETS
@@ -4332,20 +4340,20 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tcsetattr( 0, TCSANOW, &val );
                     tracer.Trace( "  ioctl set termios on stdin\n" );
                 }
-#endif //defined( _WIN32 ) || defined( M68K )
+#endif //defined( _WIN32 ) || defined( __mc68000__ )
             }
             else if ( 1 == fd ) // stdout
             {
                 if ( 0x5401 == request || 0x5408 == request ) // TCGETS
                 {
-#if defined( _WIN32 ) || defined( M68K ) || defined( sparc )
+#if defined( _WIN32 ) || defined( __mc68000__ ) || defined( sparc )
                     if ( isatty( fd ) )
                         update_result_errno( cpu, 0 );
                     else
                         update_result_errno( cpu, -1 );
 
                     break;
-#else //defined( _WIN32 ) || defined( M68K )
+#else //defined( _WIN32 ) || defined( __mc68000__ )
                     struct termios val;
                     int result = tcgetattr( fd, &val );
                     tracer.Trace( "  result: %d, iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", result, val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
@@ -4370,7 +4378,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif //__APPLE__
                     tracer.Trace( "  ioctl queried termios on stdout, sizeof local_kernel_termios %zd, sizeof val %zd\n",
                                 sizeof( struct local_kernel_termios ), sizeof( val ) );
-#endif //defined( _WIN32 ) || defined( M68K )
+#endif //defined( _WIN32 ) || defined( __mc68000__ )
                 }
 
             }
@@ -4531,7 +4539,7 @@ void emulator_invoke_68k_trap15( m68000 & cpu )
         }
         default:
         {
-            tracer.Trace( "unimplemented m68k trap #15 service %u\n", svc );
+            tracer.Trace( "unimplemented 68k trap #15 service %u\n", svc );
             break;
         }
     }
