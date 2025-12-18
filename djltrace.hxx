@@ -41,7 +41,7 @@ class CDJLTrace
 {
     private:
         FILE * fp;
-#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( M68K )
+#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( __mc68000__ )
         std::mutex mtx;
 #endif
         bool quiet; // no pid
@@ -215,7 +215,7 @@ class CDJLTrace
         {
             if ( NULL != fp )
             {
-#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( M68K )
+#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( __mc68000__ )
                 lock_guard<mutex> lock( mtx );
 #endif
 
@@ -251,7 +251,7 @@ class CDJLTrace
         {
             if ( NULL != fp )
             {
-#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( M68K )
+#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( __mc68000__ )
                 lock_guard<mutex> lock( mtx );
 #endif
                 va_list args;
@@ -265,7 +265,7 @@ class CDJLTrace
 
         void TraceIt( const char * format, ... )
         {
-#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( M68K )
+#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( __mc68000__ )
             lock_guard<mutex> lock( mtx );
 #endif
             va_list args;
@@ -281,7 +281,7 @@ class CDJLTrace
             #ifdef DEBUG
             if ( NULL != fp && condition )
             {
-#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( M68K )
+#if !defined( WATCOM ) && !defined( OLDGCC ) && !defined( __mc68000__ )
                 lock_guard<mutex> lock( mtx );
 #endif
 

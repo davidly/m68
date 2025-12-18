@@ -21,8 +21,7 @@ set ldflags=-Wl,--section-start=.init=0x4000
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 
-rem M68K means we're using the old M68K GCC compiler
-set defines=-DTARGET_BIG_ENDIAN -DM68K -DNDEBUG -DRVOS
+set defines=-DTARGET_BIG_ENDIAN -DNDEBUG -DRVOS
 set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O3
 
 rem generate .s files for debugging

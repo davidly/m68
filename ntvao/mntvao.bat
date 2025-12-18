@@ -20,8 +20,7 @@ set includes=-I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5% -I%inc6%
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 
-rem M68K means we're using the old M68K GCC compiler
-set defines=-DTARGET_BIG_ENDIAN -DM68K -DNDEBUG
+set defines=-DTARGET_BIG_ENDIAN -DNDEBUG
 set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit
 
 rem generate .s files for debugging

@@ -18,8 +18,8 @@ set includes=-I. -I.\bits -I%inc1% -I%inc2% -I%inc3% -I%inc4%
 set gcc=%gccpath%\bin\m68k-elf-gcc
 set ldflags=-Wl,--section-start=.init=0x4000
 
-rem M68 means we're building the m68.elf binary (vs another emulator). M68K means we're using the M68K GCC compiler targeting 68000
-set defines=-DTARGET_BIG_ENDIAN -DM68 -DM68K -DNDEBUG
+rem M68 means we're building the m68.elf binary (vs another emulator).
+set defines=-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG
 set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag%
 
 rem generate .s files for debugging

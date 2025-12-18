@@ -20,8 +20,8 @@ inc2=$gccpath/m68k-elf/include
 inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
-# M68 means we're building the m68.elf binary (vs another emulator). M68K means we're using the M68K GCC compiler to target 68000
-defines="-DTARGET_BIG_ENDIAN -DM68 -DM68K -DNDEBUG"
+# M68 means we're building the m68.elf binary (vs another emulator).
+defines="-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG"
 gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O$optflags"
 ldflags="-Wl,--section-start=.init=0x4000"
 
