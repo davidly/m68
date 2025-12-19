@@ -1781,6 +1781,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 158, emulator_sys_x32_x64_arch_prctl },
     { 186, SYS_gettid },
     { 201, emulator_sys_time },
+    { 202, SYS_futex },
     { 204, SYS_sched_getaffinity },
     { 217, SYS_getdents64 },
     { 218, SYS_set_tid_address },
@@ -1854,6 +1855,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 220, SYS_getdents64 },
     { 221, SYS_fcntl }, // actually fcntl64
     { 224, SYS_gettid },
+    { 240, SYS_futex },
     { 243, emulator_sys_set_thread_area },
     { 244, emulator_sys_set_thread_area },
     { 252, SYS_exit_group },
