@@ -42,7 +42,7 @@
 #include <cstddef>
 
 #include <djl_os.hxx>
-#include "linuxem.h"
+#include <linuxem.h>
 
 #ifdef _WIN32
     #include <io.h>
@@ -926,7 +926,7 @@ class SetBinaryMode
 };
 
 /*
-  what whas their childhood trauma?
+  what was their childhood trauma?
             DOS & Windows   Linux RISC-V64, AMD64, X32  Linux Arm32 & Arm64  macOS       Linux sparc  newlib 68000  Watcom      Manx CP/M
             -------------   --------------------------  -------------------  -----       -----------  ------------  ------      ---------
   0x0       O_RDONLY        O_RDONLY                    O_RDONLY             O_RDONLY    O_RDONLY     O_RDONLY      O_RDONLY    O_RDONLY
@@ -943,7 +943,7 @@ class SetBinaryMode
   0x800                                                                      O_EXCL      O_EXCL       O_EXCL                    O_APPEND
   0x2000                    O_ASYNC                     O_ASYNC              O_SYNC      O_SYNC       O_SYNC
   0x4000    O_TEXT          O_DIRECT                    O_DIRECTORY          O_NONBLOCK               O_NONBLOCK
-  0x8000    O_BINARY                                    
+  0x8000    O_BINARY
   0x10000                   O_DIRECTORY                 O_DIRECT                         O_DIRECTORY
   0x10100                   O_SYNC                      O_SYNC
   0x80000                                                                    O_DIRECT                 O_DIRECT
@@ -1668,7 +1668,7 @@ void my_qsort( void * vbase, size_t num, unsigned width, int (*compare)( const v
 
         if ( first <= last )
         {
-            if (first != last)
+            if ( first != last )
             {
                 memswap( first, last, width );
                 if ( first == key )
@@ -2084,7 +2084,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, 0 );
             break;
         }
-#endif
+#endif //X32OS
         case emulator_sys_get_thread_area:
         {
             struct linux_user_desc * pud = (linux_user_desc *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
@@ -2115,7 +2115,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, result );
             break;
         }
-#endif
+#endif // X64OS || X32OS
         case SYS_signalstack:
         {
             update_result_errno( cpu, 0 );
@@ -2250,7 +2250,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             struct timespec_syscall local_request = * request;
             local_request.tv_sec = swap_endian64( local_request.tv_sec );
             local_request.tv_nsec = swap_endian64( local_request.tv_nsec );
-#endif
+#endif //X32OS
 
             uint64_t ms = local_request.tv_sec * 1000 + local_request.tv_nsec / 1000000;
             tracer.Trace( "  nanosleep sec %llu, nsec %llu == %llu ms\n", (uint64_t) local_request.tv_sec, (uint64_t) local_request.tv_nsec, ms );
@@ -2931,7 +2931,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 tracer.Trace( "  readdir returned 0, so there are no more files in the enumeration\n" );
                 result = 0;
             }
-    #endif
+        #endif
 #endif
             update_result_errno( cpu, result );
             break;
@@ -3241,7 +3241,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tracer.Trace( "  st_rdev: %#lx\n", local_stat.st_rdev );
                     tracer.Trace( "  st_size: %#lx\n", local_stat.st_size );
                     tracer.Trace( "  st_blksize: %#llx\n", local_stat.st_blksize );
-    
+
                     local_stat.swap_endianness();
                     memcpy( cpu.getmem( ACCESS_REG( REG_ARG2 ) ), & local_stat, cbStat );
                 #endif // X64OS
@@ -6428,8 +6428,8 @@ uint16_t days_since_jan1_1978()
     time_t current_time;
     struct tm *time_info;
 
-    current_time = time(NULL);
-    time_info = localtime(&current_time);
+    current_time = time( 0 );
+    time_info = localtime( &current_time );
 
     struct tm target_date = {0};
     target_date.tm_year = 1978 - 1900; // Years since 1900
@@ -6439,7 +6439,7 @@ uint16_t days_since_jan1_1978()
     target_date.tm_min = 0;
     target_date.tm_sec = 0;
 
-    time_t target_time = mktime(&target_date);
+    time_t target_time = mktime( &target_date );
     time_t difference_seconds = current_time - target_time;
     uint16_t days_since_1978 = (uint16_t) ( difference_seconds / ( 24 * 60 * 60 ) );
     return days_since_1978;
@@ -9102,7 +9102,7 @@ int main( int argc, char * argv[] )
     }
     catch ( bad_alloc & e )
     {
-        printf( "caught exception bad_alloc -- out of RAM. If in RVOS/ARMOS/M68/SPARCOS/X64OS use -h or -m to add RAM. %s\n", e.what() );
+        printf( "caught exception bad_alloc -- out of RAM. If in RVOS/ARMOS/M68/SPARCOS/X64OS/X32OS use -h or -m to add RAM. %s\n", e.what() );
     }
     catch ( exception & e )
     {
