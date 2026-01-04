@@ -4,6 +4,8 @@
 .equ AT_EH_FRAME_BEGIN, 0x69690069
 
 .text
+
+##################################
   .global  _start
   .type    _start, @function
 _start:
@@ -34,6 +36,7 @@ _start:
     move.l %d7, -(%a7)          /* push the exit code */
     jsr exit_emulator
 
+##################################
   .global _init
   .type _init, @function
 _init:
@@ -52,6 +55,7 @@ _init:
   _init_done:
     rts
 
+##################################
   .global _fini
   .type _fini, @function
 _fini:
@@ -68,6 +72,7 @@ _fini:
   _fini_done:
     rts
 
+##################################
   .global exit_emulator
   .type exit_emulator, @function
 exit_emulator:
@@ -75,6 +80,7 @@ exit_emulator:
     move.l #93, %d0             /* linux exit function */
     trap #0                     /* no coming back from this */ 
 
+##################################
   .global syscall
   .type syscall, @function
 syscall:

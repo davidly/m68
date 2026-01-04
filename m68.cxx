@@ -1654,6 +1654,9 @@ void memswap( char * a, char * b, unsigned len )
 // adapted from powerc
 void my_qsort( void * vbase, size_t num, unsigned width, int (*compare)( const void * a, const void * b ) )
 {
+    if ( 0 == num )
+        return;
+
     char * base = (char *) vbase;
     char * max;
     char * last = max = base + ( num - 1 ) * width;

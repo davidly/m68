@@ -2,6 +2,8 @@
 # Per calling conventions, d0, d1, a0, and a1 are scratch. others must be preserved.
 
 .text
+
+##################################
 .global _start
 .type _start, @function
 _start:
@@ -67,6 +69,7 @@ _start:
     move.l %d7, -(%a7)          /* push the exit code */
     jsr exit_cpm
 
+##################################
 .global _init
 .type _init, @function
 _init:
@@ -76,6 +79,7 @@ _init:
     jsr _init_nlcpm
     rts
 
+##################################
 .global _fini
 .type _fini, @function
 _fini:
@@ -83,6 +87,7 @@ _fini:
     jsr _fini_nlcpm
     rts
 
+##################################
 .global exit_cpm
 .type exit_cpm, @function
 exit_cpm:
@@ -90,6 +95,7 @@ exit_cpm:
     clr.l %d0                   /* the cp/m exit function is 0 */
     trap #2                     /* no coming back from this */
 
+##################################
 .global bdos_cpm
 .type bdos_cpm, @function
 bdos_cpm:
@@ -98,9 +104,10 @@ bdos_cpm:
     trap #2                     /* no errno-style errors are returned; layer above must set errno */
     rts
 
+##################################
 .data
 .align 4
 argvals: .zero 64 * 4           /* array of pointers to command line arguments */
 cmdtail_copy: .zero 128         /* a copy of the command tail because it gets overwritten */
-arg0_value: .zero 4             /* temporary place to store the app name for argv[0] */
+arg0_value: .zero 4             /* temporary place to store a pointer to the app name for argv[0] */
 

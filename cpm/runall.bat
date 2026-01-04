@@ -2,19 +2,27 @@
 setlocal
 
 if "%1" == "nested" (
-  set _M68runcmd=..\m68 -h:80 ..\c_tests\m68.elf
+  set _M68runcmd=..\m68 -h:100 ..\c_tests\m68.elf
 )
 
 if "%1" == "armos" (
-  set _M68runcmd=..\..\armos\armos -h:80 ..\..\armos\bin\m68
+  set _M68runcmd=..\..\armos\armos -h:10 ..\..\armos\bin\m68
 )
 
 if "%1" == "rvos" (
-  set _M68runcmd=..\..\rvos\rvos -h:80 ..\..\rvos\linux\m68
+  set _M68runcmd=..\..\rvos\rvos -h:100 ..\..\rvos\bin\m68
+)
+
+if "%1" == "x64os" (
+  set _M68runcmd=..\..\x64os\x64os -h:100 ..\..\x64os\bin\m68
+)
+
+if "%1" == "x32os" (
+  set _M68runcmd=..\..\x64os\x32os -h:100 ..\..\x64os\x32bin\m68
 )
 
 if "%1" == "sparcos" (
-  set _M68runcmd=..\..\sparcos\sparcos -h:80 ..\..\sparcos\bin\m68-sparc.elf
+  set _M68runcmd=..\..\sparcos\sparcos -h:100 ..\..\sparcos\bin\m68-sparc.elf
 )
 
 if "%_M68runcmd%" == "" (

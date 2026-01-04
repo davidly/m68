@@ -14,8 +14,8 @@ if "%1" == "armos" (
     set _M68runcmd=..\..\armos\armos -h:180 ..\..\armos\bin\m68
 ) else (
 if "%1" == "rvos" (
-    set _runcmd=..\rvos\rvos -h:180 ..\rvos\linux\m68
-    set _M68runcmd=..\..\rvos\rvos -h:180 ..\..\rvos\linux\m68
+    set _runcmd=..\rvos\rvos -h:180 ..\rvos\bin\m68
+    set _M68runcmd=..\..\rvos\rvos -h:180 ..\..\rvos\bin\m68
 ) else (
 if "%1" == "x64os" (
     set _runcmd=..\x64os\x64os -h:180 ..\x64os\bin\m68
