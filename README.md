@@ -108,14 +108,15 @@ cb68 folder:
     * m.bat/m.sh: builds BASIC apps
     * mall.bat/mall.sh and runall.bat/runall.sh: builds and runs all test cases
 
-com folder:
+com folder: (More information about COM can be found here: [https://github.com/johnsonjh/com-cpm/tree/master/COM](https://github.com/johnsonjh/com-cpm/tree/master/COM))
 
-    * COM.68K: CP/M v2.2 + 8080 emulator for CP/M 68K. I don't know its origins. I've tested it running in m68 using a variety of CP/M v2.2 tools in my cpm_compilers repo.
+    * COM.68K: CP/M v2.2 + 8080 emulator for CP/M 68K. I've tested it running in m68 using a variety of CP/M v2.2 tools in my cpm_compilers repo.
     * MBASIC.COM: Microsoft BASIC interpreter
     * TTT.BAS/E.BAS/ASCIIART.BAS/SIEVE.BAS/HELLO.BAS: various test programs for mbasic.
     * TTTCPM.COM: cp/m 2.2 app to prove you can't win at tic-tac-toe  
     * COM.68K running in m68 was tested with Wordstar as well.
-
+    * COM.68K doesn't compute the Parity Even flag for the 8080 correctly with the ADI instruction. Sources for the newer version rewritten in C appear to fix this bug.
+ 
 ntvcm folder:
 
     * mntvcm.bat: Windows build script for my ntvcm repo. ntvcm gives full Z80 + CP/M 2.2 emulation running inside of m68.
