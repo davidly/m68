@@ -1,0 +1,106 @@
+com.68k fails to run binaries created by C Vers. 1.06D 8080  (C) 1982 1983 1984 by Manx Software Systems.
+
+That's because com.68k doesn't set the Parity bit correctly for the ADI instruction. 
+
+Code from asave.asm in the Manx c runtime to save ix/iy on the Z80 uses the behavior of the parity flag after an ADI instruction to distinguish 8080 from Z80.
+
+    .asave:         ;support for assembly routines which must save IX and IY
+            pop     d               ;save return address
+            lxi     h,2             ;compute address of arguments
+            dad     sp
+            xra     a
+            adi     3
+            jpe     nopush          ; <===============  jump past push if an 8080, not a Z80
+            DB 221,229,253,229      ;push ix ; push iy
+    nopush:
+
+-------------------------------------------
+should work like this on an 8080: partity is even for the adi
+
+    pc 1582, op af, op2 c6, op3 03, a 00, B 007f, D 18e6, H 0081, sp feea, SzaPC, xra a
+    pc 1583, op c6, op2 03, op3 ea, a 00, B 007f, D 18e6, H 0081, sp feea, sZaPc, adi 03h
+    pc 1585, op ea, op2 8c, op3 15, a 03, B 007f, D 18e6, H 0081, sp feea, szaPc, jpe 158ch
+    pc 158c, op 7e, op2 12, op3 13, a 03, B 007f, D 18e6, H 0081, sp feea, szaPc, mov a, m
+
+-------------------------------------------
+but COM.68K doesn't use the addition result to set the parity bit. the opcode is in d0.b in mloop:
+
+    pc     7b18 mloop
+                 op  7000 101de540 tscvZNx d0:fe94 d1:3113 d2:1 d4:ff d5:f d6:1 d7:e a0:8482 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf01 a6:7b18 a7:283aa9c ==> moveq #0, d0
+    pc     7b1a  op  101d e5402074 tscvZnx d1:3113 d2:1 d4:ff d5:f d6:1 d7:e a0:8482 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf01 a6:7b18 a7:283aa9c ==> move.b (a5)+, d0
+    pc     7b1c  op  e540 20740000 tscvzNx d0:af d1:3113 d2:1 d4:ff d5:f d6:1 d7:e a0:8482 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> asl.w #2, d0
+    pc     7b1e  op  2074     4ed0 tscvznx d0:2bc d1:3113 d2:1 d4:ff d5:f d6:1 d7:e a0:8482 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> movea.l (0,a4,d0.w), a0
+    pc     7b22  op  4ed0 223c0000 tscvznx d0:2bc d1:3113 d2:1 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> jmp (a0)
+    pc     8ae4 nop00 + 8f8
+                 op  7400 162a0010 tscvznx d0:2bc d1:3113 d2:1 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> moveq #0, d2
+    pc     8ae6  op  162a   104ed6 tscvZnx d0:2bc d1:3113 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> move.b 16(a2), d3
+    pc     8aea  op  4ed6 1029fff8 tscvznx d0:2bc d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> jmp (a6)
+    
+    pc     7b18 mloop
+                 op  7000 101de540 tscvznx d0:2bc d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> moveq #0, d0
+    pc     7b1a  op  101d e5402074 tscvZnx d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf02 a6:7b18 a7:283aa9c ==> move.b (a5)+, d0
+    pc     7b1c  op  e540 20740000 tscvzNx d0:c6 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf03 a6:7b18 a7:283aa9c ==> asl.w #2, d0
+    pc     7b1e  op  2074     4ed0 tscvznx d0:318 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8ae4 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf03 a6:7b18 a7:283aa9c ==> movea.l (0,a4,d0.w), a0
+    pc     7b22  op  4ed0 223c0000 tscvznx d0:318 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf03 a6:7b18 a7:283aa9c ==> jmp (a0)
+    pc     8c5a nop00 + a6e
+                 op  101d 1340fffe tscvznx d0:318 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf03 a6:7b18 a7:283aa9c ==> move.b (a5)+, d0
+    pc     8c5c  op  1340 fffe1342 tscvznx d0:303 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> move.b d0, -2(a1)
+    pc     8c60  op  1342 ffff1347 tscvznx d0:303 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> move.b d2, -1(a1)
+    pc     8c64  op  1347 fff7d400 tscvZnx d0:303 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> move.b d7, -9(a1)
+    pc     8c68  op  d400 40c0c045 tscvznx d0:303 d1:3113 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> add.b d0, d2
+    pc     8c6a  op  40c0 c0451632 tscvznx d0:303 d1:3113 d2:3 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> move sr, d0
+    pc     8c6c  op  c045 16320000 tscvznx d0:300 d1:3113 d2:3 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> and.w d5, d0
+    pc     8c6e  op  1632     4ed6 tscvZnx d1:3113 d2:3 d3:44 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> move.b (0,a2,d0.w), d3
+
+    ---->>>>> map 68000 status flags to 8080 status flags (0 to 0)
+
+    pc     8c72  op  4ed6 220d9289 tscvZnx d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> jmp (a6)
+
+    ---->>>>> partity even flag in d3 is 0! The result of the add in d2 isn't even referenced. The 68000 has no parity flag so P must be computed from d2.
+
+    pc     7b18 mloop
+                 op  7000 101de540 tscvZnx d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> moveq #0, d0
+    pc     7b1a  op  101d e5402074 tscvZnx d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf04 a6:7b18 a7:283aa9c ==> move.b (a5)+, d0
+    pc     7b1c  op  e540 20740000 tscvzNx d0:ea d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> asl.w #2, d0
+    pc     7b1e  op  2074     4ed0 tscvznx d0:3a8 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8c5a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> movea.l (0,a4,d0.w), a0
+    pc     7b22  op  4ed0 223c0000 tscvznx d0:3a8 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> jmp (a0)
+    pc     8f3a nop00 + d4e
+                 op  102d    1e158 tscvznx d0:3a8 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> move.b 1(a5), d0
+    pc     8f3e  op  e158 1015548d tscvznx d0:315 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> rol.w #8, d0
+    pc     8f40  op  1015 548d0803 tsCvznx d0:1503 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> move.b (a5), d0
+    pc     8f42  op  548d  8030002 tscvzNx d0:15e7 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf05 a6:7b18 a7:283aa9c ==> addq.l #2, a5
+    pc     8f44  op   803    26700 tscvzNx d0:15e7 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf07 a6:7b18 a7:283aa9c ==> btst #2, d3
+
+    ---->>>>> test the parity flag in d3, which fails, so the Z80 code path is taken with instruction "push ix" that starts with 0xdd
+
+    pc     8f48  op  6700 ebce4bf1 tscvZNx d0:15e7 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf07 a6:7b18 a7:283aa9c ==> beq -5168
+    pc     7b18 mloop
+                 op  7000 101de540 tscvZNx d0:15e7 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf07 a6:7b18 a7:283aa9c ==> moveq #0, d0
+    pc     7b1a  op  101d e5402074 tscvZnx d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf07 a6:7b18 a7:283aa9c ==> move.b (a5)+, d0
+    pc     7b1c  op  e540 20740000 tscvzNx d0:dd d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> asl.w #2, d0
+    pc     7b1e  op  2074     4ed0 tscvznx d0:374 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8f3a a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> movea.l (0,a4,d0.w), a0
+    pc     7b22  op  4ed0 223c0000 tscvznx d0:374 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8e44 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> jmp (a0)
+    pc     8e44 nop00 + c58
+                 op  6000 ecdee203 tscvznx d0:374 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8e44 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> bt -4896
+    pc     7b24 illegl
+                 op  223c     92e1 tscvznx d0:374 d1:3113 d2:3 d4:ff d5:f d6:1 d7:e a0:8e44 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> move.l #$92e1, d1
+    pc     7b2a  op  303c    94e42 tscvznx d0:374 d1:92e1 d2:3 d4:ff d5:f d6:1 d7:e a0:8e44 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> move.w #$9, d0
+    pc     7b2e  op  4e42 41edffff tscvznx d0:9 d1:92e1 d2:3 d4:ff d5:f d6:1 d7:e a0:8e44 a1:a924 a2:9834 a3:1a7b8 a4:9434 a5:bf08 a6:7b18 a7:283aa9c ==> trap 2 + 32 = 34
+    trap 2 cp/m 68k bdos call 9, argument 0x92e1 -- print string
+       string: 
+    Illegal instruction 
+        0000  0d 0a 49 6c 6c 65 67 61 6c 20 69 6e 73 74 72 75 : 63 74 69 6f 6e 20                                ..Illegal instruction 
+
+-------------------------------------------
+code in cpu.mac (might be slightly out of date but it looks identical) from https://github.com/johnsonjh/com-cpm/blob/master/COM/cpu.mac
+
+    adi:    movb (pseudopc)+,d0                     | C6 ADI nn
+            movb d0,regop1(regs)
+            movb rega,regop2(regs)
+            movb regcon0e,regop3(regs)
+            addb d0,rega
+            movw ccr,d0
+            andw regcon0f,d0
+            movb 0(flagptr,d0:w),regf
+            znext
+
