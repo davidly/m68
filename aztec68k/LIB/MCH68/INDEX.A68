@@ -1,0 +1,33 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+;
+RIGHTWAY equ	1
+	public _index
+_index:
+	IF RIGHTWAY==1
+	public	_strchr
+	jmp	_strchr
+	ELSE
+; this code is compatible with other Aztec C compilers and other compilers
+; which also get this wrong.  In particular, the null terminating character
+; will not be found if index(string, '\0') is used; however real unix systems
+; such as BSD and Version 7 on the pdp11 implement index with exactly the
+; same semantics as strchr.
+	move.l	4(sp),a0
+	IF INT32
+	move.l	8(sp),d0
+	ELSE
+	move.w	8(sp),d0
+	ENDC
+.1
+	move.b	(a0)+,d1
+	beq	.2
+	cmp.b	d0,d1
+	bne	.1
+	move.l	a0,d0
+	sub.l	#1,d0
+	rts
+.2
+	move.l	#0,d0
+	rts
+	ENDC

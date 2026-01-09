@@ -1,0 +1,12 @@
+; Copyright 1987 Manx Software Systems, Inc.
+; :ts=8
+;
+	public _strcpy
+_strcpy
+	movem.l	4+0(sp),a0/a1
+	move.l	a0,d0
+.1
+	move.b	(a1)+,(a0)+
+	bne.s	.1
+	rts
+;

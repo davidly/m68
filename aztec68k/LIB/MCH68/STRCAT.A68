@@ -1,0 +1,16 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	public _strcat
+;
+;	char *strcat(char *dest, const char *source);
+_strcat
+	movem.l	4+0(sp),a0/a1	a0 = dest; a1 = source
+	move.l	a0,d0
+
+.1:	tst.b	(a0)+
+	bne	.1
+	subq.l	#1,a0
+
+.2:	move.b	(a1)+,(a0)+
+	bne	.2
+	rts

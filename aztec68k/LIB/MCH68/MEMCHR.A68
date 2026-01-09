@@ -1,0 +1,40 @@
+; Copyright 1987 by Manx Software Systems
+; :ts=8
+	public	_memchr
+;
+;	void *memchr(const void *s, int c, size_t n)
+	IF INT32
+	public	_lmemchr
+;	void *memchr(const void *s, int c, u_long n)
+_lmemchr:
+	ENDC
+_memchr:
+	move.l	4+0(sp),a0	;s
+	IF INT32
+	move.l	4+8(sp),d0	;n
+	beq	notfoundr
+	move.b	4+4+3(sp),d1	;c
+	sub.l	#1,d0
+	ELSE
+	move.w	4+6(sp),d0	;n
+	beq	notfound
+	move.b	4+4+1(sp),d1	;c
+	sub.w	#1,d0
+	ENDC
+.1
+	cmp.b	(a0)+,d1
+	dbeq	d0,.1
+	bne	loopend
+found:
+	move.l	a0,d0
+	sub.l	#1,d0
+	rts
+loopend:
+	IF INT32
+	sub.l	#$10000,d0
+	bpl	.1
+	ENDC
+notfound:
+	move.l	#0,d0
+notfoundr:
+	rts

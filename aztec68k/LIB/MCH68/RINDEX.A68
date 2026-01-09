@@ -1,0 +1,37 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+;
+RIGHTWAY equ	1
+	public _rindex
+_rindex:
+	IF RIGHTWAY==1
+	public	_strrchr
+	jmp	_strrchr
+	ELSE
+; this code is compatible with other Aztec C compilers and other compilers
+; which also get this wrong.  In particular, the null terminating character
+; will not be found if rindex(string, '\0') is used; however real unix systems
+; such as BSD and Version 7 on the pdp11 implement rindex with exactly the
+; same semantics as strrchr.
+	move.l	4(sp),a0
+	move.l	a0,a1
+.1
+	tst.b	(a0)+
+	bne	.1
+	sub.l	#1,a0
+	IF INT32
+	move.b	11(sp),d0
+	ELSE
+	move.b	9(sp),d0
+	ENDC
+.2
+	cmp.l	a0,a1
+	beq	.3
+	cmp.b	-(a0),d0
+	bne	.2
+	move.l	a0,d0
+	rts
+.3
+	move.l	#0,d0
+	rts
+	ENDC

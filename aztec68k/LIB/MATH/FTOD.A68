@@ -1,0 +1,27 @@
+;
+;	convert float to double
+;
+;	argument in d0 result in d0/d1
+;
+		public	.ftod
+.ftod:	movem.l	d3/d4,-(sp)
+		tst.l	d0				;save sign
+		smi		d3
+		clr.l	d1				;clear out LL of result
+		and.l	#$7fffffff,d0	;extract exponent and mantissa
+		move.l	#2,d4
+fagain:
+		lsr.l	#1,d0			;shift exponent and mantissa into position
+		roxr.l	#1,d1
+		dbra	d4,fagain
+		move.l	d0,d4
+		or.l	d1,d4			;check for 0
+		beq		1$
+		add.l	#$38000000,d0	;adjust bias for double (1023-127) << 20
+1$:
+		tst.b	d3				; have to set sign?
+		beq		fexit			; no
+		or.l	#$80000000,d0	;yes, set it
+fexit:
+		movem.l	(sp)+,d3/d4
+		rts

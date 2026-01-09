@@ -182,7 +182,7 @@ extern "C" void _init_nlcpm() // called by _init()
     if ( 0 != g_eh_data )
         __register_frame( g_eh_data );
 
-    for ( int i = 0; i < ( sizeof( g_afcb ) / sizeof( g_afcb[ 0 ] ) ); i++ )
+    for ( int i = 0; i < _countof( g_afcb ); i++ )
         g_afcb[ i ].n[ 0 ] = '*'; // indicate that it's free
 } //_init_nlcpm
 
@@ -229,12 +229,13 @@ bool ValidCPMFilename( const char * pc )
     if ( !strcmp( pc, ".." ) )
         return false;
 
-    const char * pcinvalid = "<>,;:=?[]%|()/\\";
-    for ( size_t i = 0; i < strlen( pcinvalid ); i++ )
+    const char * pcinvalid = "<>,;:=?[]%|()/\\ \t\n\r"; // control characters are valid with exceptions
+    size_t len = strlen( pcinvalid );
+    for ( size_t i = 0; i < len; i++ )
         if ( strchr( pc, pcinvalid[i] ) )
             return false;
 
-    size_t len = strlen( pc );
+    len = strlen( pc );
 
     if ( len > 12 )
         return false;
@@ -298,7 +299,7 @@ extern "C" int open( const char * pathname, int flags, ... )
     }
 
     uint32_t result = 0;
-    bool create = flags & ( O_CREAT | O_TRUNC );
+    bool create = ( 0 != ( flags & ( O_CREAT | O_TRUNC ) ) );
 
     if ( create )
         result = bdos_cpm( 22, (long) & fcb ); // make

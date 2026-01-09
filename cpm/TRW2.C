@@ -52,10 +52,6 @@ int main()
                 show_error( "unable to write to file" );
         }
 
-        result = fflush( fd );
-        if ( 0 != result )
-            show_error( "fflush of file descriptor at point A failed\n" );
-    
         result = close( fd );
         if ( 0 != result )
             show_error( "close of file descriptor at point A failed\n" );

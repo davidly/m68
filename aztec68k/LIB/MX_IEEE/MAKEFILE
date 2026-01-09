@@ -1,0 +1,41 @@
+.SUFFIXES: .c .a68 .asm .r .rll
+CFLAGS=
+
+#
+# make small code, small data object modules for rom (extension=.r)
+#
+
+OBJ= 
+.c.r:
+	c68 $(CFLAGS) -o $*.r $*
+
+.a68.r:
+	as68 -o $*.r $*.a68
+
+.asm.r:
+	as68 -o $*.r $*.asm
+
+all: $(OBJ) 
+	echo done
+
+#
+# make large code, large data object modules for rom (extension=.rll)
+#
+
+OLL= 
+
+.c.rll:
+	c68 +c +d $(CFLAGS) -o $*.rll $*
+
+.a68.rll:
+	as68 -c -d -o $*.rll $*.a68
+
+.asm.rll:
+	as68 -c -d -o $*.rll $*.asm
+
+big: $(OLL) 
+	echo done
+
+clean:
+	del *.r
+	del *.rll

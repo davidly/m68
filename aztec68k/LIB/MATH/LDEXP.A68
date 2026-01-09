@@ -1,0 +1,46 @@
+;
+;	FLOATING POINT ERROR VALUES
+;
+UNDER_FLOW	equ	1
+OVER_FLOW	equ	2
+DIV_BY_ZERO	equ	3
+;
+;		ldexp(d, i)
+;
+;		return x = d * 2^i
+;
+		public	_ldexp
+_ldexp	move.l	d2,-(sp)
+		move.l	8(sp),d0		;get the number
+		move.l	12(sp),d1
+		move.l	d0,d2			;get exponent
+		and.l	#$800fffff,d0	;get old exponent out
+		swap	d2
+		and.l	#$7ff0,d2
+		lsr.w	#4,d2
+		if INT32
+		add.w	18(sp),d2
+		else
+		add.w	16(sp),d2
+		endc
+		bmi		ldunder
+		beq		ldunder
+		cmp.w	#2047,d2
+		bgt		ldover
+		lsl.w	#4,d2
+		swap	d2
+		or.l	d2,d0			;put new exponent in
+		move.l	(sp)+,d2
+		rts
+ldunder:
+		move.w	#UNDER_FLOW,_flterr
+		or.l	#$00100000,d0
+		move.l	(sp)+,d2
+		rts
+ldover:
+		move.w	#OVER_FLOW,_flterr
+		or.l	#$7ff00000,d0
+		move.l	(sp)+,d2
+		rts
+;
+		global	_flterr,2

@@ -1,0 +1,32 @@
+;
+;	FLOATING POINT ERROR VALUES
+;
+UNDER_FLOW	equ	1
+OVER_FLOW	equ	2
+DIV_BY_ZERO	equ	3
+;
+;		modf(d, dptr)
+;
+;		return fractional part of d and
+;		stores integral part in	*dptr
+;
+		public	.Pfix
+		public	.Pflt
+		public	.Psub
+		public	_modf
+_modf:
+		movem.l	d2/d3,-(sp)
+		move.l	12(sp),d0		;pick up double
+		move.l	16(sp),d1
+		move.l	d0,d2			;copy number
+		move.l	d1,d3			;
+		jsr		.Pfix			;fix the number
+		jsr		.Pflt			;float it again
+		move.l	20(sp),a0
+		move.l	d0,(a0)+		;store integral part
+		move.l	d1,(a0)
+		exg.l	d0,d2
+		exg.l	d1,d3
+		jsr		.Psub			;get rid of integral part
+		movem.l	(sp)+,d2/d3
+		rts

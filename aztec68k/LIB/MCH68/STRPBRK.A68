@@ -1,0 +1,29 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	public	_strpbrk
+	public	.strpbrk
+;
+;	char *strpbrk(const char *s1, const char *s2);
+;
+;	Locates the 1st occurrence in s1 of any character from s2.  Returns
+;	pointer to the character or NULL if no character from s2 occurs in s1.
+_strpbrk:
+	movem.l	4+0(sp),a0/a1	a0 = s1; a1 = s2;
+.strpbrk:			;entry point for args already in regsisters
+	move.l	a1,d2
+.10
+	move.b	(a0)+,d1  	;*s1++
+	beq	.40
+	move.l	d2,a1		;p = s2;
+.30
+	move.b	(a1)+,d0
+	beq	.10
+	cmp.b	d1,d0
+	bne	.30
+
+	sub.l	#1,a0
+	move.l	a0,d0
+	rts
+.40
+	move.l	#0,d0
+	rts

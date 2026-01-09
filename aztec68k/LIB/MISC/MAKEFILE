@@ -1,0 +1,81 @@
+.SUFFIXES: .c .a68 .r .rll .r28 .l28
+CFLAGS=
+
+#
+# make small code, small data object modules for rom (extension=.r)
+#
+
+OBJ=  atoi.r atol.r ctype.r malloc.r\
+	qsort.r sprintf.r sscanf.r rand.r
+
+.c.r:
+	c68 $(CFLAGS) -o $*.r $*
+
+.a68.r:
+	as68 -o $*.r $*.a68
+
+all: $(OBJ) format.r scan.r
+	echo done
+
+fformat.r: format.c
+	c68 $(CFLAGS) -DFLOAT -o fformat.r format.c
+
+fscan.r: scan.c
+	c68 $(CFLAGS) -DFLOAT -o fscan.r scan.c
+
+#
+# make large code, large data object modules for rom (extension=.rll)
+#
+
+OLL=  atoi.rll atol.rll ctype.rll malloc.rll\
+	qsort.rll sprintf.rll sscanf.rll rand.rll
+
+.c.rll:
+	c68 +c +d $(CFLAGS) -o $*.rll $*
+
+.a68.rll:
+	as68 -c -d -o $*.rll $*.a68
+
+big: $(OLL) format.rll scan.rll
+	echo done
+
+fformat.rll: format.c
+	c68 +c +d $(CFLAGS) -DFLOAT -o fformat.rll format.c
+
+fscan.rll: scan.c
+	c68 +c +d $(CFLAGS) -DFLOAT -o fscan.rll scan.c
+
+#
+# make 68020/68881 modules:
+#
+.c.r28:
+	c68 +2f8 -o $@ $*.c
+.c.l28:
+	c68 +cd2f8 -o $@ $*.c
+68881.r28: fformat.r28 fscan.r28 sprintf.r28 sscanf.r28
+	echo done
+68881.l28: fformat.l28 fscan.l28 sprintf.l28 sscanf.l28
+	echo done
+fformat.r28: format.c
+	c68 +2f8 $(CFLAGS) -DFLOAT -o fformat.r28 format.c
+fscan.r28: scan.c
+	c68 +2f8 $(CFLAGS) -DFLOAT -o fscan.r28 scan.c
+fformat.l28: format.c
+	c68 +cd2f8 $(CFLAGS) -DFLOAT -o fformat.l28 format.c
+fscan.l28: scan.c
+	c68 +cd2f8 $(CFLAGS) -DFLOAT -o fscan.l28 scan.c
+
+#
+# build misc.arc
+#
+SRC=  atoi.c atol.c ctype.c malloc.c\
+	qsort.c sprintf.c sscanf.c format.c scan.c rand.c
+
+arc: $(SRC)
+	mkarcv misc.arc <misc.bld
+
+clean:
+	del *.r
+	del *.rll
+	del *.r28
+	del *.l28

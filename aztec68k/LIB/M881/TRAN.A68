@@ -1,0 +1,86 @@
+; Copyright (C) 1985 by Manx Software Systems, Inc.
+; :ts=8
+
+	mc68881
+	public	_acos
+_acos
+	facos.d	4(sp),fp0
+	rts
+
+	public	_asin
+_asin
+	fasin.d	4(sp),fp0
+	rts
+
+	public	_atan
+_atan
+	fatan.d	4(sp),fp0
+	rts
+
+	public	_atanh
+_atanh
+	fatanh.d	4(sp),fp0
+	rts
+
+	public	_cos
+_cos
+	fcos.d	4(sp),fp0
+	rts
+
+	public	_cosh
+_cosh
+	fcosh.d	4(sp),fp0
+	rts
+
+	public	_cotan
+_cotan
+	fmove.w	#1,fp0
+	ftan.d	4(sp),fp1
+	fdiv.x	fp1,fp0
+	rts
+
+	public	_exp
+_exp
+	fetox.d	4(sp),fp0
+	rts
+
+	public	_log10
+_log10
+	flog10.d	4(sp),fp0
+	rts
+
+	public	_log2
+_log2
+	flog2.d	4(sp),fp0
+	rts
+
+	public	_log
+_log
+	flogn.d	4(sp),fp0
+	rts
+
+	public	_sin
+_sin
+	fsin.d	4(sp),fp0
+	rts
+
+	public	_sinh
+_sinh
+	fsinh.d	4(sp),fp0
+	rts
+
+	public	_sqrt
+_sqrt
+	fsqrt.d	4(sp),fp0
+	rts
+
+	public	_tan
+_tan
+	ftan.d	4(sp),fp0
+	rts
+
+	public	_tanh
+_tanh
+	ftanh.d	4(sp),fp0
+	rts
+

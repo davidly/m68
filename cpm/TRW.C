@@ -46,10 +46,6 @@ int main()
         }
     }
 
-    result = fflush( fd );
-    if ( 0 != result )
-        show_error( "fflush of file descriptor at point A failed\n" );
-
     result = close( fd );
     if ( 0 != result )
         show_error( "close of file descriptor at point B failed\n" );

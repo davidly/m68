@@ -1,0 +1,38 @@
+; Copyright (C) 1984 by Manx Software Systems, Inc.
+;:ts=8
+;
+	public _toupper
+;
+_toupper
+	move.l	#0,d0
+	IF INT32
+	move.b	7(sp),d0
+	ELSE
+	move.b	5(sp),d0
+	ENDC
+	cmp.b	#'a'-1,d0
+	bls	tu_done
+	cmp.b	#'z',d0
+	bhi	tu_done
+	sub.b	#'a'-'A',d0
+tu_done:
+	rts
+;
+;
+	public _tolower
+;
+_tolower
+	move.l	#0,d0
+	IF INT32
+	move.b	7(sp),d0
+	ELSE
+	move.b	5(sp),d0
+	ENDC
+	cmp.b	#'A'-1,d0
+	bls	tl_done
+	cmp.b	#'Z',d0
+	bhi	tl_done
+	add.b	#'a'-'A',d0
+tl_done:
+	rts
+;

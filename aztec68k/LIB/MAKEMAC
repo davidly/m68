@@ -1,0 +1,59 @@
+.SUFFIXES: .c .a68 .r
+CFLAGS=
+
+#
+# make small code, small data libraries for mac:
+#
+c68mac.lib: x.r
+	cd stdio
+	make CFLAGS=$(CFLAGS)
+	cd ..\misc
+	make CFLAGS=$(CFLAGS)
+	cd ..\mch68
+	make CFLAGS=$(CFLAGS)
+	cd ..\rom68
+	make CFLAGS=$(CFLAGS)
+	cd ..\mac
+	make CFLAGS=$(CFLAGS)
+	cd ..
+	lb68 c68mac.lib -e .r -f c68mac.bld
+
+#
+# make large code, large data libraries for mac 
+# (last two letters="ll"):
+#
+c68macll.lib: x.r
+	cd stdio
+	make big CFLAGS=$(CFLAGS)
+	cd ..\misc
+	make big CFLAGS=$(CFLAGS)
+	cd ..\mch68
+	make big CFLAGS=$(CFLAGS)
+	cd ..\rom68
+	make big CFLAGS=$(CFLAGS)
+	cd ..\mac
+	make big CFLAGS=$(CFLAGS)
+	cd ..
+	lb68 c68macll.lib -e .rll -f c68mac.bld
+
+x.r:
+	@cd .
+
+clean:
+	cd stdio
+	make clean
+	cd ..\misc
+	make clean
+	cd ..\mch68
+	make clean
+	cd ..\rom68
+	make clean
+	cd ..\mac
+	make clean
+	cd ..\math
+	make clean
+	cd ..\mx_ieee
+	make clean
+	cd ..\cpm68
+	make clean
+	cd ..

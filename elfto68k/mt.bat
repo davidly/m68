@@ -43,10 +43,9 @@ if %ERRORLEVEL% NEQ 0 ( goto alldone )
 elfto68k %1.elf
 del %1.elf
 
-goto alldone
+goto :eof
 
 :noargs
 echo no source file specified!
 
-:alldone
 

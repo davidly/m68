@@ -1,0 +1,31 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	public _strncat
+;
+;	char *strncat(char *dest, const char *source, size_t n);
+_strncat
+	movem.l	4+0(sp),a0/a1
+	move.l	a0,d0
+	IF INT32
+	move.l	4+8(sp),d1
+	bpl	.plus
+	move.l	#$7fffffff,d1
+.plus:
+	ELSE
+	move.w	4+8(sp),d1
+	ENDC
+	beq	done
+
+.10:	tst.b	(a0)+
+	bne	.10
+	subq.l	#1,a0
+
+.20:	move.b	(a1)+,(a0)+
+	dbeq	d1,.20
+	IF INT32
+	sub.l	#$10000,d1
+	bpl	.20
+	ENDC
+	clr.b	-(a0)
+done:
+	rts

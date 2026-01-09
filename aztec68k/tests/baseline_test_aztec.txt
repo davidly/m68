@@ -1,0 +1,569 @@
+Fri 01/09/2026 14:27:55.42 
+Aztec 680X0 Assembler 3.6B 6-9-88
+lb 3.6a 2-5-88
+lb 3.6a 2-5-88
+lb 3.6a 2-5-88
+lb 3.6a 2-5-88
+lb 3.6a 2-5-88
+Aztec 680X0 Assembler 3.6B 6-9-88
+symto68k.cxx
+test SIEVE 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00175a  Data: 000274  Udata: 0023f0  Total: 003dbe
+59 symbols successfully copied
+1899 primes.
+test E 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00176e  Data: 000274  Udata: 0003f0  Total: 001dd2
+58 symbols successfully copied
+271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
+done
+test TTT 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 002118  Data: 0002ce  Udata: 000406  Total: 0027ec
+80 symbols successfully copied
+move count:      64930
+iteration count: 10
+method:          function pointers
+test TM 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001bc2  Data: 000276  Udata: 0003f0  Total: 002228
+61 symbols successfully copied
+success
+test TARGS 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001780  Data: 000274  Udata: 0003f0  Total: 001de4
+58 symbols successfully copied
+argc: 1, argv 9af4, penv 0
+argv[ 0 ]: 'cpmapp'
+test HI 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00128c  Data: 0001e0  Udata: 0003f0  Total: 00185c
+52 symbols successfully copied
+hi
+test TPI 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001860  Data: 000274  Udata: 000bc4  Total: 002698
+59 symbols successfully copied
+314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
+test MM 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001992  Data: 000274  Udata: 0016ce  Total: 0032d4
+71 symbols successfully copied
+summ is: 465880
+test NQ1D 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 0018b0  Data: 000278  Udata: 000400  Total: 001f28
+63 symbols successfully copied
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
+test PRIMES 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00187c  Data: 000274  Udata: 0003f0  Total: 001ee0
+61 symbols successfully copied
+10007
+10009
+10037
+10039
+10061
+10067
+10069
+10079
+10091
+10093
+test NQUEENS 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 0018e2  Data: 0002b8  Udata: 0003f0  Total: 001f8a
+63 symbols successfully copied
+  size    solutions
+     1            1
+     2            0
+     3            0
+     4            2
+     5           10
+     6            4
+     7           40
+     8           92
+test T_SETJMP 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00177c  Data: 000274  Udata: 00041c  Total: 001e0c
+62 symbols successfully copied
+second
+back in main
+falling out of main
+test FOPENTST 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001d18  Data: 0002aa  Udata: 0003f4  Total: 0023b6
+64 symbols successfully copied
+O_CREAT: 100
+O_TRUNC: 200
+O_RDONLY: 0
+O_WRONLY: 1
+O_RDWR: 2
+O_APPEND: 800
+O_EXCL: 400
+fp from fopen: 40630
+len in pfl: 128
+length of file before initial close: 128
+len in pfl: 0
+exiting fopentst with great success
+test TRW 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001f3e  Data: 000274  Udata: 000430  Total: 0025e2
+59 symbols successfully copied
+trw completed with great success
+test TRW2 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001eb6  Data: 00028c  Udata: 000bf0  Total: 002d32
+60 symbols successfully copied
+pass 0 with element count 1
+pass 1 with element count 7
+pass 2 with element count 20
+pass 3 with element count 32
+pass 4 with element count 63
+pass 5 with element count 64
+pass 6 with element count 65
+pass 7 with element count 77
+pass 8 with element count 127
+pass 9 with element count 128
+pass 10 with element count 129
+pass 11 with element count 701
+trw2 completed with great success
+test FILEOPS 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 002136  Data: 0002aa  Udata: 000670  Total: 002a50
+69 symbols successfully copied
+fp: a2d4
+current offset: 0
+result of fseek: 0
+file length from ftell: 0
+empty file length: 0
+result of fseek: 0
+result of fwrite (should be 1): 1
+current offset: 8320
+result of fseek: 0
+file length from ftell: 8320
+8192 + 128 = 8320 file length from portable_filelen: 8320
+result of fseek to middle of file: 0
+result of fwrite to middle of file (should be 1): 1
+fp: a2d4
+current offset: 0
+result of fseek: 0
+file length from ftell: 8320
+8192 + 128 = 8320 file length from cpm_filelen: 8320
+result of read at offset 0: 512
+result of read at offset 512: 512
+result of read at offset 1024: 512
+result of read at offset 1536: 512
+result of read at offset 2048: 512
+result of read at offset 2560: 512
+result of read at offset 3072: 512
+result of read at offset 3584: 512
+result of read at offset 4096: 512
+result of read at offset 4608: 512
+result of read at offset 5120: 512
+result of read at offset 5632: 512
+result of read at offset 6144: 512
+result of read at offset 6656: 512
+result of read at offset 7168: 512
+result of read at offset 7680: 512
+result of read at offset 8192: 128
+testing backwards read
+result of read at offset 8192: 128
+result of read at offset 7680: 512
+result of read at offset 7168: 512
+result of read at offset 6656: 512
+result of read at offset 6144: 512
+result of read at offset 5632: 512
+result of read at offset 5120: 512
+result of read at offset 4608: 512
+result of read at offset 4096: 512
+result of read at offset 3584: 512
+result of read at offset 3072: 512
+result of read at offset 2560: 512
+result of read at offset 2048: 512
+result of read at offset 1536: 512
+result of read at offset 1024: 512
+result of read at offset 512: 512
+result of read at offset 0: 512
+test TRENAME 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001cb6  Data: 0002aa  Udata: 0007f0  Total: 002750
+66 symbols successfully copied
+current offset: 0
+result of fseek: 0
+file length from ftell: 1024
+trename completed with great success
+test TPHI 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 002116  Data: 000306  Udata: 0003f0  Total: 00280c
+70 symbols successfully copied
+should tend towards 1.61803398874989484820458683436563811772030
+  at  5 iterations: 1.6250000000000000
+  at 10 iterations: 1.6179775280898880
+  at 15 iterations: 1.6180344478216820
+  at 20 iterations: 1.6180339850173580
+  at 25 iterations: 1.6180339887802430
+done
+test TAP 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00232e  Data: 00030a  Udata: 0003f0  Total: 002a28
+74 symbols successfully copied
+starting, should tend towards 1.2020569031595942854...
+first implementation...
+  at           10 iterations: 1.1975319856741930
+  at          100 iterations: 1.2020074006596780
+  at         1000 iterations: 1.2020564036593430
+second implementation...
+  at           10 iterations: 1.1111111111111110
+  at          100 iterations: 1.2658227848101270
+  at         1000 iterations: 1.2180267965895240
+  at        10000 iterations: 1.2056908608632750
+  at       100000 iterations: 1.1939585696376330
+done
+test TMULDIV 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 0028a6  Data: 000306  Udata: 0003f0  Total: 002f9c
+77 symbols successfully copied
+app start
+i8 3 * 14: 42
+i8 3 % 14: 3
+i8 3 / 14: 0
+i8 17 * 14: -18
+i8 17 % 14: 3
+i8 17 / 14: 1
+i8 -3 * 14: -42
+i8 -3 % 14: -3
+i8 -3 / 14: 0
+i8 -17 * 14: 18
+i8 -17 % 14: -3
+i8 -17 / 14: -1
+i8 -3 * -14: 42
+i8 -3 % -14: -3
+i8 -3 / -14: 0
+i8 -17 * -14: -18
+i8 -17 % -14: -3
+i8 -17 / -14: 1
+i8 28 * 4: 112
+i8 28 % 4: 0
+i8 28 / 4: 7
+i8 28 * -4: -112
+i8 28 % -4: 0
+i8 28 / -4: -7
+i8 -28 * 4: -112
+i8 -28 % 4: 0
+i8 -28 / 4: -7
+i8 -28 * -4: 112
+i8 -28 % -4: 0
+i8 -28 / -4: 7
+ui8 3 * 14: 42
+ui8 3 % 14: 3
+ui8 3 / 14: 0
+ui8 17 * 14: 238
+ui8 17 % 14: 3
+ui8 17 / 14: 1
+ui8 253 * 14: 214
+ui8 253 % 14: 1
+ui8 253 / 14: 18
+ui8 239 * 14: 18
+ui8 239 % 14: 1
+ui8 239 / 14: 17
+ui8 253 * 242: 42
+ui8 253 % 242: 11
+ui8 253 / 242: 1
+ui8 239 * 242: 238
+ui8 239 % 242: 239
+ui8 239 / 242: 0
+ui8 28 * 4: 112
+ui8 28 % 4: 0
+ui8 28 / 4: 7
+ui8 28 * 252: 144
+ui8 28 % 252: 28
+ui8 28 / 252: 0
+ui8 228 * 4: 144
+ui8 228 % 4: 0
+ui8 228 / 4: 57
+ui8 228 * 252: 112
+ui8 228 % 252: 228
+ui8 228 / 252: 0
+i16 3 * 14: 42
+i16 3 % 14: 3
+i16 3 / 14: 0
+i16 3700 * 14: -13736
+i16 3700 % 14: 4
+i16 3700 / 14: 264
+i16 -3 * 14: -42
+i16 -3 % 14: -3
+i16 -3 / 14: 0
+i16 -3700 * 14: 13736
+i16 -3700 % 14: -4
+i16 -3700 / 14: -264
+i16 -3 * -14: 42
+i16 -3 % -14: -3
+i16 -3 / -14: 0
+i16 -3700 * -14: -13736
+i16 -3700 % -14: -4
+i16 -3700 / -14: 264
+i16 2800 * 4: 11200
+i16 2800 % 4: 0
+i16 2800 / 4: 700
+i16 2800 * -4: -11200
+i16 2800 % -4: 0
+i16 2800 / -4: -700
+i16 -2800 * 4: -11200
+i16 -2800 % 4: 0
+i16 -2800 / 4: -700
+i16 -2800 * -4: 11200
+i16 -2800 % -4: 0
+i16 -2800 / -4: 700
+ui16 3 * 14: 42
+ui16 3 % 14: 3
+ui16 3 / 14: 0
+ui16 3700 * 14: 51800
+ui16 3700 % 14: 4
+ui16 3700 / 14: 264
+ui16 65533 * 14: 65494
+ui16 65533 % 14: 13
+ui16 65533 / 14: 4680
+ui16 61836 * 14: 13736
+ui16 61836 % 14: 12
+ui16 61836 / 14: 4416
+ui16 65533 * 65522: 42
+ui16 65533 % 65522: 11
+ui16 65533 / 65522: 1
+ui16 61836 * 65522: 51800
+ui16 61836 % 65522: 61836
+ui16 61836 / 65522: 0
+ui16 2800 * 4: 11200
+ui16 2800 % 4: 0
+ui16 2800 / 4: 700
+ui16 2800 * 65532: 54336
+ui16 2800 % 65532: 2800
+ui16 2800 / 65532: 0
+ui16 62736 * 4: 54336
+ui16 62736 % 4: 0
+ui16 62736 / 4: 15684
+ui16 62736 * 65532: 11200
+ui16 62736 % 65532: 62736
+ui16 62736 / 65532: 0
+i32 3 * 14: 42
+i32 3 % 14: 3
+i32 3 / 14: 0
+i32 37000 * 14: 518000
+i32 37000 % 14: 12
+i32 37000 / 14: 2642
+i32 -3 * 14: -42
+i32 -3 % 14: -3
+i32 -3 / 14: 0
+i32 -37000 * 14: -518000
+i32 -37000 % 14: -12
+i32 -37000 / 14: -2642
+i32 -3 * -14: 42
+i32 -3 % -14: -3
+i32 -3 / -14: 0
+i32 -37000 * -14: 518000
+i32 -37000 % -14: -12
+i32 -37000 / -14: 2642
+i32 280000 * 4: 1120000
+i32 280000 % 4: 0
+i32 280000 / 4: 70000
+i32 280000 * -4: -1120000
+i32 280000 % -4: 0
+i32 280000 / -4: -70000
+i32 -280000 * 4: -1120000
+i32 -280000 % 4: 0
+i32 -280000 / 4: -70000
+i32 -280000 * -4: 1120000
+i32 -280000 % -4: 0
+i32 -280000 / -4: 70000
+ui32 3 * 14: 42
+ui32 3 % 14: 3
+ui32 3 / 14: 0
+ui32 37000 * 14: 518000
+ui32 37000 % 14: 12
+ui32 37000 / 14: 2642
+ui32 4294967293 * 14: 4294967254
+ui32 4294967293 % 14: 1
+ui32 4294967293 / 14: 306783378
+ui32 4294930296 * 14: 4294449296
+ui32 4294930296 % 14: 6
+ui32 4294930296 / 14: 306780735
+ui32 4294967293 * 4294967282: 42
+ui32 4294967293 % 4294967282: 11
+ui32 4294967293 / 4294967282: 1
+ui32 4294930296 * 4294967282: 518000
+ui32 4294930296 % 4294967282: 4294930296
+ui32 4294930296 / 4294967282: 0
+ui32 280000 * 4: 1120000
+ui32 280000 % 4: 0
+ui32 280000 / 4: 70000
+ui32 280000 * 4294967292: 4293847296
+ui32 280000 % 4294967292: 280000
+ui32 280000 / 4294967292: 0
+ui32 4294687296 * 4: 4293847296
+ui32 4294687296 % 4: 0
+ui32 4294687296 / 4: 1073671824
+ui32 4294687296 * 4294967292: 1120000
+ui32 4294687296 % 4294967292: 4294687296
+ui32 4294687296 / 4294967292: 0
+tmuldiv ended with great success
+test PIS 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00322c  Data: 00073c  Udata: 000414  Total: 003d7c
+98 symbols successfully copied
+soff128: 0, soff: 0, cGen128 1, cGen 128
+startInChunks: 0, limitInChunks 4
+percent complete: 25
+percent complete: 50
+percent complete: 75
+percent complete: 100
+results are valid for length 128
+final: 243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89452821e638d01377be5466cf34e90c6cc0ac29b7c97c50dd3f84d5b5b5470917
+test MANDLE 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 002504  Data: 000306  Udata: 0003f0  Total: 002bfa
+73 symbols successfully copied
+000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
+000001111111111111111122222222333557BF75433222211111000000000000000000000000000
+000111111111111111112222222233445C      643332222111110000000000000000000000000
+011111111111111111222222233444556C      654433332211111100000000000000000000000
+11111111111111112222233346 D978 BCF    DF9 6556F4221111110000000000000000000000
+111111111111122223333334469                 D   6322111111000000000000000000000
+1111111111222333333334457DB                    85332111111100000000000000000000
+11111122234B744444455556A                      96532211111110000000000000000000
+122222233347BAA7AB776679                         A32211111110000000000000000000
+2222233334567        9A                         A532221111111000000000000000000
+222333346679                                    9432221111111000000000000000000
+234445568  F                                   B5432221111111000000000000000000
+                                              864332221111111000000000000000000
+234445568  F                                   B5432221111111000000000000000000
+222333346679                                    9432221111111000000000000000000
+2222233334567        9A                         A532221111111000000000000000000
+122222233347BAA7AB776679                         A32211111110000000000000000000
+11111122234B744444455556A                      96532211111110000000000000000000
+1111111111222333333334457DB                    85332111111100000000000000000000
+111111111111122223333334469                 D   6322111111000000000000000000000
+11111111111111112222233346 D978 BCF    DF9 6556F4221111110000000000000000000000
+011111111111111111222222233444556C      654433332211111100000000000000000000000
+000111111111111111112222222233445C      643332222111110000000000000000000000000
+000001111111111111111122222222333557BF75433222211111000000000000000000000000000
+000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
+test TS 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 002ac6  Data: 000306  Udata: 0003f0  Total: 0031bc
+79 symbols successfully copied
+test right shifts
+  sizeof int8_t: 1, result ff
+  sizeof uint8_t: 1, result 7f
+  sizeof int16_t: 2, result ffff
+  sizeof uint16_t: 2, result 7fff
+  sizeof int32_t: 4, result ffffffff
+  sizeof uint32_t: 4, result 7fffffff
+now test left shifts
+  sizeof int8_t: 1, result fe
+  sizeof uint8_t: 1, result fe
+  sizeof int16_t: 2, result fffe
+  sizeof uint16_t: 2, result fffe
+  sizeof int32_t: 4, result fffffffe
+  sizeof uint32_t: 4, result fffffffe
+now test comparisons. t, f, t, f, t expected
+  f, t, t, f, f
+  t, f, t, f, t
+  t, f, t, f, t
+  t, f, t, f, t
+  t, f, t, f, t
+more comparisons. f, f, f, t, t expected
+  f, f, f, t, t
+  f, f, f, t, t
+  f, f, f, t, t
+testing printf
+  string: 'hello'
+  char: 'h'
+  int: 27, 1b
+  negative int: -27, ffe5
+  float: 3.141573
+  negative float: -3.141573
+ts completed with great success
+test TF 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 00573e  Data: 000346  Udata: 0003fc  Total: 005e80
+116 symbols successfully copied
+float converted by floattoa: -1.23456699
+float converted by floattoa: 1.23456699
+float converted by floattoa: 34.56699995
+float from printf: 45.678000
+division result: 333.333344, square root 18.257420
+float converted with floattoa: -27.108400
+result of 20.2 * -1.342: -27.108400
+pi in radians: 0.523599
+sin of 30 degress is 0.500000
+my_sin of 30 degress is 0.500000
+sinh of 0.5 degress is 0.521095
+cos of 30 degrees is 0.866025
+cosh of 0.5 degrees is 1.127626
+tan of 30 degrees is 0.577350
+atan of 1.000000 is 0.785398
+atan2 of 0.3, 0.2 is 0.982794
+acos of 0.3 is 1.266104
+my_acos of 0.3 is 1.266103
+asin of 0.3 is 0.304693
+my_asin of 0.3 is 0.304693
+tanh of 2.2 is 0.304693
+log of 0.3: -1.203973
+log10 of 300: 2.477121
+pi has mantissa: 0.785398, exponent 2
+  value         floor                 ceil                  round
+  ---------     -----------------     -----------------     -----------------
+  -1.750000  |  -2.000000 =    -2  |  -1.000000 =    -1  |  -2.000000 =    -2
+  -1.500000  |  -2.000000 =    -2  |  -1.000000 =    -1  |  -2.000000 =    -2
+  -1.250000  |  -2.000000 =    -2  |  -1.000000 =    -1  |  -1.000000 =    -1
+  -1.000000  |  -1.000000 =    -1  |  -1.000000 =    -1  |  -1.000000 =    -1
+  -0.750000  |  -1.000000 =    -1  |   0.000000 =     0  |  -1.000000 =    -1
+  -0.500000  |  -1.000000 =    -1  |   0.000000 =     0  |  -1.000000 =    -1
+  -0.250000  |  -1.000000 =    -1  |   0.000000 =     0  |   0.000000 =     0
+   0.000000  |   0.000000 =     0  |   0.000000 =     0  |   0.000000 =     0
+   0.250000  |   0.000000 =     0  |   1.000000 =     1  |   0.000000 =     0
+   0.500000  |   0.000000 =     0  |   1.000000 =     1  |   1.000000 =     1
+   0.750000  |   0.000000 =     0  |   1.000000 =     1  |   1.000000 =     1
+   1.000000  |   1.000000 =     1  |   1.000000 =     1  |   1.000000 =     1
+   1.250000  |   1.000000 =     1  |   2.000000 =     2  |   1.000000 =     1
+   1.500000  |   1.000000 =     1  |   2.000000 =     2  |   2.000000 =     2
+   1.750000  |   1.000000 =     1  |   2.000000 =     2  |   2.000000 =     2
+val 3.141590, intpart 2.125000, fracpart 0.141590
+ldexp( 1.500000, 5 ) = 48.000000
+ftoa result:     '3.14159012'
+floattoa result: '3.14159011'
+l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
+test tf completed with great success
+Fri 01/09/2026 14:28:02.47 

@@ -1,0 +1,29 @@
+	IF INT32==0
+; Copyright 1987 by Manx Software Systems
+; :ts=8
+	public	_lmemchr
+;
+;	void *lmemchr(const void *s, int c, size_t n)
+_lmemchr:
+	move.l	4+0(sp),a0	;s
+	move.l	4+6(sp),d0	;n
+	beq	notfoundr
+	move.b	4+4+1(sp),d1	;c
+	sub.l	#1,d0
+.1
+	cmp.b	(a0)+,d1
+	dbeq	d0,.1
+	bne	loopend
+found:
+	move.l	a0,d0
+	sub.l	#1,d0
+	rts
+loopend:
+;	IF INT32
+	sub.l	#$10000,d0
+	bpl	.1
+;	ENDC
+	move.l	#0,d0
+notfoundr:
+	rts
+	ENDC

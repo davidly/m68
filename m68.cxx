@@ -4550,6 +4550,134 @@ void emulator_invoke_68k_trap15( m68000 & cpu )
     }
 } //emulator_invoke_68k_trap15
 
+#pragma pack( push, 1 )
+
+struct IOParam
+{
+    uint32_t qLink; // pointer
+    int16_t qType; 
+    int16_t ioTrap; 
+    uint32_t ioCmdAddr; // pointer
+    uint32_t ioCompletion; // pointer
+    int16_t ioResult; 
+    uint32_t ioNamePtr; // pointer
+    int16_t ioVRefNum;
+    int16_t ioRefNum;
+    char ioVersNum;
+    char ioPermssn;
+    uint32_t ioMisc; // pointer
+    uint32_t ioBuffer; // pointer
+    int32_t ioReqCount;
+    int32_t ioActCount;
+    int16_t ioPosMode;
+    int32_t ioPosOffset;
+
+    void swap_endianness()
+    {
+        qLink = swap_endian32( qLink );
+        qType = swap_endian16( qType );
+        ioTrap = swap_endian16( ioTrap );
+        ioCmdAddr = swap_endian32( ioCmdAddr );
+        ioCompletion = swap_endian32( ioCompletion );
+        ioResult = swap_endian16( ioResult );
+        ioNamePtr = swap_endian32( ioNamePtr );
+        ioVRefNum = swap_endian16( ioVRefNum );
+        ioRefNum = swap_endian16( ioRefNum );
+        ioMisc = swap_endian32( ioMisc );
+        ioBuffer = swap_endian32( ioBuffer );
+        ioReqCount = swap_endian32( ioReqCount );
+        ioActCount = swap_endian32( ioActCount );
+        ioPosMode = swap_endian16( ioPosMode );
+        ioPosOffset = swap_endian32( ioPosOffset );
+    }
+
+    void trace()
+    {
+        tracer.Trace( "  IOParam:\n" );
+        tracer.Trace( "    qLink %#x\n", qLink );
+        tracer.Trace( "    qType %#x\n", qType );
+        tracer.Trace( "    ipTrap %#x\n", ioTrap );
+        tracer.Trace( "    ioCmdAdddr %#x\n", ioCmdAddr );
+        tracer.Trace( "    ioCompletion %#x\n", ioCompletion );
+        tracer.Trace( "    ioResult %#x\n", ioResult );
+        tracer.Trace( "    ioNamePtr %#x\n", ioNamePtr  );
+        tracer.Trace( "    ioVRefNum %#x\n", ioVRefNum );
+        tracer.Trace( "    ioRefNum %#x\n", ioRefNum );
+        tracer.Trace( "    ioVersNum %#x\n", ioVersNum );
+        tracer.Trace( "    ioPermssn %#x\n", ioPermssn );
+        tracer.Trace( "    ioMisc %#x\n", ioMisc );
+        tracer.Trace( "    ioBuffer %#x\n", ioBuffer );
+        tracer.Trace( "    ioReqCount %#x\n", ioReqCount  );
+        tracer.Trace( "    ioActCount %#x\n", ioActCount );
+        tracer.Trace( "    ioPosMode %#x\n", ioPosMode );
+        tracer.Trace( "    ioPosOffset %#x\n", ioPosOffset );
+    }
+};
+
+#pragma pack(pop)
+
+#define macos_trapa_async 0x0400
+
+#define macos_trapa_open 0
+#define macos_trapa_close 1
+#define macos_trapa_read 2
+#define macos_trapa_write 3
+#define macos_trapa_exittoshell 0x9f4
+
+#define macos_trapa_control 4
+
+void emulator_invoke_68k_trap10( m68000 & cpu, uint16_t op )
+{
+    tracer.Trace( "68k a-line trap: op: %x\n", op );
+
+    if ( macos_trapa_async & op )
+    {
+        tracer.Trace( "asynchronous calls aren't supported\n" );
+        ACCESS_REG( 0 ) = EINVAL;
+    }
+
+    switch( op & 0xbff )
+    {
+        case macos_trapa_write:
+        {
+            IOParam * p = (IOParam *) cpu.getmem( cpu.aregs[ 0 ] );
+            IOParam local = *p;
+            local.swap_endianness();
+            //local.trace();
+            tracer.Trace( "  ioRefNum: %x, ioReqCount %x, ioBuffer %x, ioPosMode %x\n", local.ioRefNum, local.ioReqCount, local.ioBuffer, local.ioPosMode );
+            if ( 1 == local.ioRefNum || 2 == local.ioRefNum ) // stdout / stderr
+                tracer.Trace( "  writing '%.*s'\n", (int) local.ioReqCount, cpu.getmem( local.ioBuffer ) );
+            tracer.TraceBinaryData( cpu.getmem( local.ioBuffer ), (uint32_t) local.ioReqCount, 4 );
+
+            int written;
+
+#ifdef _WIN32
+            written = WinWrite( local.ioRefNum, cpu.getmem( local.ioBuffer ), (int) local.ioReqCount );
+#else
+            written = write( local.ioRefNum, cpu.getmem( local.ioBuffer ), (int) local.ioReqCount );
+#endif
+
+            p->ioActCount = swap_endian32( written );
+            ACCESS_REG( 0 ) = 0;
+            break;
+        }
+        case macos_trapa_exittoshell:
+        {
+            g_terminate = true;
+            cpu.end_emulation();
+            g_exit_code = (int) ACCESS_REG( REG_ARG0 );
+            tracer.Trace( "  emulated app exit code %d\n", g_exit_code );
+            break;
+        }
+        default:
+        {
+            tracer.Trace( "unimplemented 68k trap #10 op %x\n", op );
+            ACCESS_REG( 0 ) = EINVAL;
+            break;
+        }
+    }
+} //emulator_invoke_68k_trap10
+
 #endif
 
 #ifdef RVOS
@@ -5549,7 +5677,7 @@ bool read_symbols_cpm( FILE * fp, HeaderCPM68K & head, uint32_t text_base, uint3
             else if ( sym.type & 0x100 )
                 sym.value += bss_base;
 
-            // the DR tools create some symbols that aren't null-terminated
+            // the DR tools create some symbols that aren't null-terminated. this is valid for internal symbols but difficult to work with.
             sym.name[ 7 ] = 0;
         }
 
@@ -5557,6 +5685,7 @@ bool read_symbols_cpm( FILE * fp, HeaderCPM68K & head, uint32_t text_base, uint3
 
         SymbolEntryCPM last;
         strcpy( last.name, "!last" );
+        last.type = 0;
         last.value = 0xffffffff;
         g_cpmSymbols.push_back( last );
 
@@ -5790,9 +5919,9 @@ bool load_cpm68k( const char * acApp, const char * acAppArgs )
         memory_size &= ~3;
     }
 
-    g_end_of_data = memory_size;
-    g_brk_offset = memory_size;
-    g_highwater_brk = memory_size;
+    g_end_of_data = memory_size - 0x100;
+    g_brk_offset = g_end_of_data;
+    g_highwater_brk = g_end_of_data;
     memory_size += g_brk_commit;
 
     g_bottom_of_stack = memory_size;
@@ -5983,7 +6112,7 @@ bool ValidCPMFilename( char * pc )
     if ( !strcmp( pc, ".." ) )
         return false;
 
-    const char * pcinvalid = "<>,;:=?[]%|()/\\";
+    const char * pcinvalid = "<>,;:=?[]%|()/\\ \t\n\r"; // control characters are valid with exceptions
     for ( size_t i = 0; i < strlen( pcinvalid ); i++ )
         if ( strchr( pc, pcinvalid[i] ) )
             return false;
@@ -7492,7 +7621,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             fseek( fp, (long) head.offset, SEEK_SET );
             read = fread( g_symbols32.data(), 1, head.size, fp );
             if ( 0 == read )
-                usage( "can't read symbol table\n" );
+                usage( "can't read symbol table" );
         }
     }
 
@@ -8161,7 +8290,7 @@ static bool load_image( const char * pimage, const char * app_args )
             fseek( fp, (long) head.offset, SEEK_SET );
             read = fread( g_symbols.data(), 1, head.size, fp );
             if ( 0 == read )
-                usage( "can't read symbol table\n" );
+                usage( "can't read symbol table" );
         }
     }
 
@@ -8639,7 +8768,7 @@ static void elf_info32( FILE * fp, bool verbose )
             fseek( fp, (long) head.offset, SEEK_SET );
             read = fread( symbols.data(), 1, head.size, fp );
             if ( 0 == read )
-                usage( "can't read symbol table\n" );
+                usage( "can't read symbol table" );
 
             if ( verbose )
             {
@@ -8845,7 +8974,7 @@ static void elf_info( const char * pimage, bool verbose )
             fseek( fp, (long) head.offset, SEEK_SET );
             read = fread( symbols.data(), 1, head.size, fp );
             if ( 0 == read )
-                usage( "can't read symbol table\n" );
+                usage( "can't read symbol table" );
 
             if ( verbose )
             {

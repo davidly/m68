@@ -1,0 +1,20 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+;	int abs(int j);
+	public	_abs
+_abs:
+	IF INT32==0
+	move.w	4(sp),d0
+	bmi	negw
+	rts
+negw:	neg.w	d0
+	rts
+	ENDC
+	public	_labs
+;	long int labs(long int j);
+_labs:
+	move.L	4(sp),d0
+	bmi	negl
+	rts
+negl:	neg.l	d0
+	rts

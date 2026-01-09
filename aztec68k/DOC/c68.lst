@@ -1,0 +1,15 @@
+lb 3.6a 2-5-88
+**DIR**     fdopen      fopen       fseek       scanf       gets        
+getchar     fscanf      fgets       agetc       fread       getw        
+getc        puterr      printf      puts        putchar     fprintf     
+fputs       aputc       fwrite      putw        putc        getbuff     
+setbuf      tmpnam      mktemp      ungetc      malloc      rom68       
+stkchk      isatty      open        lseek       read        write       
+rename      sbrk        mainu       exit        close       unlink      
+exitu       ioctl       atoi        atol        qsort       sscanf      
+scan        sprintf     format      ctype       abs         index       
+ldiv        lmemccpy    lmemchr     lmemcmp     lmemmove    lmemset     
+lmul        memccpy     memchr      memcmp      memmove     memset      
+peek        rindex      setjmp      strcat      strchr      strcmp      
+strcpy      strcspn     strlen      strncat     strncmp     strncpy     
+strpbrk     strrchr     strspn      strtok      swapmem     toupper     

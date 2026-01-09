@@ -1,0 +1,5 @@
+lb 3.6a 2-5-88
+**DIR**     fprintf     printf      sprintf     fformat     fscanf      
+scanf       sscanf      fscan       tran        floor       pow         
+random      atof        ftoa        frexp       fabs        abs         
+ldexp       modf        

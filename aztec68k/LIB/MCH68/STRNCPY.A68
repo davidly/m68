@@ -1,0 +1,35 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	public _strncpy
+;
+;	char *strncpy(char *dest, const char *source, size_t n);
+_strncpy
+	movem.l	4+0(sp),a0/a1
+	move.l	a0,d0
+	IF INT32
+	move.l	4+8(sp),d1
+	bpl	.plus
+	move.l	#$7fffffff,d1
+.plus:
+	ELSE
+	move.w	4+8(sp),d1
+	ENDC
+	bne	.2
+	rts
+
+.1:	move.b	(a1)+,(a0)+
+.2:	dbeq	d1,.1
+	beq	.4
+	IF INT32
+	sub.l	#$10000,d1
+	bpl	.1
+	ENDC
+	rts
+
+.3:	clr.b	(a0)+
+.4:	dbra	d1,.3
+	IF INT32
+	sub.l	#$10000,d1
+	bpl	.3
+	ENDC
+	rts

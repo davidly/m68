@@ -1,0 +1,25 @@
+.c.r28:
+	c68 +2f8 -o $@ $*.c
+.c.l28:
+	c68 +cd2f8 -o $@ $*.c
+
+.a68.r28:
+	as68 -o $@ $*.a68
+.a68.l28:
+	as68 -cdo $@ $*.a68
+
+C=atof.r28 ftoa.r28 floor.r28 random.r28
+ASM=abs.r28 atan2.r28 fabs.r28 frexp.r28 ldexp.r28 modf.r28 pow.r28 tran.r28
+LC=atof.l28 ftoa.l28 floor.l28 random.l28
+LASM=abs.l28 atan2.l28 fabs.l28 frexp.l28 ldexp.l28 modf.l28 pow.l28 tran.l28
+SRC=abs.a68 atan2.c atof.c floor.c fabs.a68 frexp.a68 ftoa.c\
+	ldexp.a68 modf.a68 pow.c random.c
+
+small:		$(ASM) $(C)
+	echo done
+
+big:	$(LASM) $(LC)
+	echo done
+
+arc:
+	mkarcv m881.arc <m881.bld

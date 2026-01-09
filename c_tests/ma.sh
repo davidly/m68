@@ -26,7 +26,8 @@ gcccmd=$gccpath/bin/m68k-elf-gcc
 inc1=$gccpath/lib/gcc/m68k-elf/$gccver/include
 inc2=$gccpath/m68k-elf/include
 inc3=..
-incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
+inc4=../../djl
+incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3 -I$inc4"
 
 ldflags="-Wl,--section-start=.init=0x4000"
 gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags"

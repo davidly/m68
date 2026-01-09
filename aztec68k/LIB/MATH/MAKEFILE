@@ -1,0 +1,36 @@
+.SUFFIXES: .c .a68 .r .rll
+CFLAGS= 
+.c.r:
+	c68 $(CFLAGS) -o $@ $*
+.c.rll:
+	c68 +cd $(CFLAGS) -o $@ $*
+.a68.r:
+	as68 -o $@ $*.a68
+.a68.rll:
+	as68 -cdo $@ $*.a68
+
+C=abs.r asin.r atan.r atof.r  dtof.r exp.r fabs.r floor.r flt68.r \
+    frexp.r ftoa.r ftod.r ldexp.r\
+	log.r  modf.r pow.r random.r sin.r sinh.r sqrt.r\
+	tan.r tanh.r
+LC=abs.rll asin.rll atan.rll atof.rll  dtof.rll exp.rll fabs.rll floor.rll\
+    flt68.rll frexp.rll ftoa.rll ftod.rll ldexp.rll log.rll\
+	modf.rll pow.rll random.rll sin.rll sinh.rll sqrt.rll\
+	tan.rll tanh.rll
+SRC=abs.a68 asin.c atan.c atof.c dtof.a68 exp.c fabs.a68 floor.c\
+    flt68.a68 frexp.a68 ftoa.c ftod.a68 ldexp.a68 log.c\
+	modf.a68 pow.c random.c sin.c sinh.c sqrt.c\
+	tan.c tanh.c
+
+small:		$(C)
+	echo done
+
+big:		$(LC)
+	echo done
+
+arc:	$(SRC)
+	mkarcv math.arc <math.bld
+
+clean:
+	del *.r
+	del *.rll

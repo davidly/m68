@@ -1,0 +1,104 @@
+; Copyright (C) 1986 by Manx Software Systems
+
+; Start-up routine for 68k rom based development.
+
+; These masks enable and disable interrupts when running in 
+; supervisor mode.  The $2000 part of the mask indicates 
+; supervisor mode.
+
+MaskInts	equ $2700		; mask to disable interrupts
+EnableInts	equ $2000		; mask to enable interrupts
+
+; DATA SEGMENT
+		dseg
+		public	__mbot,__mtop,__mcur	;*jd 15 Dec 86
+		public	__sbot
+		public	_errno
+
+HEAPSIZE	equ	$800	; size of heap space		*jd 15 Dec 86
+__mbot	ds.l	1		; ptr to bottom of heap		*jd 15 Dec 86
+__mtop	ds.l	1		; ptr to top of heap		*jd 15 Dec 86
+__mcur	ds.l	1		; ptr to top of allocated heap space	*jd 15 Dec 86
+__sbot	ds.l	1		; ptr to bottom of stack area		*jd 16 Dec 86
+_errno	ds.w	1		; place to store error numbers
+
+		public __H1_org,__H1_end	;*jd 27 Oct 86
+		public __H2_org,__H2_end	;*jd 27 Oct 86
+		public __H0_org,__H0_end	;*jd 27 Oct 86
+
+; CODE SEGMENT
+
+; When the 68k processor is reset or powered up, it fetches the values
+; at offsets 0 and 4, which contain the address of the first instruction 
+; to execute and the initial stack pointer value respectively.
+; The space up to $400 is reserved for the interrupt vector.  This
+; vector is not initilialized!
+
+		cseg
+
+		public	_Storg_,STKSIZ		
+		public	.begin
+		public	_main
+
+		dc.l	_Storg_				; initial stack pointer value
+		dc.l	.begin				; address of first instruction
+		ds.b	$3f8				; reserve space for interrupt vectors
+
+.begin:
+		move.w	#MaskInts,sr		; mask interrupts (supervisor mode)
+;
+; Assume program uses small code &/or small data 
+; and that it uses A5 to access jmptabs and data
+; ...if program uses large code and large data, 
+;    and you want to use A5 for other purposes (eg, register variable),
+;    delete the next line of code
+; ...if it uses a different address register, change the next line
+		move.l	#__H1_org+32766,a5	;*jd 17 Nov 86
+
+; Calculate length of initialized data segment
+		move.l	#__H1_end,d0		;*jd 27 Oct 86
+		sub.l	#__H1_org,d0		;*jd 27 Oct 86
+		beq		.1end				; skip if no initialized data
+		lsr.l	#1,d0				; divide length by 2 and copy words
+
+; Get addresses of initialized data segment and destination
+		move.l	#__H0_end,a0			; data is at end of code segment
+		move.l	#__H1_org,a1			; data segment destination address
+
+; Copy initialized data segment from _Cend_ to _Dorg_
+.1
+		move.w	(a0)+,(a1)+
+		dbra	d0,.1
+.1end
+
+; Calculate length of BSS segment and initialize address register
+		move.l	#__H2_end,d0		;*jd 27 Oct 86
+		sub.l	#__H2_org,d0		;*jd 27 Oct 86
+		beq		.2end				; skip if no BSS segment
+		lsr.l	#1,d0				; divide length by 2 and clear words
+		move.l	#__H2_org,a0		; BSS base address
+
+; Initialize BSS segment to 0
+.2
+		clr.w	(a0)+
+		dbra	d0,.2
+.2end
+
+; Initialize heap ptrs
+		move.l	#_Storg_,d0
+		add.l	#3,d0			; align heap on 32-bit boundary *jd 15 Dec 86
+		and.l	#-8,d0			; *jd 15 Dec 86
+		move.l	d0,__mbot		; *jd 15 Dec 86
+		move.l	d0,__mcur		; *jd 15 Dec 86
+		add.l	#HEAPSIZE,d0	; *jd 15 Dec 86
+		move.l	d0,__mtop		; *jd 15 Dec 86
+
+; Initialize stack pointers
+		move.l	#_Storg_,d0
+		sub.l	#STKSIZ,d0		;*jd10/27/86
+		move.l	d0,__sbot			; bottom of stack
+
+; Enable interrupts and branch to main routine
+		move.w	#EnableInts,sr		; enable interrupts (supervisor mode)
+		jmp		_main				; *jd 10/28/86
+		end

@@ -856,6 +856,11 @@ void m68000::trace_state()
             }
             break;
         }
+        case 0xa: // unimplemented instruction a-line trap (macOS used this for system calls)
+        {
+            tracer.Trace( "a line\n" );
+            break;
+        }
         case 0xb: // eor, cmpm, cmp, cmpa
         {
             if ( 3 == op_size ) // cmpa
@@ -1003,11 +1008,16 @@ void m68000::trace_state()
             }
             break;
         }
+        case 0xf: // unimplemented instruction f-line trap
+        {
+            tracer.Trace( "f line\n" );
+            break;
+        }
         default:
             unhandled();
     }
 
-    //tracer.Trace( "1412fa: " ); tracer.TraceBinaryData( getmem( 0x1412fa ), 0x20, 4 );
+//    tracer.Trace( "2828b68: " ); tracer.TraceBinaryData( getmem( 0x2828b68 ), 0x2, 4 );
 
     pc = save_pc;
     op_size = save_op_size;
@@ -1197,7 +1207,7 @@ static const char * get_vector( uint16_t vector )
         case  7: return "trapv";
         case  8: return "privilege violation";
         case  9: return "trace";
-        case 10: return "unimplemented instruction line A";
+        case 10: return "unimplemented instruction line A"; // macos system calls
         case 11: return "unimplemented instruction line F";
         default: return "unknown";
     }
@@ -2769,6 +2779,11 @@ uint64_t m68000::run()
                 }
                 break;
             }
+            case 0xa: // unimplemented instruction a-line trap (macOS used this for system calls)
+            {
+                emulator_invoke_68k_trap10( *this, op );
+                break;
+            }
             case 0xb: // eor, cmpm, cmp, cmpa
             {
                 if ( 3 == op_size ) // cmpa
@@ -3337,6 +3352,11 @@ uint64_t m68000::run()
                         setflag_v( false );
                     }
                 }
+                break;
+            }
+            case 0xf: // unimplemented instruction f-line trap
+            {
+                handle_trap( 0xf, pc );
                 break;
             }
             default:

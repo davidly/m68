@@ -1,0 +1,67 @@
+Segment 00:  Hunk 000
+	00000000 __H0_org
+	00000004 _main
+	00000094 _gets
+	000000d8 _getchar
+	000000ea _agetc
+	0000012c _getc
+	000001b4 _printf
+	000001d0 _putchar
+	000001e6 _aputc
+	00000202 _putc
+	00000266 _fclose
+	000002ec _flsh_
+	000003ce _newstream
+	00000406 _getbuff
+	0000045e __alloc
+	00000580 _malloc
+	000005aa _lmalloc
+	000005d2 _calloc
+	00000604 _free
+	00000662 _realloc
+	000006ea _isatty
+	000006fa _read
+	00000716 _brk
+	0000074e _sbrk
+	00000782 _close
+	0000078a _unlink
+	0000079a _write
+	000007e0 _PBWrite
+	00000804 .begin
+	00000870 _exit
+	00000870 __exit
+	00000918 _format
+	00000c32 .divs
+	00000c5a .mods
+	00000c74 .modu
+	00000c80 .divu
+	00000cd8 _movmem
+	00000ce2 _memmove
+	00000ce2 _memcpy
+	00000d0c _setmem
+	00000d16 _memset
+	00000d2c _strlen
+	00000d3e __H0_end
+
+Segment 00:  Hunk 001
+	00000d3e __H1_org
+	00000d3e _Cbuffs
+	00000efa __mbot
+	00000efe __mtop
+	00000f02 __mcur
+	00000f06 __sbot
+	00000f0a _errno
+	00000f0c _connum
+	00000f0e _a5
+	00000f1a _cls_
+	00000f34 _ctp_
+	00000fb8 __H1_end
+
+Segment 00:  Hunk 002
+	00000fb8 __H2_org
+	00000fcc __H2_end
+
+ABSOLUTES:
+	00002fcc _Storg_
+	00002000 STKSIZ
+

@@ -44,6 +44,18 @@ uint16_t swap_endian16( uint16_t x )
     return x;
 } //swap_endian16
 
+void append_string( char * pc, const char * a )
+{
+    size_t len = strlen( pc );
+    if ( 0 != len )
+    {
+        pc[ len++ ] = ',';
+        pc[ len++ ] = ' ';
+    }
+
+    strcpy( pc + len, a );
+} //append_string
+
 #pragma pack( push, 1 )
 
 struct HeaderCPM68K    // .68k executable files for cp/m 68k v1.3
@@ -283,6 +295,111 @@ struct ElfSectionHeader32
     }
 };
 
+struct ElfSymbol32
+{
+    uint32_t name;          // index into the symbol string table
+    uint32_t value;         // address where the symbol resides in memory
+    uint32_t size;          // length in memory of the symbol
+    uint8_t info;           // value of the symbol
+    uint8_t other;
+    uint16_t shndx;
+
+    void swap_endianness()
+    {
+        name = swap_endian32( name );
+        shndx = swap_endian16( shndx );
+        value = swap_endian32( value );
+        size = swap_endian32( size );
+    } //swap_endianness
+
+    const char * show_info() const
+    {
+        if ( 0 == info )
+            return "local";
+        if ( 1 == info )
+            return "global";
+        if ( 2 == info )
+            return "weak";
+        if ( 3 == info )
+            return "num";
+        if ( 4 == info )
+            return "file";
+        if ( 5 == info )
+            return "common";
+        if ( 6 == info )
+            return "tls";
+        if ( 7 == info )
+            return "num";
+        if ( 10 == info )
+            return "loos / gnu_ifunc";
+        if ( 12 == info )
+            return "hios";
+        if ( 13 == info )
+            return "loproc";
+        if ( 15 == info )
+            return "hiproc";
+        return "unknown";
+    } //show_info
+
+    const char * show_other() const
+    {
+        if ( 0 == other )
+            return "default";
+        if ( 1 == other )
+            return "internal";
+        if ( 2 == other )
+            return "hidden";
+        if ( 3 == other )
+            return "protected";
+        return "unknown";
+    }
+};
+
+struct SymbolEntryCPM
+{
+    char name[ 8 ];
+    uint16_t type;
+    uint32_t value;
+
+    void swap_endianness()
+    {
+        type = swap_endian16( type );
+        value = swap_endian32( value );
+    }
+
+    const char * get_type()
+    {
+        static char ac[ 80 ];
+        ac[ 0 ] = 0;
+
+        if ( 0x8000 & type )
+            append_string( ac, "defined" );
+        if ( 0x4000 & type )
+            append_string( ac, "equated" );
+        if ( 0x2000 & type )
+            append_string( ac, "global" );
+        if ( 0x1000 & type )
+            append_string( ac, "equated-register" );
+        if ( 0x800 & type )
+            append_string( ac, "external reference" );
+        if ( 0x400 & type )
+            append_string( ac, "data-based-relocatable" );
+        if ( 0x200 & type )
+            append_string( ac, "text-based-relocatable" );
+        if ( 0x100 & type )
+            append_string( ac, "bss-based-relocatable" );
+
+        return ac;
+    }
+
+    void trace()
+    {
+        printf( "  %#16x", value );
+        printf( "  %10s", name );
+        printf( "  %s\n", get_type() );
+    }
+};
+
 #pragma pack(pop)
 
 static const char * image_type( uint16_t e_type )
@@ -304,11 +421,76 @@ void usage( const char * err = 0 )
 {
     if ( err )
         printf( "error: %s\n", err );
-    printf( "usage: elfto68k [-v] <file>.elf\n" );
+    printf( "usage: elfto68k [-v] [-s] <file>.elf\n" );
     printf( "       creates <file>.68K\n" );
     printf( "       -v      verbose information\n" );
+    printf( "       -s      don't transfer symbols\n" );
     exit( 1 );
 } //usage
+
+static int symbol_compare32( const void * a, const void * b )
+{
+    ElfSymbol32 * pa = (ElfSymbol32 *) a;
+    ElfSymbol32 * pb = (ElfSymbol32 *) b;
+
+    if ( pa->value > pb->value )
+        return 1;
+    if ( pa->value == pb->value )
+        return 0;
+    return -1;
+} //symbol_compare32
+
+void memswap( char * a, char * b, unsigned len )
+{
+    char t;
+    for ( unsigned x = 0; x < len; x++ )
+    {
+        t = *a;
+        *a = *b;
+        *b = t;
+        a++;
+        b++;
+    }
+} //memswap
+
+// adapted from powerc
+void my_qsort( void * vbase, size_t num, unsigned width, int (*compare)( const void * a, const void * b ) )
+{
+    if ( 0 == num )
+        return;
+
+    char * base = (char *) vbase;
+    char * max;
+    char * last = max = base + ( num - 1 ) * width;
+    char * first = base;
+    char * key = base + width * ( num >> 1 );
+    do
+    {
+        while ( ( *compare )( first, key ) < 0 )
+            first += width;
+        while ( ( *compare )( key, last ) < 0 )
+            last -= width;
+
+        if ( first <= last )
+        {
+            if ( first != last )
+            {
+                memswap( first, last, width );
+                if ( first == key )
+                    key = last;
+                else if ( last == key )
+                    key = first;
+             }
+             first += width;
+             last -= width;
+        }
+    } while ( first <= last );
+
+    if ( base < last )
+        my_qsort( base, ( last - base ) / width + 1, width, compare );
+    if ( first < max)
+        my_qsort( first, ( max - first ) / width + 1, width, compare );
+} //my_qsort
 
 int main( int argc, char * argv[] )
 {
@@ -316,10 +498,13 @@ int main( int argc, char * argv[] )
     g_hostIsLittleEndian = ( 1 & ( * (uint8_t *) &tst ) );
 
     char * pinputfile = 0;
+    bool transfer_symbols = true;
 
     for ( int arg = 1; arg < argc; arg++ )
     {
-        if ( !strcmp( argv[ arg ], "-v" ) )
+        if ( !strcmp( argv[ arg ], "-s" ) )
+            transfer_symbols = false;
+        else if ( !strcmp( argv[ arg ], "-v" ) )
             trace_status = true;
         else if ( !pinputfile )
             pinputfile = argv[ arg ];
@@ -441,6 +626,7 @@ int main( int argc, char * argv[] )
     // first load the section header string table (so we can find the eh frame begin)
 
     vector<char> section_names_string_table;
+    vector<char> string_table;      // strings in the elf image
 
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
@@ -461,23 +647,27 @@ int main( int argc, char * argv[] )
                 fseek( fp, (long) head.offset, SEEK_SET );
                 read = fread( section_names_string_table.data(), head.size, 1, fp );
                 if ( 1 != read )
-                    usage( "can't read string table\n" );
-                break;
+                    usage( "can't read string table" );
+            }
+            else
+            {
+                string_table.resize( head.size );
+                fseek( fp, (long) head.offset, SEEK_SET );
+                read = fread( string_table.data(), head.size, 1, fp );
+                if ( 1 != read )
+                    usage( "can't read string table" );
             }
         }
     }
 
-    // look for .eh_frame
+    // look for .eh_frame and symbols
 
     uint32_t the_EH_FRAME_BEGIN = 0; // for C++ programs, the pointer to the argument for __register_frame() at app startup
+    vector<ElfSymbol32> symbols32;  // symbols in the elf image
 
     for ( uint16_t sh = 0; sh < ehead.section_header_table_entries; sh++ )
     {
         size_t o = ehead.section_header_table + ( sh * ehead.section_header_table_size );
-#if 0
-        printf( "section header %u at offset %zu == %zx\n", sh, o, o );
-#endif
-
         ElfSectionHeader32 head = {0};
 
         fseek( fp, (long) o, SEEK_SET );
@@ -488,7 +678,7 @@ int main( int argc, char * argv[] )
         head.swap_endianness();
 
 #if 0
-        printf( "  type: %#x / %s\n", head.type, head.show_type() );
+        printf( "section type: %#x / %s\n", head.type, head.show_type() );
         printf( "  name %s, offset: %x\n", & section_names_string_table[ head.name_offset ], head.name_offset );
         printf( "  flags: %#x / %s\n", head.flags, head.show_flags() );
         printf( "  address: %x\n", head.address );
@@ -501,14 +691,63 @@ int main( int argc, char * argv[] )
 #endif
 
         if ( !strcmp( ".eh_frame", & section_names_string_table[ head.name_offset ] ) )
-        {
             the_EH_FRAME_BEGIN = head.address;
-            break;
+
+        if ( 2 == head.type )
+        {
+            symbols32.resize( head.size / sizeof( ElfSymbol32 ) );
+            fseek( fp, (long) head.offset, SEEK_SET );
+            read = fread( symbols32.data(), 1, head.size, fp );
+            if ( 0 == read )
+                usage( "can't read symbol table" );
         }
     }
 
     if ( trace_status )
         printf( "the_EH_FRAME_BEGIN: %lx\n", the_EH_FRAME_BEGIN );
+
+    // void out the entries that don't have symbol names or have mangled names that start with $
+
+    for ( size_t se = 0; se < symbols32.size(); se++ )
+    {
+        symbols32[se].swap_endianness();
+        if ( ( 0 == symbols32[se].name ) || ( '$' == string_table[ symbols32[se].name ] ) || ( 0 == symbols32[se].info ) )
+            symbols32[se].value = 0;
+    }
+
+    my_qsort( symbols32.data(), symbols32.size(), sizeof( ElfSymbol32 ), symbol_compare32 );
+
+    // remove symbols that don't look like they have a valid addresses (rust binaries have tens of thousands of these)
+
+    size_t to_erase = 0;
+    for ( size_t se = 0; se < symbols32.size(); se++ )
+    {
+        if ( symbols32[ se ].value < elf_base_address )
+            to_erase++;
+        else
+            break;
+    }
+
+    if ( to_erase > 0 )
+        symbols32.erase( symbols32.begin(), symbols32.begin() + to_erase );
+
+    // copy elf symbols to CP/M 68K symbols
+
+    vector<SymbolEntryCPM> cpmSymbols( symbols32.size() );
+
+    for ( size_t se = 0; se < symbols32.size(); se++ )
+    {
+        ElfSymbol32 & sym = symbols32[ se ];
+        SymbolEntryCPM & cpmsym = cpmSymbols[ se ];
+
+        cpmsym.value = sym.value; // address (or value) of the symbol
+        cpmsym.type = 0x200; // treat all symbols as text, though some are data
+        strncpy( cpmsym.name, & string_table[ sym.name ], 7 );
+        cpmsym.name[ 7 ] = 0;
+    }
+
+    if ( trace_status )
+        printf( "converted %zu symbols\n", cpmSymbols.size() );
 
     // align to 2 bytes
 
@@ -581,7 +820,7 @@ int main( int argc, char * argv[] )
 
     char acout[ 255 ];
     strcpy( acout, argv[ 1 ] );
-    strupr( acout );
+    _strupr( acout );
     char * pdot = strchr( acout, '.' );
     if ( !pdot )
         pdot = acout + strlen( acout );
@@ -604,7 +843,7 @@ int main( int argc, char * argv[] )
     // 1 + strlen( acout ): asciiz filename of 68K executable pointed to by d0
     // 0 or 1:              align to 2 bytes per 68000 requirements
 
-    uint32_t cbPreStart = 4 + 2 + 6 + 6 + 1 + strlen( acout );
+    uint32_t cbPreStart = 4 + 2 + 6 + 6 + 1 + (uint32_t) strlen( acout );
 
     bool alignPad = false;
     if ( cbPreStart & 1 ) // align to 2 bytes
@@ -618,15 +857,16 @@ int main( int argc, char * argv[] )
     chead.cb_text = cbPreStart + elf_start_data - elf_start_text; // include space between elf text and data as part of text
     chead.cb_data = elf_cb_data;
     chead.cb_bss = past_bss - start_bss;
-    chead.cb_symbols = 0; // no symbols
+    chead.cb_symbols = (uint32_t) ( cpmSymbols.size() * sizeof( SymbolEntryCPM ) );
     chead.text_start = elf_base_address - cbPreStart; // address where code starts and where pc points to begin execution
     chead.relocation_flag = 0xffff; // no relocations, not relocatble.
     chead.reserved = 0;
     if ( trace_status )
         chead.trace();
 
-    chead.swap_endianness();
+    uint32_t cb_text_and_data = chead.cb_text + chead.cb_data - cbPreStart;
 
+    chead.swap_endianness();
     fwrite( &chead, sizeof( chead ), 1, fpout );
 
     // move pointer to argv[0] to a0 ==> lea (d16, pc), a0
@@ -634,7 +874,7 @@ int main( int argc, char * argv[] )
     uint16_t moveApp = swap_endian16( 0x41fa );
     fwrite( & moveApp, 2, 1, fpout );
 
-    uint16_t appNamePCOffset = swap_endian16( cbPreStart - 1 - strlen( acout ) - ( alignPad ? 1 : 0 ) - 2 );
+    uint16_t appNamePCOffset = swap_endian16( (uint16_t) cbPreStart - 1 - (uint16_t) strlen( acout ) - ( alignPad ? 1 : 0 ) - 2 );
     fwrite( & appNamePCOffset, 2, 1, fpout );
 
     // move.l a0, d0
@@ -669,9 +909,26 @@ int main( int argc, char * argv[] )
     }
 
     if ( trace_status )
-        printf( "writing data + text: %lx bytes\n", memory_size - elf_base_address );
+        printf( "writing data + text: %lx bytes\n", cb_text_and_data );
 
-    fwrite( memory.data() + elf_base_address, (size_t) ( memory_size - elf_base_address ), (size_t) 1, fpout );
+    fwrite( memory.data() + elf_base_address, (size_t) cb_text_and_data, (size_t) 1, fpout );
+
+    if ( transfer_symbols && cpmSymbols.size() ) // write symbols (if any)
+    {
+        // update value to be relative to the base address and fix endianness for writing
+
+        for ( size_t se = 0; se < cpmSymbols.size(); se++ )
+        {
+            SymbolEntryCPM & sym = cpmSymbols[ se ];
+            sym.value -= ( elf_base_address - cbPreStart );
+            sym.swap_endianness();
+        }
+
+        if ( trace_status )
+            printf( "writing symbols: %lx bytes\n", (long) ( cpmSymbols.size() * sizeof( SymbolEntryCPM ) ) );
+
+        fwrite( cpmSymbols.data(), (size_t) cpmSymbols.size() * sizeof( SymbolEntryCPM ), 1, fpout );
+    }
 
     file_out.close();
 

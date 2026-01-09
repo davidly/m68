@@ -1,0 +1,18 @@
+;:ts=8
+;
+;	modf(d, dptr)
+;
+;	return fractional part of d and
+;	stores integral part in	*dptr
+;
+	mc68881
+	public	_modf
+_modf:
+	move.l	12(sp),a0	;pick up pointer for storing
+	fmove.d	4(sp),fp0	;pick up double
+	fmove	fp0,fp1		;copy it
+	fintrz	fp1		;throw away fractional part
+	fmove.d	fp1,(a0)	;store the integral part
+	fsub	fp1,fp0		;throw away the integral part
+	rts			;and return the fractional part
+

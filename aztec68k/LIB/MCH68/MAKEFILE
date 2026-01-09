@@ -1,0 +1,58 @@
+.SUFFIXES: .a68 .r .rll
+#
+# make small code, small data object modules:
+#
+.a68.r:
+	as68 -o $@ $*.a68
+.a68.o32:
+	as -EINT32 -o $@ $*.a68
+
+ASM=abs.r index.r ldiv.r lmul.r\
+	memccpy.r   memchr.r  memcmp.r  memmove.r  memset.r\
+	lmemccpy.r lmemchr.r lmemcmp.r lmemmove.r lmemset.r\
+	peek.r\
+	rindex.r setjmp.r strcat.r strchr.r\
+	strcmp.r strcpy.r strcspn.r strlen.r strncat.r strncmp.r\
+	strncpy.r strpbrk.r strrchr.r strspn.r strtok.r\
+	swapmem.r toupper.r
+ASM32=index.r32 ldiv.r32 lmul.r32 movmem.r32 peek.r32\
+	rindex.r32 setjmp.r32 setmem.r32 strcat.r32 strchr.r32\
+	strcmp.r32 strcpy.r32 strlen.r32 strncpy.r32 strrchr.r32\
+	swapmem.r32 toupper.r32
+
+all:	$(ASM) 
+	echo done
+
+#
+# make large code, large data object modules:
+#
+.a68.rll:
+	as68 -c -d -o $@ $*.a68
+
+OLL=abs.rll index.rll ldiv.rll lmul.rll\
+	memccpy.rll   memchr.rll  memcmp.rll  memmove.rll  memset.rll\
+	lmemccpy.rll lmemchr.rll lmemcmp.rll lmemmove.rll lmemset.rll\
+	peek.rll\
+	rindex.rll setjmp.rll strcat.rll strchr.rll\
+	strcmp.rll strcpy.rll strcspn.rll strlen.rll strncat.rll strncmp.rll\
+	strncpy.rll strpbrk.rll strrchr.rll strspn.rll strtok.rll\
+	swapmem.rll toupper.rll
+
+big:	$(OLL) 
+	echo done
+
+#
+# build mch68.arc
+#
+
+SRC=index.a68 ldiv.a68 lmul.a68 movmem.a68 peek.a68\
+	rindex.a68 setjmp.a68 setmem.a68 strcat.a68 strchr.a68\
+	strcmp.a68 strcpy.a68 strlen.a68 strncpy.a68 strrchr.a68\
+	swapmem.a68 toupper.a68
+
+arc: $(SRC)
+	mkarcv mch68.arc <mch68.bld
+
+clean:
+	del *.r
+	del *.rll

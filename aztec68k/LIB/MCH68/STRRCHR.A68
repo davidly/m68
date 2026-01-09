@@ -1,0 +1,26 @@
+; Copyright (C) 1984 by Manx Software Systems, Inc.
+; :ts=8
+;
+	public _strrchr
+_strrchr
+	move.l	4(sp),a0
+	move.l	a0,a1
+.1
+	tst.b	(a0)+
+	bne	.1
+	IF INT32
+	move.b	11(sp),d0
+	ELSE
+	move.b	9(sp),d0
+	ENDC
+.2
+	cmp.l	a0,a1
+	beq	.3
+	cmp.b	-(a0),d0
+	bne	.2
+	move.l	a0,d0
+	rts
+.3
+	move.l	#0,d0
+	rts
+;

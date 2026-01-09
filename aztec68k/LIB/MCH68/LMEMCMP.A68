@@ -1,0 +1,36 @@
+	IF INT32==0
+; Copyright 1987 Manx Software Systems, Inc.
+; :ts=8
+	public	_lmemcmp
+;
+;	int lmemcmp(const void *s1, const void *s2, u_long n);
+_lmemcmp:
+	movem.l	4+0(sp),a0/a1	a0 = s1; a1 = s2;
+	cmp.l	a0,a1
+	beq	equalstr
+	move.l	4+8(sp),d1
+	bpl	.plus
+	move.l	#$7fffffff,d1
+.plus
+	beq	equalstr
+	sub.l	#1,d1
+cmploop:
+	cmp.b	(a0)+,(a1)+
+	dbne	d1,cmploop	loop until mismatch OR n compares made
+	bne	notequal
+;	IF INT32
+	sub.l	#$10000,d1
+	bpl	cmploop
+;	ENDC
+equalstr:
+	move.l	#0,d0
+	rts
+notequal:
+	move.b	-(a0),d0
+	sub.b	-(a1),d0
+	ext.w	d0
+;	IF INT32
+;	ext.l	d0
+;	ENDC
+	rts
+	ENDC

@@ -1,0 +1,36 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	blanks	off
+	public	_strspn
+	public	.strspn
+;
+;	size_t strspn(const char *s1, const char *s2);
+;	compute the length of the initial segment of the string pointed to by
+;	s1 which consists entirely of characters from s2.
+_strspn:
+	movem.l	4+0(sp),a0/a1
+.strspn:			;entry point for args already in registers.
+	IF SAVEA2==1
+	move.l	a2,d3		;save a2
+	ENDC
+	move.l	a0,d2		;save initial value of s1
+	bra	.30
+.10
+	move.l	a1,a2		;check each char of s2 until either
+.20
+	move.b	(a2)+,d1	;the end of s2 is reached in which case
+	beq	.40		;goto compute the length, or a char from s2
+	cmp.b	d0,d1		;matches the current char from s2,
+	bne	.20
+.30
+	move.b	(a0)+,d0	;in which case, bump to next char of s1.
+	bne	.10		;continue while chars remain from s1.
+.40
+	sub.l	#1,a0		;correct for autoincrement of a0
+	move.l	a0,d0
+	sub.l	d2,d0
+	IF SAVEA2==1
+	move.l	d3,a2		;restore a2
+	ENDC
+	rts
+	end

@@ -1,0 +1,103 @@
+
+
+
+       Release 3.6 of the Aztec C68k PC->68k  
+
+       NOTES:
+
+
+       BECAUSE OF CHANGES TO THE OBJECT FORMAT YOU MUST
+     RECOMPILE ALL MODULES.
+
+
+       NEW FEATURES
+
+
+       COMPILER FEATURES
+
+         The following enhancements and changes are made to the
+     compiler as follows:
+
+       * Correct handling of multiple structure asssignment
+
+       * if you use option +2, directly generates 68020
+     instructions
+
+       * Xn allows special control of the code generator. Each
+     option takes the form +Xn where n is a decimal number
+     indicating the option choice.  It is possible to abbreviate
+     these options by specifying +X1, 2, 3 instead of having a
+     separate +X for each option.  The extended options currently
+     supported are:
+
+          +X1 - Removes A6 from all lists.  The compiler
+     considers it not to exist.
+
+          +X2 - Places code into data segment
+
+          +X3 - Delays the popping of arguments until it is
+     necessary.  This saves some small amount of code when
+     several functions are called one after another.  Stack is
+     corrected whenever it is necessary or if the number of bytes
+     delayed exceeds 50 bytes.  This affects the DB stack back
+     trace command since DB checks the instruction at the return
+     address to see how many arguments were passed to the
+     function.
+
+          +X4 - Forces literal strings to be aligned on an even
+     boundary.
+
+          +X5 - If enabled, +X5 generates inline code for
+     strcpy(), strcmp(), and strlen() or if the name used is
+     preceded by _BUILT-IN _STRCPY(S1,S2)
+
+
+       
+       ASSEMBLER FEATURES:
+    * The '+A' option forces the total size of code and data to be aligned 
+      to a 4-byte boundary.
+
+
+       
+       BUG FIXES:
+    * Correct  68881 code is produced for calls to floating point functions
+      (i.e. sqrt, sin, etc.) when the +f8 option is used with the compiler 
+      and m881.lib is used.
+
+
+
+       HOW TO USE THIS RELEASE
+       
+
+       A. Using 32-Bit Integers
+
+       Option  +L makes int equivalent to long.  For example, a
+     long int always has 32 bits, a short int always has 16 bits,
+     but a variable declared int has 32 bits when +L is used, and
+     16 bits when +L is not used.
+
+       This option solves some of the problems of porting
+     programs that assume that long is the same as int (i.e.,
+     from VAX or MPW).  However, the Aztec runtime libraries and
+     the Macintosh ROM continue to use 16-bit ints, and there are
+     NO libraries  in the C68k package that assume 32-bit ints.
+
+       Manx does plan to make 32-bit libraries available but we
+     will, as usual, respond to market demand. Library source
+     users may, at their discretion, use +L to recompile selected
+     library routines to use 32-bit ints.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,821 @@
+;
+;	FLOATING POINT ERRORS
+;
+UNDER_FLOW	equ	1
+OVER_FLOW	equ	2
+DIV_BY_ZERO	equ	3
+;
+INTOVER equ	2
+;
+		dseg
+		public	_flterr
+_flterr	dc.w	0
+		cseg
+;
+;	fix a floating point argument
+;
+;	argument int d0/d1, result in d0
+;
+		public	.Pfix
+.Pfix:	movem.l	d1/d2/d3,-(sp)	; save registers
+		clr.l	d3
+		move.l	d0,d2			; copy high order into d2
+		smi		d3				; save sign
+		swap	d2				; get exponent into low word
+		lsr.w	#4,d2			; move into place
+		and.w	#$7ff,d2		; extract exponent
+		beq		zeroresult		; zero exponent is zero
+		sub.w	#1023,d2		; unbias exponent
+		bmi		zeroresult		; negative exponent is zero
+		sub.w	#31,d2			; exponent greater than 32 is overflow
+		bgt		overflow
+		neg.w	d2
+		lsl.l	#8,d0			; get mantissa over to left
+		lsl.l	#3,d0
+		or.l	#$80000000,d0	; turn hidden bit back on
+		swap	d1				; get high order word of low order longword
+;
+		lsr.w	#5,d1
+		and.w	#$7ff,d1		; get eleven bits;
+		or.w	d1,d0			; insert into shifted mantissa
+		lsr.l	d2,d0			; shift by remaining exponent
+		move.w	d3,d3			; negative input?
+		beq		nosign
+		neg.l	d0				; negate result
+		bra		nosign
+overflow:
+		move.l	#$7fffffff,d0	; positive overflow
+		move.w	d3,d3
+		beq		over1
+		neg.l	d0				; negative overflow
+over1:
+		ori		#INTOVER,ccr 	;set overflow bit
+		bra		nosign
+zeroresult:
+		move.l	#0,d0
+nosign:
+		tst.l	d0
+		movem.l	(sp)+,d1/d2/d3
+		rts
+;
+;	float a fixed point argument
+;
+;	argument in d0, result in d0/d1
+;
+		public .Pflt
+.Pflt:	movem.l	d2/d3/d4/d5/d6/d7,-(sp)
+		clr.l	d7				; make a zero for donorm
+		clr.l	d6				; clear sign indicator
+		tst.l	d0				; value is zero ?
+		beq		iszero			; make float zero
+		bgt		notneg			; test for negative value
+		move.l	#1,d6			; set sign indicator
+		neg.l	d0				; get absolute value
+notneg:
+		clr.l	d1				; zero out LL of result
+		move.l	#31,d4			; set exponent to end of HL
+		jsr		donorm		; go normalize
+		bra	fltexit
+iszero:
+		clr.l	d1				; answer is zero
+fltexit:
+		movem.l	(sp)+,d2/d3/d4/d5/d6/d7
+		rts
+;
+;	compare two floating point values
+;
+;	arg1 in d0,d1  arg2 in d2,d3  answer in d0
+;	+l arg1 < arg2
+;	 0 arg1 = arg2
+;   -1 arg1 > arg2
+;
+		public .Pcmp
+.Pcmp:	movem.l	d4/d5/d6/d7,-(sp)
+		clr.l	d6
+		move.l	d0,d4
+		smi		d6			; set sign of first
+		swap	d4
+		lsr.w	#4,d4		; extract exponent of first
+		and.w	#$7ff,d4
+		clr.l	d7
+		move.l	d2,d5
+		smi		d7			; set sign of second
+		swap	d5
+		lsr.w	#4,d5		; extract exponent of second
+		and.w	#$7ff,d5
+		tst.w	d4
+		beq		firzero		; special code for first == 0
+		tst.w	d5
+		beq		seczero		; special code for second == 0
+		cmp.w	d6,d7
+		bne		difsign		; special code for differing signs
+		move.l	#1,d7		; assume first is less
+		cmp.w	d5,d4		; compare exponents
+		beq		cmpmant		; special code for exponents equal
+		blt		cmpdone
+		move.l	#-1,d7		; second is less
+		bra		cmpdone		; all except for sign check
+firzero:
+		move.w	d7,d6		; preserve sign of second
+		move.l	#1,d7		; assume first is less
+		tst.w	d5			; check for other also zero
+		bne		cmpdone		; all done except for sign check
+		clr.l	d7
+		bra		cmpexit
+seczero:
+		move.l	#-1,d7		; assume first is greater
+		bra		cmpdone		; all done except for sign check
+difsign:
+		move.l	#-1,d7		; assume first is less
+		tst.w	d6			; is first negative?
+		beq		cmpexit		; yes, all done
+		move.l	#1,d7		; no, second is less
+		bra		cmpexit		; all done
+cmpmant:
+		and.l	#$000fffff,d0	; extract mantissa of first
+		or.l	#$00100000,d0	; restore hidden bit
+		and.l	#$000fffff,d2	; extract mantissa of second
+		or.l	#$00100000,d2	; restore hidden bit
+		move.l	#1,d7			; assume first is less
+		cmp.l	d2,d0
+		blt		cmpdone			; all done except for sign check
+		beq		moretst			; go check low order
+		move.l	#-1,d7			; second is less
+		bra		cmpdone			; go do sign check
+moretst:
+		cmp.l	d3,d1			; check low order
+		bne		oktodo			; second is less
+		clr.l	d7				; values are equal
+		bra		cmpexit
+oktodo:
+		bls		cmpdone			; first is less, go do sign check
+		move.l	#-1,d7			; second is less
+cmpdone:
+		tst.w	d6				; is sign set?
+		beq		cmpexit			; no, don't have to flip 
+		neg.l	d7				; flip
+cmpexit:
+		neg.l	d7
+		move.l	d7,d0			; set condition code
+		movem.l	(sp)+,d4/d5/d6/d7
+		rts
+;
+;	test a floating point number for zero
+;
+;	argument in d0,d1	result in d0
+;
+		public .Ptst
+.Ptst:	move.l	d0,d1			; copy high order long word into d1
+		and.l	#$7ff00000,d1	; test for zero exponent
+		beq		tstzero			; argument is zero
+		move.l	d0,d0			; test sign bit
+		bpl		tstpos			; value is positive
+		move.l	#-1,d0			; value is negative
+		rts
+tstzero:
+		clr.l	d0
+		rts
+tstpos:
+		move.l	#1,d0
+		rts
+;
+;	make a floating pooint value positive
+;
+;	argument and result are both in d0,d1
+;
+		public	.Pabs
+.Pabs:	move.l	d2,-(sp)
+		move.l	d0,d2			; copy highorder longword
+		and.l	#$7ff00000,d2	; extract exponent
+		beq		abszero			; zero exponent is zero
+		and.l	#$7fffffff,d0	; force sign bit off
+		movem.l	(sp)+,d2		
+		rts
+abszero:
+		clr.l	d0
+		clr.l	d1
+		movem.l	(sp)+,d2
+		rts
+;
+;	negate a floating point argument
+;
+;	argument and result in d0,d1
+;
+		public	.Pneg
+.Pneg:	move.l	d2,-(sp)
+		move.l	d0,d2			; copy high order long word into d2
+		and.l	#$7ff00000,d2	; extract exponent
+		beq		negzero			; zero exponent is zero
+		move.l	d0,d0			; test sign bit
+		bmi		posit
+		or.l	#$80000000,d0	; set sign bit
+		movem.l	(sp)+,d2
+		rts
+posit:
+		and.l	#$7fffffff,d0	; clear sign bit
+		movem.l	(sp)+,d2
+		rts
+negzero:
+		clr.l	d0
+		clr.l	d1
+		movem.l	(sp)+,d2
+		rts
+;
+;	subtract two floating point numbers
+;
+;	arg1 in d0,d1 arg2 in d2,d3	result in d0,d1
+;
+		public	.Psub
+.Psub:	movem.l	d4/d5/d6/d7/a0,-(sp)
+		move.l	d2,d4				; copy high order long word of arg2
+		and.l	#$7ff00000,d4		; extract exponent
+		beq		subzero				; second == 0, result is first operand
+		move.l	d2,d2
+		bmi		subit
+		or.l	#$80000000,d2		; sign bit is off, turn it on
+		bra		addit				; go add values
+subit:
+		and.l	#$7fffffff,d2		; sign bit is on, turn it off
+		bra	addit					; go add values
+subzero:
+		move.l	d0,d0				; set condition code
+		movem.l	(sp)+,d4/d5/d6/d7/a0
+		rts
+
+		public	.Padd
+.Padd:	movem.l	d4/d5/d6/d7/a0,-(sp)
+addit:
+		clr.l	d6
+		clr.l	d7
+		move.l	d0,d4		; break up first operand mantissa in d0,d1
+		smi		d6			; sign in d6
+		swap	d4			; exponent in d4
+		lsr.w	#4,d4
+		and.w	#$7ff,d4
+		tst.w	d4			; test for zero exponent
+		bne		willadd		; zero exponent is zero, result is second
+		move.l	d3,d1
+		move.l	d2,d0
+		movem.l	(sp)+,d4/d5/d6/d7/a0
+		rts
+;
+willadd:
+		move.l	d2,d5		; break up second operand mantissa in d2,d3
+		smi		d7			; sign in d7
+		swap	d5			; exponent in d5
+		lsr.w	#4,d5
+		and.w	#$7ff,d5
+		tst.w	d5			; check for zero exponent
+		bne		mustadd		; exponent of zero is zero, result is first
+		move.l	d0,d0		; set condition code
+		movem.l	(sp)+,d4/d5/d6/d7/a0
+		rts
+;
+mustadd:
+		sub.w	#1023,d4	; adjust exponent of first
+		sub.w	#1023,d5	; adjust exponent of second
+		and.l	#$fffff,d0	; extract mantissa of first
+		or.l	#$100000,d0	; turn hidden bit back on
+		exg.l	d6,a0		; save d6
+		move.w	#10,d6
+l1:
+		lsl.l	#1,d1		; now adjust mantissa to get guard digits
+		roxl.l	#1,d0
+		dbra	d6,l1
+;
+		and.l	#$fffff,d2	; extract mantissa of second
+		or.l	#$100000,d2	; turn hidden bit back on
+		move.w	#10,d6
+l2:
+		lsl.l	#1,d3		; adjust secondary for guard digits
+		roxl.l	#1,d2
+		dbra	d6,l2
+;
+		exg.l	a0,d6		; restore d6
+;
+		cmp.w	d5,d4		; find larger exponent
+		beq		equdone		; don't need to equalize
+		bgt		noswap		; first is larger, don"t swap
+		exg.l	d0,d2		; swap for equalize
+		exg.l	d1,d3
+		exg.l	d4,d5
+		exg.l	d6,d7
+noswap:
+		move.l	d4,a0		; save final exponent
+		sub.w	d5,d4		; get equalization shift count
+		cmp.w	#53,d4		; going to shift it all away? *jd 9 Oct 86
+		bmi		doshft		; no, do the shift
+		clr.l	d2			; yes, just zero the secondary
+		clr.l	d3
+		move.l	a0,d4
+		bra		equdone
+doshft:
+		sub.w	#1,d4
+shfttop:
+		lsr.l	#1,d2		; equalize the secondary
+		roxr.l	#1,d3
+		dbra	d4,shfttop
+		move.l	a0,d4		; restore exponent
+equdone:
+		cmp.w	d7,d6
+		bgt		sub_2_1		; first is signed, sub first from second
+		blt		sub_1_2		; second is signed, sub second from first
+		add.l	d3,d1		; same sign, just add
+		addx.l	d2,d0
+		bcc		normit		; check for carry out on addition
+		roxr.l	#1,d0		; carry, restore carried bit to result
+		roxr.l	#1,d1
+		add.w	#1,d4		; bump exponent
+		bra		normit
+sub_2_1:
+		exg.l	d0,d2		; swap values
+		exg.l	d1,d3
+		exg.l	d6,d7
+sub_1_2:
+		sub.l	d3,d1		; do subtraction
+		subx.l	d2,d0
+		bcc		normit		; did sign change (generated a borrow)?
+		tst.w	d6			; yes, flip sign
+		beq		signof
+		clr.w	d6
+		bra		signdone
+signof:
+		move.l	#1,d6
+signdone:
+		move.l	d0,d2		; sign changed, subtract result from zero
+		move.l	d1,d3
+		clr.l	d0
+		clr.l	d1
+		sub.l	d3,d1
+		subx.l	d2,d0
+normit:
+		clr.l	d7			; make a zero for donorm
+		jsr	donorm			; normalize result
+		movem.l	(sp)+,d4/d5/d6/d7/a0
+		rts
+;
+;	multiply two floating point values
+;
+;	arg1 in d0,d1  arg2 in d2,d3 result in d0,d1
+;
+		public	.Pmul
+.Pmul:	movem.l	d4/d5/d6/d7/a0/a1/a2,-(sp)
+		clr.l	d6
+		clr.l	d7
+		move.l	d0,d4		; break up first operand mantissa in d0,d1
+		smi		d6			; sign in d6
+		swap	d4			; exponent in d4
+		lsr.w	#4,d4
+		and.w	#$7ff,d4
+		tst.w	d4			; test for zero exponent
+		beq		multzero	; zero exponent is zero, result is zero
+;
+		move.l	d2,d5		; break up second operand mantissa in d2,d3
+		smi		d7			; sign in d7
+		swap	d5			; exponent in d5
+		lsr.w	#4,d5
+		and.w	#$7ff,d5
+		tst.w	d5			; check for zero exponent
+		beq		multzero	; exponent of zero is zero, result is zero
+;
+		sub.w	#1023,d4	; adjust exponent of first
+		sub.w	#1023,d5	; adjust exponent of second
+		and.l	#$fffff,d0	; extract mantissa of first
+		or.l	#$100000,d0	; turn hidden bit back on
+		exg.l	d6,a0		; save d6
+		move.w	#10,d6
+m1:
+		lsl.l	#1,d1		; now adjust mantissa to get guard digits
+		roxl.l	#1,d0
+		dbra	d6,m1
+;
+		and.l	#$fffff,d2	; extract mantissa of second
+		or.l	#$100000,d2	; turn hidden bit back on
+		move.w	#10,d6
+m2:
+		lsl.l	#1,d3		; adjust secondary for guard digits
+		roxl.l	#1,d2
+		dbra	d6,m2
+;
+		exg.l	a0,d6		; restore d6
+;
+		move.w	d4,a0
+		add.w	d5,a0		; add exponents and save
+		add.w	#1,a0		; adjust for result of multiply
+		eor.w	d7,d6		; figure out sign of result
+		move.w	d6,a1		; save sign
+;
+		clr.l	d7			; make a zero for carry addition and donorm
+							; because 68000 architecture is brain-damaged
+		exg.l	d2,d3		; get LL of mmultiplier into multiplier reg
+		move.l	d3,a2		; save HL of multiplier for later
+		clr.l	d3			; clear temporary accumulator
+		clr.l	d4			; clear result registers	
+		clr.l	d5
+		clr.l	d6
+		tst.w	d2			; check for zero LLLW multiplier
+		beq		skip1		; don't bother, it's zero
+		move.w	d0,d3		; check HLLW multiplicand
+		beq		skip11		; don't bother it's zero
+		mulu.w	d2,d3
+		swap	d3			; get high order word of result
+		move.w	d3,d6		; save in LLHW of final result 
+skip11:
+		swap	d0			; check HLHW multiplicand
+		move.w	d0,d3
+		swap	d0
+		tst.w	d3
+		beq		skip1		; don't bother it's zero
+		mulu.w	d2,d3
+		add.l	d3,d6		; save in LL of final result
+skip1:
+		swap	d2			; check for zero LLHW multiplier
+		tst.w	d2
+		beq		skip2		; don't bother, it's zero
+		swap	d1
+		move.w	d1,d3		; get LLHW of multiplicand
+		swap	d1
+		tst.w	d3			; check for zero
+		beq		skip2x		; don't bother it's zero
+		mulu.w	d2,d3
+		clr.w	d3			; zero LW of result
+		swap	d3			; get HW of result
+		add.l	d3,d6		; add to LL of final result
+		addx.w	d7,d5		; carry into HLLW of final result
+skip2x:
+		move.w	d0,d3		; check for zero HLLW
+		beq		skip21		; don't bother, it's zero
+		mulu.w	d2,d3
+		add.l	d3,d6		; add to LL of final result
+		addx.w	d7,d5		; carry into MLLW of final result
+skip21:
+		swap	d0
+		move.w	d0,d3		; get HLHW of multiplicand
+		swap	d0
+							; don't check for zero, can't happen
+		mulu.w	d2,d3
+		swap	d6
+		add.w	d3,d6		; add to LLHW of final result
+		swap	d6			; put LLHW back in place
+		clr.w	d3			; zero low part of result
+		swap	d3			; get high part of result
+		addx.l	d3,d5		; add with carry into ML of final result
+skip2:
+		move.l	a2,d2		; get back HL of multiplier
+		tst.w	d2			; check for zero HLLW of multiplier
+		beq		skip3		; don't bother, it's zero
+		move.w	d1,d3		; get LLLW of multiplicand
+		beq		skip3x
+		mulu.w 	d2,d3
+		clr.w	d3
+		swap	d3			; get HW of result
+		add.l	d3,d6		; add into LL of final result
+		addx.l	d7,d5		; carry into ML of final result
+skip3x:
+		swap	d1			; get LLHW of multiplicand
+		move.w	d1,d3
+		swap	d1
+		tst.w	d3			; check for zero
+		beq		skip31		; don't bother, it's zero
+		mulu.w	d2,d3
+		add.l	d3,d6		; add to LL of final result
+		addx.l	d7,d5		; carry into ML of final result
+skip31:
+		move.w	d0,d3		; get HLLW of multiplicand
+		beq		skip32		; don't bother, it's zero
+		mulu.w	d2,d3
+		swap	d6
+		add.w	d3,d6		; add LW of result to LLHW of final result
+		swap	d6			; put LLHW back into place
+		clr.w	d3			; get rid of LW of result
+		swap	d3			; get HW of result
+		addx.l	d3,d5		; carry into ML of final result
+skip32:
+		swap	d0			; get HLHW of multiplicand
+		move.w	d0,d3
+		swap	d0
+							; don't need usual test for zero, can't happen
+		mulu.w	d2,d3
+		add.l	d3,d5		; add to ML of final result
+		addx.l	d7,d4		; carry into HL of final result
+skip3:
+		swap	d2			; get HLHW of multiplier
+							; don't need usual test for zero, can't happen
+		move.w	d1,d3		; get LLLW of multiplicand
+		beq		skip41
+		mulu.w	d2,d3
+		add.l	d3,d6		; add to LL of final result
+		addx.l	d7,d5		; carry into ML of final result
+		addx.l	d7,d4		; carry into HL of final result
+skip41:
+		swap	d1			; get LLHW of multiplicand
+		move.w	d1,d3
+		beq		skip42		; if zero, skip
+		mulu.w	d2,d3
+		swap	d6			; get LLHW of final result
+		add.w	d3,d6		; add LW of result into LLHW of final result
+		swap	d6			; get LLHW of final result back in place
+		clr.w	d3			; get rid of LW of result
+		swap	d3			; get high word of result
+		add.l	d3,d5		; add into ML of final result
+		addx.l	d7,d4		; carry into HL of final result
+skip42:
+		move.w	d0,d3		; get HLLW of multiplicand
+		beq		skip43		; don't bother, it's zero
+		mulu.w	d2,d3
+		add.l	d3,d5		; add to ML of final result
+		addx.l	d7,d4		; carry into HL of final result
+skip43:
+		swap	d0			; get HLHW of multiplicand
+		move.w	d0,d3
+							; don't need check for zero, can't happen
+		mulu.w	d2,d3
+		swap	d5			; get MLHW of final result
+		add.w	d3,d5		; add LW of result to it
+		swap	d5			; put MLHW of final result back into place
+		clr.w	d3			; get rid of LW of result
+		swap	d3			; get HW of result
+		addx.l	d3,d4		; add to HL of final result
+		cmp.l	#$ffff,d4	; check for carry into HLHW of result
+		bls		skip4
+		add.w	#1,a1		; adjust expoonent
+		lsr.l	#1,d4		; shift mantissa over one
+		roxr.l	#1,d5
+		roxr.l	#1,d6
+skip4:
+		cmp.w	#$8000,d6	; check for round
+		beq		rstar		; this is the rstar special case
+		bls		noround
+		swap	d6			; for round, get LLHW of result
+		add.w	#1,d6		; round it up
+		swap	d6			; put it back in place
+		addx.l	d7,d5		; propagate carry
+		addx.l	d7,d4		; ditto
+		cmp.l	#$ffff,d4	; check for overflow out of HLLW
+		bls		noround
+		add.w	#1,a1		; bump exponent
+		lsr.l	#1,d4		; shift it down
+		roxr.l	#1,d5
+		roxr.l	#1,d6
+		bra 	noround
+rstar:
+		or.l	#10000,d6	; force low order bit to one
+noround:
+		move.w	d5,d6		; construct result
+		swap	d6			;  d4  |  d5  |  d6  |
+		move.l	d6,d1		;ov |   result   |rnd|
+		move.w	d4,d5
+		swap	d5
+		move.l	d5,d0
+		move.l	a0,d4		; move expoonent back into d4
+		move.l	a1,d6		; sign into d6
+		jsr	donorm			; normalize	
+		movem.l	(sp)+,d4/d5/d6/d7/a0/a1/a2
+		rts
+multzero:
+		clr.l	d0
+		clr.l	d1
+		movem.l	(sp)+,d4/d5/d6/d7/a0/a1/a2
+		rts
+;
+;	divide two floating point values
+;
+;	arg1 in d0,d1 arg2 in d2,d3 result in d0,d1
+;
+		public	.Pdiv
+.Pdiv	movem.l	d4/d5/d6/d7/a0/a1/a2,-(sp)
+		clr.l	d6
+		clr.l	d7
+		move.l	d0,d4		; break up first operand mantissa in d0,d1
+		smi		d6			; sign in d6
+		swap	d4			; exponent in d4
+		lsr.w	#4,d4
+		and.w	#$7ff,d4
+		tst.w	d4			; test for zero exponent
+		beq		multzero	; zero exponent is zero, result is zero
+;
+		move.l	d2,d5		; break up second operand mantissa in d2,d3
+		smi		d7			; sign in d7
+		swap	d5			; exponent in d5
+		lsr.w	#4,d5
+		and.w	#$7ff,d5
+		tst.w	d5			; check for zero exponent
+		beq		divbyzero	; exponent of zero is zero, result is fault
+;
+		sub.w	#1023,d4	; adjust exponent of first
+		sub.w	#1023,d5	; adjust exponent of second
+		and.l	#$fffff,d0	; extract mantissa of first
+		or.l	#$100000,d0	; turn hidden bit back on
+		exg.l	d6,a0		; save d6
+		move.w	#10,d6
+n1:
+		lsl.l	#1,d1		; now adjust mantissa to get guard digits
+		roxl.l	#1,d0
+		dbra	d6,n1
+;
+		and.l	#$fffff,d2	; extract mantissa of second
+		or.l	#$100000,d2	; turn hidden bit back on
+		move.w	#10,d6
+n2:
+		lsl.l	#1,d3		; adjust secondary for guard digits
+		roxl.l	#1,d2
+		dbra	d6,n2
+;
+		exg.l	a0,d6		; restore d6
+;
+		move.w	d4,a0
+		sub.w	d5,a0		; subtract exponents and save
+ 		sub.w	#1,a0
+		eor.w	d7,d6		; figure out sign of result
+		move.w	d6,a1		; save sign
+;
+;		check for easy divide case
+;
+		tst.w	d2			; check for zero HLLW divisor
+		bne		harddiv
+		tst.l	d3			; check for zero LL divisor
+		bne		harddiv
+;
+		swap	d2			; get HLHW into place as divisor
+		swap	d0
+		cmp.w	d2,d0		; make sure divide won't overflow
+		beq		okdiv
+		bls		ediv
+okdiv:
+		swap	d0			; get dividend back in place
+		add.w	#1,a0		; bump exponent
+		lsr.l	#1,d0		; make dividend smaller
+		roxr.l	#1,d1
+		swap	d0			; make nop of next instruction
+ediv:
+		swap	d0			; get dividend back in place
+		divu.w	d2,d0
+		move.w	d0,d4		; save result as HLHW of final result
+		swap	d4			
+		swap	d1			; get next word of dividend
+		move.w	d1,d0		; move it in with remainder of last calc
+		divu.w	d2,d0
+		move.w	d0,d4		; save result as HLLW of final result
+		swap	d1			; get next word of dividend
+		move.w	d1,d0
+		divu.w	d2,d0
+		move.w	d0,d5		; save result as LLHW of result
+		swap	d5
+		clr.w	d0			; get rid of quotient
+		divu.w	d2,d0
+		move.w	d0,d5		; save result as LLLW of final result
+		move.l	d4,d0		; get into place for normalization
+		move.l	d5,d1
+		bra 	divnorm		; go normalize result
+harddiv:
+		cmp.l	d0,d2
+		bne		do_div
+		cmp.l	d1,d3
+		bne		do_div
+		move.l	#$80000000,d0	; mantissas same, answer is one with exponent
+		add.w	#1,a0
+		clr.l	d1
+		bra		divnorm		; go normalize and exit
+do_div:
+		bhi		noadjust	;		*jd 9 Oct 86
+		add.w	#1,a0		; bump exponent
+		lsr.l	#1,d0		; shift dividend
+		roxr.l	#1,d1
+noadjust:
+		lsr.l	#1,d2
+		roxr.l	#1,d3
+		lsr.l	#1,d0
+		roxr.l	#1,d1
+		clr.l	d4			; clear result
+		move.l	#2,d6		; outer loop count
+bdiv_loop:
+		move.l	#31,d7		; inner loop count
+div_loop:
+		lsl.l	#1,d4		; shift result
+		lsl.l	#1,d1		; shift dividend
+		roxl.l	#1,d0
+		sub.l	d3,d1		; subtract divisor from dividend
+		subx.l	d2,d0
+		bmi		zero_bit
+one_bit:
+		add.l	#1,d4		; set bit in quotient
+		dbra	d7,div_loop
+		sub.l	#1,d6
+		beq		divend
+		move.l	d4,d5
+		clr.l	d4
+		bra		bdiv_loop
+;
+bzero_loop:
+		move.l	#31,d7		; inner loop count
+zero_loop:
+		lsl.l	#1,d4		; shift zero quotient bit in
+		lsl.l	#1,d1		; shift dividend
+		roxl.l	#1,d0
+		add.l	d3,d1		; add divisor back in
+		addx.l	d2,d0
+		bpl		one_bit
+zero_bit:
+		dbra	d7,zero_loop
+		sub.l	#1,d6
+		beq		divend
+		move.l	d4,d5
+		clr.l	d4
+		bra		bzero_loop
+;
+divend:
+		move.l	d5,d0		; move result into d0,d1
+		move.l	d4,d1
+divnorm:
+		move.l	a0,d4		; get exponent back
+		move.l	a1,d6		; get sign back
+		clr.l	d7			; make a zero for donorm
+		jsr		donorm		; go normalize
+		move.l	d0,d0		; set condition code
+		movem.l	(sp)+,d4/d5/d6/d7/a0/a1/a2
+		rts
+divbyzero:
+		move.w	#DIV_BY_ZERO,_flterr
+		move.l	#$ffffffff,d1
+		move.l	#$7fffffff,d0
+		ori		#INTOVER,ccr
+		movem.l	(sp)+,d4/d5/d6/d7/a0/a1/a2
+		rts
+;
+;		normalize a floating point value and pack it
+;
+;	mantissa in d0,d1 exponent in d4 sign in d6 result in d0,d1
+;
+donorm:
+		tst.l	d0			; test for HL is zero
+		bne		normnext	; is not, go on
+		exg.l	d0,d1		; move up LL
+		sub.w	#32,d4		; adjust exponent
+		tst.l	d0			; is it zero too
+		beq		normzero	; yes, result is zero
+normnext:
+		bmi		nonorm		; is sign bit on (i.e. number normalized)?
+		sub.w	#1,d4		; no, adjust exponent
+		lsl.l	#1,d1		; and shift number
+		roxl.l	#1,d0
+		bpl		normnext	; sign on now? no, keep looping
+		beq		normnext
+nonorm:						; normalized, now check for round
+		move.w	d1,d5		; get low order word
+		and.w	#$7ff,d5	; extract eleven bits
+		cmp.w	#$400,d5	; compare to .5
+		beq		nrstar		; special rstar case
+		bls		normfin		; round down if less
+		add.l	#$800,d1	; round up
+		addx.l	d7,d0		; and carry into HL
+		bcc		normfin		; check for overflow
+		roxr.l	#1,d0		; and re-normalize if necessary
+		roxr.l	#1,d1
+		add.w	#1,d4		; bump exponent
+		bra		normfin
+nrstar:
+		or.l	#$800,d1	; rstar round
+normfin:
+		move.l	#10,d5
+packloop:
+		lsr.l	#1,d0		; put mantissa back in place
+		roxr.l	#1,d1
+		dbra	d5,packloop
+		and.l	#$fffff,d0	; get rid of hidden bit
+		add.w	#1023,d4	; add bias back into exponent
+		bmi		normunder	; check for underflow case
+		cmp.w	#2047,d4	; check for overflow case
+		bgt		normover
+		tst.w	d6			; check for sign
+		beq		normnsign	
+		or.w	#$800,d4	; turn sign bit on
+normnsign:
+		swap	d4			; get exponent back into position
+		clr.w	d4
+		lsl.l	#4,d4
+		or.l	d4,d0		; and put it back on result
+		rts
+normunder:
+		clr.l	d1
+		move.w	#UNDER_FLOW,_flterr
+		move.l	#$00100000,d0	; smallest number
+		tst.w	d6
+		beq		exit
+		or.l	#$80000000,d0
+exit:
+		rts
+normover:
+		move.w	#OVER_FLOW,_flterr
+		move.l	#$ffffffff,d1
+		move.l	#$7fffffff,d0
+		tst.w	d6
+		beq		setover
+		or.l	#$80000000,d0
+setover:
+		ori		#INTOVER,ccr
+		rts
+normzero:
+		clr.l	d0
+		clr.l	d1
+		rts
+		end

@@ -1,0 +1,61 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	blanks	off
+	public	_memmove,_memcpy,_movmem
+;
+;	void *memmove(void *dest, const void *src, size_t n);
+;	void *memcpy (void *dest, const void *src, size_t n);
+;	void movmem  (void *src,  const void *dest,size_t n);
+
+;	memcpy() is for nonoverlapping objects; memmove() works even if
+;	objects overlap.  For Manx, both work even if objects overlap.
+_movmem:
+	move.l	4+0(sp),a1
+	move.l	4+4(sp),a0
+	bra	.memmove	;jump into the memmove() code
+	IF INT32
+	public	_lmemmove,_lmemcpy
+;	void *lmemmove(void *dest, const void *src, u_long n);
+;	void *lmemcpy (void *dest, const void *src, u_long n);
+_lmemmove:
+_lmemcpy:
+	ENDC
+_memmove:
+_memcpy:
+	movem.l	4+0(sp),a0/a1	;a0 := dest; a1 := src
+.memmove:			;entry point from movmem()
+	move.l	a0,d0		;returns dest.
+	IF INT32
+	move.l	4+8(sp),d1
+	ELSE
+	move.l	#0,d1
+	move.w	4+8(sp),d1
+	ENDC
+	cmp.l	a1,a0
+	beq	.5
+	bls	move_forward	;bif dest lower in memory than src
+; memcpy(101, 100, 2);
+; moves 101 to 102; then 100 to 101;
+	add.l	d1,a1		;start at source+n-1
+	add.l	d1,a0		;and move to dest+n-1
+	bra	.3
+
+.2:	move.b	-(a1),-(a0)
+.3:	dbra	d1,.2
+	IF INT32
+	sub.l	#$10000,d1
+	bpl	.2
+	ENDC
+.5:	rts
+;
+; memcpy(102, 104, 3);
+; moves 104 to 102; 105 to 103; 106 to 104;
+.4
+	move.b	(a1)+,(a0)+	;move from high address to a lower address
+move_forward:
+	dbra	d1,.4
+	IF INT32
+	sub.l	#$10000,d1
+	bpl	.4
+	ENDC
+	rts

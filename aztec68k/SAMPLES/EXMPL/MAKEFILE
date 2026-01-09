@@ -1,0 +1,26 @@
+.SUFFIXES: .c .a68 .asm .r .rll
+CFLAGS=
+PRG=EXMPL
+
+#
+# make small code, small data object modules for rom (extension=.r)
+#
+
+OBJ= $(PRG).r
+
+.c.r:
+	c68 $(CFLAGS) -o $*.r $*
+
+.a68.r:
+	as68 -o $*.r $*.a68
+
+.asm.r:
+	as68 -o $*.r $*.asm
+
+all: $(OBJ)
+	ln68 -t $(PRG).r -lc68mac        
+	echo done
+
+clean:
+	del *.r
+	del *.sym

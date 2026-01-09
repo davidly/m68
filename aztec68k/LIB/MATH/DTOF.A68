@@ -1,0 +1,71 @@
+;
+;	FLOATING POINT ERROR VALUES
+;
+UNDER_FLOW	equ	1
+OVER_FLOW	equ	2
+DIV_BY_ZERO	equ	3
+;
+;	convert double to float
+;
+;	argument in d0/d1	result in d0
+;
+		public	.dtof
+.dtof:	movem.l	d2/d3/d4,-(sp)
+		move.l	d0,d2			;save a copy for exponent extraction
+		beq		easy_exit		;no work if zero
+		smi		d4				;get sign of result
+		swap	d2
+		lsr.w	#4,d2
+		and.w	#$7ff,d2		;extract exponent
+		sub.w	#1023,d2		;unbias
+		and.l	#$fffff,d0		;extract mantissa
+		or.l	#$100000,d0		;turn hidden bit back on
+		move.l	#2,d3
+dagain:
+		lsl.l	#1,d1			;shift mantissa into place
+		roxl.l	#1,d0
+		dbra	d3,dagain
+		cmp.l	#$80000000,d1	;check for round
+		beq		rstar
+		bcs		nornd
+		add.l	#1,d0			;round up
+		cmp.l	#$00ffffff,d0	;check for carry
+		bls		nornd
+		add.w	#1,d2			;bump exponent
+		lsr.l	#1,d0			;and shift result back into place
+		bra		nornd
+rstar:
+		or.w	#1,d0			;rstar case, force low bit to 1
+nornd:
+		add.w	#127,d2			;add in float bias
+		bmi		underflow		;can't represent double in float
+		cmp.w	#255,d2
+		bgt		overflow		;ditto
+		lsl.w	#7,d2			;back in place
+		tst.b	d4				;need to set sign?
+		beq		ndsign			;no
+		or.w	#$8000,d2		;yes, set it
+ndsign:
+		swap	d2				;get exponent in high word
+		clr.w	d2				;clear out
+		and.l	#$7fffff,d0		;get rid of hidden bit
+		or.l	d2,d0			; put back in number
+easy_exit:
+		movem.l	(sp)+,d2/d3/d4
+		rts
+underflow:
+		move.w	#UNDER_FLOW,_flterr
+		move.l	#$00800000,d0	;set to smallest number
+		bra		dosign
+overflow:
+		move.w	#OVER_FLOW,_flterr
+		move.l	#$7fffffff,d0	;set to largest number
+dosign:
+		tst.b	d4
+		beq		dexit
+		or.l	#$80000000,d0	;set sign
+dexit:
+		movem.l	(sp)+,d2/d3/d4
+		rts
+;
+		global	_flterr,2

@@ -1,0 +1,62 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	blanks	off
+	public	_strtok
+;
+;	char *strtok(char *s1, const char *s2);
+;
+; A sequence of calls to strtok breaks s1 into a sequence of tokens, each of
+; which is delimited by a character from s2.  The first call has s1 as the
+; first argument, and is followed by calls with a null pointer as their first
+; argument.  S2 may be different from call to call.
+;
+; The first call searches s1 for the first character that is NOT contained in
+; s2.  If no such character is found, then there are no tokens in s1 and strtok
+; returns NULL.  If such a char is found, it is the start of the first token.
+;
+; Strtok then searches from there for a character that IS contained in the
+; s2.  If no such character is found, the current token extends to the end of
+; s1, and subsequent searches for a token will fail.  If such a char is found,
+; it is overwritten by '\0', which terminates the current token.  Strtok saves
+; a pointer to the following char, from which the next search for a token will
+; start.  Each subsequent call, with a null pointer for s1, starts searching
+; from the saved pointer and behaves as described above.
+;
+; dotted entry points expect args already in appropriate registers
+; (which may be trashed by the call).
+	public	.strspn
+	public	.strpbrk
+	bss	savedp,4
+_strtok:
+	move.l	4(sp),d0	;first or subsequent call?
+	bne	first		;bif first.
+	move.l	savedp,d0	;else get saved pointer.
+	bne	first
+nomoretoks
+	rts
+first:
+;				;d0 contains pointer
+	move.l	d0,a0
+	move.l	8(sp),a1	;a1 contains s2
+	move.l	a0,-(sp)	;save pointer
+	jsr	.strspn		;skip the leading separators
+; I "know" that .strspn actually returns a long.
+	move.l	(sp)+,a0
+	add.l	d0,a0		;pointer += strspn(pointer, s2);
+	tst.b	(a0)
+	beq	nomoretoks
+
+	move.l	8(sp),a1	;.strpbrk(pointer,s2)
+	move.l	a0,-(sp)	;save pointer to 1st char of token
+	jsr	.strpbrk	;search for char that IS contained in s2
+	move.l	d0,d0
+	beq	return		;bif couldn't skip past token
+;
+	move.l	d0,a0
+	clr.b	(a0)
+	add.l	#1,d0
+return:				;set savedp (0 if could'nt skip past token)
+	move.l	d0,savedp	;for subsequent calls
+	move.l	(sp)+,d0	;return pointer to 1st char of token
+	rts
+	end

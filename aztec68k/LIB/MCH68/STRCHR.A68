@@ -1,0 +1,26 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+;
+	public _strchr
+_strchr
+	move.l	4(sp),a0
+	move.l	#0,d1		;needed to make dbeq loop work
+	IF INT32
+	move.b	8+3(sp),d0
+	ELSE
+	move.b	8+1(sp),d0
+	ENDC
+.1
+	move.b	(a0)+,d1
+	cmp.b	d0,d1
+;		beq	.2		;8 clocks +
+;		tst.b	d1		;4 clocks +
+;		bne	.1		;10 clocks == 22 clocks vs. 10 clocks
+	dbeq	d1,.1
+	beq	.2		;if CC eq, then found character else
+	move.l	#0,d0		;d1 was zero, ie. end of string, so no match
+	rts
+.2
+	move.l	a0,d0
+	sub.l	#1,d0
+	rts

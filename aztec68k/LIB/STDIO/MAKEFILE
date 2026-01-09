@@ -1,0 +1,70 @@
+.SUFFIXES: .c .a68 .r .rll .r28 .l28
+CFLAGS=
+
+#
+# make small code, small data object modules for rom (ext=.r):
+#
+
+OBJ=   agetc.r aputc.r fdopen.r fgets.r fopen.r fprintf.r\
+	fputs.r fread.r fscanf.r fseek.r fwrite.r getbuff.r\
+	getc.r getchar.r gets.r getw.r mktemp.r perror.r\
+	printf.r putc.r putchar.r puterr.r puts.r putw.r\
+	scanf.r setbuf.r tmpfile.r tmpnam.r ungetc.r
+
+.c.r:
+	c68 $(CFLAGS) -o $*.r $*
+
+.a68.r:
+	as68 -o $*.r $*.a68
+
+all: $(OBJ) 
+	echo done
+
+#
+# make large code, large data object modules for rom (ext=.rll):
+#
+
+OLL=   agetc.rll aputc.rll fdopen.rll fgets.rll fopen.rll fprintf.rll\
+	fputs.rll fread.rll fscanf.rll fseek.rll fwrite.rll getbuff.rll\
+	getc.rll getchar.rll gets.rll getw.rll mktemp.rll perror.rll\
+	printf.rll putc.rll putchar.rll puterr.rll puts.rll putw.rll\
+	scanf.rll setbuf.rll tmpfile.rll tmpnam.rll ungetc.rll
+
+.c.rll:
+	c68 +c +d $(CFLAGS) -o $*.rll $*
+
+.a68.rll:
+	as68 -c -d -o $*.rll $*.a68
+
+big: $(OLL) 
+	echo done
+#
+# make 68020/68881 modules:
+#
+.c.r28:
+	c68 +2f8 -o $@ $*.c
+.c.l28:
+	c68 +cd2f8 -o $@ $*.c
+68881.r28: printf.r28 fprintf.r28 scanf.r28 fscanf.r28
+	echo done
+68881.l28: printf.l28 fprintf.l28 scanf.l28 fscanf.l28
+	echo done
+
+#
+# build stdio.arc:
+#
+
+SRC=   agetc.c aputc.c fdopen.c fgets.c fopen.c fprintf.c\
+	fputs.c fread.c fscanf.c fseek.c fwrite.c getbuff.c\
+	getc.c getchar.c gets.c getw.c mktemp.c perror.c\
+	printf.c putc.c putchar.c puterr.c puts.c putw.c\
+	scanf.c setbuf.c tmpfile.c tmpnam.c ungetc.c
+
+arc: $(SRC)
+	mkarcv stdio.arc <stdio.bld
+
+clean:
+	del *.r
+	del *.rll
+	del *.r28
+	del *.l28

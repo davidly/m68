@@ -1,0 +1,59 @@
+.SUFFIXES: .c .a68 .asm .r .rll
+CFLAGS=
+
+#
+# make small code, small data object modules for rom (extension=.r)
+#
+
+OBJ=  rom68.r\
+	open.r close.r read.r write.r lseek.r sbrk.r exit.r exitu.r\
+	unlink.r ioctl.r mainu.r isatty.r rename.r stkchk.r 
+
+.c.r:
+	c68 $(CFLAGS) -o $*.r $*
+
+.a68.r:
+	as68 -o $*.r $*.a68
+
+.asm.r:
+	as68 -o $*.r $*.asm
+
+all: $(OBJ) 
+	echo done
+
+#
+# make large code, large data object modules for rom (extension=.rll)
+#
+
+OLL=  rom68.rll\
+	open.rll close.rll read.rll write.rll lseek.rll sbrk.rll exit.rll exitu.rll\
+	unlink.rll ioctl.rll mainu.rll isatty.rll rename.rll stkchk.rll 
+
+.c.rll:
+	c68 +c +d $(CFLAGS) -o $*.rll $*
+
+.a68.rll:
+	as68 -c -d -o $*.rll $*.a68
+
+.asm.rll:
+	as68 -c -d -o $*.rll $*.asm
+
+big: $(OLL) 
+	echo done
+
+#
+# build rom68.arc
+#
+
+SRC=  rom68.a68\
+	open.c close.c read.c write.c lseek.c sbrk.c exit.c exitu.c\
+	unlink.c ioctl.c mainu.c isatty.c rename.c stkchk.c
+
+arc: $(SRC)
+	mkarcv rom68.arc <rom68.bld
+	
+clean:
+	del *.r
+	del *.rll
+	del *.r28
+	del *.l28	

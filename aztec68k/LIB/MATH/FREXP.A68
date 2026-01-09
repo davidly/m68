@@ -1,0 +1,37 @@
+;
+;	FLOATING POINT ERROR VALUES
+;
+UNDER_FLOW	equ	1
+OVER_FLOW	equ	2
+DIV_BY_ZERO	equ	3
+;
+;	frexp(d, &i)
+;
+;	returns 1/2 <= |x| < 1
+;	such that d = x *2^i
+;
+		public	_frexp
+_frexp:	move.l	d2,-(sp)
+		move.l	16(sp),a0		;get address for int
+		move.l	8(sp),d0		; get double value
+		move.l	12(sp),d1
+		move.l	d0,d2
+		swap	d2
+		and.w	#$7ff0,d2
+		bne		notzero
+		move.l	#0,d2
+		beq		done
+notzero:
+		and.l	#$800fffff,d0	;get rid of old exponent
+		lsr.w	#4,d2
+		sub.w	#1022,d2
+		or.l	#$3fe00000,d0	;change exponent to -1
+done:
+		if INT32
+		ext.l	d2
+		move.l	d2,(a0)
+		else
+		move.w	d2,(a0)
+		endc
+		move.l	(sp)+,d2
+		rts

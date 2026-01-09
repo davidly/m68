@@ -1,0 +1,115 @@
+#
+# make small code, small data libraries:
+#
+
+stdio.mk:
+	cd stdio
+	make 
+	cd ..
+
+mch68.mk:
+	cd mch68
+	make 
+	cd ..
+
+misc.mk:
+	cd misc
+	make 
+	cd ..
+
+rom68.mk:
+	cd rom68
+	make
+	cd ..
+
+math.mk:
+	cd math
+	make
+	cd ..
+
+
+m881.mk:
+	cd m881
+	make
+	cd ..
+
+c68.lib: stdio.mk mch68.mk misc.mk rom68.mk c68.bld
+	lb68 c68.lib -e .r -f c68.bld
+
+m68.lib: math.mk  m68.bld
+	cd stdio
+	make printf.r fprintf.r scanf.r fscanf.r
+	cd ..
+	cd misc
+	make sprintf.r sscanf.r fformat.r fscan.r
+	cd ..
+	lb68 m68.lib -e .r -f m68.bld
+
+m881.lib: m881.mk m881.bld
+	cd stdio
+	make 68881.r28
+	cd ..
+	cd misc
+	make 68881.r28
+	cd ..
+	lb68 m881.lib -e .r28 -f m881.bld
+
+
+#
+# make large code, large data libraries:
+#
+stdio.mkb:
+	cd stdio
+	make big
+	cd ..
+
+misc.mkb:
+	cd misc
+	make big
+	cd ..
+
+mch68.mkb:
+	cd mch68
+	make big
+	cd ..
+
+rom68.mkb:
+	cd rom68
+	make big
+	cd ..
+
+math.mkb:
+	cd math
+	make big
+	cd ..
+
+mx_ieee.mkb:
+	cd mx_ieee
+	make big
+	cd ..
+
+m881.mkb:
+	cd m881
+	make big
+	cd ..
+
+c68ll.lib: stdio.mkb mch68.mkb misc.mkb rom68.mkb c68.bld
+	lb68 c68ll.lib -e .rll -f c68.bld
+
+m68ll.lib: math.mkb  m68.bld
+	cd stdio
+	make printf.rll fprintf.rll scanf.rll fscanf.rll
+	cd ..
+	cd misc
+	make sprintf.rll sscanf.rll fformat.rll fscan.rll
+	cd ..
+	lb68 m68ll.lib -e .rll -f m68.bld
+
+m881ll.lib: m881.mkb m881.bld
+	cd stdio
+	make 68881.l28
+	cd ..
+	cd misc
+	make 68881.l28
+	cd ..
+	lb68 m881ll.lib -e .l28 -f m881.bld

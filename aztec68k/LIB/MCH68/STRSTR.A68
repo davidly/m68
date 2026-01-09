@@ -1,0 +1,34 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+;
+	public _strstr
+;
+;	char *strstr(const char *s1, const char *s2);
+;
+;	locates the first occurrence in s1 of sequence of characters
+;	(excluding the terminating null character) of the string pointed to by
+;	s2.  Returns a pointer to the located string or NULL if string is not
+;	found.  If s2 points to an empty string, strstr() returns s1.
+_strstr:
+	move.l	4+0(sp),a0	;s1
+	move.l	4+4(sp),d0	;s2
+	IF SAVEA2==1
+	move.l	a2,d2		;save a2
+	ENDC
+.1
+	move.l	a0,a1
+	move.l	d0,a2
+.2
+	move.b	(a2)+,d1	;if we get all the way to the end of string
+	beq	success		;s2, then have found a match
+	cmp.b	(a1)+,d1	;else, continue working through the strings
+	beq	.2		;as long as they match.
+	tst.b	(a0)+		;s2 doesn't match string starting at current
+	bne	.1		;position in s1; bump to next char in s1.
+	move.l	#0,a0		;if at end of s1, then no match. return NULL
+success:
+	move.l	a0,d0		;return position in s1 where s2 starts.
+	IF SAVEA2==1
+	move.l	d2,a2
+	ENDC
+	rts

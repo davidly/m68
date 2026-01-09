@@ -1,0 +1,24 @@
+; Copyright (C) 1984 by Manx Software Systems, Inc.
+; :ts=8
+;
+	public _swapmem
+_swapmem
+	movem.l	4(sp),a0/a1
+	IF INT32
+	move.l	12(sp),d0
+	ELSE
+	move.w	12(sp),d0
+	ENDC
+	bra	.2
+.1
+	move.b	(a0),d1
+	move.b	(a1),(a0)+
+	move.b	d1,(a1)+
+.2
+	dbra	d0,.1
+	IF INT32
+	sub.l	#$10000,d0
+	bpl	.1
+	ENDC
+	rts
+;

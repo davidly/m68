@@ -1,0 +1,35 @@
+; Copyright 1987 Manx Software Systems, Inc.
+; :ts=8
+	public _strcmp
+;
+;	int strcmp(const char *s1, const char *s2);
+_strcmp:	
+	movem.l	4(sp),a0/a1	a0 = s1; a1 = s2;
+	move.b	(a0)+,d0	fast check of 1st character
+	beq	nulls1		bif s1 is the "" string
+	sub.b	(a1)+,d0
+	bne	extend0		bif the 1st char of each string don't match
+	cmp.l	a0,a1
+	beq	samestr		bif strings are the same.
+	move.l	#0,d0		needed to make dbne loop work.
+cmploop:
+	move.b	(a0)+,d0
+	cmp.b	(a1)+,d0
+;			bne	notequal
+;			tst.b	d0
+;			bne	cmploop
+	dbne	d0,cmploop	keep looping while chars match AND both not 0.
+	bne	notequal	if both 0, then CC will be eq and won't branch
+samestr:
+	move.l	#0,d0		if both chars are zero, then strings match.
+	rts
+nulls1:				;probably an uncommon case; optimize for size.
+	add.l	#1,a1		negate autodecrement of next instruction
+notequal:
+	sub.b	-(a1),d0
+extend0:
+	ext.w	d0
+	IF INT32
+	ext.l	d0
+	ENDC
+	rts
