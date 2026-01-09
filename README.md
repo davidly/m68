@@ -161,6 +161,16 @@ elfto68k folder:
     * runall.bat/runall.sh: builds and runs the test apps in m68
     * words.txt: support file for the an.c test app
 
+aztec68k folder: (requires a DOS emulator to run, such as [https://github.com/davidly/ntvdm](https://github.com/davidly/ntvdm))
+
+    * Aztec C68K 3.6b Rom 6-6-88  Copyright 1982-88 Manx Software Systems, Inc.
+    * Stock distribution that can be found in many places on the internet.
+    * I added the tests folder that contains CP/M 68K C runtime support: .begin startup, console, and file I/O.
+    * The tests folder also includes C test cases for the compiler and C runtime.
+    * This compiler is old and requires use of the K&R syntax, but floating point works, making it better than the other C compilers.
+    * But it generally generates slower code than the C compiler that's part of CP/M 68K.
+    * This is a cross-compiler that runs on MS-DOS. Build scripts assume that ntvdm is in the path.
+
 notes/bugs:
 
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
