@@ -168,7 +168,7 @@ aztec68k folder: (requires a DOS emulator to run, such as [https://github.com/da
     * I added the tests folder that contains CP/M 68K C runtime support: .begin startup, console, and file I/O.
     * The tests folder also includes C test cases for the compiler and C runtime.
     * This compiler is old and requires use of the K&R syntax, but floating point works, making it better than the other C compilers.
-    * But it generally generates slower code than the C compiler that's part of CP/M 68K.
+    * It also generally generates faster and smaller binaries than the C compiler that's part of CP/M 68K. See the table below.
     * This is a cross-compiler that runs on MS-DOS. Build scripts assume that ntvdm is in the path.
 
 notes/bugs:
@@ -191,6 +191,7 @@ compiler and assembler benchmark performance:
     * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance.
     * assembly code always wins, though on hardware it's especially true due to smaller binary sizes.
 
-<img width="2034" height="601" alt="table" src="https://github.com/user-attachments/assets/039149c1-8c68-4d67-b50b-4b374e5bfcea" />
+<img width="2297" height="724" alt="table" src="https://github.com/user-attachments/assets/75bb3119-eebf-4a52-90ba-77c30a857d19" />
+
 
    
