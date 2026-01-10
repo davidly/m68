@@ -161,6 +161,16 @@ elfto68k folder:
     * runall.bat/runall.sh: builds and runs the test apps in m68
     * words.txt: support file for the an.c test app
 
+aztec68k folder: (requires a DOS emulator to run, such as [https://github.com/davidly/ntvdm](https://github.com/davidly/ntvdm))
+
+    * Aztec C68K 3.6b Rom 6-6-88  Copyright 1982-88 Manx Software Systems, Inc.
+    * Stock distribution that can be found in many places on the internet.
+    * I added the tests folder that contains CP/M 68K C runtime support: .begin startup, console, and file I/O.
+    * The tests folder also includes C test cases for the compiler and C runtime.
+    * This compiler is old and requires use of the K&R syntax, but floating point works, making it better than the other C compilers.
+    * It also generally generates faster and smaller binaries than the C compiler that's part of CP/M 68K. See the table below.
+    * This is a cross-compiler that runs on MS-DOS. Build scripts assume that ntvdm is in the path.
+
 notes/bugs:
 
     * Unlike the 68000, addresses aren't limited to 24 bits. Data in the high bits will be used as part of the address.
@@ -181,6 +191,7 @@ compiler and assembler benchmark performance:
     * the BA compiler only supports 4-byte integers, which dramatically slows 68008 performance.
     * assembly code always wins, though on hardware it's especially true due to smaller binary sizes.
 
-<img width="2034" height="601" alt="table" src="https://github.com/user-attachments/assets/039149c1-8c68-4d67-b50b-4b374e5bfcea" />
+<img width="2297" height="724" alt="table" src="https://github.com/user-attachments/assets/75bb3119-eebf-4a52-90ba-77c30a857d19" />
+
 
    
