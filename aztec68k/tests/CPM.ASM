@@ -140,33 +140,6 @@ _exit:
                 clr.l d0
                 trap #2
 
-;################################## write is now in C, not here
-_xwrite:
-                move.w 4(a7),d0                 ; get the descriptor
-                cmp.w #1,d0                     ; only stdout (1) is supported
-                beq .write_stdout
-                clr.l d0
-                move.l #-1,d0                   ; EPERM
-                move.w d0,_errno                ; coincidence that -1 error return code is the same as errno value
-                rts
-.write_stdout:
-                move.l 6(a7),a2                 ; pbuf
-                move.w 10(a7),d2                ; len
-.write_next:
-                cmp.w #0,d2
-                beq .write_done
-                clr.l d1
-                move.b (a2),d1
-                move.l #2,d0                    ; bdos write character to stdout
-                trap #2
-                sub.w #1,d2
-                bra .write_next
-
-.write_done:
-                clr.l d0
-                move.w 10(a7),d0                ; # of characters written
-                rts
-
 ;##################################
 _bdos_cpm:
                 move.l 4(a7),d0                 ; cp/m syscall ID
