@@ -4649,12 +4649,12 @@ void emulator_invoke_68k_trap10( m68000 & cpu, uint16_t op )
                 tracer.Trace( "  writing '%.*s'\n", (int) local.ioReqCount, cpu.getmem( local.ioBuffer ) );
             tracer.TraceBinaryData( cpu.getmem( local.ioBuffer ), (uint32_t) local.ioReqCount, 4 );
 
-            int written;
+            int32_t written;
 
 #ifdef _WIN32
-            written = WinWrite( local.ioRefNum, cpu.getmem( local.ioBuffer ), (int) local.ioReqCount );
+            written = (int32_t) WinWrite( local.ioRefNum, cpu.getmem( local.ioBuffer ), (int) local.ioReqCount );
 #else
-            written = write( local.ioRefNum, cpu.getmem( local.ioBuffer ), (int) local.ioReqCount );
+            written = (int32_t) write( local.ioRefNum, cpu.getmem( local.ioBuffer ), (int) local.ioReqCount );
 #endif
 
             p->ioActCount = swap_endian32( written );

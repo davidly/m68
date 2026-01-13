@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 typedef unsigned char uint8_t;
-typedef char int8_t; /* DR compiler fails with a syntax error when using "signed char" */
+typedef char int8_t;
 typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned long uint32_t;
@@ -109,7 +109,7 @@ int main()
 
     printf( "now test comparisons. t, f, t, f, t expected\n" );
 
-    f0 = i8 == ui8;
+    f0 = i8 == ui8;  /* a compiler bug in Aztec C for 68k makes this comparison false. i8 is sign-extended to 16 bits and ui8 isn't */
     f1 = i8 > ui8;
     f2 = i8 >= ui8;
     f3 = i8 < ui8;

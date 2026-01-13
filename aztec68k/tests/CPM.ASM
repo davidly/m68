@@ -7,7 +7,6 @@
                 public  __sbot
                 public  _errno
                 public  _connum
-                public  _a5
                 public  _cls_
                 public  _defdma
 
@@ -20,7 +19,6 @@ _errno  ds.w    1               ; place to store error numbers
 _connum ds.w    1               ; loader's number for console
 
 ; used by macos code
-_a5     ds.l    1               ;caller's a5
 _cls_   ds.l    1
 arg0_value dc.b 'cpmapp'
 
@@ -33,7 +31,6 @@ arg0_value dc.b 'cpmapp'
 
                 cseg
 
-                public _Storg_,STKSIZ
                 public .begin
                 public _main
                 public _memcpy
@@ -147,5 +144,6 @@ _bdos_cpm:
                 trap #2                         ; no errno-style errors are returned; layer above must set errno
                 rts
 
+;##################################
                 end
 

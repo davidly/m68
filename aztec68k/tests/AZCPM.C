@@ -503,6 +503,13 @@ int isatty( fd ) int fd;
 {
     if ( fd >= 0 && fd <= 3 )
         return 1;
+
+    if ( ( fd < 0 ) || ( fd >= _countof( g_afcb ) ) || ( 0 == g_afcb[ fd ].n[ 0 ] ) )
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
     errno = 0;
     return 0;
 } /*isatty*/
