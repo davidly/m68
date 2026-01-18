@@ -161,10 +161,10 @@ struct BasePageCPM // base page for cp/m -- the first 256 bytes in memory for an
 
 #pragma pack(pop)
 
-struct BasePageCPM * g_base_page = 0; // 256 bytes below _start. initialized by _start() in startcpm.s
-uint32_t g_eh_data = 0;               // C++ eh frame data for __register_frame. initialized by _start() in startcpm.s
-char * g_current_brk = 0;             // brk. initialized by _init_nlcpm() at startup
-struct FCBCPM68K g_afcb[ 20 ];        // file descriptors index into this array. initialized by _init_nlcpm() at startup
+struct BasePageCPM * g_base_page = 0;  // 256 bytes below _start. initialized by _start() in startcpm.s
+uint32_t g_eh_data = 0;                // C++ eh frame data for __register_frame. initialized by _start() in startcpm.s
+char * g_current_brk = 0;              // brk. initialized by _init_nlcpm() at startup
+struct FCBCPM68K g_afcb[ 20 ];         // file descriptors index into this array. initialized by _init_nlcpm() at startup
 
 extern "C" void __attribute__((noreturn)) exit_cpm( int status );
 extern "C" long bdos_cpm( long number, long arg0 );
@@ -183,7 +183,7 @@ extern "C" void _init_nlcpm() // called by _init()
         __register_frame( g_eh_data );
 
     for ( int i = 0; i < _countof( g_afcb ); i++ )
-        g_afcb[ i ].n[ 0 ] = '*'; // indicate that it's free
+        g_afcb[ i ].n[ 0 ] = 0; // indicate that it's free
 } //_init_nlcpm
 
 extern "C" void _fini_nlcpm() // called by _fini()
@@ -276,7 +276,7 @@ extern "C" int open( const char * pathname, int flags, ... )
 
     int fd;
     for ( fd = 3; fd < _countof( g_afcb ); fd++ )
-        if ( '*' == g_afcb[ fd ].n[ 0 ] )
+        if ( 0 == g_afcb[ fd ].n[ 0 ] )
             break;
 
     if ( fd >= _countof( g_afcb ) )
@@ -308,7 +308,7 @@ extern "C" int open( const char * pathname, int flags, ... )
 
     if ( 255 == result )
     {
-        g_afcb[ fd ].n[ 0 ] = '*'; // mark this fd as free
+        g_afcb[ fd ].n[ 0 ] = 0; // mark this fd as free
         if ( create )
             errno = EINVAL;
         else
@@ -342,7 +342,7 @@ extern "C" int close( int fd )
         errno = EINVAL;
         return -1;
     }
-    if ( '*' == g_afcb[ fd ].n[ 0 ] )
+    if ( 0 == g_afcb[ fd ].n[ 0 ] )
     {
         errno = EINVAL;
         return -1;
@@ -356,7 +356,7 @@ extern "C" int close( int fd )
         return -1;
     }
 
-    fcb.n[ 0 ] = '*';
+    fcb.n[ 0 ] = 0;
     return 0;
 } //close
 
@@ -367,7 +367,7 @@ extern "C" off_t lseek( int fd, off_t offset, int whence )
         errno = EINVAL;
         return -1;
     }
-    if ( '*' == g_afcb[ fd ].n[ 0 ] )
+    if ( 0 == g_afcb[ fd ].n[ 0 ] )
     {
         errno = EINVAL;
         return -1;
@@ -422,7 +422,7 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
             errno = EINVAL;
             return -1;
         }
-        if ( '*' == g_afcb[ fd ].n[ 0 ] )
+        if ( 0 == g_afcb[ fd ].n[ 0 ] )
         {
             errno = EINVAL;
             return -1;
@@ -515,7 +515,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
             errno = EINVAL;
             return -1;
         }
-        if ( '*' == g_afcb[ fd ].n[ 0 ] )
+        if ( 0 == g_afcb[ fd ].n[ 0 ] )
         {
             errno = EINVAL;
             return -1;
@@ -621,13 +621,7 @@ extern "C" ssize_t readlinkat( int dirfd, const char * pathname, char * buf, siz
 
 extern "C" int unlinkat( int dirfd, const char * path, int flags )
 {
-    if ( !ValidCPMFilename( path ) )
-    {
-        errno = EINVAL;
-        return -1;
-    }
-
-    return unlink( path ); // no folders, so just unlink the path
+    return unlink( path ); // no folders, so just unlink the file
 } //unlinkat
 
 extern "C" int fsync( int fd )
@@ -644,7 +638,7 @@ extern "C" int fdatasync( int fd )
 
 extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int flag )
 {
-printf( "fstatat error\n" );
+    printf( "fstatat not implemented error\n" );
     return -1;
 } //fstatat
 
@@ -655,7 +649,7 @@ extern "C" int fstat( int fd, struct stat * statbuf )
         errno = EINVAL;
         return -1;
     }
-    if ( '*' == g_afcb[ fd ].n[ 0 ] )
+    if ( 0 == g_afcb[ fd ].n[ 0 ] )
     {
         errno = EINVAL;
         return -1;
