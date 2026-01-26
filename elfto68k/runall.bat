@@ -47,6 +47,9 @@ echo building elfto68k
 echo building elfto68k >>%outputfile%
 call m.bat >>%outputfile%
 
+mkdir sys 2>nul
+copy ..\c_tests\sys\* sys 1>nul
+
 echo building m68
 echo building m68 >>%outputfile%
 call mm68.bat %_optflag% %_gccfolder% >>%outputfile%
@@ -75,6 +78,14 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
     del %%a.c 2>nul
     del %%a.68k 2>nul
 ) )
+
+echo building na
+echo building na >>%outputfile%
+copy ..\c_tests\na.c . >nul
+call mt.bat na %_optflag% %_gccfolder% >>%outputfile%
+del na.s 2>nul
+del na.c 2>nul
+del na.68k 2>nul
 
 echo building ba
 echo building ba >>%outputfile%

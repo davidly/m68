@@ -1,4 +1,4 @@
-Fri 01/09/2026 10:02:53.26 
+Sun 01/25/2026 21:00:02.90 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-37.459000 milliseconds
+36.573002 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificStandardTime+8', year: 2026, month 1, day 9, hour 18, min 3, sec 5
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 1, day 9, hour 13, min 3, sec 5
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 1, day 9, hour 10, min 3, sec 5
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 1, day 9, hour 10, min 3, sec 5
+before TZ is set: tz: 'PacificStandardTime+8', year: 2026, month 1, day 26, hour 5, min 0, sec 14
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 1, day 26, hour 0, min 0, sec 14
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 1, day 25, hour 21, min 0, sec 14
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 1, day 25, hour 21, min 0, sec 14
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6292,7 +6292,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2026, month 1, day 9, hour 10, min 3, sec 15
+tz: 'PST+8', year: 2026, month 1, day 25, hour 21, min 0, sec 24
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6316,6 +6316,74 @@ MREMAP_MAYMOVE: 0x1
 PROT_READ: 0x1
 PROT_WRITE: 0x2
 mmap test completed with great success
+test termiosf 
+lflag:
+ icanon 0x2
+ echonl 0x40
+ echok 0x20
+ echoke 0x800
+ echoe 0x10
+ echo 0x8
+ extproc 0x10000
+ echoprt 0x400
+ econl 0x40
+ isig 0x1
+ iexten 0x8000
+ echoctl 0x200
+oflag
+ opost 0x1
+ onocr 0x10
+ onlret 0x20
+iflag
+ ixon 0x400
+ ixoff 0x1000
+ icrnl 0x100
+ inlcr 0x40
+ igncr 0x80
+ iuclc 0x200
+ imaxbel 0x2000
+ brkint 0x2
+ inpck 0x10
+ istrip 0x20
+cflag
+ cs5 0
+ cs6 0x10
+ cs7 0x20
+ csize 0x30
+ cstopb 0x40
+ cread 0x80
+ parenb 0x100
+ cs8 0x30
+ hupcl 0x400
+ clocal 0x800
+ parodd 0x200
+ cmspar 0x40000000
+ crtscts 0x80000000
+cc_c
+ VMIN 0x6
+ VTIME 0x5
+ VINTR 0
+ VQUIT 0x1
+ VERASE 0x2
+ VKILL 0x3
+ VEOF 0x4
+ VSWTC 0x7
+ VSTART 0x8
+ VSTOP 0x9
+ VSUSP 0xa
+ VEOL 0xb
+ VEOL2 0x10
+ VREPRINT 0xc
+ VWERASE 0xe
+ VLNEXT 0xf
+ VDISCARD 0xd
+tcsetattr
+ TCSANOW 0
+ TCSADRAIN 0x1
+ TCSAFLUSH 0x2
+TIOCGWINSZ 0x5413
+c_cc elements: 0x20
+termiosf completed with great success
 test tbcd 
 result is 0x7 flags 0
 result is 0x8 flags 0
@@ -9183,17 +9251,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     374
-  dictionary: 369
+total ms:     384
+  dictionary: 379
   generate:   4
-  render:     0
+  render:     1
 test ba tp.bas 
-366 ms for 1 iterations
+418 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-492.468994 milliseconds
+458.895996 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9226,4 +9294,4 @@ argv[ 3 ]: 'ccc'
 argv[ 4 ]: 'dddd'
 penv[ 0 ]: 'OS=M68'
 penv[ 1 ]: 'TZ=PacificStandardTime+8'
-Fri 01/09/2026 10:03:48.72 
+Sun 01/25/2026 21:00:59.13 

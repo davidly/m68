@@ -505,8 +505,9 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
 
     if ( 0 == fd )
     {
-        // todo: handle read from stdin
-        return -1;
+        // todo: translate simple cp/m characters into linux-style escape sequences for keys like arrow up
+        ( (char *) buffer )[ 0 ] = (char) bdos_cpm( 6, 0xff ); // direct consoe i/o. 0xff means block until a character is ready
+        return 1;
     }
     else
     {
@@ -850,6 +851,21 @@ int getentropy( void *buffer, size_t length )
         *p = i;
     return 0;
 } //getentropy
+
+extern "C" int ioctl( int fd, unsigned long op, ... )
+{
+    return -1;
+} //ioctl
+
+extern "C" int tcgetattr( int fd, struct termios * termios_p )
+{
+    return 0; // simply pretend it worked so apps don't fail
+} //tcgetattr
+
+extern "C" int tcsetattr( int fd, int optional_actions, struct termios * termios_p )
+{
+    return 0; // simply pretend it worked so apps don't fail
+} //tcsetattr
 
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */

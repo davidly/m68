@@ -401,7 +401,7 @@ class ConsoleConfiguration
                 if ( 0 == pCtrlCRoutine )
                 {
                     DWORD dwMode = oldInputConsoleMode;
-                    dwMode &= ~ENABLE_PROCESSED_INPUT;
+                    dwMode &= ~( ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT );
                     SetConsoleMode( consoleInputHandle, dwMode );
                     tracer.Trace( "old and new console input mode: %#x, %#x\n", oldInputConsoleMode, dwMode );
                 }

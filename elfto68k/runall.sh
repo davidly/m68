@@ -45,6 +45,9 @@ outputfile="test_elfto68k.txt"
 date_time=$(date)
 echo "$date_time" >$outputfile
 
+mkdir sys >/dev/null 2>&1
+cp ../c_tests/sys/* sys >/dev/null 2>&1
+
 echo building elfto68k
 echo building elfto68k >>$outputfile
 m.sh >>$outputfile

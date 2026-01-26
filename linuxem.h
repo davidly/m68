@@ -136,6 +136,22 @@ struct linux_timeval32
 };
 #pragma pack(pop)
 
+struct winsize_syscall
+{
+    uint16_t ws_row;    /* rows, in characters */
+    uint16_t ws_col;    /* columns, in characters */
+    uint16_t ws_xpixel; /* horizontal size, in pixels */
+    uint16_t ws_ypixel; /* vertical size, in pixels */
+
+    void swap_endianness()
+    {
+        ws_row = swap_endian16( ws_row );
+        ws_col = swap_endian16( ws_col );
+        ws_xpixel = swap_endian16( ws_xpixel );
+        ws_ypixel = swap_endian16( ws_ypixel );
+    }
+};
+
 struct linux_timeval_x32
 {
     uint32_t tv_sec;       // time_t
@@ -697,7 +713,37 @@ struct utsname_syscall
     char domainname[SYS_NMLN];
 };
 
-#define local_KERNEL_NCCS 19
+#define local_KERNEL_NCCS 0x16 // most linux platforms have an array >= this but don't use them
+
+// indexes into c_cc across various platforms. linux means amd64, x86, risc-v, and arm64
+
+#define linux_VMIN 0x6
+#define sparc_VMIN 0x4
+#define macos_VMIN 0x10
+
+#define linux_VTIME 0x5
+#define sparc_VTIME 0x5
+#define macos_VTIME 0x11
+
+#define linux_VQUIT 0x1
+#define sparc_VQUIT 0x1
+#define macos_VQUIT 0x9
+
+#define linux_VERASE 0x2
+#define sparc_VERASE 0x2
+#define macos_VERASE 0x3
+
+#define linux_VKILL 0x3
+#define sparc_VKILL 0x3
+#define macos_VKILL 0x4
+
+#define linux_VSTART 0x8
+#define sparc_VSTART 0x8
+#define macos_VSTART 0xc
+
+#define linux_VSTOP 0x9
+#define sparc_VSTOP 0x9
+#define macos_VSTOP 0xd
 
 struct local_kernel_termios
 {
@@ -705,7 +751,9 @@ struct local_kernel_termios
     uint32_t c_oflag;     /* output mode flags */
     uint32_t c_cflag;     /* control mode flags */
     uint32_t c_lflag;     /* local mode flags */
+#if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
     uint8_t c_line;       /* line discipline */
+#endif
     uint8_t c_cc[local_KERNEL_NCCS]; /* control characters */
 
     void swap_endianness()

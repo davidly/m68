@@ -18,6 +18,8 @@
 #include <math.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <termios.h>
 
 #include <linuxem.h>
 
@@ -446,6 +448,31 @@ int getentropy( void *buffer, size_t length )
 {
     return syscall( SYS_getrandom, buffer, length, 0 );
 } //getentropy
+
+extern "C" int ioctl( int fd, unsigned long op, ... )
+{
+    void * pv = 0;
+
+    if ( TIOCGWINSZ == op )
+    {
+        va_list ap;
+        va_start( ap, op );
+        pv = va_arg( ap, void * );
+        va_end( ap );
+    }
+
+    return (int) syscall( SYS_ioctl, fd, op, pv );
+} //ioctl
+
+extern "C" int tcgetattr( int fd, struct termios * termios_p )
+{
+    return (int) syscall( SYS_ioctl, fd, 0x5401 , termios_p ); // TCGETS
+} //tcgetattr
+
+extern "C" int tcsetattr( int fd, int optional_actions, struct termios * termios_p )
+{
+    return (int) syscall( SYS_ioctl, fd, 0x5402 , termios_p ); // TCSETS
+} //tcsetattr
 
 /***********************************************************************************/
 /* the newlib with this compiler doesn't support printing floating point numbers,  */

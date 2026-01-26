@@ -140,7 +140,7 @@ void usage( const char * perr = 0 )
     if ( perr )
         printf( "error: %s\n", perr );
 
-    printf( "usage: perr <filename>\n" );
+    printf( "usage: symto68k <filename>\n" );
     printf( "      copies symbols from <filename>.SYM to <filename>.68K\n" );
     printf( "  arguments:\n" );
     printf( "      -v verbose output to show status\n" );

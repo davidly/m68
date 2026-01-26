@@ -69,8 +69,10 @@
     #include <unistd.h>
 
     #ifndef OLDGCC      // the several-years-old Gnu C compilers for the RISC-V development boards
-#ifndef __mc68000__
         #include <termios.h>
+        #include <sys/ioctl.h>
+
+#ifndef __mc68000__
         #include <sys/random.h>
 #endif
         #ifdef __mc68000__
@@ -852,6 +854,47 @@ static void usage( char const * perror = 0 )
     exit( 1 );
 } //usage
 
+#ifdef _WIN32
+
+int map_win32_to_errno( DWORD win_error )
+{
+    switch (win_error)
+    {
+        case ERROR_SUCCESS:                 return 0;
+        
+        // File and Path errors
+        case ERROR_FILE_NOT_FOUND:
+        case ERROR_PATH_NOT_FOUND:          return ENOENT;  // No such file/dir
+        case ERROR_TOO_MANY_OPEN_FILES:     return EMFILE;  // Too many open files
+        case ERROR_ACCESS_DENIED:
+        case ERROR_SHARING_VIOLATION:
+        case ERROR_LOCK_VIOLATION:          return EACCES;  // Permission denied
+        case ERROR_FILE_EXISTS:
+        case ERROR_ALREADY_EXISTS:          return EEXIST;  // File exists (Error 17)
+        case ERROR_DIR_NOT_EMPTY:           return ENOTEMPTY;
+        
+        // Resource and Memory errors
+        case ERROR_OUTOFMEMORY:
+        case ERROR_NOT_ENOUGH_MEMORY:       return ENOMEM;  // Out of memory
+        case ERROR_DISK_FULL:
+        case ERROR_HANDLE_DISK_FULL:        return ENOSPC;  // No space left
+        
+        // Argument and Handle errors
+        case ERROR_INVALID_HANDLE:          return EBADF;   // Bad file descriptor
+        case ERROR_INVALID_PARAMETER:
+        case ERROR_INVALID_NAME:            return EINVAL;  // Invalid argument
+        
+        // Process/Thread errors
+        case ERROR_BROKEN_PIPE:             return EPIPE;   // Broken pipe
+        case ERROR_BUSY:                    return EBUSY;   // Resource busy
+        case ERROR_NOT_SUPPORTED:           return ENOSYS;  // Function not implemented
+
+        default:                            return EINVAL;  // Generic mapping
+    }
+} //map_win32_to_errno
+
+#endif
+
 static uint64_t rand64()
 {
     uint64_t r = 0;
@@ -1323,6 +1366,102 @@ static int gettimeofday( linux_timeval * tp )
     return 0;
 } //gettimeofday
 
+void map_c_cc_sparc_to_linux( uint8_t * pcc )
+{
+    uint8_t from[ local_KERNEL_NCCS ];
+    memcpy( &from, pcc, sizeof( from ) );
+
+    // on sparc vmin and veof are both 4. vtime and veol are both 5. I don't know why.
+    pcc[ 0 ] = from[ 0 ];
+    pcc[ 1 ] = from[ 1 ];
+    pcc[ 2 ] = from[ 2 ];
+    pcc[ 3 ] = from[ 3 ];
+    pcc[ 4 ] = from[ 4 ]; // veof
+    pcc[ 5 ] = from[ 5 ]; // vtime
+    pcc[ 6 ] = from[ 4 ]; // vmin
+    pcc[ 7 ] = from[ 7 ];
+    pcc[ 8 ] = from[ 8 ];
+    pcc[ 9 ] = from[ 9 ];
+    pcc[ 0xa ] = from[ 0xa ];
+    pcc[ 0xb ] = from[ 5 ]; // veol
+    pcc[ 0xc ] = from[ 0xc ];
+    pcc[ 0xd ] = from[ 0xd ];
+    pcc[ 0xe ] = from[ 0xe ];
+    pcc[ 0xf ] = from[ 0xf ];
+    pcc[ 0x10 ] = from[ 6 ]; // veol2
+} //map_c_cc_sparc_to_linux
+
+void map_c_cc_linux_to_sparc( uint8_t * pcc )
+{
+    uint8_t from[ local_KERNEL_NCCS ];
+    memcpy( &from, pcc, sizeof( from ) );
+
+    pcc[ 0 ] = from[ 0 ];
+    pcc[ 1 ] = from[ 1 ];
+    pcc[ 2 ] = from[ 2 ];
+    pcc[ 3 ] = from[ 3 ];
+    pcc[ 4 ] = from[ 6 ]; // vmin
+    pcc[ 5 ] = from[ 5 ]; // vtime
+    pcc[ 7 ] = from[ 7 ];
+    pcc[ 8 ] = from[ 8 ];
+    pcc[ 9 ] = from[ 9 ];
+    pcc[ 0xa ] = from[ 0xa ];
+    pcc[ 0xc ] = from[ 0xc ];
+    pcc[ 0xd ] = from[ 0xd ];
+    pcc[ 0xe ] = from[ 0xe ];
+    pcc[ 0xf ] = from[ 0xf ];
+    pcc[ 6 ] = from[ 0x10 ]; // veol2
+} //map_c_cc_linux_to_sparc
+
+void map_c_cc_linux_to_apple( uint8_t * pcc )
+{
+    uint8_t from[ local_KERNEL_NCCS ];
+    memcpy( &from, pcc, sizeof( from ) );
+
+    pcc[ 0 ] = from[ 4 ]; // veof
+    pcc[ 1 ] = from[ 0xb ]; // veol
+    pcc[ 2 ] = from[ 0x10 ]; // veol2
+    pcc[ 3 ] = from[ 2 ]; // verase
+    pcc[ 4 ] = from[ 0xe ]; // vwerase
+    pcc[ 5 ] = from[ 3 ]; // vkill
+    pcc[ 6 ] = from[ 0xc ]; // vreprint
+    pcc[ 7 ] = 0; // undefined on macOS?
+    pcc[ 8 ] = from[ 0 ]; // vintr
+    pcc[ 9 ] = from[ 1 ]; // vquit
+    pcc[ 0xa ] = from[ 0xa ]; // vsusp
+    pcc[ 0xb ] = 0; // undefined on macOS?
+    pcc[ 0xc ] = from[ 8 ]; // vstart
+    pcc[ 0xd ] = from[ 9 ]; // vstop
+    pcc[ 0xe ] = from[ 0xf ]; // vlnext
+    pcc[ 0xf ] = from[ 0xd ]; // vdiscard
+    pcc[ 0x10 ] = from[ 6 ]; // veol2
+    pcc[ 0x11 ] = from[ 5 ]; // vtime
+    pcc[ 0x12 ] = 0; // vstatus undefined on linux?
+} //map_c_cc_linux_to_apple
+
+void map_c_cc_apple_to_linux( uint8_t * pcc )
+{
+    uint8_t from[ local_KERNEL_NCCS ];
+    memcpy( &from, pcc, sizeof( from ) );
+
+    pcc[ 4 ] = from[ 0 ]; // veof
+    pcc[ 0xb ] = from[ 1 ]; // veol
+    pcc[ 0x10 ] = from[ 2 ]; // veol2
+    pcc[ 2 ] = from[ 3 ]; // verase
+    pcc[ 0xe ] = from[ 4 ]; // vwerase
+    pcc[ 3 ] = from[ 5 ]; // vkill
+    pcc[ 0xc ] = from[ 6 ]; // vreprint
+    pcc[ 0 ] = from[ 8 ]; // vintr
+    pcc[ 1 ] = from[ 9 ]; // vquit
+    pcc[ 0xa ] = from[ 0xa ]; // vsusp
+    pcc[ 8 ] = from[ 0xc ]; // vstart
+    pcc[ 8 ] = from[ 0xd ]; // vstop
+    pcc[ 0xf ] = from[ 0xe ]; // vlnext
+    pcc[ 0xd ] = from[ 0xf ]; // vdiscard
+    pcc[ 6 ] = from[ 0x10 ]; // veol2
+    pcc[ 5 ] = from[ 0x11 ]; // vtime
+} //map_c_cc_apple_to_linux
+
 #ifdef __APPLE__
 
 // For each of these flag fields o/i/l/c this code translates the subset of the values actually used in the apps
@@ -1403,28 +1542,32 @@ static tcflag_t map_termios_iflag_macos_to_linux( tcflag_t f )
 static tcflag_t map_termios_lflag_linux_to_macos( tcflag_t f )
 {
     tcflag_t r = 0;
-    if ( f & 1 ) // ICANON
-        r |= 0x80;
-    if ( f & 2 ) // ECHONL
+    if ( f & 2 ) // ICANON
         r |= 0x100;
-    if ( f & 8 ) // ECHOK
-        r |= 8;
-    if ( f & 0x10 ) // ECHOKE
-        r |= 2;
-    if ( f & 0x20 ) // ECHOE
-        r |= 4;
-    if ( f & 0x40 ) // ECHO
+    if ( f & 0x40 ) // ECHONL
         r |= 0x10;
-    if ( f & 0x100 ) // EXTPROC
-        r |= 0x400000;
-    if ( f & 0x200 ) // ECHOPRT
-        r |= 0x40;
-    if ( f & 0x400 ) // ECONL
-        r |= 0x20;
-    if ( f & 0x8000 ) // ISIG
-        r |= 0x400;
-    if ( f & 0x10000 ) // IEXTEN
+    if ( f & 0x20 ) // ECHOK
+        r |= 4;
+    if ( f & 0x800 ) // ECHOKE
+        r |= 1;
+    if ( f & 0x10 ) // ECHOE
+        r |= 2;
+    if ( f & 8 ) // ECHO
+        r |= 8;
+    if ( f & 0x10000 ) // EXTPROC
         r |= 0x800;
+    if ( f & 0x400 ) // ECHOPRT
+        r |= 0x20;
+    if ( f & 0x40 ) // ECONL
+        r |= 0x10;
+    if ( f & 1 ) // ISIG
+        r |= 0x800;
+    if ( f & 0x8000 ) // IEXTEN
+        r |= 0x400;
+    if ( f & 0x200 ) // ECHOCTL
+        r |= 0x40;
+    if ( f & 0x100 ) // TOSTOP
+        r |= 0x400000;
 
     return r;
 } //map_termios_lflag_linux_to_macos
@@ -1432,53 +1575,61 @@ static tcflag_t map_termios_lflag_linux_to_macos( tcflag_t f )
 static tcflag_t map_termios_lflag_macos_to_linux( tcflag_t f )
 {
     tcflag_t r = 0;
-    if ( f & 0x80 ) // ICANON
-        r |= 1;
-    if ( f & 0x100 ) // ECHONL
+    if ( f & 0x100 ) // ICANON
         r |= 2;
-    if ( f & 8 ) // ECHOK
-        r |= 8;
-    if ( f & 2 ) // ECHOKE
-        r |= 0x10;
-    if ( f & 4 ) // ECHOE
-        r |= 0x20;
-    if ( f & 0x10 ) // ECHO
+    if ( f & 0x10 ) // ECHONL
         r |= 0x40;
-    if ( f & 0x400000 ) // EXTPROC
-        r |= 0x100;
-    if ( f & 0x40 ) // ECHOPRT
-        r |= 0x200;
-    if ( f & 0x20 ) // ECONL
-        r |= 0x400;
-    if ( f & 0x400 ) // ISIG
-        r |= 0x8000;
-    if ( f & 0x800 ) // IEXTEN
+    if ( f & 4 ) // ECHOK
+        r |= 0x20;
+    if ( f & 1 ) // ECHOKE
+        r |= 0x800;
+    if ( f & 2 ) // ECHOE
+        r |= 0x10;
+    if ( f & 8 ) // ECHO
+        r |= 8;
+    if ( f & 0x800 ) // EXTPROC
         r |= 0x10000;
+    if ( f & 0x20 ) // ECHOPRT
+        r |= 0x400;
+    if ( f & 0x10 ) // ECONL
+        r |= 0x40;
+    if ( f & 0x800 ) // ISIG
+        r |= 1;
+    if ( f & 0x400 ) // IEXTEN
+        r |= 0x8000;
+    if ( f & 0x40 ) // ECHOCTL
+        r |= 0x200;
+    if ( f & 0x400000 ) // TOSTOP
+        r |= 0x100;
 
     return r;
 } //map_termios_lflag_linux_to_macos
 
 static tcflag_t map_termios_cflag_linux_to_macos( tcflag_t f )
 {
-    tcflag_t r = 0;
-    if ( f & 0x10 ) // CS5
+    tcflag_t r = 0; // CS5 is 0
+    if ( f & 0x10 ) // CS6
         r |= 0x100;
-    if ( f & 0x20 ) // CS6  CLOCAL is also 0x20 on linux and 0x400 on MacOS
+    if ( f & 0x20 ) // CS7
         r |= 0x200;
-    if ( f & 0x30 ) // CS7
+    if ( f & 0x30 ) // CSIZE and CS8
         r |= 0x300;
-    if ( f & 0x40 ) // CSIZE
+    if ( f & 0x40 ) // CSTOPB
         r |= 0x400;
-    if ( f & 0x80 ) // CSTOPB
+    if ( f & 0x80 ) // CREAD
         r |= 0x800;
-    if ( f & 0x100 ) // CREAD
+    if ( f & 0x100 ) // PARENB
         r |= 0x1000;
-    if ( f & 0x200 ) // PARENB
-        r |= 0x2000;
-    if ( f & 0x400 ) // CS8
-        r |=  0x4000;
-    if ( f & 0x800 ) // HUPCL
+    if ( f & 0x400 ) // HUPCL
+        r |= 0x4000;
+    if ( f & 0x800 ) // CLOCAL
         r |= 0x8000;
+    if ( f & 0x200 ) // PARODD
+        r |= 0x2000;
+    if ( f & 0x80000000 ) // CRTSCTS
+        r |= 0x30000;
+
+    // CMSPAR not on macOS
 
     return r;
 } //map_termios_cflag_linux_to_macos
@@ -1486,24 +1637,28 @@ static tcflag_t map_termios_cflag_linux_to_macos( tcflag_t f )
 static tcflag_t map_termios_cflag_macos_to_linux( tcflag_t f )
 {
     tcflag_t r = 0;
-    if ( f & 0x100 ) // CS5
+    if ( f & 0x100 ) // CS6
         r |= 0x10;
-    if ( f & 0x200 ) // CS6  CLOCAL is also 0x20 on linux and 0x400 on MacOS
+    if ( f & 0x200 ) // CS7
         r |= 0x20;
-    if ( f & 0x300 ) // CS7
+    if ( f & 0x300 ) // CSIZE and CS8
         r |= 0x30;
-    if ( f & 0x400 ) // CSIZE
+    if ( f & 0x400 ) // CSTOPB
         r |= 0x40;
-    if ( f & 0x800 ) // CSTOPB
+    if ( f & 0x800 ) // CREAD
         r |= 0x80;
-    if ( f & 0x1000 ) // CREAD
+    if ( f & 0x1000 ) // PARENB
         r |= 0x100;
-    if ( f & 0x2000 ) // PARENB
-        r |= 0x200;
-    if ( f & 0x4000 ) // CS8
-        r |=  0x400;
-    if ( f & 0x8000 ) // HUPCL
+    if ( f & 0x4000 ) // HUPCL
+        r |= 0x400;
+    if ( f & 0x8000 ) // CLOCAL
         r |= 0x800;
+    if ( f & 0x2000 ) // PARODD
+        r |= 0x200;
+    if ( f & 0x30000 ) // CRTSCTS
+        r |= 0x80000000;
+
+    // CMSPAR not on macOS
 
     return r;
 } //map_termios_cflag_linux_to_macos
@@ -2184,8 +2339,15 @@ void emulator_invoke_svc( CPUClass & cpu )
             char * path = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             REG_TYPE mode = ACCESS_REG( REG_ARG1 );
             tracer.Trace( "  emulator_sys_access path '%s', mode %#x\n", path, mode );
+#if defined( _WIN32 ) || defined( __mc68000__ )
             errno = EACCES;
             update_result_errno( cpu, -1 );
+#else
+            // at least try to do this on Linux
+
+            int result = access( path, mode );
+            update_result_errno( cpu, result );
+#endif
             break;
         }
         case SYS_getcwd:
@@ -3803,7 +3965,17 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
         case emulator_sys_rename:
         {
+            const char * oldname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            const char * newname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+
+#if defined( _WIN32 )
+            bool ok = MoveFileExA( oldname, newname, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH ); // rename() on windows doesn't clobber existing files with newname
+            int result = 0;
+            if ( !ok )
+                result = map_win32_to_errno( GetLastError() );
+#else
             int result = rename( (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ), (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) ) );
+#endif
             update_result_errno( cpu, result );
             break;
         }
@@ -3816,7 +3988,12 @@ void emulator_invoke_svc( CPUClass & cpu )
             const char * newpath = (const char *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
             unsigned int flags = ( SYS_renameat2 == syscall_id ) ? (unsigned int) ACCESS_REG( REG_ARG4 ) : 0;
             tracer.Trace( "  renaming '%s' to '%s'\n", oldpath, newpath );
-#if defined( _WIN32 ) || defined( __mc68000__ )
+#if defined( _WIN32 )
+            bool ok = MoveFileExA( oldpath, newpath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH ); // rename() on windows doesn't clobber existing files with newname
+            int result = 0;
+            if ( !ok )
+                result = map_win32_to_errno( GetLastError() );
+#elif defined( __mc68000__ )
             int result = rename( oldpath, newpath );
 #elif defined( __APPLE__ )
             if ( -100 == olddirfd )
@@ -4248,10 +4425,11 @@ void emulator_invoke_svc( CPUClass & cpu )
             unsigned long request = (unsigned long) ACCESS_REG( REG_ARG1 ) & 0xffff;
             tracer.Trace( "  ioctl fd %d, request %lx\n", fd, request );
             struct local_kernel_termios * pt = (struct local_kernel_termios *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+            int result = 0;
 
             if ( 0 == fd || 1 == fd || 2 == fd ) // stdin, stdout, stderr
             {
-#if defined( _WIN32 ) || defined( __mc68000__ )
+#if defined( _WIN32 )
                 if ( 0x5401 == request || 0x5408 == request ) // TCGETS. 5401 is newer, 5408 is older like Linux on sparc
                 {
                     memset( pt, 0, sizeof( *pt ) );
@@ -4276,7 +4454,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     // kbhit() works without all this fuss on Windows
                 }
-#else //defined( _WIN32 ) || defined( __mc68000__ )
+#else //defined( _WIN32 )
                 // likely a TCGETS or TCSETS on stdin to check or enable non-blocking reads for a keystroke
 
                 if ( 0x5401 == request || 0x5408 == request ) // TCGETS
@@ -4290,6 +4468,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                         break;
                     }
                     tracer.Trace( "  result %d, iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", result, val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
+
+                    memcpy( & pt->c_cc, & val.c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
+
                     pt->c_iflag = val.c_iflag;
                     pt->c_oflag = val.c_oflag;
                     pt->c_cflag = val.c_cflag;
@@ -4300,31 +4481,27 @@ void emulator_invoke_svc( CPUClass & cpu )
                     pt->c_cflag = map_termios_cflag_macos_to_linux( pt->c_cflag );
                     pt->c_lflag = map_termios_lflag_macos_to_linux( pt->c_lflag );
                     tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
-#else //__APPLE__
-                    pt->c_line = val.c_line;
-                    memcpy( & pt->c_cc, & val.c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
+                    map_c_cc_apple_to_linux( pt->c_cc );
 #endif //__APPLE__
+
+#if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
+                    pt->c_line = val.c_line;
+#endif
+
+#ifdef SPARCOS
+                    map_c_cc_linux_to_sparc( pt->c_cc );
+#endif //SPARCOS
                     tracer.Trace( "  ioctl queried termios on stdin, sizeof local_kernel_termios %zd, sizeof val %zd\n",
                                 sizeof( struct local_kernel_termios ), sizeof( val ) );
+                    pt->swap_endianness();
                 }
                 else if ( 0x5402 == request ) // TCSETS
                 {
                     struct termios val;
                     memset( &val, 0, sizeof val );
                     tracer.TraceBinaryData( (uint8_t *) pt, sizeof( struct local_kernel_termios ), 4 );
-                    tracer.Trace( "  oflag %#x OPOST %#x ONLCR %#x OCRNL %#x ONOCR %#x ONLRET %#x\n",
-                                  pt->c_oflag, OPOST, ONLCR, OCRNL, ONOCR, ONLRET );
-                    tracer.Trace( "  iflag %#x IGNBRK %#x BRKINT %#x IGNPAR %#x PARMRK %#x INPCK %#x ISTRIP %#x INLCR %#x IGNCR %#x ICRNL %#x IXON %#x IXOFF %#x IXANY %#x IMAXBEL %#x IUTF8 %#x\n",
-                                  pt->c_iflag, IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK, ISTRIP, INLCR, IGNCR, ICRNL, IXON, IXOFF, IXANY, IMAXBEL, IUTF8 );
-                    tracer.Trace( "  cflag %#x CSIZE %#x, CSTOPB %#x CREAD %#x PARENB %#x PARODD %#x CS5 %#x CS6 %#x CS7 %#x CS8 %#x HUPCL %#x CLOCAL %#x\n",
-                                  CSIZE, CSTOPB, CREAD, PARENB, PARODD, CS5, CS6, CS7, CS8, HUPCL, CLOCAL );
-#ifdef sparc
-                    tracer.Trace( "  lflag %#x ECHOKE %#x ECHOE %#x ECHOK %#x ECHO %#x ECHONL %#x ECHOPRT %#x ECHOCTL %#x ICANON %#x ISIG %#x IEXTEN %#x TOSTOP %#x\n",
-                                  ECHOKE, ECHOE, ECHOK, ECHO, ECHONL, ECHOPRT, ECHOCTL, ICANON, ISIG, IEXTEN, TOSTOP );
-#else
-                    tracer.Trace( "  lflag %#x ECHOKE %#x ECHOE %#x ECHOK %#x ECHO %#x ECHONL %#x ECHOPRT %#x ECHOCTL %#x ICANON %#x ISIG %#x IEXTEN %#x EXTPROC %#x TOSTOP %#x\n",
-                                  ECHOKE, ECHOE, ECHOK, ECHO, ECHONL, ECHOPRT, ECHOCTL, ICANON, ISIG, IEXTEN, EXTPROC, TOSTOP );
-#endif
+                    pt->swap_endianness();
+                    memcpy( & val.c_cc, & pt->c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
 
                     val.c_iflag = pt->c_iflag;
                     val.c_oflag = pt->c_oflag;
@@ -4337,58 +4514,58 @@ void emulator_invoke_svc( CPUClass & cpu )
                     val.c_cflag = map_termios_cflag_linux_to_macos( val.c_cflag );
                     val.c_lflag = map_termios_lflag_linux_to_macos( val.c_lflag );
                     tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
-#else //__APPLE__
-                    val.c_line = pt->c_line;
-                    memcpy( & val.c_cc, & pt->c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
 #endif //__APPLE__
+
+#if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
+                    val.c_line = pt->c_line;
+#endif
+
+#ifdef SPARCOS
+                    assert( sizeof( val.c_cc ) >= local_KERNEL_NCCS );
+                    map_c_cc_sparc_to_linux( val.c_cc );
+#endif // SPARCOS
+
                     tracer.TraceBinaryData( (uint8_t *) &val, sizeof( struct termios ), 4 );
+#ifdef __APPLE__
+                    assert( sizeof( val.c_cc ) >= local_KERNEL_NCCS );
+                    map_c_cc_linux_to_apple( val.c_cc );
+#endif
                     tcsetattr( 0, TCSANOW, &val );
                     tracer.Trace( "  ioctl set termios on stdin\n" );
                 }
 #endif //defined( _WIN32 ) || defined( __mc68000__ )
-            }
-            else if ( 1 == fd ) // stdout
-            {
-                if ( 0x5401 == request || 0x5408 == request ) // TCGETS
+
+#if defined( SPARCOS )
+                else if ( 1 == fd && 0x7468 == request ) // TIOCGWINSZ
+#else
+                else if ( 1 == fd && 0x5413 == request ) // TIOCGWINSZ
+#endif
                 {
-#if defined( _WIN32 ) || defined( __mc68000__ ) || defined( sparc )
-                    if ( isatty( fd ) )
-                        update_result_errno( cpu, 0 );
-                    else
-                        update_result_errno( cpu, -1 );
-
-                    break;
-#else //defined( _WIN32 ) || defined( __mc68000__ )
-                    struct termios val;
-                    int result = tcgetattr( fd, &val );
-                    tracer.Trace( "  result: %d, iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", result, val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
-                    if ( -1 == result )
+                    tracer.Trace( "  tiocg winsize on stdout\n" );
+                    struct winsize_syscall *pws = (struct winsize_syscall *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+#ifdef _WIN32
+                    CONSOLE_SCREEN_BUFFER_INFO csbi;
+                    if ( GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE ), &csbi ) )
                     {
-                        update_result_errno( cpu, -1 );
-                        break;
+                        pws->ws_col = (uint16_t) ( csbi.srWindow.Right - csbi.srWindow.Left + 1 );
+                        pws->ws_row = (uint16_t) ( csbi.srWindow.Bottom - csbi.srWindow.Top + 1 );
                     }
-                    pt->c_iflag = val.c_iflag;
-                    pt->c_oflag = val.c_oflag;
-                    pt->c_cflag = val.c_cflag;
-                    pt->c_lflag = val.c_lflag;
-#ifdef __APPLE__
-                    pt->c_iflag = map_termios_iflag_macos_to_linux( pt->c_iflag );
-                    pt->c_oflag = map_termios_oflag_macos_to_linux( pt->c_oflag );
-                    pt->c_cflag = map_termios_cflag_macos_to_linux( pt->c_cflag );
-                    pt->c_lflag = map_termios_lflag_macos_to_linux( pt->c_lflag );
-                    tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
-#else //__APPLE__
-                    pt->c_line = val.c_line;
-                    memcpy( & pt->c_cc, & val.c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
-#endif //__APPLE__
-                    tracer.Trace( "  ioctl queried termios on stdout, sizeof local_kernel_termios %zd, sizeof val %zd\n",
-                                sizeof( struct local_kernel_termios ), sizeof( val ) );
-#endif //defined( _WIN32 ) || defined( __mc68000__ )
-                }
+                    else
+                        result = -1; // if stdout is redirected this will fail
+#else // _WIN32
 
+#if defined( __APPLE__ ) || defined( sparc )
+                    request = 0x40087468; // TIOCGWINSZ on apple and sparc
+#else
+                    request = 0x5413; // map to the standard TIOCGWINSZ constant on other platforms
+#endif // __APPLE__ || sparc
+                    result = ioctl( fd, request, pws );
+#endif // _WIN32
+                    pws->swap_endianness();
+                }
             }
 
-            ACCESS_REG( REG_RESULT ) = 0;
+            ACCESS_REG( REG_RESULT ) = result;
             break;
         }
         case SYS_set_tid_address:

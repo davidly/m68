@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -x
 
+# separate tests are in elfto68k and aztec68k/tests runall scripts
+
 _runcmd="m68"
 _m68runcmd="../m68"
 
@@ -34,7 +36,7 @@ done
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 terrno mm_old ttime fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo sleeptm \
-           nqueens nq1d tdir fopentst lenum tex trename tmmap \
+           nqueens nq1d tdir fopentst lenum tex trename tmmap termiosf \
            tbcd tshift taddsubm tea ttt68 ttt68u tchk;
 do
     echo $arg
