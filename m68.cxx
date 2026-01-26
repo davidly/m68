@@ -4521,13 +4521,11 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif
 
 #ifdef SPARCOS
-                    assert( sizeof( val.c_cc ) >= local_KERNEL_NCCS );
                     map_c_cc_sparc_to_linux( val.c_cc );
 #endif // SPARCOS
 
                     tracer.TraceBinaryData( (uint8_t *) &val, sizeof( struct termios ), 4 );
 #ifdef __APPLE__
-                    assert( sizeof( val.c_cc ) >= local_KERNEL_NCCS );
                     map_c_cc_linux_to_apple( val.c_cc );
 #endif
                     tcsetattr( 0, TCSANOW, &val );
