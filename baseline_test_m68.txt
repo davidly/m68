@@ -1,4 +1,4 @@
-Sun 01/25/2026 21:00:02.90 
+Mon 01/26/2026 11:00:27.88 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt 
 64930 moves
 10 iterations
-36.573002 milliseconds
+36.667999 milliseconds
 test sieve 
 1899 primes.
 test e 
@@ -4094,10 +4094,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime 
-before TZ is set: tz: 'PacificStandardTime+8', year: 2026, month 1, day 26, hour 5, min 0, sec 14
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 1, day 26, hour 0, min 0, sec 14
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 1, day 25, hour 21, min 0, sec 14
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 1, day 25, hour 21, min 0, sec 14
+before TZ is set: tz: 'PacificStandardTime+8', year: 2026, month 1, day 26, hour 19, min 0, sec 39
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 1, day 26, hour 14, min 0, sec 39
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 1, day 26, hour 11, min 0, sec 39
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 1, day 26, hour 11, min 0, sec 39
 test fileops 
 current offset: 0
 result of fseek: 0
@@ -6292,7 +6292,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2026, month 1, day 25, hour 21, min 0, sec 24
+tz: 'PST+8', year: 2026, month 1, day 26, hour 11, min 0, sec 49
 len in pfl: 0
 exiting fopentst with great success
 test lenum 
@@ -6330,6 +6330,7 @@ lflag:
  isig 0x1
  iexten 0x8000
  echoctl 0x200
+ tostop 0x100
 oflag
  opost 0x1
  onocr 0x10
@@ -6345,6 +6346,11 @@ iflag
  brkint 0x2
  inpck 0x10
  istrip 0x20
+ ignbrk 0x1
+ ignpar 0x4
+ parmrk 0x8
+ ixany 0x800
+ iutf8 0x4000
 cflag
  cs5 0
  cs6 0x10
@@ -9251,17 +9257,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     384
-  dictionary: 379
+total ms:     377
+  dictionary: 371
   generate:   4
   render:     1
 test ba tp.bas 
-418 ms for 1 iterations
+348 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-458.895996 milliseconds
+518.833008 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9294,4 +9300,4 @@ argv[ 3 ]: 'ccc'
 argv[ 4 ]: 'dddd'
 penv[ 0 ]: 'OS=M68'
 penv[ 1 ]: 'TZ=PacificStandardTime+8'
-Sun 01/25/2026 21:00:59.13 
+Mon 01/26/2026 11:01:25.29 
