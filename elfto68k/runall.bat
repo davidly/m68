@@ -57,7 +57,7 @@ call mm68.bat %_optflag% %_gccfolder% >>%outputfile%
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi ^
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo ^
-           nqueens nq1d fopentst lenum tex trename
+           nqueens nq1d fopentst lenum tex trename termiosf
 
 ( for %%a in (%_clist%) do (
     echo building %%a

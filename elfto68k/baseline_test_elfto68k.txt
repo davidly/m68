@@ -1,4 +1,4 @@
-Sun 01/25/2026 21:15:56.17 
+Mon 01/26/2026 10:55:45.19 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -6032,6 +6032,82 @@ building trename
 elfto68k successfully created TRENAME.68K
 running trename 
 trename completed with great success
+building termiosf 
+elfto68k successfully created TERMIOSF.68K
+running termiosf 
+lflag:
+ icanon 0x2
+ echonl 0x40
+ echok 0x20
+ echoke 0x800
+ echoe 0x10
+ echo 0x8
+ extproc 0x10000
+ echoprt 0x400
+ econl 0x40
+ isig 0x1
+ iexten 0x8000
+ echoctl 0x200
+ tostop 0x100
+oflag
+ opost 0x1
+ onocr 0x10
+ onlret 0x20
+iflag
+ ixon 0x400
+ ixoff 0x1000
+ icrnl 0x100
+ inlcr 0x40
+ igncr 0x80
+ iuclc 0x200
+ imaxbel 0x2000
+ brkint 0x2
+ inpck 0x10
+ istrip 0x20
+ ignbrk 0x1
+ ignpar 0x4
+ parmrk 0x8
+ ixany 0x800
+ iutf8 0x4000
+cflag
+ cs5 0
+ cs6 0x10
+ cs7 0x20
+ csize 0x30
+ cstopb 0x40
+ cread 0x80
+ parenb 0x100
+ cs8 0x30
+ hupcl 0x400
+ clocal 0x800
+ parodd 0x200
+ cmspar 0x40000000
+ crtscts 0x80000000
+cc_c
+ VMIN 0x6
+ VTIME 0x5
+ VINTR 0
+ VQUIT 0x1
+ VERASE 0x2
+ VKILL 0x3
+ VEOF 0x4
+ VSWTC 0x7
+ VSTART 0x8
+ VSTOP 0x9
+ VSUSP 0xa
+ VEOL 0xb
+ VEOL2 0x10
+ VREPRINT 0xc
+ VWERASE 0xe
+ VLNEXT 0xf
+ VDISCARD 0xd
+tcsetattr
+ TCSANOW 0
+ TCSADRAIN 0x1
+ TCSAFLUSH 0x2
+TIOCGWINSZ 0x5413
+c_cc elements: 0x20
+termiosf completed with great success
 building na 
 elfto68k successfully created NA.68K
 building ba 
@@ -6091,4 +6167,4 @@ building ff
 elfto68k successfully created FF.68K
 running ff 
   rwxrwxrwx         383104  1970-01-01 00:00:00  /M68.68K
-Sun 01/25/2026 21:17:50.40 
+Mon 01/26/2026 10:57:43.57 

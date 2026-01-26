@@ -59,7 +59,7 @@ mm68.sh $optflags $gccpath >>$outputfile
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi \
            t_setjmp td tf tap tphi mm ts glob nantst pis tfo \
-           nqueens nq1d fopentst lenum tex trename
+           nqueens nq1d fopentst lenum tex trename termiosf
 do
   echo building $arg
   echo building $arg >>$outputfile

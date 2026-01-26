@@ -1,3 +1,5 @@
+// these values are typical for Linux on modern ISAs, but probably different from older 68000 Linux distributions
+
 #define NCCS 0x20
 
 typedef uint32_t tcflag_t;
@@ -24,6 +26,7 @@ struct termios {
 #define ISIG 1
 #define IEXTEN 0x8000
 #define ECHOCTL 0x200
+#define TOSTOP 0x100
 
 // oflag
 #define OPOST 0x1
@@ -43,6 +46,11 @@ struct termios {
 #define BRKINT 0x2
 #define INPCK 0x10
 #define ISTRIP 0x20
+#define IGNBRK 0x1
+#define IGNPAR 0x4
+#define PARMRK 0x8
+#define IXANY 0x800
+#define IUTF8 0x4000
 
 // cflag
 #define CS5 0
