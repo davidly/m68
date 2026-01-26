@@ -81,6 +81,14 @@ do
   rm $argu.68K 2>/dev/null
 done
 
+echo building na
+echo building na >>$outputfile
+cp ../c_tests/na.c . >/dev/null
+mt.sh na $optflags $gccpath >>$outputfile
+rm na.s 2>/dev/null
+rm na.c 2>/dev/null
+rm NA.68K 2>/dev/null
+
 echo building ba
 echo building ba >>$outputfile
 cp ../c_tests/ba.c . >/dev/null
