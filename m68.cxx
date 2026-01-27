@@ -1366,6 +1366,78 @@ static int gettimeofday( linux_timeval * tp )
     return 0;
 } //gettimeofday
 
+/* 
+    lflag        linux   macos
+    -----        -----   -----
+        icanon   0x2     0x100
+        echonl   0x40    0x10
+        echok    0x20    0x4
+        echoke   0x800   0x1
+        echoe    0x10    0x2
+        echo     0x8     0x8
+        extproc  0x10000 0x800
+        echoprt  0x400   0x20
+        econl    0x40    0x10
+        isig     0x1     0x800
+        iexten   0x8000  0x400
+        echoctl  0x200   0x40
+        tostop   0x100   0x400000
+    
+    oflag        linux   macos
+    -----        -----   -----
+        opost    0x1     0x1
+        onlcr    0x4     0x2
+        onrnl    0x8     0x10
+        onocr    0x10    0x20
+        onlret   0x20    0x40
+    
+    cflag        linux       macos
+    -----        -----       -----
+        cs5      0           0
+        cs6      0x10        0x100
+        cs7      0x20        0x200
+        csize    0x30        0x300
+        cstopb   0x40        0x400
+        cread    0x80        0x800
+        parenb   0x100       0x1000
+        cs8      0x30        0x300
+        hupcl    0x400       0x4000
+        clocal   0x800       0x8000
+        parodd   0x200       0x2000
+        cmspar   0x40000000  n/a    
+        crtscts  0x80000000  0x30000
+    
+    c_cc            sparc   linux   macos
+    ----            -----   -----   -----
+        vmin        0x4     0x6     0x10
+        vtime       0x5     0x5     0x11
+        vintr       0       0       0x8
+        vquit       0x1     0x1     0x9
+        verase      0x2     0x2     0x3
+        vkill       0x3     0x3     0x5
+        veof        0x4     0x4     0x0
+        vswtc       0x7     0x7     n/a
+        vstart      0x8     0x8     0xc
+        vstop       0x9     0x9     0xd
+        vsusp       0xa     0xa     0xa
+        veol        0x5     0xb     0x1
+        veol2       0x6     0x10    0x2
+        vreprint    0xc     0xc     0x6
+        vwerase     0xe     0xe     0x4
+        vlnext      0xf     0xf     0xe
+        vdiscard    0xd     0xd     0xf
+        vstatus     n/a     n/a     0x12
+    
+    AT_                      linux       macos
+    ---                      -----       -----
+        AT_REMOVEDIR         0x200       0x80
+        AT_SYMLINK_NOFOLLOW  0x100       0x20
+        AT_SYMLINK_FOLLOW    0x400       0x40
+        AT_FDCWD             0xffffff9c  0xfffffffe
+*/
+
+#ifdef SPARCOS
+
 void map_c_cc_sparc_to_linux( uint8_t * pcc )
 {
     uint8_t from[ local_KERNEL_NCCS ];
@@ -1413,7 +1485,11 @@ void map_c_cc_linux_to_sparc( uint8_t * pcc )
     pcc[ 6 ] = from[ 0x10 ]; // veol2
 } //map_c_cc_linux_to_sparc
 
-void map_c_cc_linux_to_apple( uint8_t * pcc )
+#endif // SPARCOS
+
+#ifdef __APPLE__
+
+void map_c_cc_linux_to_macos( uint8_t * pcc )
 {
     uint8_t from[ local_KERNEL_NCCS ];
     memcpy( &from, pcc, sizeof( from ) );
@@ -1437,9 +1513,9 @@ void map_c_cc_linux_to_apple( uint8_t * pcc )
     pcc[ 0x10 ] = from[ 6 ]; // veol2
     pcc[ 0x11 ] = from[ 5 ]; // vtime
     pcc[ 0x12 ] = 0; // vstatus undefined on linux?
-} //map_c_cc_linux_to_apple
+} //map_c_cc_linux_to_macos
 
-void map_c_cc_apple_to_linux( uint8_t * pcc )
+void map_c_cc_macos_to_linux( uint8_t * pcc )
 {
     uint8_t from[ local_KERNEL_NCCS ];
     memcpy( &from, pcc, sizeof( from ) );
@@ -1460,9 +1536,7 @@ void map_c_cc_apple_to_linux( uint8_t * pcc )
     pcc[ 0xd ] = from[ 0xf ]; // vdiscard
     pcc[ 6 ] = from[ 0x10 ]; // veol2
     pcc[ 5 ] = from[ 0x11 ]; // vtime
-} //map_c_cc_apple_to_linux
-
-#ifdef __APPLE__
+} //map_c_cc_macos_to_linux
 
 // For each of these flag fields o/i/l/c this code translates the subset of the values actually used in the apps
 // I validated. There are certainly other cases that are still broken (though many aren't implemented in MacOS,
@@ -3565,7 +3639,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( -100 == directory )
                 directory = -2;
             if ( EMULATOR_AT_REMOVEDIR == flags )
-                flags = AT_REMOVEDIR;
+                flags = AT_REMOVEDIR; // 0x80 on macOS and 0x200 elsewhere
 #endif
             int result = unlinkat( directory, path, flags );
 #endif // _WIN32
@@ -3594,7 +3668,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             if ( -100 == directory )
                 directory = -2;
             if ( EMULATOR_AT_REMOVEDIR == flags )
-                flags = AT_REMOVEDIR;
+                flags = AT_REMOVEDIR; // 0x80 on macOS and 0x200 elsewhere
 #endif // __APPLE__
             int result = unlinkat( directory, path, flags );
 #endif //_WIN32
@@ -4481,7 +4555,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     pt->c_cflag = map_termios_cflag_macos_to_linux( pt->c_cflag );
                     pt->c_lflag = map_termios_lflag_macos_to_linux( pt->c_lflag );
                     tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
-                    map_c_cc_apple_to_linux( pt->c_cc );
+                    map_c_cc_macos_to_linux( pt->c_cc );
 #endif //__APPLE__
 
 #if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
@@ -4526,7 +4600,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 
                     tracer.TraceBinaryData( (uint8_t *) &val, sizeof( struct termios ), 4 );
 #ifdef __APPLE__
-                    map_c_cc_linux_to_apple( val.c_cc );
+                    map_c_cc_linux_to_macos( val.c_cc );
 #endif
                     tcsetattr( 0, TCSANOW, &val );
                     tracer.Trace( "  ioctl set termios on stdin\n" );
