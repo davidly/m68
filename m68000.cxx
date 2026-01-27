@@ -102,7 +102,7 @@ const char * m68000::render_flags()
 inline int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn )
 {
     // 16 bits: 15        14-12       11                10-9                8  7-0
-    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  ?  signed 8-bit displacement
+    //          1=a, 0=d  0-7 Xn reg  1=l, 0=w from Xn  scale 0=1 on 68000  0  signed 8-bit displacement
 
     pc += 2;
     uint16_t extension = getui16( pc );
@@ -262,9 +262,6 @@ uint32_t m68000::effective_address()
             return dregs[ ea_reg ].l;
         }
         case 1: // Address register An
-        {
-            return aregs[ ea_reg ];
-        }
         case 2: // Address (An)
         {
             return aregs[ ea_reg ];

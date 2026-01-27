@@ -37,5 +37,9 @@ set _asmlist=tbcd tshift taddsubm tea ttt68 ttt68u tchk
     call ma.bat %%a %_optflag% %_gccver%
 ) )
 
+rem used for runems.bat nested emulator tests
+mkdir bin2 1>nul 2>nul
+copy *.elf bin2 1>nul 2>nul
+
 :alldone
 

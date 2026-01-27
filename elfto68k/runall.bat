@@ -85,7 +85,7 @@ copy ..\c_tests\na.c . >nul
 call mt.bat na %_optflag% %_gccfolder% >>%outputfile%
 del na.s 2>nul
 del na.c 2>nul
-del na.68k 2>nul
+rem del na.68k 2>nul
 
 echo building ba
 echo building ba >>%outputfile%
