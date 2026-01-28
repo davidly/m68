@@ -308,7 +308,7 @@ uint32_t m68000::effective_address()
                     pc += 2;
                     return pc + (int16_t) getui16( pc );
                 }
-                case 3: // program counter with index. ( d8, PC, Xn )
+                case 3: // program counter with index. ( d8, pc, Xn )
                 {
                     int32_t displacement = get_ea_displacement(); // this modifies pc so must be a separate line
                     return pc + displacement;

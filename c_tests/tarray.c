@@ -179,6 +179,21 @@ void test_many()
     ShowBinaryData( (uint8_t *) amany, sizeof( amany ), 4 );
 } //test_many
 
+static uint32_t adata[] = { 1, 0x10, 0x100, 0x1000, 0x10000, 0x100000, 0x1000000, 0x10000000 };
+
+void test_static() // demonstrate endianness
+{
+    int i;
+    char * p = (char *) adata;
+
+    for ( i = 0; i < ( sizeof( adata ) / sizeof( adata[0] ) ); i++ )
+        printf( "element %d: %ld = %u %u %u %u\n", i, adata[ i ],
+                * ( (uint8_t *) ( & adata[ i ] ) + 0 ),
+                * ( (uint8_t *) ( & adata[ i ] ) + 1 ),
+                * ( (uint8_t *) ( & adata[ i ] ) + 2 ),
+                * ( (uint8_t *) ( & adata[ i ] ) + 3 ) );
+} //test_static
+
 int main( int argc, char * argv[] )
 {
     int8_t ai8[ 16 ];
@@ -218,6 +233,8 @@ int main( int argc, char * argv[] )
     test_array( aui8, _countof( aui8 ) );
 
     test_many();
+
+    test_static();
 
     printf( "tarray completed with great success\n" );
     return 0;

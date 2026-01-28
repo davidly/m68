@@ -13,9 +13,11 @@
 // Status bar shows row + VISUAL column (tabs expanded to 8-column stops).
 // Help bar auto-fits width (incl. 80 cols).
 // Soft tabs: pressing Tab inserts spaces to next tab stop; existing tabs remain unchanged.
+// Preserves original line ending format on save (LF vs CRLF) for opened files.
+// New files default to LF.
 // No threads, no sockets/network calls.
 // No dependency on C++17 std::clamp().
-// Ctrl+Z exit returns a value (no exceptions).
+// ^Z exit returns a value (no exceptions).
 
 #include <cerrno>
 #include <cstdarg>
@@ -100,7 +102,7 @@ enum Key {
   KEY_NULL = 0,
 
   KEY_CTRL_A = 1,   // Save As
-  KEY_CTRL_C = 3,   // PgDn
+  KEY_CTRL_C = 3,   // PgDn (outside prompts)
   KEY_CTRL_D = 4,   // Right
   KEY_CTRL_E = 5,   // Up
   KEY_CTRL_F = 6,   // Find
@@ -232,6 +234,10 @@ struct Editor {
   bool lastWasCut = false;
   static const int cutAppendWindowSec = 2;
 
+  // Preserve original file line endings on save:
+  // "\n" for LF, "\r\n" for CRLF. New files default to LF.
+  std::string eol = "\n";
+
   void setStatus(const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -285,6 +291,7 @@ struct Editor {
   void loadFile(const std::string& path) {
     filename = path;
     lines.clear();
+    eol = "\n"; // default unless we detect CRLF
 
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1) {
@@ -304,20 +311,31 @@ struct Editor {
     }
     close(fd);
 
+    // Detect CRLF by scanning for "\r\n" anywhere.
+    // If found, we'll preserve CRLF on save.
+    if (buf.find("\r\n") != std::string::npos) eol = "\r\n";
+
     size_t start = 0;
     while (start <= buf.size()) {
       size_t nl = buf.find('\n', start);
       if (nl == std::string::npos) nl = buf.size();
+
       std::string line = buf.substr(start, nl - start);
+
+      // Normalize storage: drop a trailing '\r' (CRLF files)
       if (!line.empty() && line.back() == '\r') line.pop_back();
+
       lines.push_back(line);
+
       if (nl == buf.size()) break;
       start = nl + 1;
     }
 
     ensureAtLeastOneLine();
     dirty = false;
-    setStatus("Opened %s (%d lines)", filename.c_str(), (int)lines.size());
+
+    if (eol == "\r\n") setStatus("Opened %s (%d lines, CRLF)", filename.c_str(), (int)lines.size());
+    else setStatus("Opened %s (%d lines, LF)", filename.c_str(), (int)lines.size());
   }
 
   bool saveFile(const std::string& path, std::string& err) {
@@ -336,8 +354,9 @@ struct Editor {
         }
       }
       if (i + 1 < lines.size()) {
-        const char nl = '\n';
-        if (write(fd, &nl, 1) != 1) {
+        const std::string& nl = eol;
+        ssize_t w = write(fd, nl.data(), nl.size());
+        if (w < 0 || (size_t)w != nl.size()) {
           err = std::string("write newline failed: ") + strerror(errno);
           close(fd);
           return false;
@@ -719,13 +738,11 @@ struct Editor {
 
   void writeOutPrompted() {
     markNonCutAction();
-    std::string path = filename;
     std::string newp;
     if (!prompt("Save As: ", newp)) return;
-    path = newp;
 
     std::string err;
-    if (saveFile(path, err)) setStatus("Wrote %s", filename.c_str());
+    if (saveFile(newp, err)) setStatus("Wrote %s", filename.c_str());
     else setStatus("Write failed: %s", err.c_str());
   }
 
@@ -826,6 +843,7 @@ int main(int argc, char** argv) {
   else {
     E.lines.push_back(std::string());
     E.dirty = false;
+    E.eol = "\n"; // new files default to LF
     E.setStatus("^Z Exit | ^W Save | ^A SaveAs | ^F Find | ^T Cut | ^Y Copy | ^V Paste | ^E/^X/^S/^D Move | ^R/^C Page");
   }
 

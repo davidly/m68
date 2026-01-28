@@ -861,7 +861,7 @@ int map_win32_to_errno( DWORD win_error )
     switch (win_error)
     {
         case ERROR_SUCCESS:                 return 0;
-        
+
         // File and Path errors
         case ERROR_FILE_NOT_FOUND:
         case ERROR_PATH_NOT_FOUND:          return ENOENT;  // No such file/dir
@@ -872,18 +872,18 @@ int map_win32_to_errno( DWORD win_error )
         case ERROR_FILE_EXISTS:
         case ERROR_ALREADY_EXISTS:          return EEXIST;  // File exists (Error 17)
         case ERROR_DIR_NOT_EMPTY:           return ENOTEMPTY;
-        
+
         // Resource and Memory errors
         case ERROR_OUTOFMEMORY:
         case ERROR_NOT_ENOUGH_MEMORY:       return ENOMEM;  // Out of memory
         case ERROR_DISK_FULL:
         case ERROR_HANDLE_DISK_FULL:        return ENOSPC;  // No space left
-        
+
         // Argument and Handle errors
         case ERROR_INVALID_HANDLE:          return EBADF;   // Bad file descriptor
         case ERROR_INVALID_PARAMETER:
         case ERROR_INVALID_NAME:            return EINVAL;  // Invalid argument
-        
+
         // Process/Thread errors
         case ERROR_BROKEN_PIPE:             return EPIPE;   // Broken pipe
         case ERROR_BUSY:                    return EBUSY;   // Resource busy
@@ -1366,7 +1366,7 @@ static int gettimeofday( linux_timeval * tp )
     return 0;
 } //gettimeofday
 
-/* 
+/*
     lflag        linux   macos
     -----        -----   -----
         icanon   0x2     0x100
@@ -1382,7 +1382,7 @@ static int gettimeofday( linux_timeval * tp )
         iexten   0x8000  0x400
         echoctl  0x200   0x40
         tostop   0x100   0x400000
-    
+
     oflag        linux   macos
     -----        -----   -----
         opost    0x1     0x1
@@ -1390,7 +1390,7 @@ static int gettimeofday( linux_timeval * tp )
         onrnl    0x8     0x10
         onocr    0x10    0x20
         onlret   0x20    0x40
-    
+
     cflag        linux       macos
     -----        -----       -----
         cs5      0           0
@@ -1404,9 +1404,9 @@ static int gettimeofday( linux_timeval * tp )
         hupcl    0x400       0x4000
         clocal   0x800       0x8000
         parodd   0x200       0x2000
-        cmspar   0x40000000  n/a    
+        cmspar   0x40000000  n/a
         crtscts  0x80000000  0x30000
-    
+
     c_cc            sparc   linux   macos
     ----            -----   -----   -----
         vmin        0x4     0x6     0x10
@@ -1427,7 +1427,7 @@ static int gettimeofday( linux_timeval * tp )
         vlnext      0xf     0xf     0xe
         vdiscard    0xd     0xd     0xf
         vstatus     n/a     n/a     0x12
-    
+
     AT_                      linux       macos
     ---                      -----       -----
         AT_REMOVEDIR         0x200       0x80
@@ -4804,11 +4804,11 @@ void emulator_invoke_68k_trap15( m68000 & cpu )
 struct IOParam
 {
     uint32_t qLink; // pointer
-    int16_t qType; 
-    int16_t ioTrap; 
+    int16_t qType;
+    int16_t ioTrap;
     uint32_t ioCmdAddr; // pointer
     uint32_t ioCompletion; // pointer
-    int16_t ioResult; 
+    int16_t ioResult;
     uint32_t ioNamePtr; // pointer
     int16_t ioVRefNum;
     int16_t ioRefNum;
