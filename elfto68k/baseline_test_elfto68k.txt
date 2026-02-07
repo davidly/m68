@@ -1,4 +1,4 @@
-Mon 01/26/2026 10:55:45.19 
+Thu 02/05/2026  8:30:16.93 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -3752,6 +3752,14 @@ sum: 0xf8
     0200  00 00 00 00 00 00 88 00 22 00 00 00 44 ef ff ff : ff ff ff ff ff 78 ff de ff ff ff bc 12 00 00 00  ........"...D........x..........
     0220  00 00 00 00 90 00 24 00 00 00 48 ee ff ff ff ff : ff ff ff 70 ff dc ff ff ff b8 13 00 00 00 00 00  ......$...H........p............
     0240  00 00 98 00 26 00 00 00 4c ed ff ff ff ff ff ff : ff 68 ff da ff ff ff b4                          ....&...L........h......
+element 0: 1 = 0 0 0 1
+element 1: 16 = 0 0 0 16
+element 2: 256 = 0 0 1 0
+element 3: 4096 = 0 0 16 0
+element 4: 65536 = 0 1 0 0
+element 5: 1048576 = 0 16 0 0
+element 6: 16777216 = 1 0 0 0
+element 7: 268435456 = 16 0 0 0
 tarray completed with great success
 building trw 
 elfto68k successfully created TRW.68K
@@ -6167,4 +6175,4 @@ building ff
 elfto68k successfully created FF.68K
 running ff 
   rwxrwxrwx         383104  1970-01-01 00:00:00  /M68.68K
-Mon 01/26/2026 10:57:43.57 
+Thu 02/05/2026  8:31:56.84 

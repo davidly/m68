@@ -1,5 +1,5 @@
 /*
-    These are some utilities and abstractions for building on Windows and Linux
+    These are some utilities and abstractions for building on Windows, Linux, and macOS
 */
 
 #pragma once
@@ -394,21 +394,51 @@ inline char printable( uint8_t x )
     } //wcslen
 #endif
 
-inline bool is_parity_even8( uint8_t x )
+inline uint8_t bit_count( uint64_t x )
 {
-     // use popcnt if possible. It's not available on the Q9650 and other older Intel CPUs. use fallback code below instead if needed.
+    // use popcnt if possible. It's not available on the Q9650 and other older Intel CPUs. use fallback code below instead if needed.
 
     #if defined( __GNUC__ ) || defined( __clang__ )
-        return ( ! ( __builtin_popcount( x ) & 1 ) );
+        return (uint8_t) __builtin_popcountll( x );
     #elif defined( _MSC_VER )
-        return ( ! ( __popcnt16( x ) & 1 ) );
+        return (uint8_t) __popcnt64( x );
     #elif defined( __aarch64__ )
-        return ( ! ( std::bitset<8>( x ).count() & 1 ) );
+        return (uint8_t) std::bitset<64>( x ).count();
     #else
-        x ^= ( x >> 4 );
-        x ^= ( x >> 2 );
-        x ^= ( x >> 1 );
-        return ! ( x & 1 );
+        uint8_t count = 0;
+        while ( 0 != x )
+        {
+            x &= ( x - 1 ); // Deletes the rightmost 1-bit
+            count++;
+        }
+        return count;
     #endif
+} //bit_count64
+
+inline uint8_t bit_count8( uint8_t x )
+{
+    // use popcnt if possible. It's not available on the Q9650 and other older Intel CPUs. use fallback code below instead if needed.
+
+    #if defined( __GNUC__ ) || defined( __clang__ )
+        return (uint8_t) __builtin_popcount( x );
+    #elif defined( _MSC_VER )
+        return (uint8_t) __popcnt16( x );
+    #elif defined( __aarch64__ )
+        return (uint8_t) std::bitset<8>( x ).count();
+    #else
+        uint8_t count = 0;
+        while ( 0 != x )
+        {
+            x &= ( x - 1 ); // Deletes the rightmost 1-bit
+            count++;
+        }
+        return count;
+    #endif
+} //bit_count8
+
+inline bool is_parity_even8( uint8_t x )
+{
+    return ( ! ( bit_count8( x ) & 1 ) );
 } //is_parity_even8
+
 

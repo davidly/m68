@@ -39,7 +39,8 @@ set _flist=TPHI TAP TMULDIV PIS MANDLE TS TF
 ))
 
 echo %date% %time% >>%outputfile%
-diff baseline_%outputfile% %outputfile%
+dos2unix %outputfile%
+diff -b baseline_%outputfile% %outputfile%
 
 :eof
 

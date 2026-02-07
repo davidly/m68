@@ -5,12 +5,10 @@
 //   in code that's invoking the C runtime use structs for that C runtime, not from this header file or any form of syscall structs.
 //   in code that's invoking a syscall (e.g. in a C runtime implementation) use structs based on the build platform e.g. __amd64__, __riscv__, etc.
 
-// the emulator only supports paths and filenames up to this length across all platforms
-
-#define EMULATOR_MAX_PATH 2048
+#define EMULATOR_MAX_PATH 2048                // the emulator only supports paths and filenames up to this length across all platforms 
 #define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100    // just macOS is different with 0x20
 #define EMULATOR_AT_SYMLINK_FOLLOW 0x400      // just macOS is different with 0x40
-#define EMULATOR_AT_REMOVEDIR 0x200 // this is 8 for newlib
+#define EMULATOR_AT_REMOVEDIR 0x200           // this is 8 for newlib and 0x80 for macOS
 
 // some of these are just handy additions for the emulator. Some are ancient linux syscalls modern systems don't implement
 
@@ -40,7 +38,7 @@
 // https://github.com/westerndigitalcorporation/RISC-V-Linux/blob/master/linux/arch/s390/kernel/syscalls/syscall.tbl
 // https://blog.xhyeax.com/2022/04/28/arm64-syscall-table/
 // https://syscalls.mebeim.net/?table=arm64/64/aarch64/latest
-// https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html
+// https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html        <<<<<<<------------ this one is best
 
 #define SYS_getcwd 17
 #define SYS_fcntl 25
