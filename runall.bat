@@ -116,7 +116,6 @@ echo test targs a bb ccc dddd >>%outputfile%
 %_runcmd% c_tests\targs a bb ccc dddd >>%outputfile%
 
 echo %date% %time% >>%outputfile%
-dos2unix %outputfile%
 diff -b baseline_%outputfile% %outputfile%
 
 :eof
