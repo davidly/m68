@@ -280,7 +280,6 @@ REG_TYPE g_end_of_data = 0;                    // official end of the loaded app
 REG_TYPE g_bottom_of_stack = 0;                // just beyond where brk might move
 REG_TYPE g_top_of_stack = 0;                   // argc, argv, penv, aux records sit above this
 CMMap g_mmap;                                  // for mmap and munmap system calls
-bool g_hostIsLittleEndian = true;              // is the host little endian?
 bool g_addCRBeforeLF = true;                   // on Windows, a command-line argument can make this false so the emulated app acts like Linux
 
 // fake descriptors.
@@ -290,23 +289,31 @@ const uint64_t findFirstDescriptor = 3000;
 const uint64_t timebaseFrequencyDescriptor = 3001;
 const uint64_t osreleaseDescriptor = 3002;
 
+#if defined( __mc68000 ) || defined( sparc )
+    #define HOST_IS_LITTLE_ENDIAN false
+#elif defined( __riscv ) || defined( __amd64__ ) || defined( __aarch64__ ) || defined( __i386__ ) || defined( _M_AMD64 ) || defined( _M_ARM64 ) || defined( _M_IX86 ) || defined( __ARM_32BIT_STATE )
+    #define HOST_IS_LITTLE_ENDIAN true
+#else
+    #error "update this code to include the endianness of the ISA you are targeting"
+#endif
+
 uint64_t swap_endian64( uint64_t x )
 {
-    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
+    if ( CPU_IS_LITTLE_ENDIAN != HOST_IS_LITTLE_ENDIAN )
         return flip_endian64( x );
     return x;
 } //swap_endian64
 
 uint32_t swap_endian32( uint32_t x )
 {
-    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
+    if ( CPU_IS_LITTLE_ENDIAN != HOST_IS_LITTLE_ENDIAN )
         return flip_endian32( x );
     return x;
 } //swap_endian32
 
 uint16_t swap_endian16( uint16_t x )
 {
-    if ( CPU_IS_LITTLE_ENDIAN != g_hostIsLittleEndian )
+    if ( CPU_IS_LITTLE_ENDIAN != HOST_IS_LITTLE_ENDIAN )
         return flip_endian16( x );
     return x;
 } //swap_endian16
@@ -9276,9 +9283,6 @@ int main( int argc, char * argv[] )
 {
     try
     {
-        uint16_t tst = 1;
-        g_hostIsLittleEndian = ( 1 & ( * (uint8_t *) &tst ) );
-
         bool trace = false;
         char * pcApp = 0;
         bool showPerformance = false;
@@ -9375,7 +9379,7 @@ int main( int argc, char * argv[] )
 
         tracer.Enable( trace, PREFIX_L( LOGFILE_NAME ), true );
         tracer.SetQuiet( true );
-        tracer.Trace( "host is little endian: %d, emulated cpu is little endian: %d\n", g_hostIsLittleEndian, CPU_IS_LITTLE_ENDIAN );
+        tracer.Trace( "host is little endian: %d, emulated cpu is little endian: %d\n", HOST_IS_LITTLE_ENDIAN, CPU_IS_LITTLE_ENDIAN );
 
         g_consoleConfig.EstablishConsoleOutput( 0, 0 );
 
