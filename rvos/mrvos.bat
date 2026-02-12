@@ -4,14 +4,17 @@ setlocal
 copy ..\c_tests\newlib68.c
 copy ..\c_tests\m68start.s
 
-set gccpath=..\gcc-8.2.0
+rem set gccver=8.2.0
+set gccver=13.2.0
+
+set gccpath=..\gcc-%gccver%
 path=%gccpath%\bin;%path%
 
-set inc1=%gccpath%\lib\gcc\m68k-elf\8.2.0\include
+set inc1=%gccpath%\lib\gcc\m68k-elf\%gccver%\include
 set inc2=%gccpath%\m68k-elf\include
 set inc3=..\c_tests
 set inc4=..\..\djl
-set inc5=%gccpath%\m68k-elf\include\c++\8.2.0\bits
+set inc5=%gccpath%\m68k-elf\include\c++\%gccver%\bits
 set inc6=..\
 
 set includes=-I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5% -I%inc6%
@@ -36,6 +39,7 @@ rem build the assembly portion with _start and syscalls
 
 rem actually build the app
 %gcc% %defines% %includes% %gccflags% rvos.cxx riscv.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o rvos.elf %ldflags%
+%gccpath%\m68k-elf\bin\objdump.exe -d rvos.elf >rvos.txt
 
 copy rvos.elf ..\bin
 

@@ -9,6 +9,7 @@ fi
 
 if [ "$2" == "" ]; then
     gccver="8.2.0"
+#    gccver="13.2.0"
 else
     gccver=$2
 fi

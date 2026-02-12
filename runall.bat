@@ -59,7 +59,7 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 
 ( for %%a in (%_elflist%) do (
     echo test %%a
-    echo test %%a >>%outputfile%
+    echo test %%a>>%outputfile%
     %_runcmd% c_tests\%%a >>%outputfile%
 ))
 
@@ -105,7 +105,7 @@ popd
 
 echo running tgets with redirected stdin
 echo running tgets with redirected stdin >>%outputfile%
-%_runcmd% c_tests\tgets <c_tests\tgets.txt >>%outputfile%
+%_runcmd% c_tests\tgets <tgets.txt >>%outputfile%
 
 echo test ff . ff.c
 echo test ff . ff.c >>%outputfile%
@@ -116,6 +116,7 @@ echo test targs a bb ccc dddd >>%outputfile%
 %_runcmd% c_tests\targs a bb ccc dddd >>%outputfile%
 
 echo %date% %time% >>%outputfile%
+dos2unix -f %outputfile%
 diff -b baseline_%outputfile% %outputfile%
 
 :eof

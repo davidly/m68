@@ -16,6 +16,7 @@ fi
 
 if [ "$3" == "" ]; then
     gccver="8.2.0"
+#    gccver="13.2.0"
 else
     gccver=$3
 fi
@@ -39,6 +40,6 @@ gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags"
 # build the assembly portion with _start and syscalls
 $gccpath/bin/m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
-$gcccmd $incpaths $gccflags $1.c newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o $1.elf $ldflags
+$gcccmd $incpaths $gccflags $1.c newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -static -o $1.elf $ldflags
 
 

@@ -84,7 +84,7 @@ done
 # run app with redirected input
 echo running tgets with redirected stdin
 echo running tgets with redirected stdin >>$outputfile
-$_runcmd c_tests/tgets <c_tests/tgets.txt >>$outputfile
+$_runcmd c_tests/tgets <tgets.txt >>$outputfile
 
 echo test ff . ff.c
 echo test ff . ff.c >>$outputfile

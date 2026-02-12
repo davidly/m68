@@ -33,5 +33,7 @@ rem build the assembly portion with _start and syscalls
 rem actually build the app
 %gcc% %defines% %includes% %gccflags% ..\m68.cxx ..\m68000.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -static -o m68.elf %ldflags%
 
+%gccpath%\m68k-elf\bin\objdump.exe -d m68.elf >m68.txt
+
 copy m68.elf ..\bin 1>nul 2>nul
 

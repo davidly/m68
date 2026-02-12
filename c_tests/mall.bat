@@ -4,6 +4,7 @@ setlocal
 if "%1" == "" (set _optflag=2) else (set _optflag=%1)
 
 if "%2" == "" (set _gccver=8.2.0) else (set _gccver=%2)
+rem if "%2" == "" (set _gccver=13.2.0) else (set _gccver=%2)
 
 set _gccfolder=..\gcc-%_gccver%
 

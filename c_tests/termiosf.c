@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cstdint>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
