@@ -294,16 +294,13 @@ private:
     const char * effective_string2( uint16_t m, uint16_t reg );
     int32_t decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn );
     int32_t get_ea_displacement();
-    uint32_t sub32( uint32_t a, uint32_t b, bool setflags, bool setx, bool subx );
-    uint16_t sub16( uint16_t a, uint16_t b, bool setflags, bool setx, bool subx );
-    uint8_t sub8( uint8_t a, uint8_t b, bool setflags, bool setx, bool subx );
-    uint32_t add32( uint32_t a, uint32_t b, bool setflags, bool setx, bool addx );
-    uint16_t add16( uint16_t a, uint16_t b, bool setflags, bool setx, bool addx );
-    uint8_t add8( uint8_t a, uint8_t b, bool setflags, bool setx, bool addx );
+    template <typename T> T add( T a, T b, bool setflags, bool setx, bool addx );
+    template <typename T> T sub( T a, T b, bool setflags, bool setx, bool subx );
     bool check_condition( uint16_t c );
     template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior, bool addition );
     uint8_t bcd_add( uint8_t a, uint8_t b );
     uint8_t bcd_sub( uint8_t a, uint8_t b );
+    void save_rotate( uint32_t result );
     bool handle_trap( uint16_t vector, uint32_t pc_return );
 
     inline char get_size() const { return ( 0 == op_size ) ? 'b' : ( 1 == op_size ) ? 'w' : ( 2 == op_size ) ? 'l' : '?'; }

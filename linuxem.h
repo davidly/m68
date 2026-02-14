@@ -743,6 +743,7 @@ struct utsname_syscall
 #define sparc_VSTOP 0x9
 #define macos_VSTOP 0xd
 
+#pragma pack( push, 1 ) // without packing, some compilers pad the end of this to make it 2 extra bytes, so memset() trashes memory
 struct local_kernel_termios
 {
     uint32_t c_iflag;     /* input mode flags */
@@ -762,6 +763,7 @@ struct local_kernel_termios
         c_lflag = swap_endian32( c_lflag );
     }
 };
+#pragma pack(pop)
 
 #define AT_EH_FRAME_BEGIN 0x69690069 // address of __EH_FRAME_BEGIN__  Not a real constant; just for emulators
 

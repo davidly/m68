@@ -597,7 +597,7 @@ class ConsoleConfiguration
         int portable_kbhit()
         {
             if ( !isatty( fileno( stdin ) ) )
-                return ( 0 == feof( stdin) );
+                return ( 0 == feof( stdin ) );
 
             #ifdef _WIN32
                 if ( 0 != aReady[ 0 ] )

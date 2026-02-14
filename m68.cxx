@@ -4513,7 +4513,6 @@ void emulator_invoke_svc( CPUClass & cpu )
 #if defined( _WIN32 )
                 if ( 0x5401 == request || 0x5408 == request ) // TCGETS. 5401 is newer, 5408 is older like Linux on sparc
                 {
-                    memset( pt, 0, sizeof( *pt ) );
                     if ( isatty( fd ) )
                     {
                         // populate with arbitrary but reasonable values
@@ -4522,6 +4521,8 @@ void emulator_invoke_svc( CPUClass & cpu )
                         pt->c_oflag = 5;
                         pt->c_cflag = 0xbf;
                         pt->c_lflag = 0xa30;
+                        pt->c_cc[ 0 ] = 0;
+                        pt->c_cc[ 1 ] = 0;
                         pt->swap_endianness();
                         update_result_errno( cpu, 0 );
                         break;
