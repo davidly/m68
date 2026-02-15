@@ -1,4 +1,4 @@
-Wed 01/28/2026  7:10:13.30 
+Sun 02/15/2026  6:20:19.55 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -344,9 +344,9 @@ rol.b <memory>
   result 86e3 flags 318
   result e6e4 flags 318
 after tshift_main
-test hidave 
+test hidave
 hi dave
-test tprintf 
+test tprintf
 float: 1.010000
   1.010
   1.0
@@ -395,9 +395,9 @@ Floating-point:
 Fixed-width types:
 	Largest 32-bit value is 4294967295 or 0xffffffff
 	Largest 64-bit value is 18446744073709551615 or 0xffffffffffffffff
-test tm 
+test tm
 tm has completed with great success
-test tmuldiv 
+test tmuldiv
 app start
 i8 3 * 14: 42
 i8 3 % 14: 3
@@ -640,16 +640,16 @@ ui64 18446716073709551616 * 18446744073709551612: 112000000000000
 ui64 18446716073709551616 % 18446744073709551612: 18446716073709551616
 ui64 18446716073709551616 / 18446744073709551612: 0
 tmuldiv ended with great success
-test ttt 
+test ttt
 64930 moves
 10 iterations
-36.462002 milliseconds
-test sieve 
+24.893000 milliseconds
+test sieve
 1899 primes.
-test e 
+test e
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
-test tstr 
+test tstr
 testing strlen
 testing strchr and strrchr
 testing strstr
@@ -679,12 +679,12 @@ testing wcslen
 testing wcschr and wcsrchr
 testing wcsstr
 tstr completed with great success
-test targs 
+test targs
 argc: 1
 argv[ 0 ]: 'c_tests/targs.elf'
 penv[ 0 ]: 'OS=M68'
 penv[ 1 ]: 'TZ=PacificStandardTime+8'
-test tbits 
+test tbits
 uint8_t:
   and 3, or 7, xor 4, nota f8, notb fc
   and 5, or ff, xor fa, nota f8, notb 2
@@ -765,7 +765,7 @@ int64_t:
   and f5, or ffffffffffffffff, xor ffffffffffffff0a, nota ffffffffffffff08, notb 2
   and 1, or ffffffffffffff0b, xor ffffffffffffff0a, nota f6, notb fffffffffffffffc
   and ffffffffffffff09, or ffffffffffffff09, xor 0, nota f6, notb f6
-test t 
+test t
 int8_t result: 6
 uint8_t result: 6
 int16_t result: 6
@@ -775,7 +775,7 @@ uint32_t result: 6
 int64_t result: 6
 uint64_t result: 6
 end of the app
-test tao 
+test tao
 type int8_t size 1, sum -52, magnitude 52 min, -52 max -52
 type int8_t size 2, sum -60, magnitude 60 min, -52 max -8
 type int8_t size 3, sum -56, magnitude 64 min, -52 max 4
@@ -937,7 +937,7 @@ type uint64_t size 18, sum 18428729675200069632, magnitude 18428729675200069632 
 type uint64_t size 19, sum 18428729675200069632, magnitude 18428729675200069632 min, 196 max 9223372036854775808
 type uint64_t size 20, sum 18428729675200069632, magnitude 18428729675200069632 min, 196 max 9223372036854775808
 array operations test completed with great success
-test tcmp 
+test tcmp
 uint8_t:
   lt 1 le 1 eq 0 ge 0 gt 0
   lt 1 le 1 eq 0 ge 0 gt 0
@@ -1113,7 +1113,7 @@ floating point:
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
   lt 0 le 0 eq 0 ge 1 gt 1
-test ttypes 
+test ttypes
 types: i8 a, ui8 h, i16 s, ui16 t, i32 l, ui32 m, i64 x, ui64 y, f f, d d, ld e
 int8_t is signed: 1, uint8_t is signed: 0
 int16_t is signed: 1, uint16_t is signed: 0
@@ -4025,7 +4025,7 @@ overflow: types ldouble +  double, size 128, sumA 1094841002475280.625000000000,
 cast:     types ldouble + ldouble, size 128, sumA 1095088769473106.625000000000, sumB 2409195292840835.500000000000, sumC 4818390585681671.000000000000
 overflow: types ldouble + ldouble, size 128, sumA 1094841002475280.625000000000, sumB 2408650205445618.500000000000, sumC 4817300410891237.000000000000
 test types completed with great success
-test tarray 
+test tarray
 sum: 0xf8
 sum: 0xf8
 sum: 0xfff8
@@ -4074,9 +4074,9 @@ element 5: 1048576 = 0 16 0 0
 element 6: 16777216 = 1 0 0 0
 element 7: 268435456 = 16 0 0 0
 tarray completed with great success
-test trw 
+test trw
 trw completed with great success
-test trw2 
+test trw2
 pass 0 with element count 1
 pass 1 with element count 7
 pass 2 with element count 20
@@ -4090,23 +4090,23 @@ pass 9 with element count 128
 pass 10 with element count 129
 pass 11 with element count 701
 c_tests/trw2.elf completed with great success
-test terrno 
+test terrno
 errno opening a file for read that doesn't exist: 2 (2 file not found expected)
 errno doing write to stdin file descriptor: 13. (13 permission denied expected)
 errno opening a file for read with invalid open flags: 22 (22 invalid argument expected)
 errno test completed with great success
-test mm_old 
+test mm_old
 filla
 fillb
 fillc
 starting mult
 summ is : 465880
-test ttime 
-before TZ is set: tz: 'PacificStandardTime+8', year: 2026, month 1, day 28, hour 15, min 10, sec 25
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 1, day 28, hour 10, min 10, sec 25
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 1, day 28, hour 7, min 10, sec 25
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 1, day 28, hour 7, min 10, sec 25
-test fileops 
+test ttime
+before TZ is set: tz: 'PacificStandardTime+8', year: 2026, month 2, day 15, hour 14, min 20, sec 29
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 2, day 15, hour 9, min 20, sec 29
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 2, day 15, hour 6, min 20, sec 29
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 2, day 15, hour 6, min 20, sec 29
+test fileops
 current offset: 0
 result of fseek: 0
 file length from ftell: 0
@@ -4159,13 +4159,13 @@ result of read at offset 1024: 512
 result of read at offset 512: 512
 result of read at offset 0: 512
 fileops has completed with great success
-test tpi 
+test tpi
 314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
-test t_setjmp 
+test t_setjmp
 second
 back in main
 falling out of main
-test td 
+test td
 double: 3.141593
 sprintf double 3.14159265358979356009
 double from printf: 3.14159265358979356009
@@ -4188,7 +4188,7 @@ pi has mantissa: 0.785398, exponent 2
 r should be 1.0: 1.000000
   r high point 18446744073709551615./////0
 test doubles completed with great success
-test tf 
+test tf
 float converted by floattoa: -1.23456699
 float converted by floattoa: 1.23456699
 float converted by floattoa: 34.56700000
@@ -4217,7 +4217,7 @@ floor of -1.8: -2.000000 == -2
 ceil of -1.8: -1.000000 == -1
 l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
 test tf completed with great success
-test tap 
+test tap
 starting, should tend towards 1.2020569031595942854...
   at           10 iterations: 1.19753198567419305576
   at          100 iterations: 1.20200740065967814907
@@ -4229,7 +4229,7 @@ next implementation...
   at         1000 iterations: 1.19474313022700130205
   at        10000 iterations: 1.20540019286403077281
 tap completed with great success
-test tphi 
+test tphi
 should tend towards 1.61803398874989484820458683436563811772030
   at  5 iterations: 1.6250000000000000
   at 10 iterations: 1.6179775280898876
@@ -4240,7 +4240,7 @@ should tend towards 1.61803398874989484820458683436563811772030
   at 35 iterations: 1.6180339887498969
   at 40 iterations: 1.6180339887498949
 done
-test mm 
+test mm
 float dim 1: sum 4.0, mag 4.0, min, 4.0 max 4.0, fmodsum 0.800, dotsum 4.0, sqrtsum 2.0
 float dim 2: sum 50.0, mag 50.0, min, 8.0 max 18.0, fmodsum 5.200, dotsum 24.0, sqrtsum 14.0
 float dim 3: sum 228.0, mag 228.0, min, 13.0 max 47.0, fmodsum 13.6, dotsum 71.0, sqrtsum 44.4
@@ -4462,7 +4462,7 @@ uint64_t dim 18: sum 302274.0, mag 302274.0, min, 208.0 max 5682.0, fmodsum 355.
 uint64_t dim 19: sum 376846.0, mag 376846.0, min, 229.0 max 6631.0, fmodsum 408.000, dotsum 16582.0, sqrtsum 10597.0
 uint64_t dim 20: sum 465880.0, mag 465880.0, min, 251.0 max 7680.0, fmodsum 449.000, dotsum 19421.0, sqrtsum 12388.0
 matrix multiply test completed with great success
-test ts 
+test ts
 test multiple shifts
     sizeof T: 1, result: ff
     sizeof T: 1, result: ff
@@ -4997,13 +4997,13 @@ testing inttoa
   ui8toa: 255
   i8toa: -1
 test shifts and comparisons completed with great success
-test glob 
+test glob
 in CTest constructor
 top main
 value of ctest::foo: 666
 end of main
 in ~CTest destructor
-test nantst 
+test nantst
 NAN: 0x7fffffffffffffff
 -NAN: 0xffffffffffffffff
 quiet NAN: 0x7fffffffffffffff
@@ -6245,7 +6245,7 @@ testing with -0.0:
        cmp:  lt 0 le 1 eq 1 ge 1 gt 0
     minmax:  min -0.000000, max -0.000000
 nan test completed with great success
-test pis 
+test pis
 startingOffset128: 0, startingOffset: 0, countGenerated128 1, countGenerated 128
 startInChunks: 0, limitInChunks 4
 percent complete: 25.000000
@@ -6254,16 +6254,16 @@ percent complete: 75.000000
 percent complete: 100.000000
 results are valid
 final: 243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89452821e638d01377be5466cf34e90c6cc0ac29b7c97c50dd3f84d5b5b5470917
-test tfo 
+test tfo
 filelen: 0
 filelen: 31
 tfo completed with great success
-test sleeptm 
+test sleeptm
 clk_tck / number of linux ticks per second: 100
 sleeping for 1.5 seconds
 busy loop for 1.0 seconds
 sleepy time ended with great success
-test nqueens 
+test nqueens
   size    solutions
      1            1
      2            0
@@ -6273,7 +6273,7 @@ test nqueens
      6            4
      7           40
      8           92
-test nq1d 
+test nq1d
   size    solutions
      1            1
      2            0
@@ -6283,9 +6283,9 @@ test nq1d
      6            4
      7           40
      8           92
-test tdir 
+test tdir
 tdir completed with great success
-test fopentst 
+test fopentst
 O_CREAT: 0x200
 O_TRUNC: 0x400
 O_SYNC: 0x2000
@@ -6300,12 +6300,12 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2026, month 1, day 28, hour 7, min 10, sec 35
+tz: 'PST+8', year: 2026, month 2, day 15, hour 6, min 20, sec 36
 len in pfl: 0
 exiting fopentst with great success
-test lenum 
+test lenum
 linux file system enumeration completed with great success
-test tex 
+test tex
 top of tex
 CUnwould constructor
 throwing execption
@@ -6315,16 +6315,16 @@ attempting large allocations
 caught a standard execption: std::bad_alloc
   after 9 1 megabyte allocations
 test exceptions completed with great success
-test trename 
+test trename
 trename completed with great success
-test tmmap 
+test tmmap
 MAP_PRIVATE: 0x2
 MAP_ANONYMOUS: 0x20
 MREMAP_MAYMOVE: 0x1
 PROT_READ: 0x1
 PROT_WRITE: 0x2
 mmap test completed with great success
-test termiosf 
+test termiosf
 lflag:
  icanon 0x2
  echonl 0x40
@@ -6398,7 +6398,7 @@ tcsetattr
 TIOCGWINSZ 0x5413
 c_cc elements: 0x20
 termiosf completed with great success
-test tbcd 
+test tbcd
 result is 0x7 flags 0
 result is 0x8 flags 0
 result is 0x2 flags 0x11
@@ -6426,7 +6426,7 @@ result is 0x31 flags 0x11
 result is 0x99 flags 0x11
 result is 0 flags 0x4
 result is 0x80 flags 0x11
-test tshift 
+test tshift
 asr.b <register>
   result 14 flags 311
   result e9 flags 319
@@ -6507,7 +6507,7 @@ rol.b <memory>
   result e6e4 flags 308
   result 86e3 flags 318
   result e6e4 flags 318
-test taddsubm 
+test taddsubm
   result 11 flags 300
   result 77 flags 300
   result 10 flags 300
@@ -6520,7 +6520,7 @@ test taddsubm
   result 99999999 flags 308
   result 11111110 flags 300
   result 99999999 flags 308
-test tea 
+test tea
 result is 103
 result is 98
 result is 98
@@ -6530,13 +6530,15 @@ result is 106
 result is 106
 result is 106
 result is 106
-test ttt68 
+test ttt68
 moves: 6493
-test ttt68u 
+test ttt68u
 moves: 6493
-test tchk 
+test tchk
 chk trap invocations (2 expected): 2
 tchk completed with great success
+test tsh
+success
 compiler test cpm 
 building e
 building sieve
@@ -9265,17 +9267,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     370
-  dictionary: 364
-  generate:   4
-  render:     1
+total ms:     254
+  dictionary: 250
+  generate:   3
+  render:     0
 test ba tp.bas 
-326 ms for 1 iterations
+208 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-452.763 milliseconds
+341.145996 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9308,4 +9310,4 @@ argv[ 3 ]: 'ccc'
 argv[ 4 ]: 'dddd'
 penv[ 0 ]: 'OS=M68'
 penv[ 1 ]: 'TZ=PacificStandardTime+8'
-Wed 01/28/2026  7:11:08.11 
+Sun 02/15/2026  6:21:02.45 

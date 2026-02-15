@@ -1025,7 +1025,7 @@ template <typename T> using double_width_t =
     typename std::conditional<sizeof(T) == 4, uint64_t,
     uint64_t >::type>::type>::type;
 
-template <typename T> T m68000::add( T a, T b, bool setflags, bool setx, bool addx )
+template <typename T> T m68000::do_add( T a, T b, bool setflags, bool setx, bool addx )
 {
     double_width_t<T> result_wide = (double_width_t<T>) a + (double_width_t<T>) b + ( addx ? (double_width_t<T>) flag_x() : 0 );
     T result = (T) result_wide;
@@ -1034,9 +1034,9 @@ template <typename T> T m68000::add( T a, T b, bool setflags, bool setx, bool ad
         set_flags( a, b, result, result_wide, setx, addx, true );
 
     return result;
-} //add
+} //do_add
 
-template <typename T> T m68000::sub( T a, T b, bool setflags, bool setx, bool subx )
+template <typename T> T m68000::do_sub( T a, T b, bool setflags, bool setx, bool subx )
 {
     double_width_t<T> result_wide = (double_width_t<T>) a - (double_width_t<T>) b - ( subx ? (double_width_t<T>) flag_x() : 0 );
     T result = (T) result_wide;
@@ -1045,7 +1045,7 @@ template <typename T> T m68000::sub( T a, T b, bool setflags, bool setx, bool su
         set_flags( a, b, result, result_wide, setx, subx, false );
 
     return result;
-} //sub
+} //do_sub
 
 uint8_t m68000::bcd_add( uint8_t a, uint8_t b ) // N and V are undefined, but the 68008 sets them
 {
@@ -1183,24 +1183,21 @@ static inline bool msb_width( uint32_t v, int width )
     return ( 0 != ( v & mask ) );
 } //msb_width
 
-static inline bool asl_sign_changed( uint32_t orig, uint8_t width, uint32_t count )
+static inline bool asl_sign_changed( uint32_t orig, uint8_t width, uint32_t count ) // did the sign change at any point during the shift?
 {
-    orig &= mask_width( width );
     if ( 0 == count )
         return false;
-    if ( count >= (uint32_t) width )
+    if ( count >= width )
         return ( 0 != orig );
 
     const uint32_t n = count + 1;
     const uint32_t top = orig >> ( width - n );
-    const uint32_t all1 = ( 32 == n ) ? 0xFFFFFFFFu : ( ( 1 << n ) - 1 );
-    return ! ( ( 0 == top ) || ( top == all1 ) );
+    const uint32_t all1 = ( 32 == n ) ? 0xffffffff : ( ( 1 << n ) - 1 );
+    return ! ( 0 == top || top == all1 );
 } //asl_sign_changed
 
 static inline uint32_t do_lsl( uint32_t v, uint8_t width, uint32_t c, bool &last_out )
 {
-    uint32_t wmask = mask_width( width );
-    v &= wmask;
     last_out = false;
 
     if ( 0 == c )
@@ -1210,12 +1207,11 @@ static inline uint32_t do_lsl( uint32_t v, uint8_t width, uint32_t c, bool &last
         return 0;
 
     last_out = ( 0 != ( ( v >> ( width - c ) ) & 1 ) );
-    return ( v << c ) & wmask;
+    return ( v << c ) & mask_width( width );
 } //do_lsl
 
 static inline uint32_t do_lsr( uint32_t v, uint8_t width, uint32_t c, bool &last_out )
 {
-    v &= mask_width( width );
     last_out = false;
 
     if ( 0 == c )
@@ -1230,13 +1226,12 @@ static inline uint32_t do_lsr( uint32_t v, uint8_t width, uint32_t c, bool &last
 
 static inline uint32_t do_asr( uint32_t v, uint8_t width, uint32_t c, bool &last_out )
 {
-    uint32_t wmask = mask_width( width );
-    v &= wmask;
     last_out = false;
 
     if ( 0 == c )
         return v;
 
+    uint32_t wmask = mask_width( width );
     const bool sign = msb_width( v, width );
     if ( c >= width )
     {
@@ -1247,74 +1242,67 @@ static inline uint32_t do_asr( uint32_t v, uint8_t width, uint32_t c, bool &last
     last_out = ( 0 != ( ( v >> ( c - 1 ) ) & 1 ) );
     uint32_t r = ( v >> c );
     if ( sign )
-        r |= wmask & ~( ( 1 << ( width - c ) ) - 1 );
-    return ( r & wmask );
+        r |= ( wmask & ~( ( 1 << ( width - c ) ) - 1 ) );
+    assert( r == ( r & wmask ) );
+    return r;
 } //do_asr
 
 static inline uint32_t do_rol( uint32_t v, uint8_t width, uint32_t c, bool &carry )
 {
-    uint32_t wmask = mask_width( width );
-    v &= wmask;
     const uint32_t n = ( c % width );
     if ( 0 == n )
     {
         carry = false;
         return v;
     }
-    uint32_t r = ( ( v << n ) | ( v >> ( width - n ) ) ) & wmask;
+    uint32_t r = ( ( v << n ) | ( v >> ( width - n ) ) ) & mask_width( width );
     carry = ( 0 != ( r & 1 ) );
     return r;
 } //do_rol
 
 static inline uint32_t do_ror( uint32_t v, uint8_t width, uint32_t c, bool &carry )
 {
-    uint32_t wmask = mask_width( width );
-    v &= wmask;
     const uint32_t n = ( c % width );
     if ( 0 == n )
     {
         carry = false;
         return v;
     }
-    uint32_t result = ( ( v >> n ) | ( v << ( width - n ) ) ) & wmask;
+    uint32_t result = ( ( v >> n ) | ( v << ( width - n ) ) ) & mask_width( width );
     carry = msb_width( result, width );
     return result;
 } //do_ror
 
-static inline uint32_t do_roxl( uint32_t v, uint8_t width, uint32_t c, bool &x )
+static inline uint32_t do_roxl( uint32_t v, uint8_t width, uint32_t count, bool &x )
 {
-    uint32_t wmask = mask_width( width );
-    v &= wmask;
     const uint32_t ring = width + 1;
-    const uint32_t n = ( c % ring );
+    const uint32_t n = ( count % ring );
     if ( 0 == n )
         return v;
 
-    const uint64_t mask = ( 64 == ring ) ? ~0ull : ( ( 1ull << ring ) - 1ull );
-    uint64_t ext = ( ( (uint64_t) v ) << 1 ) | ( x ? 1ull : 0ull );
+    const uint64_t mask = ( 1ull << ring ) - 1;
+    uint64_t ext = ( ( (uint64_t) v ) << 1 ) | ( x ? 1 : 0 );
     ext &= mask;
 
     uint64_t rot = ( ( ext << n ) | ( ext >> ( ring - n ) ) ) & mask;
     x = ( 0 != ( rot & 1ull ) );
-    return (uint32_t) ( ( rot >> 1 ) & (uint64_t) wmask );
+    return (uint32_t) ( ( rot >> 1 ) & (uint64_t) mask_width( width ) );
 } //do_roxl
 
-static inline uint32_t do_roxr( uint32_t v, uint8_t width, uint32_t c, bool &x )
+static inline uint32_t do_roxr( uint32_t v, uint8_t width, uint32_t count, bool &x )
 {
-    uint32_t wmask = mask_width( width );
-    v &= wmask;
     const uint32_t ring = width + 1;
-    const uint32_t n = ( c % ring );
+    const uint32_t n = ( count % ring );
     if ( 0 == n )
         return v;
 
-    const uint64_t mask = ( 64 == ring ) ? ~0ull : ( ( 1ull << ring ) - 1ull );
+    const uint64_t mask = ( 1ull << ring ) - 1;
     uint64_t ext = ( ( (uint64_t) ( x ? 1ull : 0ull ) ) << width ) | (uint64_t) v;
     ext &= mask;
 
     uint64_t rot = ( ( ext >> n ) | ( ext << ( ring - n ) ) ) & mask;
     x = ( 0 != ( ( rot >> width ) & 1ull ) );
-    return (uint32_t) ( rot & (uint64_t) wmask );
+    return (uint32_t) ( rot & (uint64_t) mask_width( width ) );
 } //do_roxr
 
 void m68000::save_rotate( uint32_t result ) // don't modify upper bits for 8 and 16 bit rotations
@@ -1640,20 +1628,20 @@ uint64_t m68000::run()
                     {
                         uint8_t imm = getui16( pc ) & 0xff;
                         uint8_t val = effective_value8( effective_address() ); // mode 7 reg 4 imm is illegal
-                        sub( val, imm, true, false, false );
+                        do_sub( val, imm, true, false, false );
                     }
                     else if ( 1 == op_size )
                     {
                         uint16_t imm = getui16( pc );
                         uint16_t val = effective_value16( effective_address() ); // mode 7 reg 4 imm is illegal
-                        sub( val, imm, true, false, false );
+                        do_sub( val, imm, true, false, false );
                     }
                     else
                     {
                         uint32_t imm = getui32( pc );
                         pc += 2;
                         uint32_t val = effective_value32( effective_address() );
-                        sub( val, imm, true, false, false );
+                        do_sub( val, imm, true, false, false );
                     }
                 }
                 else if ( 4 == bits11_8 ) // subi
@@ -1664,7 +1652,7 @@ uint64_t m68000::run()
                         uint8_t imm = getui16( pc ) & 0xff;
                         uint32_t address = effective_address();
                         uint8_t val = effective_value8( address );
-                        uint8_t result = sub( val, imm, true, true, false );
+                        uint8_t result = do_sub( val, imm, true, true, false );
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].b = result;
                         else
@@ -1675,7 +1663,7 @@ uint64_t m68000::run()
                         uint16_t imm = getui16( pc );
                         uint32_t address = effective_address();
                         uint16_t val = effective_value16( address );
-                        uint16_t result = sub( val, imm, true, true, false );
+                        uint16_t result = do_sub( val, imm, true, true, false );
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].w = result;
                         else
@@ -1687,7 +1675,7 @@ uint64_t m68000::run()
                         pc += 2;
                         uint32_t address = effective_address();
                         uint32_t val = effective_value32( address );
-                        uint32_t result = sub( val, imm, true, true, false );
+                        uint32_t result = do_sub( val, imm, true, true, false );
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].l = result;
                         else
@@ -1702,7 +1690,7 @@ uint64_t m68000::run()
                         uint8_t imm = getui16( pc ) & 0xff;
                         uint32_t address = effective_address();
                         uint8_t val = effective_value8( address );
-                        uint8_t result = add( val, imm, true, true, false );
+                        uint8_t result = do_add( val, imm, true, true, false );
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].b = result;
                         else
@@ -1713,7 +1701,7 @@ uint64_t m68000::run()
                         uint16_t imm = getui16( pc );
                         uint32_t address = effective_address();
                         uint16_t val = effective_value16( address );
-                        uint16_t result = add( val, imm, true, true, false );
+                        uint16_t result = do_add( val, imm, true, true, false );
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].w = result;
                         else
@@ -1725,7 +1713,7 @@ uint64_t m68000::run()
                         pc += 2;
                         uint32_t address = effective_address();
                         uint32_t val = effective_value32( address );
-                        uint32_t result = add( val, imm, true, true, false );
+                        uint32_t result = do_add( val, imm, true, true, false );
                         if ( 0 == ea_mode )
                             dregs[ ea_reg ].l = result;
                         else
@@ -2094,21 +2082,21 @@ uint64_t m68000::run()
                         if ( 0 == ea_mode )
                         {
                             if ( 0 == op_size )
-                                dregs[ ea_reg ].b = sub( (uint8_t) 0, dregs[ ea_reg ].b, true, true, false );
+                                dregs[ ea_reg ].b = do_sub( (uint8_t) 0, dregs[ ea_reg ].b, true, true, false );
                             else if ( 1 == op_size )
-                                dregs[ ea_reg ].w = sub( (uint16_t) 0, dregs[ ea_reg ].w, true, true, false );
+                                dregs[ ea_reg ].w = do_sub( (uint16_t) 0, dregs[ ea_reg ].w, true, true, false );
                             else
-                                dregs[ ea_reg ].l = sub( (uint32_t) 0, dregs[ ea_reg ].l, true, true, false );
+                                dregs[ ea_reg ].l = do_sub( (uint32_t) 0, dregs[ ea_reg ].l, true, true, false );
                         }
                         else
                         {
                             uint32_t address = effective_address();
                             if ( 0 == op_size )
-                                setui8( address, sub( (uint8_t) 0, effective_value8( address ), true, true, false ) );
+                                setui8( address, do_sub( (uint8_t) 0, effective_value8( address ), true, true, false ) );
                             else if ( 1 == op_size )
-                                setui16( address, sub( (uint16_t) 0, effective_value16( address ), true, true, false ) );
+                                setui16( address, do_sub( (uint16_t) 0, effective_value16( address ), true, true, false ) );
                             else
-                                setui32( address, sub( (uint32_t) 0, effective_value32( address ), true, true, false ) );
+                                setui32( address, do_sub( (uint32_t) 0, effective_value32( address ), true, true, false ) );
                         }
                     }
                     else if ( 0xe4 == bits11_4 ) // trap
@@ -2396,17 +2384,17 @@ uint64_t m68000::run()
                         {
                             if ( 0 == op_size )
                             {
-                                dregs[ ea_reg ].b = sub( (uint8_t) 0, dregs[ ea_reg ].b, true, true, true );
+                                dregs[ ea_reg ].b = do_sub( (uint8_t) 0, dregs[ ea_reg ].b, true, true, true );
                                 setflag_z( ( 0 != dregs[ ea_reg ].b ) ? false : original_z );
                             }
                             else if ( 1 == op_size )
                             {
-                                dregs[ ea_reg ].w = sub( (uint16_t) 0, dregs[ ea_reg ].w, true, true, true );
+                                dregs[ ea_reg ].w = do_sub( (uint16_t) 0, dregs[ ea_reg ].w, true, true, true );
                                 setflag_z( ( 0 != dregs[ ea_reg ].w ) ? false : original_z );
                             }
                             else
                             {
-                                dregs[ ea_reg ].l = sub( (uint32_t) 0, dregs[ ea_reg ].l, true, true, true );
+                                dregs[ ea_reg ].l = do_sub( (uint32_t) 0, dregs[ ea_reg ].l, true, true, true );
                                 setflag_z( ( 0 != dregs[ ea_reg ].l ) ? false : original_z );
                             }
                         }
@@ -2414,11 +2402,11 @@ uint64_t m68000::run()
                         {
                             uint32_t address = effective_address();
                             if ( 0 == op_size )
-                                setui8( address, sub( (uint8_t) 0, effective_value8( address ), true, true, true ) );
+                                setui8( address, do_sub( (uint8_t) 0, effective_value8( address ), true, true, true ) );
                             else if ( 1 == op_size )
-                                setui16( address, sub( (uint16_t) 0, effective_value16( address ), true, true, true ) );
+                                setui16( address, do_sub( (uint16_t) 0, effective_value16( address ), true, true, true ) );
                             else
-                                setui32( address, sub( (uint32_t) 0, effective_value32( address ), true, true, true ) );
+                                setui32( address, do_sub( (uint32_t) 0, effective_value32( address ), true, true, true ) );
                         }
                     }
                     else if ( 6 == bits11_8 ) // not
@@ -2563,11 +2551,11 @@ uint64_t m68000::run()
                     if ( 0 == ea_mode )
                     {
                         if ( 0 == op_size )
-                            dregs[ ea_reg ].b = sub( dregs[ ea_reg ].b, (uint8_t) data, true, true, false );
+                            dregs[ ea_reg ].b = do_sub( dregs[ ea_reg ].b, (uint8_t) data, true, true, false );
                         else if ( 1 == op_size )
-                            dregs[ ea_reg ].w = sub( dregs[ ea_reg ].w, (uint16_t) data, true, true, false );
+                            dregs[ ea_reg ].w = do_sub( dregs[ ea_reg ].w, (uint16_t) data, true, true, false );
                         else
-                            dregs[ ea_reg ].l = sub( dregs[ ea_reg ].l, data, true, true, false );
+                            dregs[ ea_reg ].l = do_sub( dregs[ ea_reg ].l, data, true, true, false );
                     }
                     else if ( 1 == ea_mode )
                         aregs[ ea_reg ] -= data;
@@ -2575,11 +2563,11 @@ uint64_t m68000::run()
                     {
                         uint32_t address = effective_address();
                         if ( 0 == op_size )
-                            setui8( address, sub( getui8( address ), (uint8_t) data, true, true, false ) );
+                            setui8( address, do_sub( getui8( address ), (uint8_t) data, true, true, false ) );
                         else if ( 1 == op_size )
-                            setui16( address, sub( getui16( address ), (uint16_t) data, true, true, false ) );
+                            setui16( address, do_sub( getui16( address ), (uint16_t) data, true, true, false ) );
                         else
-                            setui32( address, sub( getui32( address ), data, true, true, false ) );
+                            setui32( address, do_sub( getui32( address ), data, true, true, false ) );
                     }
                 }
                 else // addq
@@ -2591,11 +2579,11 @@ uint64_t m68000::run()
                     if ( 0 == ea_mode )
                     {
                         if ( 0 == op_size )
-                            dregs[ ea_reg ].b = add( dregs[ ea_reg ].b, (uint8_t) data, true, true, false );
+                            dregs[ ea_reg ].b = do_add( dregs[ ea_reg ].b, (uint8_t) data, true, true, false );
                         else if ( 1 == op_size )
-                            dregs[ ea_reg ].w = add( dregs[ ea_reg ].w, (uint16_t) data, true, true, false );
+                            dregs[ ea_reg ].w = do_add( dregs[ ea_reg ].w, (uint16_t) data, true, true, false );
                         else
-                            dregs[ ea_reg ].l = add( dregs[ ea_reg ].l, data, true, true, false );
+                            dregs[ ea_reg ].l = do_add( dregs[ ea_reg ].l, data, true, true, false );
                     }
                     else if ( 1 == ea_mode )
                         aregs[ ea_reg ] += data;
@@ -2603,11 +2591,11 @@ uint64_t m68000::run()
                     {
                         uint32_t address = effective_address();
                         if ( 0 == op_size )
-                            setui8( address, add( getui8( address ), (uint8_t) data, true, true, false ) );
+                            setui8( address, do_add( getui8( address ), (uint8_t) data, true, true, false ) );
                         else if ( 1 == op_size )
-                            setui16( address, add( getui16( address ), (uint16_t) data, true, true, false ) );
+                            setui16( address, do_add( getui16( address ), (uint16_t) data, true, true, false ) );
                         else
-                            setui32( address, add( getui32( address ), data, true, true, false ) );
+                            setui32( address, do_add( getui32( address ), data, true, true, false ) );
                     }
                 }
                 break;
@@ -2792,29 +2780,29 @@ uint64_t m68000::run()
                         {
                             aregs[ op_reg ] -= 1;
                             aregs[ ea_reg ] -= 1;
-                            setui8( aregs[ op_reg ], sub( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, true, true ) );
+                            setui8( aregs[ op_reg ], do_sub( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, true, true ) );
                         }
                         else if ( 1 == op_size )
                         {
                             aregs[ op_reg ] -= 2;
                             aregs[ ea_reg ] -= 2;
-                            setui16( aregs[ op_reg ], sub( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
+                            setui16( aregs[ op_reg ], do_sub( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
                         }
                         else
                         {
                             aregs[ op_reg ] -= 4;
                             aregs[ ea_reg ] -= 4;
-                            setui32( aregs[ op_reg ], sub( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, true, true ) );
+                            setui32( aregs[ op_reg ], do_sub( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, true, true ) );
                         }
                     }
                     else
                     {
                         if ( 0 == op_size )
-                            dregs[ op_reg ].b = sub( dregs[ op_reg ].b, dregs[ ea_reg ].b, true, true, true );
+                            dregs[ op_reg ].b = do_sub( dregs[ op_reg ].b, dregs[ ea_reg ].b, true, true, true );
                         else if ( 1 == op_size )
-                            dregs[ op_reg ].w = sub( dregs[ op_reg ].w, dregs[ ea_reg ].w, true, true, true );
+                            dregs[ op_reg ].w = do_sub( dregs[ op_reg ].w, dregs[ ea_reg ].w, true, true, true );
                         else
-                            dregs[ op_reg ].l = sub( dregs[ op_reg ].l, dregs[ ea_reg ].l, true, true, true );
+                            dregs[ op_reg ].l = do_sub( dregs[ op_reg ].l, dregs[ ea_reg ].l, true, true, true );
                     }
                 }
                 else // sub
@@ -2823,18 +2811,18 @@ uint64_t m68000::run()
                     if ( 0 == ( op_mode & 4 ) ) // Dn - <ea> => Dn
                     {
                         if ( 0 == op_size ) // byte
-                            dregs[ op_reg ].b = sub( dregs[ op_reg ].b, effective_value8( address ), true, true, false );
+                            dregs[ op_reg ].b = do_sub( dregs[ op_reg ].b, effective_value8( address ), true, true, false );
                         else if ( 1 == op_size ) // word
-                            dregs[ op_reg ].w = sub( dregs[ op_reg ].w, effective_value16( address ), true, true, false );
+                            dregs[ op_reg ].w = do_sub( dregs[ op_reg ].w, effective_value16( address ), true, true, false );
                         else // long
-                            dregs[ op_reg ].l = sub( dregs[ op_reg ].l, effective_value32( address ), true, true, false );
+                            dregs[ op_reg ].l = do_sub( dregs[ op_reg ].l, effective_value32( address ), true, true, false );
                     }
                     else // <ea> - Dn => <ea>
                     {
                         if ( 0 == op_size ) // byte
                         {
                             uint8_t val = effective_value8( address );
-                            uint8_t result = sub( val, dregs[ op_reg ].b, true, true, false );
+                            uint8_t result = do_sub( val, dregs[ op_reg ].b, true, true, false );
 
                             if ( 0 == ea_mode )
                                 dregs[ ea_reg ].b = result;
@@ -2846,7 +2834,7 @@ uint64_t m68000::run()
                         else if ( 1 == op_size ) // word
                         {
                             uint16_t val = effective_value16( address );
-                            uint16_t result = sub( val, dregs[ op_reg ].w, true, true, false );
+                            uint16_t result = do_sub( val, dregs[ op_reg ].w, true, true, false );
 
                             if ( 0 == ea_mode )
                                 dregs[ ea_reg ].w = result;
@@ -2858,7 +2846,7 @@ uint64_t m68000::run()
                         else // long
                         {
                             uint32_t val = effective_value32( address );
-                            uint32_t result = sub( val, dregs[ op_reg ].l, true, true, false );
+                            uint32_t result = do_sub( val, dregs[ op_reg ].l, true, true, false );
 
                             if ( 0 == ea_mode )
                                 dregs[ ea_reg ].l = result;
@@ -2892,35 +2880,35 @@ uint64_t m68000::run()
                         op_size = 1;
                         source = sign_extend( effective_value16( effective_address() ), 15 );
                     }
-                    sub( aregs[ op_reg ], source, true, false, false );
+                    do_sub( aregs[ op_reg ], source, true, false, false );
                 }
                 else if ( op_mode <= 2 ) // cmp
                 {
                     uint32_t address = effective_address();
                     if ( 0 == op_mode )
-                        sub( dregs[ op_reg ].b, effective_value8( address ), true, false, false );
+                        do_sub( dregs[ op_reg ].b, effective_value8( address ), true, false, false );
                     else if ( 1 == op_mode )
-                        sub( dregs[ op_reg ].w, effective_value16( address ), true, false, false );
+                        do_sub( dregs[ op_reg ].w, effective_value16( address ), true, false, false );
                     else
-                        sub( dregs[ op_reg ].l, effective_value32( address ), true, false, false );
+                        do_sub( dregs[ op_reg ].l, effective_value32( address ), true, false, false );
                 }
                 else if ( 1 == ea_mode ) // cmpm
                 {
                     if ( 0 == op_size )
                     {
-                        sub( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, false, false );
+                        do_sub( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, false, false );
                         aregs[ op_reg ]++;
                         aregs[ ea_reg ]++;
                     }
                     else if ( 1 == op_size )
                     {
-                        sub( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, false, false );
+                        do_sub( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, false, false );
                         aregs[ op_reg ] += 2;
                         aregs[ ea_reg ] += 2;
                     }
                     else
                     {
-                        sub( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, false, false );
+                        do_sub( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, false, false );
                         aregs[ op_reg ] += 4;
                         aregs[ ea_reg ] += 4;
                     }
@@ -3087,29 +3075,29 @@ uint64_t m68000::run()
                         {
                             aregs[ op_reg ] -= 1;
                             aregs[ ea_reg ] -= 1;
-                            setui8( aregs[ op_reg ], add( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, true, true ) );
+                            setui8( aregs[ op_reg ], do_add( getui8( aregs[ op_reg ] ), getui8( aregs[ ea_reg ] ), true, true, true ) );
                         }
                         else if ( 1 == op_size )
                         {
                             aregs[ op_reg ] -= 2;
                             aregs[ ea_reg ] -= 2;
-                            setui16( aregs[ op_reg ], add( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
+                            setui16( aregs[ op_reg ], do_add( getui16( aregs[ op_reg ] ), getui16( aregs[ ea_reg ] ), true, true, true ) );
                         }
                         else
                         {
                             aregs[ op_reg ] -= 4;
                             aregs[ ea_reg ] -= 4;
-                            setui32( aregs[ op_reg ], add( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, true, true ) );
+                            setui32( aregs[ op_reg ], do_add( getui32( aregs[ op_reg ] ), getui32( aregs[ ea_reg ] ), true, true, true ) );
                         }
                     }
                     else // both are d registers
                     {
                         if ( 0 == op_size )
-                            dregs[ op_reg ].b = add( dregs[ op_reg ].b, dregs[ ea_reg ].b, true, true, true );
+                            dregs[ op_reg ].b = do_add( dregs[ op_reg ].b, dregs[ ea_reg ].b, true, true, true );
                         else if ( 1 == op_size )
-                            dregs[ op_reg ].w = add( dregs[ op_reg ].w, dregs[ ea_reg ].w, true, true, true );
+                            dregs[ op_reg ].w = do_add( dregs[ op_reg ].w, dregs[ ea_reg ].w, true, true, true );
                         else
-                            dregs[ op_reg ].l = add( dregs[ op_reg ].l, dregs[ ea_reg ].l, true, true, true );
+                            dregs[ op_reg ].l = do_add( dregs[ op_reg ].l, dregs[ ea_reg ].l, true, true, true );
                     }
                 }
                 else // add
@@ -3118,20 +3106,20 @@ uint64_t m68000::run()
                     if ( 0 != ( op_mode & 4 ) ) // Dn + <ea> => ea
                     {
                         if ( 0 == op_size ) // byte
-                            setui8( address, add( effective_value8( address ), dregs[ op_reg ].b, true, true, false ) );
+                            setui8( address, do_add( effective_value8( address ), dregs[ op_reg ].b, true, true, false ) );
                         else if ( 1 == op_size ) // word
-                            setui16( address, add( effective_value16( address ), dregs[ op_reg ].w, true, true, false ) );
+                            setui16( address, do_add( effective_value16( address ), dregs[ op_reg ].w, true, true, false ) );
                         else
-                            setui32( address, add( effective_value32( address ), dregs[ op_reg ].l, true, true, false ) );
+                            setui32( address, do_add( effective_value32( address ), dregs[ op_reg ].l, true, true, false ) );
                     }
                     else // <ea> + Dn => Dn
                     {
                         if ( 0 == op_size ) // byte
-                            dregs[ op_reg ].b = add( dregs[ op_reg ].b, effective_value8( address ), true, true, false );
+                            dregs[ op_reg ].b = do_add( dregs[ op_reg ].b, effective_value8( address ), true, true, false );
                         else if ( 1 == op_size ) // word
-                            dregs[ op_reg ].w = add( dregs[ op_reg ].w, effective_value16( address ), true, true, false );
+                            dregs[ op_reg ].w = do_add( dregs[ op_reg ].w, effective_value16( address ), true, true, false );
                         else
-                            dregs[ op_reg ].l = add( dregs[ op_reg ].l, effective_value32( address ), true, true, false );
+                            dregs[ op_reg ].l = do_add( dregs[ op_reg ].l, effective_value32( address ), true, true, false );
                     }
                 }
                 break;
@@ -3215,7 +3203,7 @@ uint64_t m68000::run()
                     if ( bits4_3 <= 1 ) // ASd / LSd
                     {
                         const bool is_arith = ( 0 == bits4_3 );
-                        bool last = false;
+                        bool last;
 
                         if ( opbit( 8 ) ) // left: ASL / LSL
                         {

@@ -294,8 +294,8 @@ private:
     const char * effective_string2( uint16_t m, uint16_t reg );
     int32_t decode_ea_displacement( bool & is_a, bool & is_l, uint16_t & Xn );
     int32_t get_ea_displacement();
-    template <typename T> T add( T a, T b, bool setflags, bool setx, bool addx );
-    template <typename T> T sub( T a, T b, bool setflags, bool setx, bool subx );
+    template <typename T> T do_add( T a, T b, bool setflags, bool setx, bool addx );
+    template <typename T> T do_sub( T a, T b, bool setflags, bool setx, bool subx );
     bool check_condition( uint16_t c );
     template < typename T, typename W > void set_flags( T a, T b, T result, W result_wide, bool setx, bool xbehavior, bool addition );
     uint8_t bcd_add( uint8_t a, uint8_t b );
