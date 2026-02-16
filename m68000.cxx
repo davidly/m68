@@ -69,20 +69,9 @@ static inline uint16_t get_bits16( uint16_t x, uint16_t lowbit, uint16_t len )
     return ( val & ( ( 1 << len ) - 1 ) );
 } //get_bits16
 
-static inline bool sign8( uint8_t b )
-{
-    return( 0 != ( 0x80 & b ) );
-} //sign8
-
-static inline bool sign16( uint16_t w )
-{
-    return( 0 != ( 0x8000 & w ) );
-} //sign16
-
-static inline bool sign32( uint32_t l )
-{
-    return( 0 != ( 0x80000000 & l ) );
-} //sign32
+static inline bool sign8( uint8_t b ) { return( 0 != ( 0x80 & b ) ); }
+static inline bool sign16( uint16_t w ) { return( 0 != ( 0x8000 & w ) ); }
+static inline bool sign32( uint32_t l ) { return( 0 != ( 0x80000000 & l ) ); }
 
 const char * m68000::render_flags()
 {
@@ -692,19 +681,18 @@ void m68000::trace_state()
                     bool memory_to_register = opbit( 10 );
                     bool size_long = opbit( 6 );
                     char size_c = size_long ? 'l' : 'w';
+                    pc += 2;
                     if ( 4 == ea_mode && !memory_to_register ) // pre decrement, register to memory
-                        tracer.Trace( "movem.%c %s, -(a%u)\n", size_c, movem_a7_d0( getui16( pc + 2 ) ), ea_reg );
+                        tracer.Trace( "movem.%c %s, -(a%u)\n", size_c, movem_a7_d0( getui16( pc ) ), ea_reg );
                     else if ( 3 == ea_mode && memory_to_register ) // post increment, memory to register
-                        tracer.Trace( "movem.%c (a%u)+, %s\n", size_c, ea_reg, movem_d0_a7( getui16( pc + 2 ) ) );
+                        tracer.Trace( "movem.%c (a%u)+, %s\n", size_c, ea_reg, movem_d0_a7( getui16( pc ) ) );
                     else if ( memory_to_register ) // list, ea   == memory to register
                     {
-                        pc += 2;
                         const char * pregs = movem_d0_a7( getui16( pc ) ); // control mode is always d0..a7 == 0..15
                         tracer.Trace( "movem.%c %s, %s\n", size_c, effective_string(), pregs );
                     }
                     else // ea, list   == register to memory
                     {
-                        pc += 2;
                         const char * pregs = movem_d0_a7( getui16( pc ) ); // control mode is always d0..a7
                         tracer.Trace( "movem.%c %s, %s\n", size_c, pregs, effective_string() );
                     }
@@ -1613,7 +1601,7 @@ uint64_t m68000::run()
                     pc += 2;
                     if ( 0 == op_size )
                     {
-                        uint8_t imm = getui16( pc ) & 0xff;
+                        uint8_t imm = (uint8_t) getui16( pc );
                         uint8_t val = effective_value8( effective_address() ); // mode 7 reg 4 imm is illegal
                         do_sub( val, imm, true, false, false );
                     }
@@ -2163,7 +2151,6 @@ uint64_t m68000::run()
                     {
                         bool memory_to_register = opbit( 10 );
                         bool size_long = opbit( 6 );
-
                         pc += 2;
                         uint16_t mask = getui16( pc );
                         uint16_t bit = 1;
@@ -2308,15 +2295,9 @@ uint64_t m68000::run()
                             op_size = 1;
                             int16_t val = (int16_t) effective_value16( effective_address() );
                             int16_t dval = (int16_t) dregs[ op_reg ].w;
-                            if ( dval < 0 )
+                            if ( ( dval < 0 ) || ( dval > val ) )
                             {
-                                setflag_n( true );
-                                if ( handle_trap( 6, pc + 2 ) )
-                                    continue;
-                            }
-                            else if ( dval > val )
-                            {
-                                setflag_n( false );
+                                setflag_n( dval < 0 );
                                 if ( handle_trap( 6, pc + 2 ) )
                                     continue;
                             }
@@ -2326,15 +2307,9 @@ uint64_t m68000::run()
                             op_size = 2;
                             int32_t val = (int32_t) effective_value32( effective_address() );
                             int32_t dval = (int32_t) dregs[ op_reg ].l;
-                            if ( dval < 0 )
+                            if ( ( dval < 0 ) || ( dval > val ) )
                             {
-                                setflag_n( true );
-                                if ( handle_trap( 6, pc + 2 ) )
-                                    continue;
-                            }
-                            else if ( dval > val )
-                            {
-                                setflag_n( false );
+                                setflag_n( dval < 0 );
                                 if ( handle_trap( 6, pc + 2 ) )
                                     continue;
                             }
@@ -2365,10 +2340,9 @@ uint64_t m68000::run()
                     }
                     else if ( 0 == bits11_8 ) // negx
                     {
-                        bool original_z = flag_z();
-
                         if ( 0 == ea_mode )
                         {
+                            bool original_z = flag_z();
                             if ( 0 == op_size )
                             {
                                 dregs[ ea_reg ].b = do_sub( (uint8_t) 0, dregs[ ea_reg ].b, true, true, true );
@@ -2531,9 +2505,7 @@ uint64_t m68000::run()
                 }
                 else if ( opbit( 8 ) ) // subq
                 {
-                    uint32_t data = op_reg;
-                    if ( 0 == data )
-                        data = 8;
+                    uint32_t data = ( 0 == op_reg ) ? 8 : op_reg;
 
                     if ( 0 == ea_mode )
                     {
@@ -2559,9 +2531,7 @@ uint64_t m68000::run()
                 }
                 else // addq
                 {
-                    uint32_t data = op_reg;
-                    if ( 0 == data )
-                        data = 8;
+                    uint32_t data = ( 0 == op_reg ) ? 8 : op_reg;
 
                     if ( 0 == ea_mode )
                     {
@@ -3234,7 +3204,7 @@ uint64_t m68000::run()
             }
             default:
                 unhandled();
-        }
+        } // switch
 
         pc += 2;       // 7.8% of runtime
     } // for
