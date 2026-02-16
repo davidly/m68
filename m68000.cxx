@@ -1174,9 +1174,7 @@ bool m68000::handle_trap( uint16_t vector, uint32_t pc_return )
     return true;
 } //handle_trap
 
-static inline uint32_t mask_width( uint8_t w ) { return ( 32 == w ) ? 0xffffffff : ( 16 == w ) ? 0xffff : 0xff; }
-
-static inline bool msb_width( uint32_t v, int width )
+static inline bool msb_width( uint32_t v, uint8_t width )
 {
     assert( 8 == width || 16 == width || 32 == width );
     const uint32_t mask = ( 32 == width ) ? 0x80000000 : ( 16 == width ) ? 0x8000 : 0x80;
@@ -1196,113 +1194,102 @@ static inline bool asl_sign_changed( uint32_t orig, uint8_t width, uint32_t coun
     return ! ( 0 == top || top == all1 );
 } //asl_sign_changed
 
-static inline uint32_t do_lsl( uint32_t v, uint8_t width, uint32_t c, bool &last_out )
+static inline uint32_t do_lsl( uint32_t value, uint8_t width, uint32_t count, bool &last_out )
 {
-    last_out = false;
+    if ( 0 == count )
+        return value;
 
-    if ( 0 == c )
-        return v;
-
-    if ( c >= width )
+    if ( count >= width )
         return 0;
 
-    last_out = ( 0 != ( ( v >> ( width - c ) ) & 1 ) );
-    return ( v << c ) & mask_width( width );
+    last_out = ( 0 != ( ( value >> ( width - count ) ) & 1 ) );
+    return ( value << count );
 } //do_lsl
 
-static inline uint32_t do_lsr( uint32_t v, uint8_t width, uint32_t c, bool &last_out )
+static inline uint32_t do_lsr( uint32_t value, uint8_t width, uint32_t count, bool &last_out )
 {
-    last_out = false;
+    if ( 0 == count )
+        return value;
 
-    if ( 0 == c )
-        return v;
-
-    if ( c >= width )
+    if ( count >= width )
         return 0;
 
-    last_out = ( 0 != ( ( v >> ( c - 1 ) ) & 1 ) );
-    return ( v >> c );
+    last_out = ( 0 != ( ( value >> ( count - 1 ) ) & 1 ) );
+    return ( value >> count );
 } //do_lsr
 
-static inline uint32_t do_asr( uint32_t v, uint8_t width, uint32_t c, bool &last_out )
+static inline uint32_t do_asr( uint32_t value, uint8_t width, uint32_t count, bool &last_out )
 {
-    last_out = false;
+    if ( 0 == count )
+        return value;
 
-    if ( 0 == c )
-        return v;
-
-    uint32_t wmask = mask_width( width );
-    const bool sign = msb_width( v, width );
-    if ( c >= width )
+    uint32_t width_mask = ( 32 == width ) ? 0xffffffff : ( 16 == width ) ? 0xffff : 0xff;
+    const bool sign = msb_width( value, width );
+    if ( count >= width )
     {
         last_out = sign;
-        return sign ? wmask : 0;
+        return sign ? width_mask : 0;
     }
 
-    last_out = ( 0 != ( ( v >> ( c - 1 ) ) & 1 ) );
-    uint32_t r = ( v >> c );
+    last_out = ( 0 != ( ( value >> ( count - 1 ) ) & 1 ) );
+    uint32_t result = ( value >> count );
     if ( sign )
-        r |= ( wmask & ~( ( 1 << ( width - c ) ) - 1 ) );
-    assert( r == ( r & wmask ) );
-    return r;
+        result |= ( width_mask & ~( ( 1 << ( width - count ) ) - 1 ) );
+    return result;
 } //do_asr
 
-static inline uint32_t do_rol( uint32_t v, uint8_t width, uint32_t c, bool &carry )
+static inline uint32_t do_rol( uint32_t value, uint8_t width, uint32_t count, bool &carry )
 {
-    const uint32_t n = ( c % width );
+    const uint32_t n = ( count % width );
     if ( 0 == n )
-    {
-        carry = false;
-        return v;
-    }
-    uint32_t r = ( ( v << n ) | ( v >> ( width - n ) ) ) & mask_width( width );
-    carry = ( 0 != ( r & 1 ) );
-    return r;
+        return value;
+
+    uint32_t result = ( ( value << n ) | ( value >> ( width - n ) ) );
+    carry = ( 0 != ( result & 1 ) );
+    return result;
 } //do_rol
 
-static inline uint32_t do_ror( uint32_t v, uint8_t width, uint32_t c, bool &carry )
+static inline uint32_t do_ror( uint32_t value, uint8_t width, uint32_t count, bool &carry )
 {
-    const uint32_t n = ( c % width );
+    const uint32_t n = ( count % width );
     if ( 0 == n )
-    {
-        carry = false;
-        return v;
-    }
-    uint32_t result = ( ( v >> n ) | ( v << ( width - n ) ) ) & mask_width( width );
+        return value;
+
+    uint32_t result = ( ( value >> n ) | ( value << ( width - n ) ) );
     carry = msb_width( result, width );
     return result;
 } //do_ror
 
-static inline uint32_t do_roxl( uint32_t v, uint8_t width, uint32_t count, bool &x )
+static inline uint32_t do_roxl( uint32_t value, uint8_t width, uint32_t count, bool &x )
 {
     const uint32_t ring = width + 1;
     const uint32_t n = ( count % ring );
     if ( 0 == n )
-        return v;
+        return value;
 
     const uint64_t mask = ( 1ull << ring ) - 1;
-    uint64_t ext = ( ( (uint64_t) v ) << 1 ) | ( x ? 1 : 0 );
+    uint64_t ext = ( ( (uint64_t) value ) << 1 ) | ( x ? 1 : 0 );
     ext &= mask;
 
     uint64_t rot = ( ( ext << n ) | ( ext >> ( ring - n ) ) ) & mask;
     x = ( 0 != ( rot & 1ull ) );
-    return (uint32_t) ( ( rot >> 1 ) & (uint64_t) mask_width( width ) );
+    return (uint32_t) ( ( rot >> 1 ) );
 } //do_roxl
 
-static inline uint32_t do_roxr( uint32_t v, uint8_t width, uint32_t count, bool &x )
+static inline uint32_t do_roxr( uint32_t value, uint8_t width, uint32_t count, bool &x )
 {
     const uint32_t ring = width + 1;
     const uint32_t n = ( count % ring );
     if ( 0 == n )
-        return v;
+        return value;
 
     const uint64_t mask = ( 1ull << ring ) - 1;
-    uint64_t ext = ( ( (uint64_t) ( x ? 1ull : 0ull ) ) << width ) | (uint64_t) v;
+    uint64_t ext = ( ( (uint64_t) ( x ? 1ull : 0ull ) ) << width ) | (uint64_t) value;
     ext &= mask;
 
     uint64_t rot = ( ( ext >> n ) | ( ext << ( ring - n ) ) ) & mask;
     x = ( 0 != ( ( rot >> width ) & 1ull ) );
-    return (uint32_t) ( rot & (uint64_t) mask_width( width ) );
+    return (uint32_t) rot;
 } //do_roxr
 
 void m68000::save_rotate( uint32_t result ) // don't modify upper bits for 8 and 16 bit rotations
@@ -2691,7 +2678,6 @@ uint64_t m68000::run()
                     {
                         if ( handle_trap( 5, pc ) )
                             continue;
-
                         dregs[ op_reg ].l = 0;
                     }
                     else
@@ -3203,7 +3189,7 @@ uint64_t m68000::run()
                     if ( bits4_3 <= 1 ) // ASd / LSd
                     {
                         const bool is_arith = ( 0 == bits4_3 );
-                        bool last;
+                        bool last = false;
 
                         if ( opbit( 8 ) ) // left: ASL / LSL
                         {
