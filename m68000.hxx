@@ -266,22 +266,6 @@ private:
     inline bool flag_s() { return ( 0 != ( sr & 0x2000 ) ); }
     inline bool flag_t() { return ( 0 != ( sr & 0x8000 ) ); } // t1. t0 is always 0 on a 68000
 
-    inline static int32_t sign_extend( uint32_t x, uint32_t high_bit )
-    {
-        assert( high_bit < 31 );
-        x &= ( 1 << ( high_bit + 1 ) ) - 1; // clear bits above the high bit since they may contain noise
-        const int32_t m = ( (uint32_t) 1 ) << high_bit;
-        return ( x ^ m ) - m;
-    } //sign_extend
-
-    inline static int16_t sign_extend16( uint16_t x, uint16_t high_bit )
-    {
-        assert( high_bit < 15 );
-        x &= ( 1 << ( high_bit + 1 ) ) - 1; // clear bits above the high bit since they may contain noise
-        const int16_t m = ( (uint16_t) 1 ) << high_bit;
-        return ( x ^ m ) - m;
-    } //sign_extend16
-
     void trace_state( void );                  // trace the machine current status
     void unhandled( void );
     const char * render_flags( void );

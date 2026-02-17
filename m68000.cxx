@@ -104,7 +104,7 @@ inline int32_t m68000::decode_ea_displacement( bool & is_a, bool & is_l, uint16_
         tracer.Trace( "ea displacement word scale isn't 0 or bit8 is 1, so it's not a 68000 instruction: %#x\n", extension );
         unhandled(); // it's a post-68000 instruction
     }
-    return (int32_t) sign_extend( 0xff & extension, 7 );
+    return (int8_t) ( 0xff & extension );
 } //decode_ea_displacement
 
 const char * m68000::effective_string()
@@ -161,7 +161,7 @@ const char * m68000::effective_string()
                 case 0: // absolute short (xxx).w
                 {
                     pc += 2;
-                    uint32_t address = sign_extend( getui16( pc ), 15 );
+                    uint32_t address = (int16_t) getui16( pc );
                     snprintf( ea, _countof( ea ), "(#$%x)", address );
                     break;
                 }
@@ -193,7 +193,7 @@ const char * m68000::effective_string()
                     if ( op_size < 2 )
                     {
                         pc += 2;
-                        address = sign_extend( getui16( pc ), 15 );
+                        address = (int16_t) getui16( pc );
                     }
                     else
                     {
@@ -234,7 +234,7 @@ int32_t m68000::get_ea_displacement()
     int32_t displacement = decode_ea_displacement( is_a, is_l, Xn );
     int32_t reg_displacement = is_a ? aregs[ Xn ] : dregs[ Xn ].l;
     if ( !is_l )
-        reg_displacement = sign_extend( reg_displacement, 15 ); // both A and D registers behave like this per experimentation
+        reg_displacement = (int16_t) reg_displacement; // both A and D registers behave like this per experimentation
     return displacement + reg_displacement;
 } //get_ea_displacement
 
@@ -284,7 +284,7 @@ uint32_t m68000::effective_address()
                 case 0: // absolute short (xxx).w
                 {
                     pc += 2;
-                    return (uint32_t) sign_extend( getui16( pc ), 15 );
+                    return (int16_t) getui16( pc );
                 }
                 case 1: // absolute long (xxx).l
                 {
@@ -308,7 +308,7 @@ uint32_t m68000::effective_address()
                     if ( op_size < 2 )
                     {
                         pc += 2;
-                        address = sign_extend( getui16( pc ), 15 );
+                        address = (int16_t) getui16( pc );
                     }
                     else
                     {
@@ -770,10 +770,8 @@ void m68000::trace_state()
         case 6: // bra / bsr / bcc
         {
             uint16_t condition = opbits( 8, 4 );
-            int16_t displacement = op & 0xff;
-            if ( 0 != displacement )
-                displacement = sign_extend16( displacement, 7 );
-            else
+            int16_t displacement = (int8_t) ( op & 0xff );
+            if ( 0 == displacement )
                 displacement = (int16_t) getui16( pc + 2 );
 
             tracer.Trace( "b%s %d\n", condition_string( condition ), displacement + 2 );
@@ -784,7 +782,7 @@ void m68000::trace_state()
             if ( opbit( 8 ) )
                 unhandled();  // it's not a 68000 instruction if this bit is set
 
-            uint32_t data = sign_extend( opbits( 0, 8 ), 7 );
+            uint32_t data = (int8_t) opbits( 0, 8 );
             tracer.Trace( "moveq #%d, d%u\n", data, op_reg );
             break;
         }
@@ -1169,17 +1167,16 @@ static inline bool msb_width( uint32_t v, uint8_t width )
     return ( 0 != ( v & mask ) );
 } //msb_width
 
-static inline bool asl_sign_changed( uint32_t orig, uint8_t width, uint32_t count ) // did the sign change at any point during the shift?
+static inline bool asl_sign_changed( uint32_t orig, uint8_t width, uint32_t count ) // did the sign change at any point during the ASL?
 {
     if ( 0 == count )
         return false;
     if ( count >= width )
         return ( 0 != orig );
-
     const uint32_t n = count + 1;
     const uint32_t top = orig >> ( width - n );
-    const uint32_t all1 = ( 32 == n ) ? 0xffffffff : ( ( 1 << n ) - 1 );
-    return ! ( 0 == top || top == all1 );
+    const uint32_t mask = ( 32 == n ) ? 0xffffffffu : ( ( 1u << n ) - 1u );
+    return ( 0 != top && mask != top );
 } //asl_sign_changed
 
 static inline uint32_t do_lsl( uint32_t value, uint8_t width, uint32_t count, bool &last_out )
@@ -1222,7 +1219,7 @@ static inline uint32_t do_asr( uint32_t value, uint8_t width, uint32_t count, bo
     last_out = ( 0 != ( ( value >> ( count - 1 ) ) & 1 ) );
     uint32_t result = ( value >> count );
     if ( sign )
-        result |= ( width_mask & ~( ( 1 << ( width - count ) ) - 1 ) );
+        result |= ( width_mask & ~( ( 1u << ( width - count ) ) - 1u ) );
     return result;
 } //do_asr
 
@@ -1869,7 +1866,7 @@ uint64_t m68000::run()
                     if ( 2 == op_size )
                         aregs[ op_reg ] = effective_value32( effective_address() );
                     else
-                        aregs[ op_reg ] = sign_extend( effective_value16( effective_address() ), 15 );
+                        aregs[ op_reg ] = (int16_t) effective_value16( effective_address() );
                 }
                 else // move.l / move.w / move.b
                 {
@@ -2103,12 +2100,12 @@ uint64_t m68000::run()
                     {
                         if ( 3 == op_mode )
                         {
-                            dregs[ ea_reg ].l = sign_extend( dregs[ ea_reg ].l, 15 );
+                            dregs[ ea_reg ].l = (int16_t) dregs[ ea_reg ].w;
                             set_nzcv32( dregs[ ea_reg ].l );
                         }
                         else if ( 2 == op_mode )
                         {
-                            dregs[ ea_reg ].w = sign_extend16( dregs[ ea_reg ].w, 7 );
+                            dregs[ ea_reg ].w = (int8_t) dregs[ ea_reg ].b;
                             set_nzcv16( dregs[ ea_reg ].w );
                         }
                         else
@@ -2244,9 +2241,9 @@ uint64_t m68000::run()
                                     if ( mask & bit )
                                     {
                                         if ( i >= 8 )
-                                            aregs[ i - 8 ] = sign_extend( getui16( aregs[ ea_reg ] ), 15 );
+                                            aregs[ i - 8 ] = (int16_t) getui16( aregs[ ea_reg ] );
                                         else
-                                            dregs[ i ].l = sign_extend( getui16( aregs[ ea_reg ] ), 15 );
+                                            dregs[ i ].l = (int16_t) getui16( aregs[ ea_reg ] );
                                         aregs[ ea_reg ] += 2;
                                     }
                                     bit <<= 1;
@@ -2260,9 +2257,9 @@ uint64_t m68000::run()
                                     if ( mask & bit )
                                     {
                                         if ( i >= 8 )
-                                            aregs[ i - 8 ] = sign_extend( getui16( address ), 15 );
+                                            aregs[ i - 8 ] = (int16_t) getui16( address );
                                         else
-                                            dregs[ i ].l = sign_extend( getui16( address ), 15 );
+                                            dregs[ i ].l = (int16_t) getui16( address );
                                         address += 2;
                                     }
                                     bit <<= 1;
@@ -2561,10 +2558,8 @@ uint64_t m68000::run()
             {
                 uint16_t condition = opbits( 8, 4 );
                 bool two_byte_displacement = false;
-                int16_t displacement = op & 0xff;
-                if ( 0 != displacement )
-                    displacement = sign_extend16( displacement, 7 );
-                else
+                int16_t displacement = (int8_t) ( op & 0xff );
+                if ( 0 == displacement )
                 {
                     two_byte_displacement = true;
                     displacement = (int16_t) getui16( pc + 2 );
@@ -2592,7 +2587,7 @@ uint64_t m68000::run()
                 if ( opbit( 8 ) )
                     unhandled();
 
-                uint32_t data = sign_extend( op & 0xff, 7 );
+                uint32_t data = (int8_t) ( op & 0xff );
                 dregs[ op_reg ].l = data;
                 set_nzcv32( data );
                 break;
@@ -2725,7 +2720,7 @@ uint64_t m68000::run()
                     else // word
                     {
                         op_size = 1;
-                        aregs[ op_reg ] -= sign_extend( effective_value16( effective_address() ), 15 );
+                        aregs[ op_reg ] -= (int16_t) effective_value16( effective_address() );
                     }
                 }
                 else if ( 0 == opbits( 4, 2 ) && opbit( 8 ) ) // subx
@@ -2834,7 +2829,7 @@ uint64_t m68000::run()
                     else
                     {
                         op_size = 1;
-                        source = sign_extend( effective_value16( effective_address() ), 15 );
+                        source = (int16_t) effective_value16( effective_address() );
                     }
                     do_sub( aregs[ op_reg ], source, true, false, false );
                 }
@@ -3020,7 +3015,7 @@ uint64_t m68000::run()
                     else // word
                     {
                         op_size = 1;
-                        aregs[ op_reg ] += sign_extend( effective_value16( effective_address() ), 15 );
+                        aregs[ op_reg ] += (int16_t) effective_value16( effective_address() );
                     }
                 }
                 else if ( 0 == opbits( 4, 2 ) && opbit( 8 ) ) // addx
