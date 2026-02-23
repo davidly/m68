@@ -24,11 +24,11 @@ set includes=-I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5% -I%inc6%
 set gcc=%gccpath%\bin\m68k-elf-gcc
 
 rem the linker makes the address space start at 0x2000 lower than the address of .init. Close enough
-set ldflags=-Wl,--section-start=.init=0x4000
+set ldflags=-Wl,--section-start=.init=0x4000 -Wl,--gc-sections
 
 rem WIN_GCC_HANG is defined for the Windows version of gcc 13.2.0, which hangs compiling some normal C code in ttypes.c
 set defines=-DNDEBUG -DWIN_GCC_HANG
-set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag%
+set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag% -ffunction-sections -fdata-sections
 
 rem generate .s files for debugging
 rem %gcc% %includes% %gccflags% %1.c -S -fverbose-asm -o %1.s

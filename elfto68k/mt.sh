@@ -28,9 +28,9 @@ inc2=$gccpath/m68k-elf/include
 inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
-ldflags="-Wl,--section-start=.init=0xa000"
+ldflags="-Wl,--section-start=.init=0xa000 -Wl,--gc-sections"
 # building with -O2 yields 33% faster test runtimes (because compiling is faster) and smaller binaries for CP/M 68k machines
-gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags"
+gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags -ffunction-sections -fdata-sections"
 
 # generate .s files for debugging
 #$gcccmd $incpaths $gccflags $1.c -S -fverbose-asm -o $1.s

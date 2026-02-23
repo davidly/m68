@@ -18,9 +18,9 @@ set inc5=.\bits
 set inc6=..\..\djl
 set includes=-I%inc4% -I%inc5% -I%inc1% -I%inc2% -I%inc3% -I%inc6%
 
-set ldflags=-Wl,--section-start=.init=0x4000
+set ldflags=-Wl,--section-start=.init=0x4000 -Wl,--gc-sections
 set gcc=%gccpath%\bin\m68k-elf-gcc
-set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag%
+set gccflags=-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O%_optflag% -ffunction-sections -fdata-sections
 
 rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o

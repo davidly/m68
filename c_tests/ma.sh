@@ -29,7 +29,7 @@ inc3=..
 inc4=../../djl
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3 -I$inc4"
 
-ldflags="-Wl,--section-start=.init=0x4000"
+ldflags="-Wl,--section-start=.init=0x4000 -Wl,--gc-sections -ffunction-sections -fdata-sections"
 gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags"
 
 # build the assembly portion with _start and syscalls

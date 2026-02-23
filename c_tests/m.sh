@@ -30,8 +30,8 @@ inc3=..
 inc4=../../djl
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3 -I$inc4"
 
-ldflags="-Wl,--section-start=.init=0x4000"
-gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags"
+ldflags="-Wl,--section-start=.init=0x4000 -Wl,--gc-sections"
+gccflags="-mcpu=68000 -x c++ -fexceptions -fno-use-cxa-atexit -O$optflags -ffunction-sections -fdata-sections"
 
 # generate .s files for debugging
 #$gcccmd $incpaths $gccflags $1.c -S -fverbose-asm -o $1.s
