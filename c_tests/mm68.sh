@@ -24,8 +24,8 @@ incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
 # M68 means we're building the m68.elf binary (vs another emulator)
 defines="-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG"
-gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O$optflags"
-ldflags="-Wl,--section-start=.init=0x4000"
+gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O$optflags -ffunction-sections -fdata-sections"
+ldflags="-Wl,--section-start=.init=0x4000 -Wl,--gc-sections"
 
 # generate .s files for debugging
 $gcccmd $incpaths $gccflags $defines ../m68.cxx -S -fverbose-asm -o m68.s

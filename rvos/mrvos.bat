@@ -20,12 +20,12 @@ set inc6=..\
 set includes=-I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5% -I%inc6%
 
 rem the linker makes the address space start at 0x2000 lower than the address of .init. Close enough
-set ldflags=-Wl,--section-start=.init=0x4000
+set ldflags=-Wl,--section-start=.init=0x4000 -Wl,--gc-sections
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 
 set defines=-DTARGET_BIG_ENDIAN -DNDEBUG -DRVOS
-set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O3
+set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O3 -ffunction-sections -fdata-sections
 
 rem generate .s files for debugging
 %gcc% %defines% %includes% %gccflags% rvos.cxx -S -fverbose-asm -o rvos.s
