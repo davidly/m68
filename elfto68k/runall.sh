@@ -36,9 +36,9 @@ else
 fi
 
 if [ "$3" == "" ]; then
-    gccpath="../gcc-8.2.0-linux"
+    gccver="8.2.0"
 else
-    gccpath=$3
+    gccver=$3
 fi
 
 outputfile="test_elfto68k.txt"
@@ -54,7 +54,7 @@ m.sh >>$outputfile
 
 echo building m68
 echo building m68 >>$outputfile
-mm68.sh $optflags $gccpath >>$outputfile
+mm68.sh $optflags $gccver >>$outputfile
 
 for arg in hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao \
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi \
@@ -64,7 +64,7 @@ do
   echo building $arg
   echo building $arg >>$outputfile
   cp ../c_tests/$arg.c . >/dev/null
-  mt.sh $arg $optflags $gccpath >>$outputfile
+  mt.sh $arg $optflags $gccver >>$outputfile
   echo running $arg
   echo running $arg >>$outputfile
   argu=$(tr '[a-z]' '[A-Z]' <<< $arg)
@@ -84,7 +84,7 @@ done
 echo building na
 echo building na >>$outputfile
 cp ../c_tests/na.c . >/dev/null
-mt.sh na $optflags $gccpath >>$outputfile
+mt.sh na $optflags $gccver >>$outputfile
 rm na.s 2>/dev/null
 rm na.c 2>/dev/null
 #rm NA.68K 2>/dev/null
@@ -92,7 +92,7 @@ rm na.c 2>/dev/null
 echo building ba
 echo building ba >>$outputfile
 cp ../c_tests/ba.c . >/dev/null
-mt.sh ba $optflags $gccpath >>$outputfile
+mt.sh ba $optflags $gccver >>$outputfile
 echo running ba
 echo running ba >>$outputfile
 $_m68runcmd BA.68K TP.BAS >>$outputfile
@@ -103,7 +103,7 @@ rm BA.68K 2>/dev/null
 echo building an
 echo building an >>$outputfile
 cp ../c_tests/an.c . >/dev/null
-mt.sh an $optflags $gccpath >>$outputfile
+mt.sh an $optflags $gccver >>$outputfile
 echo running an
 echo running an >>$outputfile
 $_m68runcmd AN.68K david lee >>$outputfile
@@ -116,7 +116,7 @@ echo building ff >>$outputfile
 cp ../c_tests/ff.c . >/dev/null
 cp ../c_tests/realpath.c . >/dev/null
 cp ../c_tests/fnmatch.c . >/dev/null
-mt.sh ff $optflags $gccpath >>$outputfile
+mt.sh ff $optflags $gccver >>$outputfile
 echo running ff
 echo running ff >>$outputfile
 $_m68runcmd FF.68K -i "M*.68K" >>$outputfile

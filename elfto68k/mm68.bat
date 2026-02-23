@@ -3,23 +3,24 @@ setlocal
 
 if "%1" == "" (set _optflag=3) else (set _optflag=%1)
 
-if "%2" == "" (set gccpath=..\gcc-8.2.0) else (set gccpath=%2)
+if "%2" == "" (set gccver=13.2.0) else (set gccver=%2)
 
+set gccpath=..\gcc-%gccver%
 path=%gccpath%\bin;%path%
 
-set inc1=%gccpath%\lib\gcc\m68k-elf\8.2.0\include
+set inc1=%gccpath%\lib\gcc\m68k-elf\%gccver%\include
 set inc2=%gccpath%\m68k-elf\include
 set inc3=..\
 set inc4=..\..\djl
-set inc5=%gccpath%\m68k-elf\include\c++\8.2.0\bits
+set inc5=%gccpath%\m68k-elf\include\c++\%gccver%\bits
 set includes=-I. -I.\bits -I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5%
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
-set ldflags=-Wl,--section-start=.init=0xa000
+set ldflags=-Wl,--section-start=.init=0xa000 -Wl,--gc-sections
 
 rem M68 means we're building the m68.elf binary (vs another emulator).
 set defines=-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG
-set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag%
+set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag% -ffunction-sections -fdata-sections
 
 rem generate .s files for debugging
 rem %gcc% %defines% %includes% %gccflags% ..\m68.cxx -S -fverbose-asm -o m68.s

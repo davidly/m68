@@ -15,11 +15,12 @@ else
 fi
 
 if [ "$3" == "" ]; then
-    gccpath="../gcc-8.2.0-linux"
+    gccver="13.2.0"
 else
-    gccpath=$3
+    gccver=$3
 fi
 
+gccpath=../gcc-$gccver-linux
 gcccmd=$gccpath/bin/m68k-elf-gcc
 
 inc1=$gccpath/lib/gcc/m68k-elf/8.2.0/include

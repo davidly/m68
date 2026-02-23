@@ -8,22 +8,23 @@ else
 fi
 
 if [ "$2" == "" ]; then
-    gccpath="../gcc-8.2.0-linux"
+    gccver="13.2.0"
 else
-    gccpath=$2
+    gccver=$2
 fi
 
+gccpath=../gcc-$gccver-linux
 gcccmd=$gccpath/bin/m68k-elf-gcc
 
-inc1=$gccpath/lib/gcc/m68k-elf/8.2.0/include
+inc1=$gccpath/lib/gcc/m68k-elf/$gccver/include
 inc2=$gccpath/m68k-elf/include
 inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
 # M68 means we're building the m68.elf binary (vs another emulator).
 defines="-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG"
-gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O$optflags"
-ldflags="-Wl,--section-start=.init=0x4000"
+gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O$optflags -ffunction-sections -fdata-sections"
+ldflags="-Wl,--section-start=.init=0x4000 -Wl,--gc-sections"
 
 # generate .s files for debugging
 #$gcccmd $incpaths $gccflags $defines ../m68.cxx -S -fverbose-asm -o m68.s

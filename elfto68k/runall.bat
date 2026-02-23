@@ -41,7 +41,7 @@ if "%_M68runcmd%" == "" (
 if "%1" == "" (set _optflag=2) else (set _optflag=%1)
 
 rem note that ttypes.c produces difference results for gcc 8.2.0 vs gcc 13.2.0
-if "%2" == "" (set _gccfolder=..\gcc-8.2.0) else (set _gccfolder=%2)
+if "%2" == "" (set _gccver=8.2.0) else (set _gccver=%2)
 
 echo building elfto68k
 echo building elfto68k >>%outputfile%
@@ -52,7 +52,7 @@ copy ..\c_tests\sys\* sys 1>nul
 
 echo building m68
 echo building m68 >>%outputfile%
-call mm68.bat %_optflag% %_gccfolder% >>%outputfile%
+call mm68.bat %_optflag% %_gccver% >>%outputfile%
 
 set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
            tcmp ttypes tarray trw trw2 terrno mm_old fileops tpi ^
@@ -63,7 +63,7 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
     echo building %%a
     echo building %%a >>%outputfile%
     copy ..\c_tests\%%a.c . >nul
-    call mt.bat %%a %_optflag% %_gccfolder% >>%outputfile%
+    call mt.bat %%a %_optflag% %_gccver% >>%outputfile%
     echo running %%a
     echo running %%a >>%outputfile%
     %_M68runcmd% %%a.68K >>%outputfile%
@@ -82,7 +82,7 @@ set _clist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 echo building na
 echo building na >>%outputfile%
 copy ..\c_tests\na.c . >nul
-call mt.bat na %_optflag% %_gccfolder% >>%outputfile%
+call mt.bat na %_optflag% %_gccver% >>%outputfile%
 del na.s 2>nul
 del na.c 2>nul
 rem del na.68k 2>nul
@@ -90,7 +90,7 @@ rem del na.68k 2>nul
 echo building ba
 echo building ba >>%outputfile%
 copy ..\c_tests\ba.c . >nul
-call mt.bat ba %_optflag% %_gccfolder% >>%outputfile%
+call mt.bat ba %_optflag% %_gccver% >>%outputfile%
 echo running ba
 echo running ba >>%outputfile%
 %_M68runcmd% ba.68K TP.BAS >>%outputfile%
@@ -101,7 +101,7 @@ del ba.68k 2>nul
 echo building an
 echo building an >>%outputfile%
 copy ..\c_tests\an.c . >nul
-call mt.bat an %_optflag% %_gccfolder% >>%outputfile%
+call mt.bat an %_optflag% %_gccver% >>%outputfile%
 echo running an
 echo running an >>%outputfile%
 %_M68runcmd% AN.68K david lee >>%outputfile%
@@ -114,7 +114,7 @@ echo building ff >>%outputfile%
 copy ..\c_tests\ff.c . >nul
 copy ..\c_tests\realpath.c . >nul
 copy ..\c_tests\fnmatch.c . >nul
-call mt.bat ff %_optflag% %_gccfolder% >>%outputfile%
+call mt.bat ff %_optflag% %_gccver% >>%outputfile%
 echo running ff
 echo running ff >>%outputfile%
 %_M68runcmd% FF.68K -i M*.68K >>%outputfile%
