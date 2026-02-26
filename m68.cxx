@@ -281,6 +281,7 @@ REG_TYPE g_bottom_of_stack = 0;                // just beyond where brk might mo
 REG_TYPE g_top_of_stack = 0;                   // argc, argv, penv, aux records sit above this
 CMMap g_mmap;                                  // for mmap and munmap system calls
 bool g_addCRBeforeLF = true;                   // on Windows, a command-line argument can make this false so the emulated app acts like Linux
+bool g_addTimeZoneToEnv = true;                // on Windows, a command-line argument to control if the TZ is added to the environment
 
 // fake descriptors.
 // /etc/timezone is not implemented, so apps running in the emulator on Windows assume UTC
@@ -857,6 +858,9 @@ static void usage( char const * perror = 0 )
     printf( "                 -s:X   # of KB for stack space. 1..1024 are valid. default is 128.\n" );
     printf( "                 -t     enable debug tracing to %s\n", LOGFILE_NAME );
     printf( "                 -v     used with -e shows verbose information (e.g. symbols)\n" );
+#ifdef _WIN32
+    printf( "                 -z     on Windows, don't add time zone to environment at startup\n" );
+#endif
     printf( "  %s\n", build_string() );
     exit( 1 );
 } //usage
@@ -1842,6 +1846,7 @@ static const SysCall syscalls[] =
     { "emulator_sys_set_thread_area", emulator_sys_set_thread_area }, // exists on x32 and some other platforms
     { "emulator_sys_get_thread_area", emulator_sys_get_thread_area },
     { "emulator_sys_ugetrlimit", emulator_sys_ugetrlimit },
+    { "emulator_sys_stat64", emulator_sys_stat64 },
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -2060,9 +2065,12 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 1, SYS_exit },
     { 3, SYS_read },
     { 4, SYS_write },
+    { 5, SYS_open },
     { 6, SYS_close },
     { 10, SYS_unlink },
     { 12, SYS_chdir },
+    { 13, emulator_sys_time },
+    { 19, SYS_lseek },
     { 20, SYS_getpid },
     { 33, emulator_sys_access },
     { 38, emulator_sys_rename },
@@ -2074,12 +2082,16 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 55, SYS_fcntl },
     { 77, SYS_getrusage },
     { 85, emulator_sys_readlink },
+    { 90, SYS_mmap },
     { 91, SYS_munmap },
+    { 106, SYS_stat },
+    { 108, SYS_newfstat }, // on x86, it's just SYS_fstat
     { 116, SYS_sysinfo },
     { 118, SYS_fsync },
     { 122, SYS_uname },
     { 125, SYS_mprotect },
     { 140, emulator_sys__llseek },
+    { 141, emulator_sys_getdents },
     { 148, SYS_fdatasync },
     { 163, SYS_mremap },
     { 174, SYS_sigaction },
@@ -2087,6 +2099,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 183, SYS_getcwd },
     { 191, emulator_sys_ugetrlimit },
     { 192, SYS_mmap }, // really mmap2, but just map to mmap because we don't suppor the last parameter anyway
+    { 195, emulator_sys_stat64 },
     { 199, SYS_getuid }, // actually getuid32
     { 200, SYS_getgid }, // actually getgid32
     { 201, SYS_geteuid }, // actually geteuid32
@@ -2555,6 +2568,27 @@ void emulator_invoke_svc( CPUClass & cpu )
                     tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) pout->st_size, (int) offsetof( struct stat_linux_syscall_x64, st_size ) );
                     pout->swap_endianness();
                     tracer.Trace( "post-swap mode: %#x\n", pout->st_mode );
+                #elif defined( X32OS )
+                    struct linux_syscall_x32_stat * pout = (struct linux_syscall_x32_stat *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                    pout->st_dev = local_stat.st_dev;
+                    pout->st_ino = local_stat.st_ino;
+                    pout->st_mode = local_stat.st_mode;
+                    pout->st_nlink = local_stat.st_nlink;
+                    pout->st_uid = local_stat.st_uid;
+                    pout->st_gid = local_stat.st_gid;
+                    pout->st_rdev = local_stat.st_rdev;
+                    pout->st_size = local_stat.st_size;
+                    pout->st_blksize = local_stat.st_blksize;
+                    pout->st_blocks = local_stat.st_blocks;
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) pout->st_size, (int) offsetof( struct stat_linux_syscall_x64, st_size ) );
+                    pout->swap_endianness();
+                    tracer.Trace( "post-swap mode: %#x\n", pout->st_mode );
                 #else // X64OS
                     size_t cbStat = sizeof( struct stat_linux_syscall );
                     assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
@@ -2578,6 +2612,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 
                 #ifdef X64OS
                     struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #elif defined( X32OS )
+                    struct linux_syscall_x32_stat * pout = (struct linux_syscall_x32_stat *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
                 #else
                     struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
                 #endif
@@ -4109,6 +4145,170 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, result );
             break;
         }
+#ifdef X32OS
+        case SYS_stat: // only called by x86 32-bit linux apps. only used by Open Watcom 2.0 C runtime on Linux when built on Linux
+        {
+            const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.Trace( "  stat on path '%s'\n", pathname );
+            tracer.Trace( "sizeof linux_syscall_x32_stat: %u\n", (int) sizeof( struct linux_syscall_x32_stat ) );
+            struct linux_syscall_x32_stat * pout = (struct linux_syscall_x32_stat *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            int result = 0;
+
+#ifdef _WIN32
+            struct stat_linux_syscall local_stat = {0};
+            char ac[ EMULATOR_MAX_PATH ];
+            strcpy( ac, pathname );
+            slash_to_backslash( ac );
+            result = fill_pstat_windows( -1, & local_stat, ac );
+            if ( 0 == result )
+            {
+                pout->st_blksize = (uint32_t) local_stat.st_blksize;
+                pout->st_ino = local_stat.st_ino;
+                pout->st_nlink = (uint32_t) local_stat.st_nlink;
+                pout->st_uid = local_stat.st_uid;
+                pout->st_gid = local_stat.st_gid;
+                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_size = local_stat.st_size;
+                pout->st_blocks = local_stat.st_blocks;
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+                pout->swap_endianness();
+            }
+            else
+            {
+                errno = 2;
+                tracer.Trace( "  fill_pstat_windows failed\n" );
+            }
+#else //_WIN32
+            struct stat local_stat = {0};
+            result = stat( pathname, &local_stat );
+            if ( 0 == result )
+            {
+                pout->st_blksize = (uint32_t) local_stat.st_blksize;
+                pout->st_ino = local_stat.st_ino;
+                pout->st_nlink = (uint32_t) local_stat.st_nlink;
+                pout->st_uid = local_stat.st_uid;
+                pout->st_gid = local_stat.st_gid;
+                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_size = local_stat.st_size;
+                pout->st_blocks = local_stat.st_blocks;
+
+#if defined( __APPLE__ )
+                pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
+#elif defined( __mc68000__ )
+                pout->st_atim.tv_sec = local_stat.st_atime;
+                pout->st_atim.tv_nsec = 0;
+                pout->st_mtim.tv_sec = local_stat.st_mtime;
+                pout->st_mtim.tv_nsec = 0;
+                pout->st_ctim.tv_sec = local_stat.st_ctime;
+                pout->st_ctim.tv_nsec = 0;
+#else
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+#endif
+
+                pout->swap_endianness();
+            }
+#endif //_WIN32
+
+            update_result_errno( cpu, result );
+            break;
+        }
+        case emulator_sys_stat64: // only called by x86 32-bit linux apps. only used by the Open Watcom 2.0 C runtime for Linux when built on Windows
+        {
+            const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.Trace( "  stat64 on path '%s'\n", pathname );
+            tracer.Trace( "sizeof linux_syscall_x32_stat64: %u\n", (int) sizeof( struct linux_syscall_x32_stat64 ) );
+            struct linux_syscall_x32_stat64 * pout = (struct linux_syscall_x32_stat64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            int result = 0;
+
+#ifdef _WIN32
+            struct stat_linux_syscall local_stat = {0};
+            char ac[ EMULATOR_MAX_PATH ];
+            strcpy( ac, pathname );
+            slash_to_backslash( ac );
+            result = fill_pstat_windows( -1, & local_stat, ac );
+            if ( 0 == result )
+            {
+                pout->st_blksize = (uint32_t) local_stat.st_blksize;
+                pout->__st_ino = local_stat.st_ino;
+                pout->st_nlink = (uint32_t) local_stat.st_nlink;
+                pout->st_uid = local_stat.st_uid;
+                pout->st_gid = local_stat.st_gid;
+                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_size = local_stat.st_size;
+                pout->st_blocks = local_stat.st_blocks;
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+                pout->swap_endianness();
+            }
+            else
+            {
+                errno = 2;
+                tracer.Trace( "  fill_pstat_windows failed\n" );
+            }
+#else //_WIN32
+            struct stat local_stat = {0};
+            result = stat( pathname, &local_stat );
+            if ( 0 == result )
+            {
+                pout->st_blksize = (uint32_t) local_stat.st_blksize;
+                pout->__st_ino = local_stat.st_ino;
+                pout->st_nlink = (uint32_t) local_stat.st_nlink;
+                pout->st_uid = local_stat.st_uid;
+                pout->st_gid = local_stat.st_gid;
+                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_size = local_stat.st_size;
+                pout->st_blocks = local_stat.st_blocks;
+
+#if defined( __APPLE__ )
+                pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
+#elif defined( __mc68000__ )
+                pout->st_atim.tv_sec = local_stat.st_atime;
+                pout->st_atim.tv_nsec = 0;
+                pout->st_mtim.tv_sec = local_stat.st_mtime;
+                pout->st_mtim.tv_nsec = 0;
+                pout->st_ctim.tv_sec = local_stat.st_ctime;
+                pout->st_ctim.tv_nsec = 0;
+#else
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+#endif
+
+                pout->swap_endianness();
+            }
+#endif //_WIN32
+
+            update_result_errno( cpu, result );
+            break;
+        }
+#endif //X32OS
         case SYS_statx:
         {
             //                    0                                        1          2                  3                                4
@@ -4225,16 +4425,6 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->stx_mtime.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout->stx_ctime.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->stx_ctime.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
-
-                pout->stx_blksize = 0xbbbbbbbb;
-                pout->stx_attributes = 0xaaaaaaaaaaaaaaaa;
-                pout->stx_nlink = 0x11111111;
-                pout->stx_uid = 0x22222222;
-                pout->stx_gid = 0x33333333;
-                pout->stx_mode = 0x4444;
-                pout->stx_ino = 0x5555555555555555;
-                pout->stx_size = 0x6666666666666666;
-                pout->stx_blocks = 0x7777777777777777;
 
                 tracer.Trace( "offsetof mode: %u\n", (int) offsetof( struct stat_linux_syscall, st_mode ) );
                 tracer.Trace( "statx data:\n" );
@@ -7778,6 +7968,9 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             exit( 1 );
         }
 
+        if ( 0 != head.virtual_address && 0 == head.physical_address ) // Watcom produces ELF files where the physical address is 0
+            head.physical_address = head.virtual_address;
+
         REG_TYPE just_past = head.physical_address + head.memory_size;
         if ( just_past > memory_size )
             memory_size = just_past;
@@ -7990,6 +8183,9 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
         if ( 0 != head.file_size && 1 == head.type )
         {
+            if ( 0 != head.virtual_address && 0 == head.physical_address ) // Watcom produces ELF files where the physical address is 0
+                head.physical_address = head.virtual_address;
+
             fseek( fp, (long) head.offset_in_image, SEEK_SET );
             read = fread( memory.data() + head.physical_address - g_base_address, 1, head.file_size, fp );
             if ( 0 == read )
@@ -8060,45 +8256,48 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     // Workaround: set the TZ environment variable.
 
 #ifdef _WIN32
-    DYNAMIC_TIME_ZONE_INFORMATION tzi = {0};
-    DWORD dw = GetDynamicTimeZoneInformation( &tzi );
-    if ( TIME_ZONE_ID_INVALID != dw )
+    if ( g_addTimeZoneToEnv )
     {
-        char acName[ 32 ] = {0};
-        if ( TIME_ZONE_ID_STANDARD == dw )
-            wcstombs( acName, tzi.StandardName, sizeof( acName ) );
-        else if ( TIME_ZONE_ID_DAYLIGHT == dw )
-            wcstombs( acName, tzi.DaylightName, sizeof( acName ) );
-        else if ( TIME_ZONE_ID_UNKNOWN == dw )
-            strcpy( acName, "local" );
-
-        if ( 0 != acName[ 0 ] )
+        DYNAMIC_TIME_ZONE_INFORMATION tzi = {0};
+        DWORD dw = GetDynamicTimeZoneInformation( &tzi );
+        if ( TIME_ZONE_ID_INVALID != dw )
         {
-            char * ptz_data = penv_data + 1 + strlen( penv_data );
-            env_tz_address = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
-            tracer.Trace( "env_tz_address %x\n", env_tz_address );
-            strcpy( ptz_data, "TZ=" );
-
-            // libc doesn't like spaces in spite of the doc saying it's OK:
-            // https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_node/libc_431.html
-
-            remove_spaces( acName );
-            strcat( (char *) ptz_data, acName );
-
-            if ( tzi.Bias >= 0 )
-                strcat( (char *) ptz_data, "+" );
-            itoa( tzi.Bias / 60, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
-            int minutes = abs( tzi.Bias % 60 );
-            if ( 0 != minutes )
+            char acName[ 32 ] = {0};
+            if ( TIME_ZONE_ID_STANDARD == dw )
+                wcstombs( acName, tzi.StandardName, sizeof( acName ) );
+            else if ( TIME_ZONE_ID_DAYLIGHT == dw )
+                wcstombs( acName, tzi.DaylightName, sizeof( acName ) );
+            else if ( TIME_ZONE_ID_UNKNOWN == dw )
+                strcpy( acName, "local" );
+    
+            if ( 0 != acName[ 0 ] )
             {
-                strcat( ptz_data, ":" );
-                itoa( minutes, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
+                char * ptz_data = penv_data + 1 + strlen( penv_data );
+                env_tz_address = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
+                tracer.Trace( "env_tz_address %x\n", env_tz_address );
+                strcpy( ptz_data, "TZ=" );
+    
+                // libc doesn't like spaces in spite of the doc saying it's OK:
+                // https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_node/libc_431.html
+    
+                remove_spaces( acName );
+                strcat( (char *) ptz_data, acName );
+    
+                if ( tzi.Bias >= 0 )
+                    strcat( (char *) ptz_data, "+" );
+                itoa( tzi.Bias / 60, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
+                int minutes = abs( tzi.Bias % 60 );
+                if ( 0 != minutes )
+                {
+                    strcat( ptz_data, ":" );
+                    itoa( minutes, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
+                }
+                tracer.Trace( "ptz_data: '%s'\n", ptz_data );
+                env_count++;
             }
-            tracer.Trace( "ptz_data: '%s'\n", ptz_data );
-            env_count++;
         }
     }
-#endif
+#endif //_WIN32
 
     tracer.Trace( "args_len %d, penv_data %p\n", args_len, penv_data );
     tracer.TraceBinaryData( (uint8_t *) ( memory.data() + arg_data_offset ), g_arg_data_commit + 0x20, 4 ); // +20 to inspect for bugs
@@ -8722,44 +8921,47 @@ static bool load_image( const char * pimage, const char * app_args )
      // Workaround: set the TZ environment variable.
 
 #ifdef _WIN32
-    DYNAMIC_TIME_ZONE_INFORMATION tzi = {0};
-    DWORD dw = GetDynamicTimeZoneInformation( &tzi );
-    if ( TIME_ZONE_ID_INVALID != dw )
+    if ( g_addTimeZoneToEnv )
     {
-        char acName[ 32 ] = {0};
-        if ( TIME_ZONE_ID_STANDARD == dw )
-            wcstombs( acName, tzi.StandardName, sizeof( acName ) );
-        else if ( TIME_ZONE_ID_DAYLIGHT == dw )
-            wcstombs( acName, tzi.DaylightName, sizeof( acName ) );
-        else if ( TIME_ZONE_ID_UNKNOWN == dw )
-            strcpy( acName, "local" );
-
-        if ( 0 != acName[ 0 ] )
+        DYNAMIC_TIME_ZONE_INFORMATION tzi = {0};
+        DWORD dw = GetDynamicTimeZoneInformation( &tzi );
+        if ( TIME_ZONE_ID_INVALID != dw )
         {
-            char * ptz_data = penv_data + 1 + strlen( penv_data );
-            env_tz_address = ( ptz_data - (char *) memory.data() ) + g_base_address;
-            strcpy( ptz_data, "TZ=" );
-
-            // libc doesn't like spaces in spite of the doc saying it's OK:
-            // https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_node/libc_431.html
-
-            remove_spaces( acName );
-            strcat( (char *) ptz_data, acName );
-
-            if ( tzi.Bias >= 0 )
-                strcat( (char *) ptz_data, "+" );
-            itoa( tzi.Bias / 60, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
-            int minutes = abs( tzi.Bias % 60 );
-            if ( 0 != minutes )
+            char acName[ 32 ] = {0};
+            if ( TIME_ZONE_ID_STANDARD == dw )
+                wcstombs( acName, tzi.StandardName, sizeof( acName ) );
+            else if ( TIME_ZONE_ID_DAYLIGHT == dw )
+                wcstombs( acName, tzi.DaylightName, sizeof( acName ) );
+            else if ( TIME_ZONE_ID_UNKNOWN == dw )
+                strcpy( acName, "local" );
+    
+            if ( 0 != acName[ 0 ] )
             {
-                strcat( ptz_data, ":" );
-                itoa( minutes, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
+                char * ptz_data = penv_data + 1 + strlen( penv_data );
+                env_tz_address = ( ptz_data - (char *) memory.data() ) + g_base_address;
+                strcpy( ptz_data, "TZ=" );
+    
+                // libc doesn't like spaces in spite of the doc saying it's OK:
+                // https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_node/libc_431.html
+    
+                remove_spaces( acName );
+                strcat( (char *) ptz_data, acName );
+    
+                if ( tzi.Bias >= 0 )
+                    strcat( (char *) ptz_data, "+" );
+                itoa( tzi.Bias / 60, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
+                int minutes = abs( tzi.Bias % 60 );
+                if ( 0 != minutes )
+                {
+                    strcat( ptz_data, ":" );
+                    itoa( minutes, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
+                }
+                tracer.Trace( "ptz_data: '%s'\n", ptz_data );
+                env_count++;
             }
-            tracer.Trace( "ptz_data: '%s'\n", ptz_data );
-            env_count++;
         }
     }
-#endif
+#endif //_WIN32
 
     tracer.Trace( "args_len %d, penv_data %p\n", args_len, penv_data );
     tracer.TraceBinaryData( (uint8_t *) ( memory.data() + arg_data_offset ), g_arg_data_commit + 0x20, 4 ); // +20 to inspect for bugs
@@ -9361,6 +9563,8 @@ int main( int argc, char * argv[] )
                 }
                 else if ( 'v' == ca )
                     verboseElfInfo = true;
+                else if ( 'z' == ca )
+                    g_addTimeZoneToEnv = false;
                 else
                     usage( "invalid argument specified" );
             }

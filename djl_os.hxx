@@ -104,7 +104,7 @@ extern "C" int nanosleep( const struct timespec * duration, struct timespec * re
 #endif
     } //set_process_affinity
 
-    template < typename T, size_t N > size_t _countof( T ( & arr )[ N ] ) { return std::extent< T[ N ] >::value; }    
+    template < typename T, size_t N > size_t _countof( T ( & arr )[ N ] ) { return std::extent< T[ N ] >::value; }
     #define _stricmp strcasecmp
     #define MAX_PATH 1024
 
@@ -350,17 +350,17 @@ inline char printable( uint8_t x )
     inline uint64_t flip_endian64( uint64_t x )
     {
         return ( ( x & 0xffull ) << 56 ) | ( ( x & 0xff00ull ) << 40 ) | ( ( x & 0xff0000ull ) << 24 ) | ( ( x & 0xff000000ull ) << 8 ) |
-               ( ( x & 0xff00000000ull ) >> 8 ) | ( ( x & 0xff0000000000ull ) >> 24 ) | ( ( x & 0xff000000000000ull ) >> 40 ) | ( ( x & 0xff00000000000000ull ) >> 56 );
+               ( ( x & 0xff00000000ull ) >> 8 ) | ( ( x & 0xff0000000000ull ) >> 24 ) | ( ( x & 0xff000000000000ull ) >> 40 ) | ( x >> 56 );
     } //flip_endian64
 
     inline uint32_t flip_endian32( uint32_t x )
     {
-        return ( ( x & 0xff ) << 24 ) | ( ( x & 0xff00) << 8 ) | ( ( x & 0xff0000) >> 8 ) | ( ( x & 0xff000000 ) >> 24 );
+        return ( ( x & 0xff ) << 24 ) | ( ( x & 0xff00) << 8 ) | ( ( x & 0xff0000) >> 8 ) | ( x >> 24 );
     } //flip_endian32
 
     inline uint16_t flip_endian16( uint16_t x )
     {
-        return ( ( ( x & 0xff00 ) >> 8 ) | ( ( x & 0xff ) << 8 ) );
+        return ( ( x >> 8 ) | ( ( x & 0xff ) << 8 ) );
     } //flip_endian16
 
 #endif

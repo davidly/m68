@@ -31,6 +31,7 @@
 #define emulator_sys_set_thread_area    0x2010 // exists for x32 and some other platforms
 #define emulator_sys_get_thread_area    0x2011 // exists for x32 and some other platforms
 #define emulator_sys_ugetrlimit         0x2012 // exists for x32 and some other platforms
+#define emulator_sys_stat64             0x2013 // exists for x32, used by open watcom, not gnu
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -577,6 +578,81 @@ struct statx_sparc_linux_syscall32
         stx_ctime.swap_endianness();
     }
 };
+
+#pragma pack( push, 4 )
+struct linux_syscall_x32_stat64 {
+    uint64_t          st_dev;    /* Device ID (64-bit) */
+    unsigned char     __pad0[4];
+    uint32_t          __st_ino;  /* 32-bit inode number */
+    uint32_t          st_mode;   /* File mode */
+    uint32_t          st_nlink;  /* Link count */
+    uint32_t          st_uid;    /* User ID (32-bit) */
+    uint32_t          st_gid;    /* Group ID (32-bit) */
+    uint64_t          st_rdev;   /* Device ID (if special) */
+    unsigned char     __pad3[4];
+    int64_t           st_size;   /* Total size, in bytes (64-bit) */
+    uint32_t          st_blksize;/* Block size for I/O */
+    uint64_t          st_blocks; /* Number of 512B blocks (64-bit) */
+    timespec_syscall_x32 st_atim;
+    timespec_syscall_x32 st_mtim;
+    timespec_syscall_x32 st_ctim;
+    uint64_t             st_ino;    /* 64-bit inode number */
+    void swap_endianness()
+    {
+        st_dev = swap_endian64( st_dev );
+        __st_ino = swap_endian32( __st_ino );
+        st_mode = swap_endian32( st_mode );
+        st_nlink = swap_endian32( st_nlink );
+        st_uid = swap_endian32( st_uid );
+        st_gid = swap_endian32( st_gid );
+        st_rdev = swap_endian64( st_rdev );
+        st_size = swap_endian64( st_size );
+        st_blksize = swap_endian32( st_blksize );
+        st_blocks = swap_endian64( st_blocks );
+        st_atim.swap_endianness();
+        st_mtim.swap_endianness();
+        st_ctim.swap_endianness();
+        st_ino = swap_endian64( st_ino );
+    }
+};
+#pragma pack(pop)
+
+#pragma pack( push, 4 )
+struct linux_syscall_x32_stat {
+    uint32_t  st_dev;    /* Device ID */
+    uint32_t  st_ino;    /* Inode number */
+    uint16_t  st_mode;   /* File mode */
+    uint16_t  st_nlink;  /* Links */
+    uint16_t  st_uid;    /* Owner UID */
+    uint16_t  st_gid;    /* Group GID */
+    uint32_t  st_rdev;   /* Device ID (if special file) */
+    uint32_t  st_size;   /* Total size in bytes */
+    uint32_t  st_blksize;/* Block size for I/O */
+    uint32_t  st_blocks; /* Number of blocks allocated */
+    timespec_syscall_x32 st_atim;
+    timespec_syscall_x32 st_mtim;
+    timespec_syscall_x32 st_ctim;
+    uint32_t  __unused4;
+    uint32_t  __unused5;
+    void swap_endianness()
+    {
+        st_dev = swap_endian32( st_dev );
+        st_ino = swap_endian32( st_ino );
+        st_mode = swap_endian16( st_mode );
+        st_nlink = swap_endian16( st_nlink );
+        st_uid = swap_endian16( st_uid );
+        st_gid = swap_endian16( st_gid );
+        st_rdev = swap_endian32( st_rdev );
+        st_size = swap_endian32( st_size );
+        st_blksize = swap_endian32( st_blksize );
+        st_blocks = swap_endian32( st_blocks );
+        st_atim.swap_endianness();
+        st_mtim.swap_endianness();
+        st_ctim.swap_endianness();
+    }
+};
+
+#pragma pack(pop)
 
 #pragma warning(disable: 4200) // 0-sized array
 struct linux_dirent64_syscall
