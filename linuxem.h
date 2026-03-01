@@ -32,6 +32,7 @@
 #define emulator_sys_get_thread_area    0x2011 // exists for x32 and some other platforms
 #define emulator_sys_ugetrlimit         0x2012 // exists for x32 and some other platforms
 #define emulator_sys_stat64             0x2013 // exists for x32, used by open watcom, not gnu
+#define emulator_sys__newselect         0x2014 // exists on x86 as 142 and sparcv8 as 230
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?

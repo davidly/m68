@@ -18,6 +18,12 @@ using namespace std::chrono;
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem );
 extern "C" int clock_gettime( clockid_t id, struct timespec * res );
 
+uint64_t ns_to_ms( uint64_t ns )
+{
+    const uint64_t ms_per_ns = 1000000;
+    return ( ns + ( ms_per_ns / 2 ) ) / ms_per_ns;
+} //ns_to_ms
+
 int main( int argc, char * argv[] )
 {
     high_resolution_clock::time_point tStart = high_resolution_clock::now();
@@ -137,13 +143,19 @@ int main( int argc, char * argv[] )
         exit( 1 );
     }
 
-    uint32_t sts_sleep_duration = (uint32_t) ( ( ( sts_sleep_end.tv_sec - sts_start.tv_sec ) * 1000 ) + ( ( sts_sleep_end.tv_nsec - sts_start.tv_nsec ) / 1000000 ) );
-    uint32_t sts_duration = (uint32_t) ( ( ( sts_end.tv_sec - sts_start.tv_sec ) * 1000 ) + ( ( sts_end.tv_nsec - sts_start.tv_nsec ) / 1000000 ) );
-    if ( sts_sleep_duration < 1480 || sts_sleep_duration > 1530 || sts_duration < 2480 || sts_duration > 2540 )
+    uint64_t cgt_start = ( ( (uint64_t) sts_start.tv_sec * 1000 ) + ns_to_ms( sts_start.tv_nsec ) );
+    uint64_t cgt_sleep_end = ( ( (uint64_t) sts_sleep_end.tv_sec * 1000 ) + ns_to_ms( sts_sleep_end.tv_nsec ) );
+    uint64_t cgt_end = ( ( (uint64_t) sts_end.tv_sec * 1000 ) + ns_to_ms( sts_end.tv_nsec ) );        
+
+    uint32_t cgt_sleep_duration = (uint32_t) ( cgt_sleep_end - cgt_start );
+    uint32_t cgt_duration = (uint32_t) ( cgt_end - cgt_start );
+
+    if ( cgt_sleep_duration < 1480 || cgt_sleep_duration > 1530 || cgt_duration < 2480 || cgt_duration > 2540 )
     {
-        printf( "millisecond sleep duration using clock_gettime (should be about 1500 ms: %lu\n", sts_sleep_duration );
-        printf( "millisecond duration using clock_gettime (should be about 2500 ms: %lu\n", sts_duration );
+        printf( "millisecond sleep duration using clock_gettime (should be about 1500 ms): %lu\n", cgt_sleep_duration );
+        printf( "millisecond duration using clock_gettime (should be about 2500 ms): %lu\n", cgt_duration );
     }
+
 
     printf( "sleepy time ended with great success\n" );
     return 0;

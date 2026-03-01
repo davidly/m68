@@ -38,7 +38,7 @@
         SetProcessAffinityMask( (HANDLE) -1, processAffinityMask );
     }
 
-#elif defined( WATCOM )
+#elif defined( WATCOMDOS ) || defined( WATCOMLINUX )
 
     #include <io.h>
     #define MAX_PATH 255
@@ -194,8 +194,10 @@ inline const char * target_platform()
         return "amd64";
     #elif defined( _M_ARM64 )     // msft on Windows
         return "arm64";
-    #elif defined( WATCOM )       // WATCOM for 8086
+    #elif defined( WATCOMDOS )    // WATCOM for 8086
         return "8086";
+    #elif defined( WATCOMLINUX )  // WATCOM for i386
+        return "i386";
     #elif defined( _M_IX86 )      // msft on Windows 32-bit
         return "x86";
     #elif defined( __ARM_32BIT_STATE ) // ARM32 on Raspberry PI (and more)
@@ -229,8 +231,10 @@ inline const char * compiler_used()
         return acver;
     #elif defined( __clang__ )
         return "clang";
-    #elif defined( WATCOM )
-        return "watcom";
+    #elif defined( WATCOMDOS )
+        return "watcom 8086";
+    #elif defined( WATCOMLINUX )
+        return "watcom i386";
     #else
         return "unknown";
     #endif
@@ -244,7 +248,11 @@ inline const char * build_platform()
         return "linux";
     #elif defined( _WIN32 )
         return "windows";
-    #elif defined( WATCOM )
+    #elif defined( __LINUX__ ) // watcom does this
+        return "linux";
+    #elif defined( __UNIX__ ) // watcom does this
+        return "unix";
+    #elif defined( __WINDOWS__ ) || defined( __NT__ ) // watcom does this
         return "windows";
     #else
         return "unknown";
@@ -263,7 +271,7 @@ inline const char * build_string()
 #if defined( __GNUC__ ) || defined( __clang__ )
     #define assume_false return( 0 )   // clearly terrible, but this code will never execute. ever.
     #define assume_false_return return // clearly terrible, but this code will never execute. ever.
-#elif defined( WATCOM )
+#elif defined( WATCOMDOS ) || defined( WATCOMLINUX )
     #define assume_false return( 0 )   // clearly terrible, but this code will never execute. ever.
     #define __assume( x )
 #else

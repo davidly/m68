@@ -1847,6 +1847,7 @@ static const SysCall syscalls[] =
     { "emulator_sys_get_thread_area", emulator_sys_get_thread_area },
     { "emulator_sys_ugetrlimit", emulator_sys_ugetrlimit },
     { "emulator_sys_stat64", emulator_sys_stat64 },
+    { "emulator_sys__newselect", emulator_sys__newselect }, // exists on x86 as 142 and sparcv8 as 230
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -2092,6 +2093,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 125, SYS_mprotect },
     { 140, emulator_sys__llseek },
     { 141, emulator_sys_getdents },
+    { 142, emulator_sys__newselect },
     { 148, SYS_fdatasync },
     { 163, SYS_mremap },
     { 174, SYS_sigaction },
@@ -2112,6 +2114,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 244, emulator_sys_set_thread_area },
     { 252, SYS_exit_group },
     { 258, SYS_set_tid_address },
+    { 265, SYS_clock_gettime },
     { 267, SYS_clock_nanosleep },
     { 270, SYS_tgkill },
     { 295, SYS_openat },
@@ -2125,7 +2128,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 383, SYS_statx },
     { 384, emulator_sys_x32_x64_arch_prctl },
     { 386, SYS_rseq },
-    { 403, SYS_clock_gettime },
+    { 403, SYS_clock_gettime64 },
     { 0x2002, emulator_sys_trace_instructions }, // same value
 };
 
@@ -2164,6 +2167,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 95, SYS_fsync },
     { 102, SYS_sigaction },
     { 103, SYS_rt_sigprocmask },
+    { 113, SYS_clock_gettime },
     { 117, SYS_getrusage },
     { 119, SYS_getcwd },
     { 136, SYS_mkdir },
@@ -2174,6 +2178,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 189, SYS_uname },
     { 211, SYS_tgkill },
     { 214, SYS_sysinfo },
+    { 230, emulator_sys__newselect },
     { 236, emulator_sys__llseek },
     { 250, SYS_mremap },
     { 253, SYS_fdatasync },
@@ -2185,7 +2190,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 345, SYS_renameat2 },
     { 347, SYS_getrandom },
     { 360, SYS_statx },
-    { 403, SYS_clock_gettime }, // same value for both
+    { 403, SYS_clock_gettime64 },
     { 407, SYS_clock_nanosleep }, // really, SYS_clock_nanosleep_time64, but here that's redundant
     { 413, SYS_pselect6 }, // SYS_pselect6_time64, which is the same here
     { 0x2002, emulator_sys_trace_instructions }, // same value
@@ -2285,12 +2290,12 @@ void emulator_invoke_svc( CPUClass & cpu )
 
     if ( tracer.IsEnabled() )
 #if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
-        tracer.Trace( "syscall %s %x = %d, arg0 %x, arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x\n",
+        tracer.Trace( "syscall %s %#x = %d, arg0 %x, arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x\n",
                       lookup_syscall( syscall_id ), syscall_id, syscall_id,
                       ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ), ACCESS_REG( REG_ARG3 ),
                       ACCESS_REG( REG_ARG4 ), ACCESS_REG( REG_ARG5 ) );
 #else
-        tracer.Trace( "syscall %s %llx = %lld, arg0 %llx, arg1 %llx, arg2 %llx, arg3 %llx, arg4 %llx, arg5 %llx\n",
+        tracer.Trace( "syscall %s %#llx = %lld, arg0 %llx, arg1 %llx, arg2 %llx, arg3 %llx, arg4 %llx, arg5 %llx\n",
                       lookup_syscall( (uint32_t) syscall_id ), syscall_id, syscall_id,
                       ACCESS_REG( REG_ARG0 ), ACCESS_REG( REG_ARG1 ), ACCESS_REG( REG_ARG2 ), ACCESS_REG( REG_ARG3 ),
                       ACCESS_REG( REG_ARG4 ), ACCESS_REG( REG_ARG5 ) );
@@ -3939,16 +3944,53 @@ void emulator_invoke_svc( CPUClass & cpu )
             struct timespec_syscall local_ts = { 0 };
             int result = msc_clock_gettime( cid, & local_ts );
 #else
-            struct timespec local_ts; // this varies in size from platform to platform
+            struct timespec local_ts = { 0 }; // this varies in size from platform to platform
+            int result = clock_gettime( cid, & local_ts );
+#endif
+
+#if defined( X32OS ) || defined( SPARCOS )
+            struct timespec_syscall_x32 * ptimespec = (struct timespec_syscall_x32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            ptimespec->tv_sec = (uint32_t) local_ts.tv_sec;
+            ptimespec->tv_nsec = (uint32_t) local_ts.tv_nsec;
+#else
+            struct timespec_syscall * ptimespec = (struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            ptimespec->tv_sec = local_ts.tv_sec;
+            ptimespec->tv_nsec = local_ts.tv_nsec;
+#endif
+
+            ptimespec->swap_endianness();
+
+            tracer.Trace( "  tv_sec %llu, tv_nsec %llu\n", ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
+            update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_clock_gettime64: // called by more recent builds of 32-bit linux. 64-bit linux calls sys_clock_gettime and assumes 64-bit values
+        {
+            clockid_t cid = (clockid_t) ACCESS_REG( REG_ARG0 );
+            #ifdef __APPLE__ // Linux vs MacOS
+                if ( 1 == cid )
+                    cid = CLOCK_REALTIME;
+                else if ( 5 == cid )
+                    cid = CLOCK_REALTIME;
+            #endif
+
+#ifdef _WIN32
+            struct timespec_syscall local_ts = { 0 };
+            int result = msc_clock_gettime( cid, & local_ts );
+#else
+            struct timespec local_ts = { 0 }; // this varies in size from platform to platform
             int result = clock_gettime( cid, & local_ts );
 #endif
 
             struct timespec_syscall * ptimespec = (struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             ptimespec->tv_sec = local_ts.tv_sec;
             ptimespec->tv_nsec = local_ts.tv_nsec;
-            ptimespec->swap_endianness();
 
-            tracer.Trace( "  tv_sec %llx, tv_nsec %llx\n", ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
+            tracer.Trace( "  before swap: tv_sec %llu, tv_nsec %llu\n", (uint64_t) ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
+            tracer.Trace( "  before swap: tv_sec %#llx, tv_nsec %#llx\n", (uint64_t) ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
+            ptimespec->swap_endianness();
+            tracer.Trace( "  tv_sec %llu, tv_nsec %llu\n", (uint64_t) ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
+            tracer.Trace( "  tv_sec %#llx, tv_nsec %#llx\n", (uint64_t) ptimespec->tv_sec, (uint64_t) ptimespec->tv_nsec );
             update_result_errno( cpu, result );
             break;
         }
@@ -4620,6 +4662,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             ACCESS_REG( REG_RESULT ) = 0;
             break;
         }
+        case emulator_sys__newselect:
         case SYS_pselect6:
         {
             int nfds = (int) ACCESS_REG( REG_ARG0 );
@@ -5940,7 +5983,7 @@ struct FCBCPM68K // file control block for cp/m
         cr = (uint8_t) ( ( offset % ( (uint32_t) 16 * 1024 ) ) / (uint32_t) 128 );
         ex = (uint8_t) ( ( offset % ( (uint32_t) 512 * 1024 ) ) / ( (uint32_t) 16 * 1024 ) );
         s2 = (uint8_t) ( offset / ( (uint32_t) 512 * 1024 ) );
-        #ifdef WATCOM
+        #ifdef WATCOMDOS
         tracer.Trace( "  new offset: %u, s2 %u, ex %u, cr %u\n", (uint16_t) offset, (uint16_t) s2, (uint16_t) ex, (uint16_t) cr );
         #else
         tracer.Trace( "  new offset: %u, s2 %u, ex %u, cr %u\n", offset, s2, ex, cr );
@@ -6858,7 +6901,7 @@ uint8_t map_input( uint8_t input )
 {
     uint8_t output = input;
 
-#if defined(_MSC_VER) || defined(WATCOM)
+#if defined(_MSC_VER) || defined(WATCOMDOS)
     // On Windows, input is  0xe0 for standard arrow keys and 0 for keypad equivalents
     // On DOS/WATCOM, input is 0 for both cases
 
@@ -9505,7 +9548,7 @@ int main( int argc, char * argv[] )
             char c = *parg;
 
             if ( ( 0 == pcApp ) && ( '-' == c
-#if defined( WATCOM ) || defined( _WIN32 )
+#if defined( WATCOMDOS ) || defined( _WIN32 )
                 || '/' == c
 #endif
                ) )
