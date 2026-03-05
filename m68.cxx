@@ -67,6 +67,7 @@
 
 #else
     #include <unistd.h>
+    #include <sys/wait.h>
 
     #ifndef OLDGCC      // the several-years-old Gnu C compilers for the RISC-V development boards
         #include <termios.h>
@@ -90,6 +91,9 @@
         #ifdef __mc68000__
             DIR * fdopendir( int fd );
             extern "C" int lstat( const char * path, struct stat * statbuf );
+            extern "C" int pipe2( int pipefd[2], int flags );
+            extern "C" int wait4( pid_t pid, int * wstatus, int options, struct rusage * ru );
+            extern "C" char * realpath( const char *__restrict path, char *__restrict resolved_path );
         #endif
     #endif
 
@@ -120,7 +124,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ]
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PC cpu.pc
+    #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL 8
     #define REG_RESULT 0
     #define REG_ARG0 0
@@ -144,7 +148,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ]
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PC cpu.pc
+    #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL RiscV::a7
     #define REG_RESULT RiscV::a0
     #define REG_ARG0 RiscV::a0
@@ -168,7 +172,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.dregs[ x ].l
     #define CPU_IS_LITTLE_ENDIAN false
 
-    #define REG_PC cpu.pc
+    #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL 0
     #define REG_RESULT 0
     #define REG_ARG0 1
@@ -192,7 +196,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.Sparc_reg( x )
     #define CPU_IS_LITTLE_ENDIAN false
 
-    #define REG_PC cpu.pc
+    #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL 1 // g1
     #define REG_RESULT 8  // o0
     #define REG_ARG0 8    // o0..o5
@@ -216,7 +220,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ].q
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PC cpu.rip.q
+    #define REG_PROGRAM_COUNTER cpu.rip.q
     #define REG_SYSCALL x64::rax
     #define REG_RESULT x64::rax
     #define REG_ARG0 x64::rdi
@@ -240,7 +244,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ].d
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PC cpu.rip.d
+    #define REG_PROGRAM_COUNTER cpu.rip.d
     #define REG_SYSCALL x64::rax
     #define REG_RESULT x64::rax
     #define REG_ARG0 x64::rbx
@@ -282,6 +286,8 @@ REG_TYPE g_top_of_stack = 0;                   // argc, argv, penv, aux records 
 CMMap g_mmap;                                  // for mmap and munmap system calls
 bool g_addCRBeforeLF = true;                   // on Windows, a command-line argument can make this false so the emulated app acts like Linux
 bool g_addTimeZoneToEnv = true;                // on Windows, a command-line argument to control if the TZ is added to the environment
+char * g_penvironment = 0;                     // 0 or initial environment variables from the command-line
+char g_acLoadedApp[ EMULATOR_MAX_PATH ];       // path of the app being emulated
 
 // fake descriptors.
 // /etc/timezone is not implemented, so apps running in the emulator on Windows assume UTC
@@ -844,8 +850,8 @@ static void usage( char const * perror = 0 )
         printf( "error: %s\n", perror );
 
     printf( "usage: %s <%s arguments> <executable> <app arguments>\n", APP_NAME, APP_NAME );
-    printf( "   arguments:    -e     just show information about the elf executable; don't actually run it\n" );
 #ifdef RVOS
+    printf( "  arguments:     -e     environment. semicolon-separated list of name=value pairs\n" );
     printf( "                 -g     (internal) generate rcvtable.txt then exit\n" );
 #endif
     printf( "                 -h:X   # of meg for the heap (brk space). 0..1024 are valid. default is 40\n" );
@@ -854,6 +860,7 @@ static void usage( char const * perror = 0 )
     printf( "                 -l     don't let Windows translate LF (10) to CR (13) / LF (10)\n" );
 #endif
     printf( "                 -m:X   # of meg for mmap space. 0..1024 are valid. default is 40.\n" );
+    printf( "                 -n     just show information about the elf executable; don't actually run it\n" );
     printf( "                 -p     shows performance information at app exit\n" );
     printf( "                 -s:X   # of KB for stack space. 1..1024 are valid. default is 128.\n" );
     printf( "                 -t     enable debug tracing to %s\n", LOGFILE_NAME );
@@ -1768,6 +1775,7 @@ static const SysCall syscalls[] =
     { "SYS_chdir", SYS_chdir },
     { "SYS_openat", SYS_openat },
     { "SYS_close", SYS_close },
+    { "SYS_pipe2", SYS_pipe2 },
     { "SYS_getdents64", SYS_getdents64 },
     { "SYS_lseek", SYS_lseek },
     { "SYS_read", SYS_read },
@@ -1807,6 +1815,7 @@ static const SysCall syscalls[] =
     { "SYS_getegid", SYS_getegid },
     { "SYS_gettid", SYS_gettid },
     { "SYS_sysinfo", SYS_sysinfo },
+    { "SYS_execve", SYS_execve },
     { "SYS_brk", SYS_brk },
     { "SYS_munmap", SYS_munmap },
     { "SYS_mremap", SYS_mremap },
@@ -1815,6 +1824,7 @@ static const SysCall syscalls[] =
     { "SYS_mprotect", SYS_mprotect },
     { "SYS_madvise", SYS_madvise },
     { "SYS_riscv_flush_icache", SYS_riscv_flush_icache },
+    { "SYS_wait4", SYS_wait4 },
     { "SYS_prlimit64", SYS_prlimit64 },
     { "SYS_renameat2", SYS_renameat2 },
     { "SYS_getrandom", SYS_getrandom },
@@ -1848,6 +1858,9 @@ static const SysCall syscalls[] =
     { "emulator_sys_ugetrlimit", emulator_sys_ugetrlimit },
     { "emulator_sys_stat64", emulator_sys_stat64 },
     { "emulator_sys__newselect", emulator_sys__newselect }, // exists on x86 as 142 and sparcv8 as 230
+    { "emulator_sys_pipe", emulator_sys_pipe }, // exists for x86 and older ISAs as 42
+    { "emulator_sys_fork", emulator_sys_fork }, // exists for x86 and older ISAs as 2
+    { "emulator_sys_signal", emulator_sys_signal }, // exists for x86 and older ISAs as 48
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -2001,6 +2014,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 16, SYS_ioctl },
     { 20, SYS_writev },
     { 21, emulator_sys_access },
+    { 22, emulator_sys_pipe },
     { 25, SYS_mremap },
     { 39, SYS_getpid },
     { 60, SYS_exit },
@@ -2042,6 +2056,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 267, SYS_readlinkat },
     { 270, SYS_pselect6 },
     { 273, SYS_set_robust_list },
+    { 292, SYS_pipe2 },
     { 302, SYS_prlimit64 },
     { 318, SYS_getrandom },
     { 334, SYS_rseq },
@@ -2064,11 +2079,13 @@ uint16_t MapX64ToRiscV( REG_TYPE c )
 static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html
 {
     { 1, SYS_exit },
+    { 2, emulator_sys_fork },
     { 3, SYS_read },
     { 4, SYS_write },
     { 5, SYS_open },
     { 6, SYS_close },
     { 10, SYS_unlink },
+    { 11, SYS_execve },
     { 12, SYS_chdir },
     { 13, emulator_sys_time },
     { 19, SYS_lseek },
@@ -2077,8 +2094,10 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 38, emulator_sys_rename },
     { 39, SYS_mkdir },
     { 40, SYS_rmdir },
+    { 42, emulator_sys_pipe },
     { 43, SYS_times },
     { 45, SYS_brk },
+    { 48, emulator_sys_signal },
     { 54, SYS_ioctl },
     { 55, SYS_fcntl },
     { 77, SYS_getrusage },
@@ -2087,6 +2106,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 91, SYS_munmap },
     { 106, SYS_stat },
     { 108, SYS_newfstat }, // on x86, it's just SYS_fstat
+    { 114, SYS_wait4 },
     { 116, SYS_sysinfo },
     { 118, SYS_fsync },
     { 122, SYS_uname },
@@ -2124,6 +2144,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 305, SYS_readlinkat },
     { 308, SYS_pselect6 },
     { 311, SYS_set_robust_list },
+    { 331, SYS_pipe2 },
     { 355, SYS_getrandom },
     { 383, SYS_statx },
     { 384, emulator_sys_x32_x64_arch_prctl },
@@ -2158,6 +2179,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 17, SYS_brk },
     { 19, SYS_lseek },
     { 20, SYS_getpid },
+    { 42, emulator_sys_pipe },
     { 43, SYS_times },
     { 54, SYS_ioctl },
     { 58, emulator_sys_readlink },
@@ -2187,6 +2209,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 290, SYS_unlinkat },
     { 291, SYS_renameat },
     { 294, SYS_readlinkat },
+    { 321, SYS_pipe2 },
     { 345, SYS_renameat2 },
     { 347, SYS_getrandom },
     { 360, SYS_statx },
@@ -2486,13 +2509,26 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             int fd = (int) ACCESS_REG( REG_ARG0 );
             int op = (int) ACCESS_REG( REG_ARG1 );
+            int result = -1;
 
             if ( 1 == op ) // F_GETFD
-                ACCESS_REG( REG_RESULT ) = 1; // FD_CLOEXEC
+                result = 1; // FD_CLOEXEC
+            else if ( 2 == op ) // F_SETFD
+            {
+#ifdef _WIN32
+                int flags = (int) ACCESS_REG( REG_ARG2 );
+                result = 0; // lie for now
+#else
+                int flags = (int) ACCESS_REG( REG_ARG2 );
+                result = 0; // lie for now
+#endif
+            }
             else if ( 3 == op )
-                ACCESS_REG( REG_RESULT ) = 2; // O_RDWR
+                result = 2; // O_RDWR
             else
                 tracer.Trace( "unhandled SYS_fcntl operation %d\n", op );
+
+            update_result_errno( cpu, result );
             break;
         }
         case SYS_clock_nanosleep:
@@ -2691,14 +2727,109 @@ void emulator_invoke_svc( CPUClass & cpu )
             ACCESS_REG( REG_RESULT ) = result;
             break;
         }
+        case emulator_sys_signal:
+        {
+            // do nothing assuming happy path
+            update_result_errno( cpu, 0 );
+            break;
+        }
+        case SYS_wait4:
+        {
+            REG_TYPE pid = ACCESS_REG( REG_ARG0 );
+            int * wstatus = (int *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            int options = (int) ACCESS_REG( REG_ARG2 );
+            struct rusage * rusage = (struct rusage *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
+
+#ifdef _WIN32
+            assert( false );
+            int result = -1;
+#else
+            int result = wait4( pid, wstatus, options, rusage );
+#endif
+            update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_execve:
+        {
+            char * path = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            char ** argv = (char **) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            char ** envp = (char **) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+
+            tracer.Trace( "    path: '%s'\n", path );
+            for ( int i = 0; argv[ i ]; i++ )
+                printf( "    argv[ %d ] = '%s'\n", i, argv[ i ] );
+            for ( int i = 0; envp[ i ]; i++ )
+                printf( "    envp[ %d ] = '%s'\n", i, envp[ i ] );
+
+            // don't execve(). instead, load the binary in this process and start executing at _start on return from this syscall
+            // not implemented yet.
+
+#ifdef _WIN32
+            assert( false );
+            int result = -1;
+#else
+            assert( false );
+            int result = -1;
+            // int result = execve( path, argv, envp );
+#endif
+            update_result_errno( cpu, result );
+            break;
+        }
+        case emulator_sys_fork:
+        {
+#ifdef _WIN32
+            assert( false );
+            // to do: write all of RAM and register values for the emulated app to disk and create new flag for the emulator to load and run one of those dumps.
+            int result = -1;
+#else
+            int result = fork();
+            tracer.Trace( "  result of fork: %#x\n", result );
+#endif            
+            update_result_errno( cpu, result );
+            break;
+        }
+        case emulator_sys_pipe:
+        case SYS_pipe2:
+        {
+            int * pipefd = (int *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            int flags = ( SYS_pipe2 == syscall_id ) ? (int) ACCESS_REG( REG_ARG1 ) : 0;
+#ifdef _WIN32
+            assert( false );
+            int result = -1;
+#else
+            int result = pipe2( pipefd, flags );
+            if ( -1 != result )
+            {
+                if ( 4 == sizeof( int ) )
+                {
+                    pipefd[ 0 ] = swap_endian32( pipefd[ 0 ] );
+                    pipefd[ 1 ] = swap_endian32( pipefd[ 1 ] );
+                }
+                else
+                {
+                    pipefd[ 0 ] = swap_endian64( pipefd[ 0 ] );
+                    pipefd[ 1 ] = swap_endian64( pipefd[ 1 ] );
+                }
+            }
+#endif //_WIN32
+            update_result_errno( cpu, result );
+            break;
+        }
         case SYS_lseek:
         {
             tracer.Trace( "  syscall command SYS_lseek\n" );
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
             int offset = (int) ACCESS_REG( REG_ARG1 );
             int origin = (int) ACCESS_REG( REG_ARG2 );
+            long result = -1;
 
-            long result = lseek( descriptor, offset, origin );
+            if ( descriptor < 0 ) // Windows AVs in lseek in this case, and the Open Watcom 2 compiler C runtime does this after failing to open /etc/localtime
+                errno = 9; // bad file descriptor
+            else
+            {
+                result = lseek( descriptor, offset, origin );
+                tracer.Trace( "  result of lseek: %#lx, error %d\n", result, errno );
+            }
             update_result_errno( cpu, result );
             break;
         }
@@ -4718,6 +4849,35 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "  readlinkat pathname %p == '%s', buf %p, bufsiz %zd, dirfd %d\n", pathname, pathname, buf, bufsiz, dirfd );
             int result = -1;
 
+            if ( !strcmp( pathname, "/proc/self/exe" ) )
+            {
+                char acResolved[ EMULATOR_MAX_PATH ];
+#if defined( _WIN32 )
+                if ( 0 != _fullpath( acResolved, g_acLoadedApp, sizeof( acResolved ) ) )
+                {
+                    tracer.Trace( "    resolved path = '%s'\n", acResolved );
+                    int len = (int) strlen( acResolved );
+                    assert( ':' == acResolved[ 1 ] );
+                    len -= 2;
+                    memmove( acResolved, acResolved + 2, len + 1 );
+                    backslash_to_slash( acResolved );
+                    tracer.Trace( "    final resolved path = '%s'\n", acResolved );
+#else
+                if ( 0 != realpath( g_acLoadedApp, acResolved ) )
+                {
+                    int len = (int) strlen( acResolved );
+#endif
+                    if ( bufsiz >= ( 1 + len ) )
+                    {
+                        strcpy( buf, acResolved );
+                        result = len;
+                    }
+                }
+
+                update_result_errno( cpu, result );
+                break;
+            }
+
 #if defined( _WIN32 )
             errno = EINVAL; // no symbolic links on Windows as far as this emulator is concerned
             result = -1;
@@ -5210,21 +5370,21 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
     uint64_t offset = 0;
 #if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
     uint32_t offset32 = 0;
-    const char * psymbol = emulator_symbol_lookup( REG_PC, offset32 );
+    const char * psymbol = emulator_symbol_lookup( REG_PROGRAM_COUNTER, offset32 );
     offset = offset32;
 #else
-    const char * psymbol = emulator_symbol_lookup( REG_PC, offset );
+    const char * psymbol = emulator_symbol_lookup( REG_PROGRAM_COUNTER, offset );
 #endif
 
     if ( psymbol[ 0 ] )
     {
-        tracer.Trace( "pc: %llx %s + %llx\n", REG_PC, psymbol, offset );
-        printf( "pc: %llx %s + %llx\n", (uint64_t) REG_PC, psymbol, offset );
+        tracer.Trace( "pc: %llx %s + %llx\n", REG_PROGRAM_COUNTER, psymbol, offset );
+        printf( "pc: %llx %s + %llx\n", (uint64_t) REG_PROGRAM_COUNTER, psymbol, offset );
     }
     else
     {
-        tracer.Trace( "pc: %llx\n", REG_PC );
-        printf( "pc: %llx\n", (uint64_t) REG_PC );
+        tracer.Trace( "pc: %llx\n", REG_PROGRAM_COUNTER );
+        printf( "pc: %llx\n", (uint64_t) REG_PROGRAM_COUNTER );
     }
 
     tracer.Trace( "address space %llx to %llx\n", (uint64_t) g_base_address, (uint64_t) g_base_address + memory.size() );
@@ -8251,7 +8411,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     // there's an array of pointers to the args followed by the arg strings at offset arg_data_offset.
 
     const uint32_t max_args = 40;
-    REG_TYPE aargs[ max_args ]; // vm pointers to each arguments
+    REG_TYPE aargs[ max_args ]; // vm pointers to each argument
     char * buffer_args = (char *) ( memory.data() + arg_data_offset );
     size_t image_len = strlen( pimage );
     vector<char> full_command( 2 + image_len + strlen( app_args ) );
@@ -8259,6 +8419,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     backslash_to_slash( full_command.data() );
     full_command[ image_len ] = ' ';
     strcpy( full_command.data() + image_len + 1, app_args );
+
     strcpy( buffer_args, full_command.data() );
     char * pargs = buffer_args;
     REG_TYPE args_len = (REG_TYPE) strlen( buffer_args );
@@ -8285,15 +8446,36 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
             pargs++;
     }
 
+    REG_TYPE aenv[ max_args ]; // vm pointers to each environment variable
     REG_TYPE env_offset = args_len + 1;
     tracer.Trace( "env_offset: %x\n", env_offset );
     char * penv_data = (char *) ( buffer_args + env_offset );
     strcpy( penv_data, "OS=" );
     strcat( penv_data, APP_NAME );
-    REG_TYPE env_os_address = (REG_TYPE) ( penv_data - (char *) memory.data() ) + g_base_address;
-    tracer.Trace( "env_os_address %x\n", env_os_address );
-    REG_TYPE env_count = 1;
-    REG_TYPE env_tz_address = 0;
+    char * penv_cur = penv_data + 1 + strlen( penv_data );
+    REG_TYPE app_env_count = 0;
+    aenv[ app_env_count++ ] = (REG_TYPE) ( penv_data - (char *) memory.data() ) + g_base_address;
+    tracer.Trace( "env_os_address %x\n", aenv[ 0 ] );
+
+    if ( g_penvironment ) // semicolon-separated list of name=value pairs. names like PATH can have colon-separated values
+    {
+        tracer.Trace( "environment variable argument: '%s'\n", g_penvironment );
+        char * pfrom = g_penvironment;
+        while ( *pfrom )
+        {
+            tracer.Trace( "remaining env: %s\n", pfrom );
+            char *psc = strchr( pfrom, ';' );
+            if ( psc )
+                *psc = 0;
+            if ( !strchr( pfrom, '=' ) )
+                usage( "environment variable is malformed; no equal sign" );
+            strcpy( penv_cur, pfrom );
+            size_t len = strlen( penv_cur );
+            aenv[ app_env_count++ ] =  (REG_TYPE) ( penv_cur - (char *) memory.data() ) + g_base_address;
+            penv_cur += len + 1;
+            pfrom += len + ( psc ? 1 : 0 );
+        }
+    }
 
     // The local time zone is found by libc on Linux/MacOS, but not on Windows.
     // Workaround: set the TZ environment variable.
@@ -8315,9 +8497,9 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     
             if ( 0 != acName[ 0 ] )
             {
-                char * ptz_data = penv_data + 1 + strlen( penv_data );
-                env_tz_address = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
-                tracer.Trace( "env_tz_address %x\n", env_tz_address );
+                char * ptz_data = penv_cur;
+                aenv[ app_env_count++ ] = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
+                tracer.Trace( "env_tz_address %x\n", aenv[ app_env_count - 1 ] );
                 strcpy( ptz_data, "TZ=" );
     
                 // libc doesn't like spaces in spite of the doc saying it's OK:
@@ -8336,7 +8518,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
                     itoa( minutes, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
                 }
                 tracer.Trace( "ptz_data: '%s'\n", ptz_data );
-                env_count++;
+                penv_cur += 1 + strlen( ptz_data );
             }
         }
     }
@@ -8368,7 +8550,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     // ensure that after all of this the stack is 16-byte aligned
 
-    if ( 0 == ( 1 & ( app_argc + env_count ) ) )
+    if ( 0 == ( 1 & ( app_argc + app_env_count ) ) )
         pstack--;
 
     pstack -= ( 10 * sizeof( AuxProcessStart32 ) ); // for 10 aux records
@@ -8407,18 +8589,13 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     paux[9].a_un.a_val = 0;
 
     pstack--; // end of environment data is 0
-    pstack--; // move to where the OS environment variable is set OS=RVOS or OS=ARMOS
 
-    if ( 0 != env_tz_address )
+    for ( int ienv = (int) app_env_count - 1; ienv >= 0; ienv-- )
     {
-        *pstack = swap_endian32( env_tz_address );
-        tracer.Trace( "the TZ environment argument is at VM address %lx (orig %lx)\n", swap_endian32( *pstack ), env_tz_address );
         pstack--;
+        *pstack = swap_endian32( aenv[ ienv ] );
+        tracer.Trace( "environment[ %d ] = %#x\n", ienv, aenv[ ienv ] );
     }
-
-    // point to the OS= environment variable location
-    *pstack = swap_endian32( env_os_address ); // (REG_TYPE) ( env_offset + arg_data_offset + g_base_address + max_args * sizeof( REG_TYPE ) );
-    tracer.Trace( "the OS environment argument is at VM address %lx\n", swap_endian32( *pstack ) );
 
     pstack--; // the last argv is 0 to indicate the end
 
@@ -8601,6 +8778,8 @@ static bool load_68000_hex( const char * pimage )
 static bool load_image( const char * pimage, const char * app_args )
 {
     tracer.Trace( "loading image %s\n", pimage );
+
+    strcpy( g_acLoadedApp, pimage );
 
 #ifdef M68
     if ( ends_with( pimage, ".hex" ) ) // Motorola 68000 hex file special-case
@@ -8952,16 +9131,39 @@ static bool load_image( const char * pimage, const char * app_args )
             pargs++;
     }
 
-    uint64_t env_offset = args_len + 1;
+    REG_TYPE aenv[ max_args ]; // vm pointers to each environment variable
+    REG_TYPE env_offset = args_len + 1;
+    tracer.Trace( "env_offset: %x\n", env_offset );
     char * penv_data = (char *) ( buffer_args + env_offset );
     strcpy( penv_data, "OS=" );
     strcat( penv_data, APP_NAME );
-    uint64_t env_os_address = ( penv_data - (char *) memory.data() ) + g_base_address;
-    uint64_t env_count = 1;
-    uint64_t env_tz_address = 0;
+    char * penv_cur = penv_data + 1 + strlen( penv_data );
+    REG_TYPE app_env_count = 0;
+    aenv[ app_env_count++ ] = (REG_TYPE) ( penv_data - (char *) memory.data() ) + g_base_address;
+    tracer.Trace( "env_os_address %x\n", aenv[ 0 ] );
 
-     // The local time zone is found by libc on Linux/MacOS, but not on Windows.
-     // Workaround: set the TZ environment variable.
+    if ( g_penvironment ) // semicolon-separated list of name=value pairs. names like PATH can have colon-separated values
+    {
+        tracer.Trace( "environment variable argument: '%s'\n", g_penvironment );
+        char * pfrom = g_penvironment;
+        while ( *pfrom )
+        {
+            tracer.Trace( "remaining env: %s\n", pfrom );
+            char *psc = strchr( pfrom, ';' );
+            if ( psc )
+                *psc = 0;
+            if ( !strchr( pfrom, '=' ) )
+                usage( "environment variable is malformed; no equal sign" );
+            strcpy( penv_cur, pfrom );
+            size_t len = strlen( penv_cur );
+            aenv[ app_env_count++ ] =  (REG_TYPE) ( penv_cur - (char *) memory.data() ) + g_base_address;
+            penv_cur += len + 1;
+            pfrom += len + ( psc ? 1 : 0 );
+        }
+    }
+
+    // The local time zone is found by libc on Linux/MacOS, but not on Windows.
+    // Workaround: set the TZ environment variable.
 
 #ifdef _WIN32
     if ( g_addTimeZoneToEnv )
@@ -8980,8 +9182,9 @@ static bool load_image( const char * pimage, const char * app_args )
     
             if ( 0 != acName[ 0 ] )
             {
-                char * ptz_data = penv_data + 1 + strlen( penv_data );
-                env_tz_address = ( ptz_data - (char *) memory.data() ) + g_base_address;
+                char * ptz_data = penv_cur;
+                aenv[ app_env_count++ ] = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
+                tracer.Trace( "env_tz_address %x\n", aenv[ app_env_count - 1 ] );
                 strcpy( ptz_data, "TZ=" );
     
                 // libc doesn't like spaces in spite of the doc saying it's OK:
@@ -9000,7 +9203,7 @@ static bool load_image( const char * pimage, const char * app_args )
                     itoa( minutes, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
                 }
                 tracer.Trace( "ptz_data: '%s'\n", ptz_data );
-                env_count++;
+                penv_cur += 1 + strlen( ptz_data );
             }
         }
     }
@@ -9031,7 +9234,7 @@ static bool load_image( const char * pimage, const char * app_args )
 
     // ensure that after all of this the stack is 16-byte aligned
 
-    if ( 0 == ( 1 & ( app_argc + env_count ) ) )
+    if ( 0 == ( 1 & ( app_argc + app_env_count ) ) )
         pstack--;
 
     pstack -= 2; // the AT_NULL record will be here since memory is initialized to 0
@@ -9064,18 +9267,13 @@ static bool load_image( const char * pimage, const char * app_args )
     paux[7].swap_endianness();
 
     pstack--; // end of environment data is 0
-    pstack--; // move to where the first environment variable is
 
-    if ( 0 != env_tz_address )
+    for ( int ienv = (int) app_env_count - 1; ienv >= 0; ienv-- )
     {
-        *pstack = swap_endian64( env_tz_address );
-        tracer.Trace( "the TZ environment argument is at VM address %llx\n", env_tz_address );
         pstack--;
+        *pstack = swap_endian64( aenv[ ienv ] );
+        tracer.Trace( "environment[ %d ] = %#llx\n", ienv, aenv[ ienv ] );
     }
-
-    // point to the OS= environment variable location
-    *pstack = swap_endian64( env_os_address );
-    tracer.Trace( "the OS environment argument is at VM address %llx\n", *pstack );
 
     pstack--; // the last argv is 0 to indicate the end
 
@@ -9555,7 +9753,13 @@ int main( int argc, char * argv[] )
             {
                 char ca = (char) tolower( parg[1] );
 
-                if ( 't' == ca )
+                if ( 'e' == ca )
+                {
+                    if ( ':' != parg[2] || 0 == parg[3] )
+                        usage( "the -e argument requires a value" );
+                    g_penvironment = parg + 3;
+                }
+                else if ( 't' == ca )
                     trace = true;
                 else if ( 'i' == ca )
                     traceInstructions = true;
@@ -9589,7 +9793,7 @@ int main( int argc, char * argv[] )
 
                     g_mmap_commit = mmap_space * 1024 * 1024;
                 }
-                else if ( 'e' == ca )
+                else if ( 'n' == ca )
                     elfInfo = true;
                 else if ( 'p' == ca )
                     showPerformance = true;

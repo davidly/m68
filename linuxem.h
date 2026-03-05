@@ -33,6 +33,9 @@
 #define emulator_sys_ugetrlimit         0x2012 // exists for x32 and some other platforms
 #define emulator_sys_stat64             0x2013 // exists for x32, used by open watcom, not gnu
 #define emulator_sys__newselect         0x2014 // exists on x86 as 142 and sparcv8 as 230
+#define emulator_sys_pipe               0x2015 // exists for x86 and older ISAs
+#define emulator_sys_fork               0x2016 // exists for x86 and older ISAs. Newer ISAs use sys_clone
+#define emulator_sys_signal             0x2017 // exists for x86 and older ISAs
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -52,6 +55,7 @@
 #define SYS_chdir 49
 #define SYS_openat 56
 #define SYS_close 57
+#define SYS_pipe2 59
 #define SYS_getdents64 61
 #define SYS_lseek 62
 #define SYS_read 63
@@ -91,6 +95,7 @@
 #define SYS_getegid 177
 #define SYS_gettid 178
 #define SYS_sysinfo 179
+#define SYS_execve 211
 #define SYS_brk 214
 #define SYS_munmap 215
 #define SYS_mremap 216
@@ -99,6 +104,7 @@
 #define SYS_mprotect 226
 #define SYS_madvise 233
 #define SYS_riscv_flush_icache 259 // not in docs; may be riscv only
+#define SYS_wait4 260
 #define SYS_prlimit64 261
 #define SYS_renameat2 276
 #define SYS_getrandom 278
