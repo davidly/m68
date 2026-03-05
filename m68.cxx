@@ -101,6 +101,10 @@
     {
         char cFileName[ EMULATOR_MAX_PATH ];
     };
+
+    #ifndef PATH_MAX
+        #define PATH_MAX 4096
+    #endif
 #endif
 
 #include <djltrace.hxx>
@@ -4863,7 +4867,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                     backslash_to_slash( acResolved );
                     tracer.Trace( "    final resolved path = '%s'\n", acResolved );
 #else
-                char acResolved[ PATH_MAX ]; // on x64 linux realpath() fails if buffer < 4096
+                static char acResolved[ PATH_MAX ]; // on x64 linux realpath() fails if buffer < 4096
                 if ( 0 != realpath( g_acLoadedApp, acResolved ) )
                 {
                     int len = (int) strlen( acResolved );
