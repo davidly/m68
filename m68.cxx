@@ -4851,8 +4851,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( !strcmp( pathname, "/proc/self/exe" ) )
             {
-                char acResolved[ EMULATOR_MAX_PATH ];
 #if defined( _WIN32 )
+                char acResolved[ EMULATOR_MAX_PATH ];
                 if ( 0 != _fullpath( acResolved, g_acLoadedApp, sizeof( acResolved ) ) )
                 {
                     tracer.Trace( "    resolved path = '%s'\n", acResolved );
@@ -4863,9 +4863,11 @@ void emulator_invoke_svc( CPUClass & cpu )
                     backslash_to_slash( acResolved );
                     tracer.Trace( "    final resolved path = '%s'\n", acResolved );
 #else
+                char acResolved[ PATH_MAX ]; // on x64 linux realpath() fails if buffer < 4096
                 if ( 0 != realpath( g_acLoadedApp, acResolved ) )
                 {
                     int len = (int) strlen( acResolved );
+                    tracer.Trace( "    resolved path = '%s'\n", acResolved );
 #endif
                     if ( bufsiz >= ( 1 + len ) )
                     {
