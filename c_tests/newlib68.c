@@ -23,6 +23,10 @@
 
 #include <linuxem.h>
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 #define LINUX_AT_FDCWD -100
 
 extern "C" void __libc_fini_array( void );
@@ -116,6 +120,10 @@ extern "C" int openat( int dirfd, const char * pathname, int flags, ... )
     return (int) syscall( SYS_openat, dirfd, pathname, flags, mode ); // openat
 } //openat
 
+extern "C" int pipe2( int pipefd[2], int flags ) { return -1; }
+extern "C" int wait4( pid_t pid, int * wstatus, int options, struct rusage * ru ) { return -1; }
+extern "C" pid_t fork() { return -1; }
+
 extern "C" int clock_gettime( clockid_t id, struct timespec * res )
 {
     timespec_syscall tsc = { 0 };
@@ -204,6 +212,99 @@ extern "C" int fstatat( int fd, const char * path, struct stat * statbuf, int fl
     statbuf->st_ctime = sls.st_ctim.tv_sec;
     return result;
 } //fstatat
+
+static void append_path_component(char *resolved_path, const char *component)
+{
+    size_t len = strlen( resolved_path );
+    if ( len > 0 && resolved_path[len - 1] != '/' )
+        strcat( resolved_path, "/" );
+    strcat( resolved_path, component );
+} //append_path_component
+
+extern "C" char * realpath( const char * __restrict path, char * __restrict resolved_path )
+{
+    if ( 0 == path )
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    char *result_buf = resolved_path;
+    if ( 0 == result_buf )
+    {
+        result_buf = (char *) malloc( PATH_MAX ); // Allocate buffer if not provided
+        if ( 0 == result_buf )
+        {
+            errno = ENOMEM;
+            return NULL;
+        }
+    }
+
+    result_buf[0] = '\0'; // Initialize resolved path
+
+    // If path is relative, get current working directory
+    if (path[0] != '/')
+    {
+        if ( 0 == getcwd( result_buf, PATH_MAX ) )
+        {
+            if ( 0 == resolved_path )
+                free( result_buf );
+            return NULL;
+        }
+    }
+    else
+    {
+        result_buf[0] = '/';
+        result_buf[1] = '\0';
+    }
+
+    char temp_path[PATH_MAX];
+    strncpy(temp_path, path, PATH_MAX);
+    temp_path[PATH_MAX - 1] = '\0';
+
+    char *token;
+    char *saveptr;
+
+    token = strtok_r( temp_path, "/", &saveptr );
+    while ( 0 != token )
+    {
+        if ( strcmp(token, ".") == 0)
+        {
+            // Ignore '.'
+        }
+        else if (strcmp(token, "..") == 0)
+        {
+            // Go up one directory
+            char *last_slash = strrchr(result_buf, '/');
+            if (last_slash == result_buf) // At root
+                result_buf[1] = '\0';
+            else if (last_slash != NULL)
+                *last_slash = '\0';
+        }
+        else
+        {
+            // Append the component
+            append_path_component(result_buf, token);
+
+            struct stat st;
+            if ( -1 == lstat( result_buf, &st ) )
+            {
+                // Handle non-existent component or other lstat error
+                if ( 0 == resolved_path )
+                    free( result_buf );
+                errno = ENOENT;
+                return NULL;
+            }
+        }
+        token = strtok_r( NULL, "/", &saveptr );
+    }
+
+    // Handle trailing '/' for directories
+    if ( path[ strlen( path ) - 1 ] == '/' && strcmp( result_buf, "/" ) != 0 )
+        append_path_component( result_buf, "" ); // Add trailing slash
+
+    return result_buf;
+} //realpath
 
 extern "C" void * mmap( void * address, size_t length, int prot, int flags, int fd, off_t offset )
 {

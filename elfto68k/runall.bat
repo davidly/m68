@@ -112,7 +112,6 @@ del an.68k 2>nul
 echo building ff
 echo building ff >>%outputfile%
 copy ..\c_tests\ff.c . >nul
-copy ..\c_tests\realpath.c . >nul
 copy ..\c_tests\fnmatch.c . >nul
 call mt.bat ff %_optflag% %_gccver% >>%outputfile%
 echo running ff

@@ -14,9 +14,7 @@ extern "C" int lstat( const char *__restrict __path, struct stat *__restrict __b
 
 #ifndef DT_LNK // newlib doesn't define these
 
-  // these two are goofy/buggy ai-generated implementations that exist because newlib doesn't have them
   #include "fnmatch.c"
-  #include "realpath.c"
 
   #define DT_UNKNOWN 0
   #define DT_FIFO 1

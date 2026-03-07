@@ -114,7 +114,6 @@ rm AN.68K 2>/dev/null
 echo building ff
 echo building ff >>$outputfile
 cp ../c_tests/ff.c . >/dev/null
-cp ../c_tests/realpath.c . >/dev/null
 cp ../c_tests/fnmatch.c . >/dev/null
 mt.sh ff $optflags $gccver >>$outputfile
 echo running ff

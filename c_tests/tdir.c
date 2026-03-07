@@ -10,8 +10,7 @@
 #include <string.h>
 
 #ifndef PATH_MAX // newlib doesn't define this
-#define PATH_MAX 255
-#include "realpath.c"
+#define PATH_MAX 4096
 #endif
 
 int main( int argc, char * argv[] )

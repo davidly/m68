@@ -835,6 +835,22 @@ extern "C" int mkdirat( int dirfd, const char * path, mode_t mode ) { return 0; 
 extern "C" clock_t times( struct tms * buf ) { return 0; }
 int getrusage( int who, struct rusage *usage ) { return 0; }
 extern "C" long syscall( long number, ... ) { return 0; } // no calling into Linux syscalls here
+extern "C" int pipe2( int pipefd[2], int flags ) { return -1; }
+extern "C" int wait4( pid_t pid, int * wstatus, int options, struct rusage * ru ) { return -1; }
+extern "C" pid_t fork() { return -1; }
+
+extern "C" char * realpath( const char * __restrict path, char * __restrict resolved_path )
+{
+    if ( 0 != resolved_path )
+    {
+        strcpy( resolved_path, path );
+        return resolved_path;
+    }
+
+    char * result = (char *) malloc( 1 + strlen( path ) );
+    strcpy( result, path );
+    return result;
+} //realpath
 
 extern "C" int clock_gettime( clockid_t id, struct timespec * res )
 {
