@@ -2266,6 +2266,22 @@ static struct linux_user_desc g_user_desc;
 extern "C" long syscall( long number, ... );
 #endif
 
+#ifdef __APPLE__
+int macos_pipe2( int pipefd[2] )
+{
+    if (pipe(pipefd) == -1)
+        return -1;
+
+    if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) == -1)
+        return -1;
+
+    if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1)
+        return -1;
+
+    return 0;
+} //macos_pipe2
+#endif // __APPLE__
+
 // this is called when the arm64 app has an svc #0 instruction or a RISC-V 64 app has an ecall instruction
 // https://thevivekpandey.github.io/posts/2017-09-25-linux-system-calls.html
 
@@ -2800,6 +2816,8 @@ void emulator_invoke_svc( CPUClass & cpu )
 #ifdef _WIN32
             assert( false );
             int result = -1;
+#elif defined( __APPLE__ ) // no pipe2 on macOS
+            int result = macos_pipe2( pipefd );
 #else
             int result = pipe2( pipefd, flags );
             if ( -1 != result )
