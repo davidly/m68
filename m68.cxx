@@ -224,7 +224,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ].q
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PROGRAM_COUNTER cpu.rip.q
+    #define REG_PROGRAM_COUNTER cpu.rip
     #define REG_SYSCALL x64::rax
     #define REG_RESULT x64::rax
     #define REG_ARG0 x64::rdi
@@ -248,7 +248,7 @@ using namespace std::chrono;
     #define ACCESS_REG( x ) cpu.regs[ x ].d
     #define CPU_IS_LITTLE_ENDIAN true
 
-    #define REG_PROGRAM_COUNTER cpu.rip.d
+    #define REG_PROGRAM_COUNTER ( (uint32_t) cpu.rip )
     #define REG_SYSCALL x64::rax
     #define REG_RESULT x64::rax
     #define REG_ARG0 x64::rbx
@@ -2850,7 +2850,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             else
             {
                 result = lseek( descriptor, offset, origin );
-                tracer.Trace( "  result of lseek: %#lx, error %d\n", result, errno );
+                tracer.Trace( "  result of lseek: %#lx, error %d\n", result, ( -1 == result ) ? errno : 0 );
             }
             update_result_errno( cpu, result );
             break;
@@ -5493,6 +5493,8 @@ void emulator_hard_termination( CPUClass & cpu, const char *pcerr, uint64_t erro
             }
         }
     }
+
+    cpu.TraceDecoding();
 
 #else
 
