@@ -85,6 +85,7 @@
 #define SYS_rt_sigprocmask 135
 #define SYS_times 153
 #define SYS_uname 160
+#define SYS_getrlimit 163
 #define SYS_getrusage 165
 #define SYS_prctl 167
 #define SYS_gettimeofday 169
@@ -906,5 +907,29 @@ struct linux_user_desc
         entry_number = swap_endian32( entry_number );
         base_addr = swap_endian32( base_addr );
         limit = swap_endian32( limit );
+    }
+};
+
+struct rlimit_syscall32
+{
+    uint32_t rlim_cur; // soft limit
+    uint32_t rlim_max; // hard limit
+
+    void swap_endianness()
+    {
+        rlim_cur = swap_endian32( rlim_cur );
+        rlim_max = swap_endian32( rlim_max );
+    }
+};
+
+struct rlimit_syscall64
+{
+    uint64_t rlim_cur; // soft limit
+    uint64_t rlim_max; // hard limit
+
+    void swap_endianness()
+    {
+        rlim_cur = swap_endian64( rlim_cur );
+        rlim_max = swap_endian64( rlim_max );
     }
 };

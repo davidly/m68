@@ -1809,6 +1809,7 @@ static const SysCall syscalls[] =
     { "SYS_rt_sigprocmask", SYS_rt_sigprocmask },
     { "SYS_times", SYS_times },
     { "SYS_uname", SYS_uname },
+    { "SYS_getrlimit", SYS_getrlimit },
     { "SYS_getrusage", SYS_getrusage },
     { "SYS_prctl", SYS_prctl },
     { "SYS_gettimeofday", SYS_gettimeofday },
@@ -2006,7 +2007,9 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
 {
     { 0, SYS_read },
     { 1, SYS_write },
+    { 2, SYS_open },
     { 3, SYS_close },
+    { 4, SYS_stat },
     { 7, emulator_sys_poll },
     { 8, SYS_lseek },
     { 9, SYS_mmap },
@@ -2034,6 +2037,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 87, SYS_unlink },
     { 89, emulator_sys_readlink },
     { 96, SYS_gettimeofday },
+    { 97, SYS_getrlimit },
     { 98, SYS_getrusage },
     { 99, SYS_sysinfo },
     { 100, SYS_times },
@@ -2104,6 +2108,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 48, emulator_sys_signal },
     { 54, SYS_ioctl },
     { 55, SYS_fcntl },
+    { 76, SYS_getrlimit },
     { 77, SYS_getrusage },
     { 85, emulator_sys_readlink },
     { 90, SYS_mmap },
@@ -2718,6 +2723,21 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif // !_WIN32
 
             update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_getrlimit:
+        {
+            tracer.Trace( "  syscall command SYS_getrlimit\n" );
+            int resource = (int) ACCESS_REG( REG_ARG0 );
+#if defined( X32OS ) || defined( SPARCOS ) || defined ( M68 )
+            struct rlimit_syscall32 * prlimit = (struct rlimit_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+#else
+            struct rlimit_syscall64 * prlimit = (struct rlimit_syscall64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+#endif
+
+            prlimit->rlim_cur = ~decltype( prlimit->rlim_cur )( 0 );
+            prlimit->rlim_max = ~decltype( prlimit->rlim_max )( 0 );
+            update_result_errno( cpu, 0 );
             break;
         }
         case SYS_gettimeofday:
@@ -3490,15 +3510,15 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             // The gnu c runtime is ok with this failing -- it just allocates memory instead probably assuming it's an embedded system.
             // Same for the gnu runtime with Rust.
-            // But golang actually needs this to succeed and return the requested address and this code doesn't support that.
+            // But golang actually needs this to succeed and return the requested address and this code doesn't support that. Same for Free Pascal generated 32-bit apps.
 
-            REG_TYPE addr = ACCESS_REG( REG_ARG0 );
+            REG_TYPE addr_hint = ACCESS_REG( REG_ARG0 );
             size_t length = ACCESS_REG( REG_ARG1 );
             int prot = (int) ACCESS_REG( REG_ARG2 );
             int flags = (int) ACCESS_REG( REG_ARG3 );
             int fd = (int) ACCESS_REG( REG_ARG4 );
             size_t offset = (size_t) ACCESS_REG( REG_ARG5 );
-            tracer.Trace( "  SYS_mmap. addr %llx, length %zd, protection %#x, flags %#x, fd %d, offset %zd\n", addr, length, prot, flags, fd, offset );
+            tracer.Trace( "  SYS_mmap. addr_hint %llx, length %zd, protection %#x, flags %#x, fd %d, offset %zd\n", (uint64_t) addr_hint, length, prot, flags, fd, offset );
 
             if ( 0 != ( length & 0xfff ) )
             {
@@ -3507,29 +3527,26 @@ void emulator_invoke_svc( CPUClass & cpu )
                 length = round_up( length, (size_t) 4096 );
             }
 
-            if ( 0 == addr )
-            {
-                if ( 0 == ( length & 0xfff ) )
-                {
-                    // 2 == MAP_PRIVATE, 0x20 == MAP_ANONYMOUS, 0x100 = MAP_FIXED
+            // addr_hint is ignored. If MAP_FIXED is specified, it'll fail below.
 
-                    if ( ( 0 == ( 0x100 & flags ) ) && ( 0x22 == ( 0x22 & flags ) ) )
+            if ( 0 == ( length & 0xfff ) )
+            {
+                // 2 == MAP_PRIVATE, 0x20 == MAP_ANONYMOUS, 0x100 = MAP_FIXED
+
+                if ( ( 0 == ( 0x100 & flags ) ) && ( 0x22 == ( 0x22 & flags ) ) )
+                {
+                    SIGNED_REG_TYPE result = (SIGNED_REG_TYPE) g_mmap.allocate( length );
+                    if ( 0 != result )
                     {
-                        SIGNED_REG_TYPE result = (SIGNED_REG_TYPE) g_mmap.allocate( length );
-                        if ( 0 != result )
-                        {
-                            update_result_errno( cpu, result );
-                            break;
-                        }
+                        update_result_errno( cpu, result );
+                        break;
                     }
-                    else
-                        tracer.Trace( "  error: mmap flags %#x aren't supported\n", flags );
                 }
                 else
-                    tracer.Trace( "  error mmap length isn't 4k-page-aligned\n" );
+                    tracer.Trace( "  error: mmap flags %#x aren't supported\n", flags );
             }
             else
-                tracer.Trace( "  mmap allocation at specific address isn't supported\n" );
+                tracer.Trace( "  error mmap length isn't 4k-page-aligned\n" );
 
             tracer.Trace( "  mmap failed\n" );
             errno = ENOMEM;
@@ -4340,6 +4357,14 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, result );
             break;
         }
+#ifdef X64OS
+        case SYS_stat: // only called by amd64 apps built by Free Pascal on Windows for /etc/timezone. for now just fail it
+        {
+            errno = EINVAL;
+            update_result_errno( cpu, -1 );
+            break;
+        }
+#endif
 #ifdef X32OS
         case SYS_stat: // only called by x86 32-bit linux apps. only used by Open Watcom 2.0 C runtime on Linux when built on Linux
         {
@@ -4853,21 +4878,27 @@ void emulator_invoke_svc( CPUClass & cpu )
             break;
         }
         case emulator_sys_readlink:
-        {
-            // shift the arguments over to make room for dirfd then fall through to readlinkat
-
-            ACCESS_REG( REG_ARG3 ) = ACCESS_REG( REG_ARG2 );
-            ACCESS_REG( REG_ARG2 ) = ACCESS_REG( REG_ARG1 );
-            ACCESS_REG( REG_ARG1 ) = ACCESS_REG( REG_ARG0 );
-            ACCESS_REG( REG_ARG0 ) = (REG_TYPE) -100;
-            // fall through!
-        }
         case SYS_readlinkat:
         {
-            int dirfd = (int) ACCESS_REG( REG_ARG0 );
-            const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-            char * buf = (char *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
-            size_t bufsiz = (size_t) ACCESS_REG( REG_ARG3 );
+            int dirfd;
+            const char * pathname;
+            char * buf;
+            size_t bufsiz;
+            if ( SYS_readlinkat == syscall_id )
+            {
+                dirfd = (int) ACCESS_REG( REG_ARG0 );
+                pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                buf = (char *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
+                bufsiz = (size_t) ACCESS_REG( REG_ARG3 );
+            }
+            else
+            {
+                assert( emulator_sys_readlink == syscall_id );
+                dirfd = -100;
+                pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+                buf = (char *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                bufsiz = (size_t) ACCESS_REG( REG_ARG2 );
+            }
             tracer.Trace( "  readlinkat pathname %p == '%s', buf %p, bufsiz %zd, dirfd %d\n", pathname, pathname, buf, bufsiz, dirfd );
             int result = -1;
 
@@ -5842,6 +5873,9 @@ const char * emulator_symbol_lookup( uint32_t address, uint32_t & offset )
         return "";
     }
 
+    if ( 0 == g_symbols32.size() )
+        return "";
+
     ElfSymbol32 key = {0};
     key.value = address;
 
@@ -5873,7 +5907,7 @@ static int symbol_compare32( const void * a, const void * b )
 
 const char * emulator_symbol_lookup( uint64_t address, uint64_t & offset )
 {
-    if ( address < g_base_address || address > ( g_base_address + memory.size() ) )
+    if ( address < g_base_address || address > ( g_base_address + memory.size() ) || ( 0 == g_symbols.size() ) )
         return "";
 
     ElfSymbol64 key = {0};
@@ -8316,7 +8350,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
 
     // use known my_qsort so traces are consistent across platforms because qsort implementations for duplicate values differ
 
-    tracer.Trace( "sorting symbol entries\n" );
+    tracer.Trace( "sorting symbol entries. size %zu\n", g_symbols32.size() );
     my_qsort( g_symbols32.data(), g_symbols32.size(), sizeof( ElfSymbol32 ), symbol_compare32 );
 
     // remove symbols that don't look like they have a valid addresses (rust binaries have tens of thousands of these)
@@ -8340,7 +8374,13 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         if ( 0 == g_symbols32[se].size )
         {
             if ( se < ( g_symbols32.size() - 1 ) )
-                g_symbols32[se].size = g_symbols32[ se + 1 ].value - g_symbols32[ se ].value;
+            {
+                // Free Pascal writes all symbols in lower and uppercase with the same value/address
+                size_t next = se + 1;
+                while ( ( next < ( g_symbols32.size() - 1 ) ) && ( g_symbols32[ next ].value == g_symbols32[ se ].value ) )
+                    next++;
+                g_symbols32[se].size = g_symbols32[ next ].value - g_symbols32[ se ].value;
+            }
             else
                 g_symbols32[se].size = g_base_address + memory_size - g_symbols32[ se ].value;
         }
@@ -9033,7 +9073,13 @@ static bool load_image( const char * pimage, const char * app_args )
         if ( 0 == g_symbols[se].size )
         {
             if ( se < ( g_symbols.size() - 1 ) )
-                g_symbols[se].size = g_symbols[ se + 1 ].value - g_symbols[ se ].value;
+            {
+                // Free Pascal writes all symbols in lower and uppercase with the same value/address
+                size_t next = se + 1;
+                while ( ( next < ( g_symbols.size() - 1 ) ) && ( g_symbols[ next ].value == g_symbols[ se ].value ) )
+                    next++;
+                g_symbols[se].size = g_symbols[ next ].value - g_symbols[ se ].value;
+            }
             else
                 g_symbols[se].size = g_base_address + memory_size - g_symbols[ se ].value;
         }
