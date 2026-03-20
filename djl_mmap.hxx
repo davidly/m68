@@ -81,7 +81,7 @@ class CMMap
                 for ( size_t i = 0; i < entries.size(); i++ )
                 {
                     MMapEntry & entry = entries[ i ];
-                    tracer.Trace( "    %zu: %llx, %llu == %llx\n", i, entry.address, entry.length, entry.length );
+                    tracer.Trace( "    %zu: %llx - %llx, length %llu == %llx\n", i, entry.address, entry.address + entry.length - 1, entry.length, entry.length );
                     total += entry.length;
                     beyond = entry.address + entry.length;
                 }
@@ -89,10 +89,22 @@ class CMMap
             }
         } //trace_allocations
 
-        uint64_t allocate( uint64_t l )
+        uint64_t allocate_fixed( uint64_t address, uint64_t l )
+        {
+            size_t match = binary_search( address );
+            if ( -1 == match )
+                tracer.Trace( "attempt to mmap allocate a fixed entry that's not in the allocation list address %#llx len %#llx\n", address, l );
+            
+            return address;
+        } //allocate_fixed
+
+        uint64_t allocate( uint64_t ahint, uint64_t l, bool fixed )
         {
             assert( 0 == ( l & 0xfff ) );
             trace_allocations();
+
+            if ( fixed )
+                return allocate_fixed( ahint, l );
 
             if ( 0 == entries.size() )
             {
@@ -115,14 +127,14 @@ class CMMap
             }
             else
             {
-                // first look for a gap large enough to work
+                // first look for a gap large enough to work whose address >= the address hint
 
                 for ( size_t i = 0; i < entries.size() - 1; i++ )
                 {
                     MMapEntry & entry = entries[ i ];
 
                     uint64_t gapSize = entries[ i + 1 ].address  - ( entry.address + entry.length );
-                    if ( gapSize >= l )
+                    if ( ( gapSize >= l ) && ( ( entry.address + entry.length ) >= ahint ) )
                     {
                         uint64_t result = entry.address + entry.length;
                         MMapEntry newEntry = { result, l };
@@ -165,18 +177,52 @@ class CMMap
             if ( -1 != match )
             {
                 if ( l < entries[ match ].length )
-                    entries[ match ].length = l;
+                {
+                    entries[ match ].address += l;
+                    entries[ match ].length -= l;
+                }
                 else
                     entries.erase( entries.begin() + match );
-                trace_allocations();
-                validate();
             }
-            else
+            else // may be punching a hole in the middle of an allocation
             {
-                tracer.Trace( "  munmap/free can't find entry %llu to free\n", a );
-                return false;
+                bool found = false;
+
+                // slow search to find possible allocation containing requested area to free
+
+                for ( int i = ( (int) entries.size() ) - 1; i >= 0; i-- )
+                {
+                    MMapEntry & entry = entries[ i ];
+                    uint64_t past = entry.address + entry.length;
+                    if ( ( entry.address < a ) && ( a < past ) && ( ( a + l ) <= past ) )
+                    {
+                        // make the existing entry shorter
+
+                        found = true;
+                        uint64_t original_length = entry.length;
+                        entry.length = a - entry.address;
+
+                        // if anything remains allocated after the free, create a new entry for it
+
+                        if ( ( a + l ) < past )
+                        {
+                            MMapEntry new_entry = { a + l, original_length - l - entry.length };
+                            entries.insert( entries.begin() + i + 1, new_entry );
+                        }
+                        
+                        break;
+                    }
+                }
+
+                if ( !found )
+                {
+                    tracer.Trace( "  munmap/free can't find entry %llu == %#llx to free\n", a, a );
+                    return false;
+                }
             }
 
+            trace_allocations();
+            validate();
             return true;
         } //free
 

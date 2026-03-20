@@ -1798,6 +1798,7 @@ static const SysCall syscalls[] =
     { "SYS_set_tid_address", SYS_set_tid_address },
     { "SYS_futex", SYS_futex },
     { "SYS_set_robust_list", SYS_set_robust_list },
+    { "SYS_nanosleep", SYS_nanosleep },
     { "SYS_clock_gettime", SYS_clock_gettime },
     { "SYS_clock_nanosleep", SYS_clock_nanosleep },
     { "SYS_sched_setaffinity", SYS_sched_setaffinity },
@@ -2023,6 +2024,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 21, emulator_sys_access },
     { 22, emulator_sys_pipe },
     { 25, SYS_mremap },
+    { 35, SYS_nanosleep },
     { 39, SYS_getpid },
     { 60, SYS_exit },
     { 63, SYS_uname },
@@ -2124,6 +2126,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 141, emulator_sys_getdents },
     { 142, emulator_sys__newselect },
     { 148, SYS_fdatasync },
+    { 162, SYS_nanosleep },
     { 163, SYS_mremap },
     { 174, SYS_sigaction },
     { 175, SYS_rt_sigprocmask },
@@ -2554,6 +2557,25 @@ void emulator_invoke_svc( CPUClass & cpu )
                 tracer.Trace( "unhandled SYS_fcntl operation %d\n", op );
 
             update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_nanosleep:
+        {
+            const struct timespec_syscall * request = (const struct timespec_syscall *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+#ifdef X32OS
+            struct timespec_syscall_x32 local_request = * (struct timespec_syscall_x32 *) request;
+            local_request.tv_sec = swap_endian32( local_request.tv_sec );
+            local_request.tv_nsec = swap_endian32( local_request.tv_nsec );
+#else
+            struct timespec_syscall local_request = * request;
+            local_request.tv_sec = swap_endian64( local_request.tv_sec );
+            local_request.tv_nsec = swap_endian64( local_request.tv_nsec );
+#endif //X32OS
+
+            uint64_t ms = local_request.tv_sec * 1000 + local_request.tv_nsec / 1000000;
+            tracer.Trace( "  nanosleep sec %llu, nsec %llu == %llu ms\n", (uint64_t) local_request.tv_sec, (uint64_t) local_request.tv_nsec, ms );
+            sleep_ms( ms ); // ignore remain argument because there are no signals to wake the thread
+            update_result_errno( cpu, 0 );
             break;
         }
         case SYS_clock_nanosleep:
@@ -3510,7 +3532,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             // The gnu c runtime is ok with this failing -- it just allocates memory instead probably assuming it's an embedded system.
             // Same for the gnu runtime with Rust.
-            // But golang actually needs this to succeed and return the requested address and this code doesn't support that. Same for Free Pascal generated 32-bit apps.
+            // The Go runtime maps a large range then uses mmap with MAP_FIXED to re-allocate portions, along with hole-punching munmap
 
             REG_TYPE addr_hint = ACCESS_REG( REG_ARG0 );
             size_t length = ACCESS_REG( REG_ARG1 );
@@ -3531,11 +3553,12 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( 0 == ( length & 0xfff ) )
             {
-                // 2 == MAP_PRIVATE, 0x20 == MAP_ANONYMOUS, 0x100 = MAP_FIXED
+                // 2 == MAP_PRIVATE, 0x20 == MAP_ANONYMOUS, 0x10 = MAP_FIXED
+                bool fixed = ( 0 != ( 0x10 & flags ) );
 
-                if ( ( 0 == ( 0x100 & flags ) ) && ( 0x22 == ( 0x22 & flags ) ) )
+                if ( 0x22 == ( 0x22 & flags ) )
                 {
-                    SIGNED_REG_TYPE result = (SIGNED_REG_TYPE) g_mmap.allocate( length );
+                    SIGNED_REG_TYPE result = (SIGNED_REG_TYPE) g_mmap.allocate( addr_hint, length, fixed );
                     if ( 0 != result )
                     {
                         update_result_errno( cpu, result );
