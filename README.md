@@ -19,7 +19,7 @@ The test apps in the c_tests folder build with newlib and have the required BSP 
 Linux-like system calls emulated by m68. m68start.s has the assembly code that initializes newlib
 then calls main(). newlib68.c has the small wrappers that are called by newlib then make Linux-style
 system calls into the m68 emulator via the Trap insruction. It's required to link these two object
-files with yor C apps for them to link and run.
+files with your C apps for them to link and run.
 
 m68 can also load and run CP/M 68K .68k binary files. The cpm folder has the Digital Research C compiler, assembler, and linker along with some test .c and .s apps that can be built and run.
 Those tools all run in m68 along with the binaries they produce. Same for the Pascal and BASIC compilers in the mtpascal and CB68 folders. The DDT debugger works in the emulator including
