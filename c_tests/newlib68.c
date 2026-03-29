@@ -27,6 +27,13 @@
 #define PATH_MAX 4096
 #endif
 
+template <class T> inline T get_min( T a, T b )
+{
+    if ( a < b )
+        return a;
+    return b;
+} //get_min
+
 #define LINUX_AT_FDCWD -100
 
 extern "C" void __libc_fini_array( void );
@@ -567,12 +574,29 @@ extern "C" int ioctl( int fd, unsigned long op, ... )
 
 extern "C" int tcgetattr( int fd, struct termios * termios_p )
 {
-    return (int) syscall( SYS_ioctl, fd, 0x5401 , termios_p ); // TCGETS
+    struct local_kernel_termios t;
+    int result = (int) syscall( SYS_ioctl, fd, 0x5401 , &t ); // TCGETS
+    if ( -1 != result )
+    {
+        termios_p->c_iflag = t.c_iflag;
+        termios_p->c_oflag = t.c_oflag;
+        termios_p->c_cflag = t.c_cflag;
+        termios_p->c_lflag = t.c_lflag;
+        memcpy( termios_p->c_cc, t.c_cc, get_min( sizeof( t.c_cc ), sizeof( termios_p->c_cc ) ) );
+    }
+    return result;
 } //tcgetattr
 
 extern "C" int tcsetattr( int fd, int optional_actions, struct termios * termios_p )
 {
-    return (int) syscall( SYS_ioctl, fd, 0x5402 , termios_p ); // TCSETS
+    struct local_kernel_termios t;
+    t.c_iflag = termios_p->c_iflag;
+    t.c_oflag = termios_p->c_oflag;
+    t.c_cflag = termios_p->c_cflag;
+    t.c_lflag = termios_p->c_lflag;
+        memcpy( t.c_cc, termios_p->c_cc, get_min( sizeof( t.c_cc ), sizeof( termios_p->c_cc ) ) );
+
+    return (int) syscall( SYS_ioctl, fd, 0x5402 , &t ); // TCSETS
 } //tcsetattr
 
 /***********************************************************************************/

@@ -971,7 +971,7 @@ void m68000::trace_state()
             unhandled();
     }
 
-//    tracer.Trace( "2828b68: " ); tracer.TraceBinaryData( getmem( 0x2828b68 ), 0x2, 4 );
+    //tracer.Trace( "28408c0: " ); tracer.TraceBinaryData( getmem( 0x28408c0 ), 4, 4 );
 
     pc = save_pc;
     op_size = save_op_size;

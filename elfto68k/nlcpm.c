@@ -827,7 +827,7 @@ extern "C" int rename( const char * oldpath, const char * newpath )
 
 extern "C" int usleep( useconds_t usec ) { return 0; }
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem ) { return 0; }
-extern "C" int isatty( int fd ) { return -1; /* probably some way to make this work */ }
+extern "C" int isatty( int fd ) { return 1; /* probably some way to make this work */ }
 extern "C" int gettimeofday( struct timeval *tv, void *tz ) { return -1; }
 extern "C" char * getcwd( char * buf, size_t size ) { strcpy( buf, "." ); return buf; }
 extern "C" int chdir( const char * path ) { return 0; }

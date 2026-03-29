@@ -796,37 +796,108 @@ struct utsname_syscall
     char domainname[SYS_NMLN];
 };
 
-#define local_KERNEL_NCCS 0x16 // most linux platforms have an array >= this but don't use them
+// i386 linux typically uses 19. other platforms use a larger size. i386 is 18 for the gcc on ubuntu tools I'm using
+
+#define local_KERNEL_NCCS 18 // 0x16 // most linux platforms have an array >= this but don't use them
 
 // indexes into c_cc across various platforms. linux means amd64, x86, risc-v, and arm64
 
-#define linux_VMIN 0x6
 #define sparc_VMIN 0x4
 #define macos_VMIN 0x10
 
-#define linux_VTIME 0x5
 #define sparc_VTIME 0x5
 #define macos_VTIME 0x11
 
-#define linux_VQUIT 0x1
 #define sparc_VQUIT 0x1
 #define macos_VQUIT 0x9
 
-#define linux_VERASE 0x2
 #define sparc_VERASE 0x2
 #define macos_VERASE 0x3
 
-#define linux_VKILL 0x3
 #define sparc_VKILL 0x3
 #define macos_VKILL 0x4
 
-#define linux_VSTART 0x8
 #define sparc_VSTART 0x8
 #define macos_VSTART 0xc
 
-#define linux_VSTOP 0x9
 #define sparc_VSTOP 0x9
 #define macos_VSTOP 0xd
+
+// c_iflag
+#define linux_IGNBRK  0x0001
+#define linux_BRKINT  0x0002
+#define linux_IGNPAR  0x0004
+#define linux_PARMRK  0x0008
+#define linux_INPCK   0x0010
+#define linux_ISTRIP  0x0020
+#define linux_INLCR   0x0040
+#define linux_IGNCR   0x0080
+#define linux_ICRNL   0x0100
+#define linux_IUCLC   0x0200
+#define linux_IXON    0x0400
+#define linux_IXANY   0x0800
+#define linux_IXOFF   0x1000
+#define linux_IMAXBEL 0x2000
+#define linux_IUTF8   0x4000
+
+// c_oflag
+#define linux_OPOST   0x0001
+#define linux_OLCUC   0x0002
+#define linux_ONLCR   0x0004
+#define linux_OCRNL   0x0008
+#define linux_ONOCR   0x0010
+#define linux_ONLRET  0x0020
+#define linux_OFILL   0x0040
+#define linux_OFDEL   0x0080
+
+// c_cflag
+#define linux_B38400  0x000f
+#define linux_CS5     0x0000
+#define linux_CS6     0x0010
+#define linux_CS7     0x0020
+#define linux_CS8     0x0030
+#define linux_CSTOPB  0x0040
+#define linux_CREAD   0x0080
+#define linux_PARENB  0x0100
+#define linux_PARODD  0x0200
+#define linux_HUPCL   0x0400
+#define linux_CLOCAL  0x0800
+
+// c_lflag
+#define linux_ISIG    0x0001
+#define linux_CANON   0x0002
+#define linux_XCASE   0x0004
+#define linux_ECHO    0x0008
+#define linux_ECHOE   0x0010
+#define linux_ECHOK   0x0020
+#define linux_ECHONL  0x0040
+#define linux_NOFLSH  0x0080
+#define linux_TOSTOP  0x0100
+#define linux_ECHOCTL 0x0200
+#define linux_ECHOPRT 0x0400
+#define linux_ECHOKE  0x0800
+#define linux_FLUSHO  0x1000
+#define linux_PENDIN  0x4000
+#define linux_IEXTEN  0x8000
+
+/* Indices into the c_cc array */
+#define linux_VINTR    0x00  /* 0x03 (ETX)  - ^C - Interrupt signal (SIGINT) */
+#define linux_VQUIT    0x01  /* 0x1C (FS)   - ^\ - Quit signal (SIGQUIT) */
+#define linux_VERASE   0x02  /* 0x7F (DEL)  - DEL- Erase previous character */
+#define linux_VKILL    0x03  /* 0x15 (NAK)  - ^U - Erase entire line */
+#define linux_VEOF     0x04  /* 0x04 (EOT)  - ^D - End-of-file (canonical mode) */
+#define linux_VTIME    0x05  /* 0x00        - N/A- Inter-character timer (deciseconds) */
+#define linux_VMIN     0x06  /* 0x01        - N/A- Minimum characters for read */
+#define linux_VSWTC    0x07  /* 0x00        - N/A- Switch character (unused) */
+#define linux_VSTART   0x08  /* 0x11 (DC1)  - ^Q - Restart output */
+#define linux_VSTOP    0x09  /* 0x13 (DC3)  - ^S - Stop output */
+#define linux_VSUSP    0x0A  /* 0x1A (SUB)  - ^Z - Suspend process (SIGTSTP) */
+#define linux_VEOL     0x0B  /* 0x00        - N/A- Additional end-of-line */
+#define linux_VREPRINT 0x0C  /* 0x12 (DC2)  - ^R - Retype pending input */
+#define linux_VDISCARD 0x0D  /* 0x0F (SI)   - ^O - Toggle flushing of output */
+#define linux_VWERASE  0x0E  /* 0x17 (ETB)  - ^W - Word erase */
+#define linux_VLNEXT   0x0F  /* 0x16 (SYN)  - ^V - Literal next character */
+#define linux_VEOL2    0x10  /* 0x00        - N/A- Second additional end-of-line */
 
 #pragma pack( push, 1 ) // without packing, some compilers pad the end of this to make it 2 extra bytes, so memset() trashes memory
 struct local_kernel_termios
@@ -934,3 +1005,104 @@ struct rlimit_syscall64
         rlim_max = swap_endian64( rlim_max );
     }
 };
+
+// sizeof void * 4, sizeof sysinfo: 64
+// sizeof fields in sysinfo: uptime 4, loads 12, totalram 4, freeram 4, sharedram 4, bufferram 4, totalswap 4, freeswap 4, procs 2, totalhigh 4, freehigh 4, mem_unit 4
+// offsetof fields in sysinfo: uptime 0, loads 4, totalram 16, freeram 20, sharedram 24, bufferram 28, totalswap 32, freeswap 36, procs 40, totalhigh 44, freehigh 48, mem_unit 52
+// uptime: 1310662, loads: 1952 736 0, totalram: 8179741, freeram: 7809918, sharedram: 1042, bufferram: 784, totalswap: 2097152, freeswap: 2097152, procs: 551, totalhigh: 0, freehigh: 0, mem_ unit: 4096
+
+struct sysinfo_syscall32
+{
+    uint32_t uptime;
+    uint32_t loads[ 3 ];
+    uint32_t totalram;
+    uint32_t freeram;
+    uint32_t bufferram;
+    uint32_t totalswap;
+    uint32_t freeswap;
+    uint16_t procs;
+    uint32_t totalhigh;
+    uint32_t freehigh;
+    uint32_t mem_unit;
+    char _f[20-2*sizeof(long)-sizeof(int)];
+
+    void swap_endianness()
+    {
+        uptime = swap_endian32( uptime );
+        loads[ 0 ] = swap_endian32( loads[ 0 ] );
+        loads[ 1 ] = swap_endian32( loads[ 1 ] );
+        loads[ 2 ] = swap_endian32( loads[ 2 ] );
+        totalram = swap_endian32( totalram );
+        freeram = swap_endian32( freeram );
+        bufferram = swap_endian32( bufferram );
+        totalswap = swap_endian32( totalswap );
+        freeswap = swap_endian32( freeswap );
+        procs = swap_endian16( procs );
+        totalhigh = swap_endian32( totalhigh );
+        freehigh = swap_endian32( freehigh );
+        mem_unit = swap_endian32( mem_unit );
+    }
+};
+
+// sizeof void * 8, sizeof sysinfo: 112
+// sizeof fields in sysinfo: uptime 8, loads 24, totalram 8, freeram 8, sharedram 8, bufferram 8, totalswap 8, freeswap 8, procs 2, totalhigh 8, freehigh 8, mem_unit 4
+// offsetof fields in sysinfo: uptime 0, loads 8, totalram 32, freeram 40, sharedram 48, bufferram 56, totalswap 64, freeswap 72, procs 80, totalhigh 88, freehigh 96, mem_unit 104
+// uptime: 1310710, loads: 704 416 0, totalram: 33504219136, freeram: 31994527744, sharedram: 4268032, bufferram: 3227648, totalswap: 8589934592, freeswap: 8589934592, procs: 551, totalhigh: 0, freehigh: 0, mem_ unit: 1
+
+struct sysinfo_syscall64
+{
+    uint64_t uptime;
+    uint64_t loads[ 3 ];
+    uint64_t totalram;
+    uint64_t freeram;
+    uint64_t bufferram;
+    uint64_t totalswap;
+    uint64_t freeswap;
+    uint16_t procs;
+    uint64_t totalhigh;
+    uint64_t freehigh;
+    uint32_t mem_unit;
+    char _f[20-2*sizeof(long)-sizeof(int)];
+
+    void swap_endianness()
+    {
+        uptime = swap_endian64( uptime );
+        loads[ 0 ] = swap_endian64( loads[ 0 ] );
+        loads[ 1 ] = swap_endian64( loads[ 1 ] );
+        loads[ 2 ] = swap_endian64( loads[ 2 ] );
+        totalram = swap_endian64( totalram );
+        freeram = swap_endian64( freeram );
+        bufferram = swap_endian64( bufferram );
+        totalswap = swap_endian64( totalswap );
+        freeswap = swap_endian64( freeswap );
+        procs = swap_endian16( procs );
+        totalhigh = swap_endian64( totalhigh );
+        freehigh = swap_endian64( freehigh );
+        mem_unit = swap_endian32( mem_unit );
+    }
+};
+
+struct iovec_syscall32
+{
+    uint32_t iov_base;
+    uint32_t iov_len;
+
+    void swap_endianness()
+    {
+        iov_base = swap_endian32( iov_base );
+        iov_len = swap_endian32( iov_len );
+    }
+};
+
+struct iovec_syscall64
+{
+    uint64_t iov_base;
+    uint64_t iov_len;
+
+    void swap_endianness()
+    {
+        iov_base = swap_endian64( iov_base );
+        iov_len = swap_endian64( iov_len );
+    }
+};
+

@@ -126,6 +126,6 @@ del fnmatch.c 2>nul
 del ff.68k 2>nul
 
 echo %date% %time% >>%outputfile%
-dos2unix %outputfile%
+dos2unix -f %outputfile%
 diff -b baseline_%outputfile% %outputfile%
 

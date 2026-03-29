@@ -1,3 +1,5 @@
+#pragma once
+
 // these values are typical for Linux on modern ISAs, but probably different from older 68000 Linux distributions
 
 #define NCCS 0x20
@@ -97,11 +99,29 @@ struct winsize
 };
 
 extern "C" int tcgetattr( int fd, struct termios * termios_p );
+extern "C" int tcsetattr( int fd, int optional_actions, struct termios * termios_p );
 
 #define TCSANOW 0
 #define TCSADRAIN 1
 #define TCSAFLUSH 2
 
-extern "C" int tcsetattr( int fd, int optional_actions, struct termios * termios_p );
-
+inline void cfmakeraw( struct termios *t )
+{
+    /* Disable input processing: ignore breaks, parity, cr-to-nl, and flow control */
+    t->c_iflag &= ~( IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON );
+    
+    /* Disable output processing (e.g., nl-to-cr translation) */
+    t->c_oflag &= ~OPOST;
+    
+    /* Disable echoing, canonical mode (line buffering), signals, and extended functions */
+    t->c_lflag &= ~( ECHO | ECHONL | ICANON | ISIG | IEXTEN );
+    
+    /* Set character size to 8 bits and disable parity */
+    t->c_cflag &= ~( CSIZE | PARENB );
+    t->c_cflag |= CS8;
+    
+    /* Set non-blocking/character-at-a-time read behavior */
+    t->c_cc[ VMIN ] = 1;  /* Minimum characters to read */
+    t->c_cc[ VTIME ] = 0; /* No timeout */
+} //cfmakeraw
 
