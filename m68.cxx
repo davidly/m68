@@ -1923,6 +1923,7 @@ static const SysCall syscalls[] =
     { "emulator_sys_pipe", emulator_sys_pipe }, // exists for x86 and older ISAs as 42
     { "emulator_sys_fork", emulator_sys_fork }, // exists for x86 and older ISAs as 2
     { "emulator_sys_signal", emulator_sys_signal }, // exists for x86 and older ISAs as 48
+    { "emulator_sys_mmap2", emulator_sys_mmap2 }, // exists for x86 so arguments are passed in registers and offset is in 4k pages not bytes
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -2189,7 +2190,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 175, SYS_rt_sigprocmask },
     { 183, SYS_getcwd },
     { 191, emulator_sys_ugetrlimit },
-    { 192, SYS_mmap }, // really mmap2, but just map to mmap because we don't suppor the last parameter anyway
+    { 192, emulator_sys_mmap2 },
     { 195, emulator_sys_stat64 },
     { 199, SYS_getuid }, // actually getuid32
     { 200, SYS_getgid }, // actually getgid32
@@ -3614,17 +3615,41 @@ void emulator_invoke_svc( CPUClass & cpu )
             break;
         }
         case SYS_mmap:
+        case emulator_sys_mmap2:
         {
             // The gnu c runtime is ok with this failing -- it just allocates memory instead probably assuming it's an embedded system.
             // Same for the gnu runtime with Rust.
             // The Go runtime maps a large range then uses mmap with MAP_FIXED to re-allocate portions, along with hole-punching munmap
+            REG_TYPE addr_hint;
+            size_t length, offset;
+            int prot, flags, fd;
 
-            REG_TYPE addr_hint = ACCESS_REG( REG_ARG0 );
-            size_t length = ACCESS_REG( REG_ARG1 );
-            int prot = (int) ACCESS_REG( REG_ARG2 );
-            int flags = (int) ACCESS_REG( REG_ARG3 );
-            int fd = (int) ACCESS_REG( REG_ARG4 );
-            size_t offset = (size_t) ACCESS_REG( REG_ARG5 );
+#ifdef X32OS
+            if ( SYS_mmap == syscall_id )
+            {
+                struct mmap_args_x86 * args = (struct mmap_args_x86 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+                args->swap_endianness();
+                addr_hint = args->addr;
+                length = args->len;
+                prot = (int) args->prot;
+                flags = (int) args->flags;
+                fd = (int) args->fd;
+                offset = (size_t) args->offset;
+            }
+            else
+#endif //X32OS
+            {
+                addr_hint = ACCESS_REG( REG_ARG0 );
+                length = ACCESS_REG( REG_ARG1 );
+                prot = (int) ACCESS_REG( REG_ARG2 );
+                flags = (int) ACCESS_REG( REG_ARG3 );
+                fd = (int) ACCESS_REG( REG_ARG4 );
+                offset = (size_t) ACCESS_REG( REG_ARG5 );
+#ifdef X32OS
+                offset *= 4096;
+#endif
+            }
+
             tracer.Trace( "  SYS_mmap. addr_hint %llx, length %zd, protection %#x, flags %#x, fd %d, offset %zd\n", (uint64_t) addr_hint, length, prot, flags, fd, offset );
 
             if ( 0 != ( length & 0xfff ) )

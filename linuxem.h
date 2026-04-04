@@ -36,6 +36,7 @@
 #define emulator_sys_pipe               0x2015 // exists for x86 and older ISAs
 #define emulator_sys_fork               0x2016 // exists for x86 and older ISAs. Newer ISAs use sys_clone
 #define emulator_sys_signal             0x2017 // exists for x86 and older ISAs
+#define emulator_sys_mmap2              0x2018 // exists for x86. like mmap except offset is in 4k pages, not bytes and all 6 registers are used
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -1103,6 +1104,26 @@ struct iovec_syscall64
     {
         iov_base = swap_endian64( iov_base );
         iov_len = swap_endian64( iov_len );
+    }
+};
+
+struct mmap_args_x86 // because this takes 6 arguments and x86 linux only supports 5 register arguments, a pointer to this is passed in EBX instead
+{
+    uint32_t addr;
+    uint32_t len;
+    uint32_t prot;
+    uint32_t flags;
+    uint32_t fd;
+    uint32_t offset;
+
+    void swap_endianness()
+    {
+        addr = swap_endian32( addr );
+        len = swap_endian32( len );
+        prot = swap_endian32( prot );
+        flags = swap_endian32( flags );
+        fd = swap_endian32( fd );
+        offset = swap_endian32( offset );
     }
 };
 
