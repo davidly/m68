@@ -2173,6 +2173,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 90, SYS_mmap },
     { 91, SYS_munmap },
     { 106, SYS_stat },
+    { 107, SYS_lstat },
     { 108, SYS_newfstat }, // on x86, it's just SYS_fstat
     { 114, SYS_wait4 },
     { 116, SYS_sysinfo },
@@ -4548,6 +4549,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         }
 #endif
 #ifdef X32OS
+        case SYS_lstat: // only called by x86 32-bit linux apps. used by Open Watcom2.0 C runtime on lstat calls
         case SYS_stat: // only called by x86 32-bit linux apps. only used by Open Watcom 2.0 C runtime on Linux when built on Linux
         {
             const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
@@ -4587,7 +4589,10 @@ void emulator_invoke_svc( CPUClass & cpu )
             }
 #else //_WIN32
             struct stat local_stat = {0};
-            result = stat( pathname, &local_stat );
+            if ( SYS_lstat == syscall_id )
+                result = lstat( pathname, &local_stat );
+            else
+                result = stat( pathname, &local_stat );
             if ( 0 == result )
             {
                 pout->st_blksize = (uint32_t) local_stat.st_blksize;
