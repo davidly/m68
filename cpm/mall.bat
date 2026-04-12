@@ -18,7 +18,7 @@ if "%1" == "sparcos" (
 )
 
 set _clist=e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets ^
-           nqueens nq1d cpmenumd primes targs trw trw2
+           nqueens nq1d cpmenumd primes targs trw trw2 wumpus
 
 ( for %%a in (%_clist%) do (
     echo building %%a

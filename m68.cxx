@@ -846,8 +846,8 @@ static void usage( char const * perror = 0 )
         printf( "error: %s\n", perror );
 
     printf( "usage: %s <%s arguments> <executable> <app arguments>\n", APP_NAME, APP_NAME );
-#ifdef RVOS
     printf( "  arguments:     -e     environment. semicolon-separated list of name=value pairs\n" );
+#ifdef RVOS
     printf( "                 -g     (internal) generate rcvtable.txt then exit\n" );
 #endif
     printf( "                 -h:X   # of meg for the heap (brk space). 0..1024 are valid. default is 40\n" );
@@ -2586,31 +2586,27 @@ void emulator_invoke_svc( CPUClass & cpu )
         {
             // the syscall version of getcwd never uses malloc to allocate a return value. Just C runtimes do that for POSIX compliance.
 
-            REG_TYPE original = ACCESS_REG( REG_ARG0 );
-            tracer.Trace( "  address in vm space: %llx == %llu\n", original, original );
             char * pin = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.Trace( "  address in vm space: %llx == %llu\n", pin, pin );
             size_t size = (size_t) ACCESS_REG( REG_ARG1 );
-            uint64_t pout = 0;
+            SIGNED_REG_TYPE result = -1;
 #ifdef _WIN32
             char * poutwin32 = _getcwd( acPath, sizeof( acPath ) );
             if ( poutwin32 )
             {
                 tracer.Trace( "  acPath: '%s', poutwin32: '%s'\n", acPath, poutwin32 );
                 backslash_to_slash( poutwin32 );
-                pout = original;
                 strcpy( pin, poutwin32 + 2 ); // get past C:
+                result = (SIGNED_REG_TYPE) strlen( pin );
             }
             else
-                tracer.Trace( "  _getcwd failed on win32, error %d\n", (int) errno );
-
-            tracer.Trace( "  getcwd returning '%s'\n", pin );
+                tracer.Trace( "  _getcwd failed on win32, errno %d\n", (int) errno );
 #else
-            pout = cpu.host_to_vm_address( getcwd( pin, size ) );
+            char * presult = getcwd( pin, size );
+            if ( 0 != presult )
+                result = strlen( pin );
 #endif
-            if ( pout )
-                update_result_errno( cpu, original );
-            else
-                update_result_errno( cpu, errno );
+            update_result_errno( cpu, result );
             break;
         }
         case SYS_fcntl:

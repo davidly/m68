@@ -365,7 +365,13 @@ extern "C" int fdatasync( int fd )
 
 extern "C" char * getcwd( char * buf, size_t size )
 {
-    return (char *) syscall( SYS_getcwd, buf, size );
+    int len = (int) syscall( SYS_getcwd, buf, size );
+    if ( len < 1 )
+    {
+        errno = EINVAL;
+        return 0;
+    }
+    return buf;
 } //getcwd
 
 extern "C" int mkdir( const char * path, mode_t mode )

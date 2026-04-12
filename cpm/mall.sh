@@ -20,7 +20,7 @@ fi
 export _m68runcmd
 
 for arg in e sieve ttt tm fileops tpi t_setjmp tmuldiv mm fopentst tgets \
-           nqueens nq1d cpmenumd primes targs trw trw2
+           nqueens nq1d cpmenumd primes targs trw trw2 wumpus
 do
     echo building $arg
     m.sh $arg
