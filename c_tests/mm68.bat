@@ -35,5 +35,5 @@ rem actually build the app
 
 %gccpath%\m68k-elf\bin\objdump.exe -d m68.elf >m68.txt
 
-copy m68.elf ..\bin 1>nul 2>nul
+copy m68.elf ..\bin\m68 1>nul 2>nul
 

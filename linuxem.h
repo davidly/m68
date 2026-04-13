@@ -907,7 +907,7 @@ struct local_kernel_termios
     uint32_t c_oflag;     /* output mode flags */
     uint32_t c_cflag;     /* control mode flags */
     uint32_t c_lflag;     /* local mode flags */
-#if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
+#if defined( X32OS ) || defined( SPARCOS )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
     uint8_t c_line;       /* line discipline */
 #endif
     uint8_t c_cc[local_KERNEL_NCCS]; /* control characters */

@@ -1765,7 +1765,7 @@ int initialize_local_kernel_termios( struct local_kernel_termios * pt, int fd )
             pt->c_cflag = linux_B38400 | linux_CS8 | linux_CREAD;
             pt->c_lflag = linux_ISIG | linux_CANON | linux_ECHO | linux_ECHOE | linux_ECHOK | linux_ECHOCTL | linux_ECHOKE;
 
-            #if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
+            #if defined( X32OS ) || defined( SPARCOS )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
                 pt->c_line = 0;
             #endif
     
@@ -1809,7 +1809,7 @@ int initialize_local_kernel_termios( struct local_kernel_termios * pt, int fd )
             map_c_cc_macos_to_linux( pt->c_cc );
         #endif //__APPLE__
             
-        #if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
+        #if ( ( defined( X32OS ) || defined( SPARCOS ) ) && ( defined( __i386__ ) || defined( sparc ) ) )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
             pt->c_line = val.c_line;
         #endif
     #endif
@@ -4553,8 +4553,8 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_stat: // only called by x86 32-bit linux apps. only used by Open Watcom 2.0 C runtime on Linux when built on Linux
         {
             const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            tracer.Trace( "  stat on path '%s'\n", pathname );
-            tracer.Trace( "sizeof linux_syscall_x32_stat: %u\n", (int) sizeof( struct linux_syscall_x32_stat ) );
+            tracer.Trace( "    stat on path '%s'\n", pathname );
+            tracer.Trace( "    sizeof linux_syscall_x32_stat: %u\n", (int) sizeof( struct linux_syscall_x32_stat ) );
             struct linux_syscall_x32_stat * pout = (struct linux_syscall_x32_stat *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int result = 0;
 
@@ -4571,7 +4571,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_nlink = (uint32_t) local_stat.st_nlink;
                 pout->st_uid = local_stat.st_uid;
                 pout->st_gid = local_stat.st_gid;
-                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_mode = (uint16_t) local_stat.st_mode;
                 pout->st_size = local_stat.st_size;
                 pout->st_blocks = local_stat.st_blocks;
                 pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
@@ -4580,7 +4580,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
                 pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
                 pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+                tracer.Trace( "    pre-swap st_mode: %#x\n", pout->st_mode );
                 pout->swap_endianness();
+                tracer.Trace( "    post-swap st_mode: %#x\n", pout->st_mode );
             }
             else
             {
@@ -4600,7 +4602,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_nlink = (uint32_t) local_stat.st_nlink;
                 pout->st_uid = local_stat.st_uid;
                 pout->st_gid = local_stat.st_gid;
-                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_mode = (uint16_t) local_stat.st_mode;
                 pout->st_size = local_stat.st_size;
                 pout->st_blocks = local_stat.st_blocks;
 
@@ -4627,7 +4629,9 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
 #endif
 
+                tracer.Trace( "    pre-swap st_mode: %#x\n", pout->st_mode );
                 pout->swap_endianness();
+                tracer.Trace( "    post-swap st_mode: %#x\n", pout->st_mode );
             }
 #endif //_WIN32
 
@@ -5223,7 +5227,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                                 tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
                             #endif //__APPLE__
             
-                            #if defined( __i386__ ) || defined( sparc )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
+                            #if ( ( defined( X32OS ) || defined( SPARCOS ) ) && ( defined( __i386__ ) || defined( sparc ) ) )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
                                 val.c_line = pt->c_line;
                             #endif
             

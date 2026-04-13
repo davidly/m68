@@ -581,6 +581,7 @@ extern "C" int ioctl( int fd, unsigned long op, ... )
 extern "C" int tcgetattr( int fd, struct termios * termios_p )
 {
     struct local_kernel_termios t;
+    //printf( "sizeof local_kernel_termiosf: %d\n", (int) sizeof( t ) );
     int result = (int) syscall( SYS_ioctl, fd, 0x5401 , &t ); // TCGETS
     if ( -1 != result )
     {
@@ -600,7 +601,7 @@ extern "C" int tcsetattr( int fd, int optional_actions, struct termios * termios
     t.c_oflag = termios_p->c_oflag;
     t.c_cflag = termios_p->c_cflag;
     t.c_lflag = termios_p->c_lflag;
-        memcpy( t.c_cc, termios_p->c_cc, get_min( sizeof( t.c_cc ), sizeof( termios_p->c_cc ) ) );
+    memcpy( t.c_cc, termios_p->c_cc, get_min( sizeof( t.c_cc ), sizeof( termios_p->c_cc ) ) );
 
     return (int) syscall( SYS_ioctl, fd, 0x5402 , &t ); // TCSETS
 } //tcsetattr
