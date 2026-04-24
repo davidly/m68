@@ -5,7 +5,12 @@
 //   in code that's invoking the C runtime use structs for that C runtime, not from this header file or any form of syscall structs.
 //   in code that's invoking a syscall (e.g. in a C runtime implementation) use structs based on the build platform e.g. __amd64__, __riscv__, etc.
 
-#define EMULATOR_MAX_PATH 2048                // the emulator only supports paths and filenames up to this length across all platforms 
+#ifdef PATH_MAX
+#define EMULATOR_MAX_PATH PATH_MAX            // 4096 on modern linux
+#else
+#define EMULATOR_MAX_PATH 4096                // the emulator only supports paths and filenames up to this length across all platforms
+#endif
+
 #define EMULATOR_AT_SYMLINK_NOFOLLOW 0x100    // just macOS is different with 0x20
 #define EMULATOR_AT_SYMLINK_FOLLOW 0x400      // just macOS is different with 0x40
 #define EMULATOR_AT_REMOVEDIR 0x200           // this is 8 for newlib and 0x80 for macOS
@@ -37,6 +42,7 @@
 #define emulator_sys_fork               0x2016 // exists for x86 and older ISAs. Newer ISAs use sys_clone
 #define emulator_sys_signal             0x2017 // exists for x86 and older ISAs
 #define emulator_sys_mmap2              0x2018 // exists for x86. like mmap except offset is in 4k pages, not bytes and all 6 registers are used
+#define emulator_sys_fstat64            0x2019 // exists for x32, used by fpc
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?
@@ -1126,4 +1132,11 @@ struct mmap_args_x86 // because this takes 6 arguments and x86 linux only suppor
         offset = swap_endian32( offset );
     }
 };
+
+struct syscall_rlimit_x86
+{
+    uint32_t rlim_cur;  /* 4 bytes (Soft limit) */
+    uint32_t rlim_max;  /* 4 bytes (Hard limit) */
+};
+
 

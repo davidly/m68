@@ -284,7 +284,6 @@ char * g_penvironment = 0;                     // 0 or initial environment varia
 char g_acLoadedApp[ EMULATOR_MAX_PATH ];       // path of the app being emulated
 struct local_kernel_termios g_termios;         // current state of stdin/stdout/stderr for those not redirected
 
-
 // fake descriptors.
 // /etc/timezone is not implemented, so apps running in the emulator on Windows assume UTC
 
@@ -1101,6 +1100,23 @@ int translate_open_flags( int f )
 } //translate_open_flags
 
 #ifdef _WIN32
+
+char * windows_realpath( const char * src, char * dst )
+{
+    if ( 0 != _fullpath( dst, src, EMULATOR_MAX_PATH ) )
+    {
+        tracer.Trace( "    resolved path = '%s'\n", dst );
+        int len = (int) strlen( dst );
+        assert( ':' == dst[ 1 ] );
+        len -= 2;
+        memmove( dst, dst + 2, len + 1 );
+        backslash_to_slash( dst );
+        tracer.Trace( "    final resolved path = '%s'\n", dst );
+        return dst;
+    }
+
+    return 0;
+} //windows_realpath
 
 size_t WinWrite( int descriptor, uint8_t * p, int count )
 {
@@ -1924,6 +1940,7 @@ static const SysCall syscalls[] =
     { "emulator_sys_fork", emulator_sys_fork }, // exists for x86 and older ISAs as 2
     { "emulator_sys_signal", emulator_sys_signal }, // exists for x86 and older ISAs as 48
     { "emulator_sys_mmap2", emulator_sys_mmap2 }, // exists for x86 so arguments are passed in registers and offset is in 4k pages not bytes
+    { "emulator_sys_fstat64", emulator_sys_fstat64 }, // exists for x86 and used by the Free Pascal Compiler
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -2068,6 +2085,8 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 2, SYS_open },
     { 3, SYS_close },
     { 4, SYS_stat },
+    { 5, SYS_newfstat },
+    { 6, SYS_lstat },
     { 7, emulator_sys_poll },
     { 8, SYS_lseek },
     { 9, SYS_mmap },
@@ -2169,6 +2188,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 55, SYS_fcntl },
     { 76, SYS_getrlimit },
     { 77, SYS_getrusage },
+    { 78, SYS_gettimeofday },
     { 85, emulator_sys_readlink },
     { 90, SYS_mmap },
     { 91, SYS_munmap },
@@ -2193,6 +2213,7 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 191, emulator_sys_ugetrlimit },
     { 192, emulator_sys_mmap2 },
     { 195, emulator_sys_stat64 },
+    { 197, emulator_sys_fstat64 },
     { 199, SYS_getuid }, // actually getuid32
     { 200, SYS_getgid }, // actually getgid32
     { 201, SYS_geteuid }, // actually geteuid32
@@ -2250,6 +2271,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 17, SYS_brk },
     { 19, SYS_lseek },
     { 20, SYS_getpid },
+    { 33, emulator_sys_access },
     { 42, emulator_sys_pipe },
     { 43, SYS_times },
     { 54, SYS_ioctl },
@@ -2452,8 +2474,21 @@ void emulator_invoke_svc( CPUClass & cpu )
 #if defined( X32OS )
         case emulator_sys_ugetrlimit:
         {
-            errno = EINVAL;
-            update_result_errno( cpu, -1 );
+            uint32_t resource = ACCESS_REG( REG_ARG0 );
+            struct syscall_rlimit_x86 * prlimit = (struct syscall_rlimit_x86 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            tracer.Trace( "  x86 ugetrlimit resource %u\n", resource );
+            if ( 3 == resource ) // RLIMIT_STACK
+            {
+                prlimit->rlim_cur = g_stack_commit;
+                prlimit->rlim_max = g_stack_commit;
+                tracer.Trace( "ugetrlimit stack cur=%08x max=%08x\n", prlimit->rlim_cur, prlimit->rlim_max );
+            }
+            else
+            {
+                prlimit->rlim_cur = 0xffffffff;
+                prlimit->rlim_max = 0xffffffff;
+            }
+            update_result_errno( cpu, 0 );
             break;
         }
         case emulator_sys_set_thread_area:
@@ -2586,6 +2621,7 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_getcwd:
         {
             // the syscall version of getcwd never uses malloc to allocate a return value. Just C runtimes do that for POSIX compliance.
+            // also, the syscall version takes a buffer and size as arguments instead of just a size argument and returning a malloc'd pointer. So this is pretty different from the getcwd wrapper in libc.
 
             char * pin = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             tracer.Trace( "  address in vm space: %llx == %llu\n", pin, pin );
@@ -2598,14 +2634,14 @@ void emulator_invoke_svc( CPUClass & cpu )
                 tracer.Trace( "  acPath: '%s', poutwin32: '%s'\n", acPath, poutwin32 );
                 backslash_to_slash( poutwin32 );
                 strcpy( pin, poutwin32 + 2 ); // get past C:
-                result = (SIGNED_REG_TYPE) strlen( pin );
+                result = (SIGNED_REG_TYPE) ( 1 + strlen( pin ) );
             }
             else
                 tracer.Trace( "  _getcwd failed on win32, errno %d\n", (int) errno );
 #else
             char * presult = getcwd( pin, size );
             if ( 0 != presult )
-                result = strlen( pin );
+                result = 1 +strlen( pin );
 #endif
             update_result_errno( cpu, result );
             break;
@@ -2842,7 +2878,11 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_gettimeofday:
         {
             tracer.Trace( "  syscall command SYS_gettimeofday\n" );
+#ifdef X32OS
+            linux_timeval_x32 * ptimeval = (linux_timeval_x32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+#else
             linux_timeval * ptimeval = (linux_timeval *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+#endif
             int result = 0;
             if ( 0 != ptimeval )
             {
@@ -2851,14 +2891,21 @@ void emulator_invoke_svc( CPUClass & cpu )
 
                 if ( 0 == result )
                 {
-                    ptimeval->tv_sec = tv.tv_sec;
-                    ptimeval->tv_usec = tv.tv_usec;
+                    ptimeval->tv_sec = static_cast<decltype(ptimeval->tv_sec )>( tv.tv_sec );
+                    ptimeval->tv_usec = static_cast<decltype(ptimeval->tv_usec )>( tv.tv_usec );
 
+#ifdef X32OS
+                    ptimeval->tv_sec = swap_endian32( (uint32_t) ptimeval->tv_sec );
+                    ptimeval->tv_usec = swap_endian32( (uint32_t) ptimeval->tv_usec );
+                    tracer.Trace( "    tv.tv_sec %#x, swapped %#x\n", tv.tv_sec, ptimeval->tv_sec );
+                    tracer.Trace( "    tv_usec %#x, swapped %lx\n", swap_endian32( ptimeval->tv_usec ), ptimeval->tv_usec );
+#else
                     ptimeval->tv_sec = swap_endian64( ptimeval->tv_sec );
                     ptimeval->tv_usec = swap_endian64( ptimeval->tv_usec );
-
                     tracer.Trace( "    tv.tv_sec %#llx, swapped %#llx\n", tv.tv_sec, ptimeval->tv_sec );
                     tracer.Trace( "    tv_usec %#llx, swapped %#llx\n", swap_endian64( ptimeval->tv_usec ), ptimeval->tv_usec );
+#endif
+
                 }
             }
 
@@ -3037,11 +3084,9 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_write:
         {
             tracer.Trace( "  syscall command SYS_write. fd %lld, buf %llx, count %lld\n", (uint64_t) ACCESS_REG( REG_ARG0 ), (uint64_t) ACCESS_REG( REG_ARG1 ), (uint64_t) ACCESS_REG( REG_ARG2 ) );
-
             int descriptor = (int) ACCESS_REG( REG_ARG0 );
             uint8_t * p = (uint8_t *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             REG_TYPE count = ACCESS_REG( REG_ARG2 );
-
             tracer.Trace( "    descriptor %d, pdata %p, count %u\n", descriptor, p, count );
 
             if ( 0 == descriptor ) // stdin
@@ -3090,7 +3135,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             int descriptor;
             tracer.Trace( "  opendir: %u\n", opendir );
             DWORD attr = GetFileAttributesA( acPath );
-            if ( opendir && ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
+            if ( ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
             {
                 if ( INVALID_HANDLE_VALUE != g_hFindFirst )
                 {
@@ -3285,8 +3330,13 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             tracer.Trace( "  g_FindFirstDescriptor: %d, g_FindFirst: %p\n", g_FindFirstDescriptor, g_FindFirst );
 
-            if ( -1 == g_FindFirstDescriptor )
+            if ( g_FindFirstDescriptor != descriptor )
             {
+                if ( 0 != g_FindFirst )
+                {
+                    closedir( g_FindFirst );
+                    g_FindFirst = 0;
+                }
                 g_FindFirstDescriptor = descriptor;
                 g_FindFirst = fdopendir( descriptor );
             }
@@ -3450,8 +3500,13 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             tracer.Trace( "  g_FindFirstDescriptor: %d, g_FindFirst: %p, descriptor: %p\n", g_FindFirstDescriptor, g_FindFirst, descriptor );
 
-            if ( -1 == g_FindFirstDescriptor )
+            if ( g_FindFirstDescriptor != descriptor )
             {
+                if ( 0 != g_FindFirst )
+                {
+                    closedir( g_FindFirst );
+                    g_FindFirst = 0;
+                }
                 g_FindFirstDescriptor = descriptor;
                 g_FindFirst = fdopendir( descriptor );
             }
@@ -3726,7 +3781,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             slash_to_backslash( acPath );
 
             DWORD attr = GetFileAttributesA( acPath );
-            if ( opendir && ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
+            if ( ( INVALID_FILE_ATTRIBUTES != attr ) && ( attr & FILE_ATTRIBUTE_DIRECTORY ) )
             {
                 if ( INVALID_HANDLE_VALUE != g_hFindFirst )
                 {
@@ -4029,6 +4084,17 @@ void emulator_invoke_svc( CPUClass & cpu )
 #endif
             int result = unlinkat( directory, path, flags );
 #endif // _WIN32
+
+#ifdef SPARCOS // the rmdir syscall on Sparc deletes files with the name if it's not a directory.
+            if ( 0 != result )
+            {
+                #ifdef _WIN32
+                    result = remove( path );
+                #else
+                    result = unlink( path );
+                #endif
+            }
+#endif // SPARCOS
 
             update_result_errno( cpu, result );
             break;
@@ -4541,13 +4607,130 @@ void emulator_invoke_svc( CPUClass & cpu )
             break;
         }
 #ifdef X64OS
-        case SYS_stat: // only called by amd64 apps built by Free Pascal on Windows for /etc/timezone. for now just fail it
+        case SYS_stat: // only called by amd64 apps built by Free Pascal on Windows and by Free Pascal itself on Linux.
         {
-            errno = EINVAL;
-            update_result_errno( cpu, -1 );
+            const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            tracer.Trace( "    stat on path '%s'\n", pathname );
+            int result = 0;
+#ifdef _WIN32
+            struct stat_linux_syscall local_stat = {0};
+            result = fill_pstat_windows( -1, & local_stat, pathname );
+            if ( 0 == result )
+            {
+                #ifdef X64OS
+                    struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                    pout->st_dev = local_stat.st_dev;
+                    pout->st_ino = local_stat.st_ino;
+                    pout->st_mode = local_stat.st_mode;
+                    pout->st_nlink = local_stat.st_nlink;
+                    pout->st_uid = local_stat.st_uid;
+                    pout->st_gid = local_stat.st_gid;
+                    pout->st_rdev = local_stat.st_rdev;
+                    pout->st_size = local_stat.st_size;
+                    pout->st_blksize = local_stat.st_blksize;
+                    pout->st_blocks = local_stat.st_blocks;
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) pout->st_size, (int) offsetof( struct stat_linux_syscall_x64, st_size ) );
+                    pout->swap_endianness();
+                    tracer.Trace( "post-swap mode: %#x\n", pout->st_mode );
+                #elif defined( X32OS )
+                    struct linux_syscall_x32_stat * pout = (struct linux_syscall_x32_stat *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                    pout->st_dev = local_stat.st_dev;
+                    pout->st_ino = local_stat.st_ino;
+                    pout->st_mode = local_stat.st_mode;
+                    pout->st_nlink = local_stat.st_nlink;
+                    pout->st_uid = local_stat.st_uid;
+                    pout->st_gid = local_stat.st_gid;
+                    pout->st_rdev = local_stat.st_rdev;
+                    pout->st_size = local_stat.st_size;
+                    pout->st_blksize = local_stat.st_blksize;
+                    pout->st_blocks = local_stat.st_blocks;
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) pout->st_size, (int) offsetof( struct stat_linux_syscall_x64, st_size ) );
+                    pout->swap_endianness();
+                    tracer.Trace( "post-swap mode: %#x\n", pout->st_mode );
+                #else // X64OS
+                    size_t cbStat = sizeof( struct stat_linux_syscall );
+                    assert( 128 == cbStat );  // 128 is the size of the stat struct this syscall on RISC-V Linux
+                    local_stat.swap_endianness();
+                    memcpy( cpu.getmem( ACCESS_REG( REG_ARG1 ) ), & local_stat, cbStat );
+                    tracer.Trace( "  file size in bytes: %d, offsetof st_size: %d\n", (int) local_stat.st_size, (int) offsetof( struct stat_linux_syscall, st_size ) );
+                #endif // X64OS
+            }
+            else
+            {
+                errno = 2;
+                tracer.Trace( "  fill_pstat_windows failed\n" );
+            }
+#else // _WIN32
+            tracer.Trace( "  sizeof struct stat: %d\n", (int) sizeof( struct stat ) );
+            struct stat local_stat = {0};
+            result = stat( pathname, & local_stat );
+            if ( 0 == result )
+            {
+                // the syscall version of stat has similar fields but a different layout, so copy fields one by one
+
+                #ifdef X64OS
+                    struct stat_linux_syscall_x64 * pout = (struct stat_linux_syscall_x64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #elif defined( X32OS )
+                    struct linux_syscall_x32_stat * pout = (struct linux_syscall_x32_stat *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #else
+                    struct stat_linux_syscall * pout = (struct stat_linux_syscall *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+                #endif
+
+                pout->st_dev = local_stat.st_dev;
+                pout->st_ino = local_stat.st_ino;
+                pout->st_mode = local_stat.st_mode;
+                pout->st_nlink = local_stat.st_nlink;
+                pout->st_uid = local_stat.st_uid;
+                pout->st_gid = local_stat.st_gid;
+                pout->st_rdev = local_stat.st_rdev;
+                pout->st_size = local_stat.st_size;
+                pout->st_blksize = local_stat.st_blksize;
+                pout->st_blocks = local_stat.st_blocks;
+
+                #ifdef __APPLE__
+                    pout->st_atim.tv_sec = local_stat.st_atimespec.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atimespec.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtimespec.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtimespec.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctimespec.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctimespec.tv_nsec;
+                #elif defined( __mc68000__ )
+                    pout->st_atim.tv_sec = local_stat.st_atime;
+                    pout->st_mtim.tv_sec = local_stat.st_mtime;
+                    pout->st_ctim.tv_sec = local_stat.st_ctime;
+                #else
+                    pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                    pout->st_atim.tv_nsec = local_stat.st_atim.tv_nsec;
+                    pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                    pout->st_mtim.tv_nsec = local_stat.st_mtim.tv_nsec;
+                    pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                    pout->st_ctim.tv_nsec = local_stat.st_ctim.tv_nsec;
+                #endif // !__APPLE__
+
+                tracer.Trace( "  file size %d, mode %#x, isdir %s\n", (int) local_stat.st_size, local_stat.st_mode, S_ISDIR( local_stat.st_mode ) ? "yes" : "no" );
+                pout->swap_endianness();
+            }
+            else
+                tracer.Trace( "  fstat failed, error %d\n", errno );
+#endif // !_WIN32
+
+            update_result_errno( cpu, result );
             break;
         }
-#endif
+#endif // X64OS
+
 #ifdef X32OS
         case SYS_lstat: // only called by x86 32-bit linux apps. used by Open Watcom2.0 C runtime on lstat calls
         case SYS_stat: // only called by x86 32-bit linux apps. only used by Open Watcom 2.0 C runtime on Linux when built on Linux
@@ -4641,8 +4824,8 @@ void emulator_invoke_svc( CPUClass & cpu )
         case emulator_sys_stat64: // only called by x86 32-bit linux apps. only used by the Open Watcom 2.0 C runtime for Linux when built on Windows
         {
             const char * pathname = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            tracer.Trace( "  stat64 on path '%s'\n", pathname );
-            tracer.Trace( "sizeof linux_syscall_x32_stat64: %u\n", (int) sizeof( struct linux_syscall_x32_stat64 ) );
+            tracer.Trace( "    stat64 on path '%s'\n", pathname );
+            tracer.Trace( "    sizeof linux_syscall_x32_stat64: %u\n", (int) sizeof( struct linux_syscall_x32_stat64 ) );
             struct linux_syscall_x32_stat64 * pout = (struct linux_syscall_x32_stat64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int result = 0;
 
@@ -4712,6 +4895,87 @@ void emulator_invoke_svc( CPUClass & cpu )
                 pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
 #endif
 
+                pout->swap_endianness();
+            }
+#endif //_WIN32
+
+            update_result_errno( cpu, result );
+            break;
+        }
+        case emulator_sys_fstat64: // only called by x86 32-bit linux apps. only used by the Free Pascal Compiler
+        {
+            int fd = (int) ACCESS_REG( REG_ARG0 );
+            tracer.Trace( "    fstat64 on fd %d\n", fd );
+            tracer.Trace( "    sizeof linux_syscall_x32_stat64: %u\n", (int) sizeof( struct linux_syscall_x32_stat64 ) );
+            struct linux_syscall_x32_stat64 * pout = (struct linux_syscall_x32_stat64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            memset(pout, 0, sizeof(*pout));
+            int result = 0;
+
+#ifdef _WIN32
+            struct stat_linux_syscall local_stat = {0};
+            result = fill_pstat_windows( fd, & local_stat, 0 );
+            if ( 0 == result )
+            {
+                pout->st_blksize = (uint32_t) local_stat.st_blksize;
+                pout->__st_ino = local_stat.st_ino;
+                pout->st_nlink = (uint32_t) local_stat.st_nlink;
+                pout->st_uid = local_stat.st_uid;
+                pout->st_gid = local_stat.st_gid;
+                pout->st_mode = swap_endian16( (uint16_t) swap_endian32( local_stat.st_mode ) );
+                pout->st_size = local_stat.st_size;
+                pout->st_blocks = local_stat.st_blocks;
+                pout->st_atim.tv_sec = local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec = local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec = local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+                pout->swap_endianness();
+            }
+            else
+            {
+                errno = 2;
+                tracer.Trace( "  fill_pstat_windows failed\n" );
+            }
+#else //_WIN32
+            struct stat local_stat = {};
+            result = fstat(fd, &local_stat);
+            if (0 == result)
+            {
+                pout->st_dev    = (uint64_t) local_stat.st_dev;
+                pout->__st_ino  = (uint32_t) local_stat.st_ino;
+                pout->st_ino    = (uint64_t) local_stat.st_ino;
+                pout->st_mode   = (uint32_t) local_stat.st_mode;
+                pout->st_nlink  = (uint32_t) local_stat.st_nlink;
+                pout->st_uid    = (uint32_t) local_stat.st_uid;
+                pout->st_gid    = (uint32_t) local_stat.st_gid;
+                pout->st_rdev   = (uint64_t) local_stat.st_rdev;
+                pout->st_size   = (int64_t) local_stat.st_size;
+                pout->st_blksize= (uint32_t) local_stat.st_blksize;
+                pout->st_blocks = (uint64_t) local_stat.st_blocks;
+
+        #if defined(__APPLE__)
+                pout->st_atim.tv_sec  = (uint32_t) local_stat.st_atimespec.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atimespec.tv_nsec;
+                pout->st_mtim.tv_sec  = (uint32_t) local_stat.st_mtimespec.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtimespec.tv_nsec;
+                pout->st_ctim.tv_sec  = (uint32_t) local_stat.st_ctimespec.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctimespec.tv_nsec;
+        #elif defined(__mc68000__)
+                pout->st_atim.tv_sec  = (uint32_t) local_stat.st_atime;
+                pout->st_atim.tv_nsec = 0;
+                pout->st_mtim.tv_sec  = (uint32_t) local_stat.st_mtime;
+                pout->st_mtim.tv_nsec = 0;
+                pout->st_ctim.tv_sec  = (uint32_t) local_stat.st_ctime;
+                pout->st_ctim.tv_nsec = 0;
+        #else
+                pout->st_atim.tv_sec  = (uint32_t) local_stat.st_atim.tv_sec;
+                pout->st_atim.tv_nsec = (uint32_t) local_stat.st_atim.tv_nsec;
+                pout->st_mtim.tv_sec  = (uint32_t) local_stat.st_mtim.tv_sec;
+                pout->st_mtim.tv_nsec = (uint32_t) local_stat.st_mtim.tv_nsec;
+                pout->st_ctim.tv_sec  = (uint32_t) local_stat.st_ctim.tv_sec;
+                pout->st_ctim.tv_nsec = (uint32_t) local_stat.st_ctim.tv_nsec;
+        #endif
                 pout->swap_endianness();
             }
 #endif //_WIN32
@@ -5095,27 +5359,18 @@ void emulator_invoke_svc( CPUClass & cpu )
 
             if ( !strcmp( pathname, "/proc/self/exe" ) )
             {
-#if defined( _WIN32 )
                 char acResolved[ EMULATOR_MAX_PATH ];
-                if ( 0 != _fullpath( acResolved, g_acLoadedApp, sizeof( acResolved ) ) )
-                {
-                    tracer.Trace( "    resolved path = '%s'\n", acResolved );
-                    int len = (int) strlen( acResolved );
-                    assert( ':' == acResolved[ 1 ] );
-                    len -= 2;
-                    memmove( acResolved, acResolved + 2, len + 1 );
-                    backslash_to_slash( acResolved );
-                    tracer.Trace( "    final resolved path = '%s'\n", acResolved );
+#if defined( _WIN32 )
+                if ( 0 != windows_realpath( g_acLoadedApp, acResolved ) )
 #else
-                static char acResolved[ PATH_MAX ]; // on x64 linux realpath() fails if buffer < 4096
                 if ( 0 != realpath( g_acLoadedApp, acResolved ) )
+#endif
                 {
                     int len = (int) strlen( acResolved );
                     tracer.Trace( "    resolved path = '%s'\n", acResolved );
-#endif
                     if ( bufsiz >= ( 1 + len ) )
                     {
-                        strcpy( buf, acResolved );
+                        memcpy( buf, acResolved, len ); // do not copy the null termination
                         result = len;
                     }
                 }
@@ -8345,6 +8600,21 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
 
 #endif // M68
 
+char * resolve_execfn_path( const char * pimage )
+{
+    static char resolved[ EMULATOR_MAX_PATH + 1 ] = {0};
+
+    #ifdef _WIN32
+        if ( !windows_realpath( pimage, resolved ) )
+            strcpy( resolved, pimage );
+    #else
+        if ( !realpath( pimage, resolved ) )
+            strcpy( resolved, pimage );
+    #endif
+
+    return resolved;
+} //resolve_execfn_path
+
 #if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
 
 static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
@@ -8780,6 +9050,14 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     }
 #endif //_WIN32
 
+    char * execfn_string = resolve_execfn_path( pimage );
+    backslash_to_slash( execfn_string );
+    char * pexecfn_data = penv_cur;
+    strcpy( pexecfn_data, execfn_string );
+    REG_TYPE aexecfn = (REG_TYPE) ( pexecfn_data - (char *) memory.data() ) + g_base_address;
+    penv_cur += strlen( pexecfn_data ) + 1;
+    tracer.Trace( "execfn_string '%s', vm address %x\n", pexecfn_data, aexecfn );
+
     tracer.Trace( "args_len %d, penv_data %p\n", args_len, penv_data );
     tracer.TraceBinaryData( (uint8_t *) ( memory.data() + arg_data_offset ), g_arg_data_commit + 0x20, 4 ); // +20 to inspect for bugs
 
@@ -8799,10 +9077,16 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     REG_TYPE * pstack = (REG_TYPE *) ( memory.data() + top_of_aux );
 
     pstack--;
-    *pstack = (REG_TYPE) rand64();
+    *pstack = (REG_TYPE) 0x01020304; // use fixed values for consistent traces across runs
     pstack--;
-    *pstack = (REG_TYPE) rand64();
-    REG_TYPE prandom = g_base_address + memory_size - ( 2 * sizeof( REG_TYPE ) );
+    *pstack = (REG_TYPE) 0x05060708;
+    pstack--;
+    *pstack = (REG_TYPE) 0x01020304;
+    pstack--;
+    *pstack = (REG_TYPE) 0x05060708;
+    tracer.Trace( "random data for AT_RANDOM: " );
+    tracer.TraceBinaryData( (uint8_t *) pstack, 16, 4 );
+    REG_TYPE prandom = g_base_address + top_of_aux - 16; // point to the 16 bytes we just put on the stack for AT_RANDOM for 32 and 64 bit machines.
 
     // ensure that after all of this the stack is 16-byte aligned
 
@@ -8825,25 +9109,31 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     paux[3].a_un.a_val = 0;
     paux[3].swap_endianness();
     paux[4].a_type = 11; // AT_UID
-    paux[4].a_un.a_val = 0x595a5449; // "ITZY" they are each my bias.
+    paux[4].a_un.a_val = 0x2061696C; // Lia
     paux[4].swap_endianness();
-    paux[5].a_type = 22; // AT_EUID;
-    paux[5].a_un.a_val = 0x595a5449;
+    paux[5].a_type = 12; // AT_EUID;
+    paux[5].a_un.a_val = 0x696A6559; // Yeji
     paux[5].swap_endianness();
     paux[6].a_type = 13; // AT_GID
-    paux[6].a_un.a_val = 0x595a5449;
+    paux[6].a_un.a_val = 0x65616863; // Chae
     paux[6].swap_endianness();
     paux[7].a_type = 14; // AT_EGID
-    paux[7].a_un.a_val = 0x595a5449;
+    paux[7].a_un.a_val = 0x6E696873; // Shin (Ryujin and Yuna)
     paux[7].swap_endianness();
-#ifdef M68 // only needed for M68 because it uses newlib. In fact, on Sparc the C runtime infinte loops when it sees a value as large as AT_EH_FRAME_BEGIN
-    paux[8].a_type = AT_EH_FRAME_BEGIN;
-    paux[8].a_un.a_val = the_EH_FRAME_BEGIN;
+    paux[8].a_type = 31; // AT_EXECFN
+    paux[8].a_un.a_val = aexecfn;
     paux[8].swap_endianness();
-#endif
+    
+#ifdef M68 // only needed for M68 because it uses newlib. In fact, on Sparc the C runtime infinte loops when it sees a value as large as AT_EH_FRAME_BEGIN
+    paux[9].a_type = AT_EH_FRAME_BEGIN;
+    paux[9].a_un.a_val = the_EH_FRAME_BEGIN;
+    paux[9].swap_endianness();
+    paux[10].a_type = 0;  // 0 to signify the end of the list of AT aux records
+    paux[10].a_un.a_val = 0;
+#else
     paux[9].a_type = 0;  // 0 to signify the end of the list of AT aux records
     paux[9].a_un.a_val = 0;
-
+#endif
     pstack--; // end of environment data is 0
 
     for ( int ienv = (int) app_env_count - 1; ienv >= 0; ienv-- )
@@ -9471,6 +9761,14 @@ static bool load_image( const char * pimage, const char * app_args )
     }
 #endif //_WIN32
 
+    char * execfn_string = resolve_execfn_path( pimage );
+    backslash_to_slash( execfn_string );
+    char * pexecfn_data = penv_cur;
+    strcpy( pexecfn_data, execfn_string );
+    REG_TYPE aexecfn = (REG_TYPE) ( pexecfn_data - (char *) memory.data() ) + g_base_address;
+    penv_cur += strlen( pexecfn_data ) + 1;
+    tracer.Trace( "execfn_string '%s', vm address %x\n", pexecfn_data, aexecfn );
+
     tracer.Trace( "args_len %d, penv_data %p\n", args_len, penv_data );
     tracer.TraceBinaryData( (uint8_t *) ( memory.data() + arg_data_offset ), g_arg_data_commit + 0x20, 4 ); // +20 to inspect for bugs
 
@@ -9489,10 +9787,10 @@ static bool load_image( const char * pimage, const char * app_args )
     uint64_t * pstack = (uint64_t *) ( memory.data() + top_of_aux );
 
     pstack--;
-    *pstack = rand64();
+    *pstack = 0x0102030405060708; // use fixed values for consistent traces across runs
     pstack--;
-    *pstack = rand64();
-    uint64_t prandom = g_base_address + memory_size - 16;
+    *pstack = 0x0102030405060708;
+    uint64_t prandom = g_base_address + top_of_aux - 16;
 
     // ensure that after all of this the stack is 16-byte aligned
 
@@ -9501,7 +9799,7 @@ static bool load_image( const char * pimage, const char * app_args )
 
     pstack -= 2; // the AT_NULL record will be here since memory is initialized to 0
 
-    pstack -= 16; // for 8 aux records
+    pstack -= 18; // for 9 aux records
     AuxProcessStart * paux = (AuxProcessStart *) pstack;
     paux[0].a_type = 25; // AT_RANDOM
     paux[0].a_un.a_val = prandom;
@@ -9516,17 +9814,20 @@ static bool load_image( const char * pimage, const char * app_args )
     paux[3].a_un.a_val = 0;
     paux[3].swap_endianness();
     paux[4].a_type = 11; // AT_UID
-    paux[4].a_un.a_val = 0x595a5449; // "ITZY" they are each my bias.
+    paux[4].a_un.a_val = 0x2061696C; // Lia
     paux[4].swap_endianness();
-    paux[5].a_type = 22; // AT_EUID;
-    paux[5].a_un.a_val = 0x595a5449;
+    paux[5].a_type = 12; // AT_EUID;
+    paux[5].a_un.a_val = 0x696A6559; // Yeji
     paux[5].swap_endianness();
     paux[6].a_type = 13; // AT_GID
-    paux[6].a_un.a_val = 0x595a5449;
+    paux[6].a_un.a_val = 0x65616863; // Chae
     paux[6].swap_endianness();
     paux[7].a_type = 14; // AT_EGID
-    paux[7].a_un.a_val = 0x595a5449;
+    paux[7].a_un.a_val = 0x6E696873; // Shin (Ryujin and Yuna)
     paux[7].swap_endianness();
+    paux[8].a_type = 31; // AT_EXECFN
+    paux[8].a_un.a_val = aexecfn;
+    paux[8].swap_endianness();
 
     pstack--; // end of environment data is 0
 

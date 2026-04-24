@@ -41,5 +41,5 @@ rem actually build the app
 %gcc% %defines% %includes% %gccflags% rvos.cxx riscv.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o rvos.elf %ldflags%
 %gccpath%\m68k-elf\bin\objdump.exe -d rvos.elf >rvos.txt
 
-copy rvos.elf ..\bin
+copy rvos.elf ..\bin\rvos
 

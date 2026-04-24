@@ -1,4 +1,4 @@
-Sat 04/11/2026 20:12:00.32 
+Fri 04/24/2026  9:31:20.49 
 test sieve.hex 
 1899 primes.
 test e.hex 
@@ -643,7 +643,7 @@ tmuldiv ended with great success
 test ttt
 64930 moves
 10 iterations
-34.852001 milliseconds
+32.939999 milliseconds
 test sieve
 1899 primes.
 test e
@@ -4102,10 +4102,10 @@ fillc
 starting mult
 summ is : 465880
 test ttime
-before TZ is set: tz: 'PacificDaylightTime+8', year: 2026, month 4, day 12, hour 3, min 12, sec 11
-east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 4, day 11, hour 22, min 12, sec 11
-west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 4, day 11, hour 19, min 12, sec 11
-TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 4, day 11, hour 19, min 12, sec 11
+before TZ is set: tz: 'PacificDaylightTime+8', year: 2026, month 4, day 24, hour 16, min 31, sec 31
+east coast time: set tz 'TZ=EST+5' tz: 'EST+5', year: 2026, month 4, day 24, hour 11, min 31, sec 31
+west coast time: set tz 'TZ=PST+8' tz: 'PST+8', year: 2026, month 4, day 24, hour 8, min 31, sec 31
+TZ=<blank>: set tz 'TZ=' tz: '', year: 2026, month 4, day 24, hour 8, min 31, sec 31
 test fileops
 current offset: 0
 result of fseek: 0
@@ -6300,7 +6300,7 @@ len in pfl: 70
 length of file before initial close: 70
 length from stat: 70
 length from fstat: 70
-tz: 'PST+8', year: 2026, month 4, day 11, hour 19, min 12, sec 20
+tz: 'PST+8', year: 2026, month 4, day 24, hour 8, min 31, sec 39
 len in pfl: 0
 exiting fopentst with great success
 test lenum
@@ -6539,6 +6539,20 @@ chk trap invocations (2 expected): 2
 tchk completed with great success
 test tsh
 success
+test taux
+ID  NAME               DATATYPE         VALUE
+--  ----               --------         -----
+25  AT_RANDOM          16-byte address  0x282f280  08070605040302010807060504030201
+6   AT_PAGESZ          integer          0x1000  (4096)
+16  AT_HWCAP           bitmask          0xa01
+26  AT_HWCAP2          bitmask          0x0
+11  AT_UID             uid_t            0x2061696c  (543254892)
+12  AT_EUID            uid_t            0x696a6559  (1768580441)
+13  AT_GID             gid_t            0x65616863  (1700882531)
+14  AT_EGID            gid_t            0x6e696873  (1852401779)
+31  AT_EXECFN          string address   0x282f2c2  "/Users/david/OneDrive/m68/c_tests/taux.elf"
+1768489065 UNKNOWN            unknown          0xbe58
+0   AT_NULL            terminator       0x0
 compiler test cpm 
 building e
 building sieve
@@ -9269,17 +9283,17 @@ id leaved
 idea veld
 lade vied
 lead vied
-total ms:     345
-  dictionary: 340
-  generate:   4
-  render:     0
+total ms:     336
+  dictionary: 331
+  generate:   3
+  render:     1
 test ba tp.bas 
-276 ms for 1 iterations
+263 ms for 1 iterations
 final move count 6493
 test m68.elf ttt.elf 1 
 6493 moves
 1 iterations
-452.712006 milliseconds
+447.45401 milliseconds
 test m68.elf ttt.68k 1 
 move count:      6493
 iteration count: 1
@@ -9312,4 +9326,4 @@ argv[ 3 ]: 'ccc'
 argv[ 4 ]: 'dddd'
 penv[ 0 ]: 'OS=M68'
 penv[ 1 ]: 'TZ=PacificDaylightTime+8'
-Sat 04/11/2026 20:12:52.44 
+Fri 04/24/2026  9:32:10.56 
