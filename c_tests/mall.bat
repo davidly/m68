@@ -27,7 +27,7 @@ set _elflist=hidave tprintf tm tmuldiv ttt sieve e tstr targs tbits t tao ^
 ) )
 
 :makem68elf
-echo build m68.elf
+echo build m68 binary
 rem hard-code optimization level to 3
 call mm68.bat 3 %_gccver%
 

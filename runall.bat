@@ -8,8 +8,8 @@ if "%1" == "" (
     set _M68runcmd=..\m68
 ) else (
 if "%1" == "nested" (
-    set _runcmd=m68 -h:180 c_tests\m68.elf
-    set _M68runcmd=..\m68 -h:180 ..\c_tests\m68.elf
+    set _runcmd=m68 -h:180 c_tests\m68
+    set _M68runcmd=..\m68 -h:180 ..\c_tests\m68
 ) else (
 if "%1" == "armos" (
     set _runcmd=..\armos\armos -h:180 ..\armos\bin\m68
@@ -89,13 +89,13 @@ set _genlist=6 8 a d 3 i I m o r x
     %_runcmd% c_tests\ba -a:%%g -x -q c_tests\tp.bas >>%outputfile%
 ))
 
-echo test m68.elf ttt.elf 1
-echo test m68.elf ttt.elf 1 >>%outputfile%
-%_runcmd% -h:120 c_tests\m68.elf c_tests\ttt.elf 1 >>%outputfile%
+echo test m68 ttt.elf 1
+echo test m68 ttt.elf 1 >>%outputfile%
+%_runcmd% -h:120 c_tests\m68 c_tests\ttt.elf 1 >>%outputfile%
 
-echo test m68.elf ttt.68k 1
-echo test m68.elf ttt.68k 1 >>%outputfile%
-%_runcmd% -h:120 c_tests\m68.elf cpm\ttt.68k 1 >>%outputfile%
+echo test m68 ttt.68k 1
+echo test m68 ttt.68k 1 >>%outputfile%
+%_runcmd% -h:120 c_tests\m68 cpm\ttt.68k 1 >>%outputfile%
 
 echo test com cp/m 2.2 emulator
 echo test com cp/m 2.2 emulator >>%outputfile%

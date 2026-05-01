@@ -22,7 +22,7 @@ inc2=$gccpath/m68k-elf/include
 inc3=..
 incpaths="-I. -I./bits -I$inc1 -I$inc2 -I$inc3"
 
-# M68 means we're building the m68.elf binary (vs another emulator)
+# M68 means we're building the m68 binary (vs another emulator)
 defines="-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG"
 gccflags="-mcpu=68000 -x c++ -fno-use-cxa-atexit -O$optflags -ffunction-sections -fdata-sections"
 ldflags="-Wl,--section-start=.init=0x4000 -Wl,--gc-sections"
@@ -35,7 +35,7 @@ $gcccmd $incpaths $gccflags $defines newlib68.c -S -fverbose-asm -o newlib68.s
 # build the assembly portion with _start and syscalls
 $gccpath/bin/m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
-$gcccmd $defines $incpaths $gccflags ../m68.cxx ../m68000.cxx newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o m68.elf $ldflags
+$gcccmd $defines $incpaths $gccflags ../m68.cxx ../m68000.cxx newlib68.c -l:m68start.o -L./ -static-libgcc -l:libm.a -l:libstdc++.a -static -o m68 $ldflags
 
-cp m68.elf ../bin
+cp m68 ../bin
 

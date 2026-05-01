@@ -18,7 +18,7 @@ set includes=-I. -I.\bits -I%inc1% -I%inc2% -I%inc3% -I%inc4%
 set gcc=%gccpath%\bin\m68k-elf-gcc
 set ldflags=-Wl,--section-start=.init=0x4000 -Wl,--gc-sections
 
-rem M68 means we're building the m68.elf binary (vs another emulator).
+rem M68 means we're building the m68 elf binary (vs another emulator).
 set defines=-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG
 set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag% -ffunction-sections -fdata-sections
 
@@ -31,9 +31,9 @@ rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 rem actually build the app
-%gcc% %defines% %includes% %gccflags% ..\m68.cxx ..\m68000.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -static -o m68.elf %ldflags%
+%gcc% %defines% %includes% %gccflags% ..\m68.cxx ..\m68000.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -static -o m68 %ldflags%
 
-%gccpath%\m68k-elf\bin\objdump.exe -d m68.elf >m68.txt
+%gccpath%\m68k-elf\bin\objdump.exe -d m68 >m68.txt
 
-copy m68.elf ..\bin\m68 1>nul 2>nul
+copy m68 ..\bin 1>nul 2>nul
 

@@ -42,7 +42,9 @@
 #define emulator_sys_fork               0x2016 // exists for x86 and older ISAs. Newer ISAs use sys_clone
 #define emulator_sys_signal             0x2017 // exists for x86 and older ISAs
 #define emulator_sys_mmap2              0x2018 // exists for x86. like mmap except offset is in 4k pages, not bytes and all 6 registers are used
-#define emulator_sys_fstat64            0x2019 // exists for x32, used by fpc
+#define emulator_sys_fstat64            0x2019 // exists for x86, used by fpc
+#define emulator_sys_chmod              0x2020 // exists for x86, used by fpc after creating a .sh file
+#define emulator_sys_waitpid            0x2021 // exists for x86, used by fpc after forking ld
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?

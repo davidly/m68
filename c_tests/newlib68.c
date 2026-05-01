@@ -130,6 +130,8 @@ extern "C" int openat( int dirfd, const char * pathname, int flags, ... )
 extern "C" int pipe2( int pipefd[2], int flags ) { return -1; }
 extern "C" int wait4( pid_t pid, int * wstatus, int options, struct rusage * ru ) { return -1; }
 extern "C" pid_t fork() { return -1; }
+extern "C" int waitpid( int pid, int * wstatus, int options ) { return -1; }
+extern "C" int execve( const char * path, char * const argv[], char * const envp[] ) { return -1; }
 
 extern "C" int clock_gettime( clockid_t id, struct timespec * res )
 {

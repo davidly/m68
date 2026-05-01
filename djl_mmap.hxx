@@ -63,6 +63,7 @@ class CMMap
         CMMap() : base( 0 ), length( 0 ), peak( 0 ), pmem( 0 ) {}
         ~CMMap() { validate(); }
         uint64_t peak_usage() { return peak; }
+        size_t count() { return entries.size(); }
 
         void initialize( uint64_t b, uint64_t l, uint8_t * p )
         {

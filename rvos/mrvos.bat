@@ -38,8 +38,8 @@ rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 rem actually build the app
-%gcc% %defines% %includes% %gccflags% rvos.cxx riscv.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o rvos.elf %ldflags%
-%gccpath%\m68k-elf\bin\objdump.exe -d rvos.elf >rvos.txt
+%gcc% %defines% %includes% %gccflags% rvos.cxx riscv.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o rvos %ldflags%
+%gccpath%\m68k-elf\bin\objdump.exe -d rvos >rvos.txt
 
-copy rvos.elf ..\bin\rvos
+copy rvos ..\bin\rvos
 

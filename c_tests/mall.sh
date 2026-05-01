@@ -24,7 +24,7 @@ do
     m.sh $arg $optflags $gccver
 done
 
-echo build m68.elf
+echo build m68
 mm68.sh $optflags $gccver
 
 for arg in tbcd tshift taddsubm tea ttt68 ttt68u tchk tsh

@@ -84,6 +84,8 @@
         extern "C" int lstat( const char * path, struct stat * statbuf );
         extern "C" int pipe2( int pipefd[2], int flags );
         extern "C" int wait4( pid_t pid, int * wstatus, int options, struct rusage * ru );
+        extern "C" int waitpid( int pid, int * wstatus, int options );
+        extern "C" int execve( const char * path, char * const argv[], char * const envp[] );
         extern "C" char * realpath( const char *__restrict path, char *__restrict resolved_path );
     #endif
 
@@ -117,6 +119,7 @@ using namespace std::chrono;
     #define SIGNED_REG_TYPE int64_t
     #define ACCESS_REG( x ) cpu.regs[ x ]
     #define CPU_IS_LITTLE_ENDIAN true
+    #define AT_PLATFORM_VALUE "aarch64"
 
     #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL 8
@@ -141,6 +144,7 @@ using namespace std::chrono;
     #define SIGNED_REG_TYPE int64_t
     #define ACCESS_REG( x ) cpu.regs[ x ]
     #define CPU_IS_LITTLE_ENDIAN true
+    #define AT_PLATFORM_VALUE "riscv"
 
     #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL RiscV::a7
@@ -165,6 +169,7 @@ using namespace std::chrono;
     #define SIGNED_REG_TYPE int32_t
     #define ACCESS_REG( x ) cpu.dregs[ x ].l
     #define CPU_IS_LITTLE_ENDIAN false
+    #define AT_PLATFORM_VALUE "m68knommu"
 
     #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL 0
@@ -189,6 +194,7 @@ using namespace std::chrono;
     #define SIGNED_REG_TYPE int32_t
     #define ACCESS_REG( x ) cpu.Sparc_reg( x )
     #define CPU_IS_LITTLE_ENDIAN false
+    #define AT_PLATFORM_VALUE "sparc"
 
     #define REG_PROGRAM_COUNTER cpu.pc
     #define REG_SYSCALL 1 // g1
@@ -213,6 +219,7 @@ using namespace std::chrono;
     #define SIGNED_REG_TYPE int64_t
     #define ACCESS_REG( x ) cpu.regs[ x ].q
     #define CPU_IS_LITTLE_ENDIAN true
+    #define AT_PLATFORM_VALUE "x86_64"
 
     #define REG_PROGRAM_COUNTER cpu.rip
     #define REG_SYSCALL x64::rax
@@ -237,6 +244,7 @@ using namespace std::chrono;
     #define SIGNED_REG_TYPE int32_t
     #define ACCESS_REG( x ) cpu.regs[ x ].d
     #define CPU_IS_LITTLE_ENDIAN true
+    #define AT_PLATFORM_VALUE "i686"
 
     #define REG_PROGRAM_COUNTER ( (uint32_t) cpu.rip )
     #define REG_SYSCALL x64::rax
@@ -1941,6 +1949,8 @@ static const SysCall syscalls[] =
     { "emulator_sys_signal", emulator_sys_signal }, // exists for x86 and older ISAs as 48
     { "emulator_sys_mmap2", emulator_sys_mmap2 }, // exists for x86 so arguments are passed in registers and offset is in 4k pages not bytes
     { "emulator_sys_fstat64", emulator_sys_fstat64 }, // exists for x86 and used by the Free Pascal Compiler
+    { "emulator_sys_chmod", emulator_sys_chmod }, // exists for x86 and used by the Free Pascal Compiler
+    { "emulator_sys_waitpid", emulator_sys_waitpid }, // exists for x86 and used by the Free Pascal Compiler
 };
 
 // Use custom versions of bsearch and qsort to get consistent behavior across platforms.
@@ -2102,7 +2112,10 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 25, SYS_mremap },
     { 35, SYS_nanosleep },
     { 39, SYS_getpid },
+    { 57, emulator_sys_fork },
+    { 59, SYS_execve },
     { 60, SYS_exit },
+    { 61, SYS_wait4 },
     { 63, SYS_uname },
     { 72, SYS_fcntl },
     { 74, SYS_fsync },
@@ -2170,10 +2183,12 @@ static const SyscalltoRV X32ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 4, SYS_write },
     { 5, SYS_open },
     { 6, SYS_close },
+    { 7, emulator_sys_waitpid },
     { 10, SYS_unlink },
     { 11, SYS_execve },
     { 12, SYS_chdir },
     { 13, emulator_sys_time },
+    { 15, emulator_sys_chmod },
     { 19, SYS_lseek },
     { 20, SYS_getpid },
     { 33, emulator_sys_access },
@@ -2608,8 +2623,13 @@ void emulator_invoke_svc( CPUClass & cpu )
             REG_TYPE mode = ACCESS_REG( REG_ARG1 );
             tracer.Trace( "  emulator_sys_access path '%s', mode %#x\n", path, mode );
 #if defined( _WIN32 ) || defined( __mc68000__ )
-            errno = EACCES;
-            update_result_errno( cpu, -1 );
+            if ( file_exists( path ) )
+                update_result_errno( cpu, 0 );
+            else
+            {
+                errno = EACCES;
+                update_result_errno( cpu, -1 );
+            }
 #else
             // at least try to do this on Linux
 
@@ -2641,8 +2661,10 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             char * presult = getcwd( pin, size );
             if ( 0 != presult )
-                result = 1 +strlen( pin );
+                result = 1 + strlen( pin );
 #endif
+            if ( result > 0 )
+                tracer.Trace( "  cwd: '%s'\n", pin );
             update_result_errno( cpu, result );
             break;
         }
@@ -2924,11 +2946,11 @@ void emulator_invoke_svc( CPUClass & cpu )
             REG_TYPE pid = ACCESS_REG( REG_ARG0 );
             int * wstatus = (int *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
             int options = (int) ACCESS_REG( REG_ARG2 );
-            struct rusage * rusage = (struct rusage *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
+            struct rusage * rusage = ( 0 == ACCESS_REG( REG_ARG3 ) ) ? 0 : (struct rusage *) cpu.getmem( ACCESS_REG( REG_ARG3 ) );
 
 #ifdef _WIN32
-            assert( false );
-            int result = -1;
+            int result = 0;
+            *wstatus = 0; // lie
 #else
             int result = wait4( pid, wstatus, options, rusage );
 #endif
@@ -2938,25 +2960,38 @@ void emulator_invoke_svc( CPUClass & cpu )
         case SYS_execve:
         {
             char * path = (char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
-            char ** argv = (char **) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-            char ** envp = (char **) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
-
             tracer.Trace( "    path: '%s'\n", path );
-            for ( int i = 0; argv[ i ]; i++ )
-                printf( "    argv[ %d ] = '%s'\n", i, argv[ i ] );
-            for ( int i = 0; envp[ i ]; i++ )
-                printf( "    envp[ %d ] = '%s'\n", i, envp[ i ] );
+            REG_TYPE * argv = (REG_TYPE *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            REG_TYPE * envp = (REG_TYPE *) cpu.getmem( ACCESS_REG( REG_ARG2 ) );
 
-            // don't execve(). instead, load the binary in this process and start executing at _start on return from this syscall
-            // not implemented yet.
+            char * local_argv[ 100 ];
+            int argc = 0;
+            while ( argv[ argc ] )
+            {
+                local_argv[ argc ] = (char *) cpu.getmem( argv[ argc ] );
+                tracer.Trace( "    argv[ %d ] = '%s'\n", argc, local_argv[ argc ] );
+                argc++;
+            }
+            local_argv[ argc ] = 0;
+
+            char * local_envp[ 100 ];
+            int envc = 0;
+            while ( envp[ envc ] )
+            {
+                local_envp[ envc ] = (char *) cpu.getmem( envp[ envc ] );
+                tracer.Trace( "    envp[ %d ] = '%s'\n", envc, local_envp[ envc ] );
+                envc++;
+            }
+            local_envp[ envc ] = 0;
 
 #ifdef _WIN32
-            assert( false );
+            assert( false ); // determine if the target binary is 32 or 64 bit and invoke x32os or x64os to run it (if it's a static binary)
             int result = -1;
 #else
-            assert( false );
-            int result = -1;
-            // int result = execve( path, argv, envp );
+            tracer.Trace( "    calling execve\n" );
+            int result = execve( path, local_argv, local_envp ); // may be a 64-bit or a 32-bit process so the emulator can't for sure run it.
+            assert( 0 != result ); // execve doesn't return on success
+            tracer.Trace( "    result of execve: %d\n", result );
 #endif
             update_result_errno( cpu, result );
             break;
@@ -4827,6 +4862,7 @@ void emulator_invoke_svc( CPUClass & cpu )
             tracer.Trace( "    stat64 on path '%s'\n", pathname );
             tracer.Trace( "    sizeof linux_syscall_x32_stat64: %u\n", (int) sizeof( struct linux_syscall_x32_stat64 ) );
             struct linux_syscall_x32_stat64 * pout = (struct linux_syscall_x32_stat64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            memset( pout, 0, sizeof( *pout ) );
             int result = 0;
 
 #ifdef _WIN32
@@ -4902,13 +4938,37 @@ void emulator_invoke_svc( CPUClass & cpu )
             update_result_errno( cpu, result );
             break;
         }
+#ifdef X32OS
+        case emulator_sys_waitpid: // only called by x86 32-bit linux apps. only used by the Free Pascal Compiler
+        {
+            REG_TYPE pid = ACCESS_REG( REG_ARG0 );
+            int * wstatus = (int *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
+            int options = (int) ACCESS_REG( REG_ARG2 );
+#ifdef _WIN32
+            int result = pid;
+            *wstatus = 0; // lie and say the process exited cleanly
+#else
+            int result = waitpid( pid, wstatus, options );
+#endif
+            tracer.Trace( "    waitpid result %#x, wstatus %#x\n", result, *wstatus );
+            update_result_errno( cpu, result ); // for now just pretend it worked
+            break;
+        }
+        case emulator_sys_chmod: // only called by x86 32-bit linux apps. only used by the Free Pascal Compiler
+        {
+            const char * path = (const char *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
+            uint32_t mode = (uint32_t) ACCESS_REG( REG_ARG1 );
+            update_result_errno( cpu, 0 ); // for now just pretend it worked
+            break;
+        }
+#endif
         case emulator_sys_fstat64: // only called by x86 32-bit linux apps. only used by the Free Pascal Compiler
         {
             int fd = (int) ACCESS_REG( REG_ARG0 );
             tracer.Trace( "    fstat64 on fd %d\n", fd );
             tracer.Trace( "    sizeof linux_syscall_x32_stat64: %u\n", (int) sizeof( struct linux_syscall_x32_stat64 ) );
             struct linux_syscall_x32_stat64 * pout = (struct linux_syscall_x32_stat64 *) cpu.getmem( ACCESS_REG( REG_ARG1 ) );
-            memset(pout, 0, sizeof(*pout));
+            memset( pout, 0, sizeof( *pout ) );
             int result = 0;
 
 #ifdef _WIN32
@@ -9058,6 +9118,12 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     penv_cur += strlen( pexecfn_data ) + 1;
     tracer.Trace( "execfn_string '%s', vm address %x\n", pexecfn_data, aexecfn );
 
+    char * p_at_platform_data = penv_cur;
+    strcpy( p_at_platform_data, AT_PLATFORM_VALUE );
+    REG_TYPE p_at_platform = (REG_TYPE) ( p_at_platform_data - (char *) memory.data() ) + g_base_address;
+    penv_cur += strlen( p_at_platform_data ) + 1;
+    tracer.Trace( "at_platform '%s', vm address %x\n", p_at_platform_data, p_at_platform );
+
     tracer.Trace( "args_len %d, penv_data %p\n", args_len, penv_data );
     tracer.TraceBinaryData( (uint8_t *) ( memory.data() + arg_data_offset ), g_arg_data_commit + 0x20, 4 ); // +20 to inspect for bugs
 
@@ -9093,47 +9159,51 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     if ( 0 == ( 1 & ( app_argc + app_env_count ) ) )
         pstack--;
 
-    pstack -= ( 10 * sizeof( AuxProcessStart32 ) ); // for 10 aux records
+    pstack -= ( 11 * sizeof( AuxProcessStart32 ) ); // for 10 aux records
     REG_TYPE aux_data_offset = (REG_TYPE) ( (uint8_t *) pstack - memory.data() );
     AuxProcessStart32 * paux = (AuxProcessStart32 *) pstack;
-    paux[0].a_type = 25; // AT_RANDOM
-    paux[0].a_un.a_val = prandom;
-    paux[0].swap_endianness();
-    paux[1].a_type = 6; // AT_PAGESZ
-    paux[1].a_un.a_val = 4096;
-    paux[1].swap_endianness();
-    paux[2].a_type = 16; // AT_HWCAP
-    paux[2].a_un.a_val = 0xa01; // ARM64 bits for fp(0), atomics(8), cpuid(11)
-    paux[2].swap_endianness();
-    paux[3].a_type = 26; // AT_HWCAP2
-    paux[3].a_un.a_val = 0;
-    paux[3].swap_endianness();
-    paux[4].a_type = 11; // AT_UID
-    paux[4].a_un.a_val = 0x2061696C; // Lia
-    paux[4].swap_endianness();
-    paux[5].a_type = 12; // AT_EUID;
-    paux[5].a_un.a_val = 0x696A6559; // Yeji
-    paux[5].swap_endianness();
-    paux[6].a_type = 13; // AT_GID
-    paux[6].a_un.a_val = 0x65616863; // Chae
-    paux[6].swap_endianness();
-    paux[7].a_type = 14; // AT_EGID
-    paux[7].a_un.a_val = 0x6E696873; // Shin (Ryujin and Yuna)
-    paux[7].swap_endianness();
-    paux[8].a_type = 31; // AT_EXECFN
-    paux[8].a_un.a_val = aexecfn;
-    paux[8].swap_endianness();
+    size_t irec = 0;
+    paux[irec].a_type = 25; // AT_RANDOM
+    paux[irec].a_un.a_val = prandom;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 6; // AT_PAGESZ
+    paux[irec].a_un.a_val = 4096;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 16; // AT_HWCAP
+    paux[irec].a_un.a_val = 0xa01; // ARM64 bits for fp(0), atomics(8), cpuid(11)
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 26; // AT_HWCAP2
+    paux[irec].a_un.a_val = 0;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 11; // AT_UID
+    paux[irec].a_un.a_val = 0x2061696C; // Lia
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 12; // AT_EUID;
+    paux[irec].a_un.a_val = 0x696A6559; // Yeji
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 13; // AT_GID
+    paux[irec].a_un.a_val = 0x65616863; // Chae
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 14; // AT_EGID
+    paux[irec].a_un.a_val = 0x6E696873; // Shin (Ryujin and Yuna)
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 31; // AT_EXECFN
+    paux[irec].a_un.a_val = aexecfn;
+    paux[irec++].swap_endianness();
     
 #ifdef M68 // only needed for M68 because it uses newlib. In fact, on Sparc the C runtime infinte loops when it sees a value as large as AT_EH_FRAME_BEGIN
-    paux[9].a_type = AT_EH_FRAME_BEGIN;
-    paux[9].a_un.a_val = the_EH_FRAME_BEGIN;
-    paux[9].swap_endianness();
-    paux[10].a_type = 0;  // 0 to signify the end of the list of AT aux records
-    paux[10].a_un.a_val = 0;
-#else
-    paux[9].a_type = 0;  // 0 to signify the end of the list of AT aux records
-    paux[9].a_un.a_val = 0;
+    paux[irec].a_type = AT_EH_FRAME_BEGIN;
+    paux[irec].a_un.a_val = the_EH_FRAME_BEGIN;
+    paux[irec++].swap_endianness();
 #endif
+
+    paux[irec].a_type = 15; // AT_PLATFORM
+    paux[irec].a_un.a_val = p_at_platform;
+    paux[irec++].swap_endianness();
+
+    paux[irec].a_type = 0;  // 0 to signify the end of the list of AT aux records
+    paux[irec].a_un.a_val = 0;
+
     pstack--; // end of environment data is 0
 
     for ( int ienv = (int) app_env_count - 1; ienv >= 0; ienv-- )
@@ -9769,6 +9839,12 @@ static bool load_image( const char * pimage, const char * app_args )
     penv_cur += strlen( pexecfn_data ) + 1;
     tracer.Trace( "execfn_string '%s', vm address %x\n", pexecfn_data, aexecfn );
 
+    char * p_at_platform_data = penv_cur;
+    strcpy( p_at_platform_data, AT_PLATFORM_VALUE );
+    REG_TYPE p_at_platform = (REG_TYPE) ( p_at_platform_data - (char *) memory.data() ) + g_base_address;
+    penv_cur += strlen( p_at_platform_data ) + 1;
+    tracer.Trace( "at_platform '%s', vm address %x\n", p_at_platform_data, p_at_platform );
+
     tracer.Trace( "args_len %d, penv_data %p\n", args_len, penv_data );
     tracer.TraceBinaryData( (uint8_t *) ( memory.data() + arg_data_offset ), g_arg_data_commit + 0x20, 4 ); // +20 to inspect for bugs
 
@@ -9799,35 +9875,39 @@ static bool load_image( const char * pimage, const char * app_args )
 
     pstack -= 2; // the AT_NULL record will be here since memory is initialized to 0
 
-    pstack -= 18; // for 9 aux records
+    pstack -= 20; // for 10 aux records
     AuxProcessStart * paux = (AuxProcessStart *) pstack;
-    paux[0].a_type = 25; // AT_RANDOM
-    paux[0].a_un.a_val = prandom;
-    paux[0].swap_endianness();
-    paux[1].a_type = 6; // AT_PAGESZ
-    paux[1].a_un.a_val = 4096;
-    paux[1].swap_endianness();
-    paux[2].a_type = 16; // AT_HWCAP
-    paux[2].a_un.a_val = 0xa01; // ARM64 bits for fp(0), atomics(8), cpuid(11)
-    paux[2].swap_endianness();
-    paux[3].a_type = 26; // AT_HWCAP2
-    paux[3].a_un.a_val = 0;
-    paux[3].swap_endianness();
-    paux[4].a_type = 11; // AT_UID
-    paux[4].a_un.a_val = 0x2061696C; // Lia
-    paux[4].swap_endianness();
-    paux[5].a_type = 12; // AT_EUID;
-    paux[5].a_un.a_val = 0x696A6559; // Yeji
-    paux[5].swap_endianness();
-    paux[6].a_type = 13; // AT_GID
-    paux[6].a_un.a_val = 0x65616863; // Chae
-    paux[6].swap_endianness();
-    paux[7].a_type = 14; // AT_EGID
-    paux[7].a_un.a_val = 0x6E696873; // Shin (Ryujin and Yuna)
-    paux[7].swap_endianness();
-    paux[8].a_type = 31; // AT_EXECFN
-    paux[8].a_un.a_val = aexecfn;
-    paux[8].swap_endianness();
+    size_t irec = 0;
+    paux[irec].a_type = 25; // AT_RANDOM
+    paux[irec].a_un.a_val = prandom;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 6; // AT_PAGESZ
+    paux[irec].a_un.a_val = 4096;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 16; // AT_HWCAP
+    paux[irec].a_un.a_val = 0xa01; // ARM64 bits for fp(0), atomics(8), cpuid(11)
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 26; // AT_HWCAP2
+    paux[irec].a_un.a_val = 0;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 11; // AT_UID
+    paux[irec].a_un.a_val = 0x2061696C; // Lia
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 12; // AT_EUID;
+    paux[irec].a_un.a_val = 0x696A6559; // Yeji
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 13; // AT_GID
+    paux[irec].a_un.a_val = 0x65616863; // Chae
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 14; // AT_EGID
+    paux[irec].a_un.a_val = 0x6E696873; // Shin (Ryujin and Yuna)
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 31; // AT_EXECFN
+    paux[irec].a_un.a_val = aexecfn;
+    paux[irec++].swap_endianness();
+    paux[irec].a_type = 15; // AT_PLATFORM
+    paux[irec].a_un.a_val = p_at_platform;
+    paux[irec++].swap_endianness();
 
     pstack--; // end of environment data is 0
 

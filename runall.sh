@@ -7,8 +7,8 @@ _runcmd="m68"
 _m68runcmd="../m68"
 
 if [ "$1" = "nested" ]; then
-    _runcmd="m68 -h:180 c_tests/m68.elf"
-    _m68runcmd="../m68 -h:180 ../c_tests/m68.elf"
+    _runcmd="m68 -h:180 c_tests/m68"
+    _m68runcmd="../m68 -h:180 ../c_tests/m68"
 elif [ "$1" = "armos" ]; then
     _runcmd="../ArmOS/armos -h:180 ../ArmOS/bin/m68"
     _m68runcmd="../../ArmOS/armos -h:180 ../../ArmOS/bin/m68"
@@ -62,13 +62,13 @@ echo test ba
 echo test ba tp.bas >>$outputfile
 $_runcmd c_tests/ba.elf -q c_tests/tp.bas >>$outputfile
 
-echo test m68.elf ttt.elf 1
-echo test m68.elf ttt.elf 1 >>$outputfile
-$_runcmd -h:120 c_tests/m68.elf c_tests/ttt.elf 1 >>$outputfile
+echo test m68 ttt.elf 1
+echo test m68 ttt.elf 1 >>$outputfile
+$_runcmd -h:120 c_tests/m68 c_tests/ttt.elf 1 >>$outputfile
 
-echo test m68.elf ttt.68k 1
-echo test m68.elf ttt.68k 1 >>$outputfile
-$_runcmd -h:120 c_tests/m68.elf cpm/TTT.68K 1 >>$outputfile
+echo test m68 ttt.68k 1
+echo test m68 ttt.68k 1 >>$outputfile
+$_runcmd -h:120 c_tests/m68 cpm/TTT.68K 1 >>$outputfile
 
 echo test com cp/m 2.2 emulator
 echo test com cp/m 2.2 emulator >>$outputfile
