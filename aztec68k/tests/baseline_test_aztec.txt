@@ -1,4 +1,4 @@
-Sat 01/10/2026  9:17:43.54 
+Tue 05/05/2026  8:23:27.14 
 Aztec 680X0 Assembler 3.6B 6-9-88
 lb 3.6a 2-5-88
 lb 3.6a 2-5-88
@@ -517,7 +517,7 @@ ts completed with great success
 test TF 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 005732  Data: 000342  Udata: 0003fc  Total: 005e70
+Base: 000000   Code: 00572e  Data: 000342  Udata: 0003fc  Total: 005e6c
 115 symbols successfully copied
 float converted by floattoa: -1.23456699
 float converted by floattoa: 1.23456699
@@ -560,10 +560,10 @@ pi has mantissa: 0.785398, exponent 2
    1.250000  |   1.000000 =     1  |   2.000000 =     2  |   1.000000 =     1
    1.500000  |   1.000000 =     1  |   2.000000 =     2  |   2.000000 =     2
    1.750000  |   1.000000 =     1  |   2.000000 =     2  |   2.000000 =     2
-val 3.141590, intpart 2.125000, fracpart 0.141590
+val 3.141590, intpart 3.000000, fracpart 0.141590
 ldexp( 1.500000, 5 ) = 48.000000
 ftoa result:     '3.14159012'
 floattoa result: '3.14159011'
 l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
 test tf completed with great success
-Sat 01/10/2026  9:17:50.48 
+Tue 05/05/2026  8:23:33.32 

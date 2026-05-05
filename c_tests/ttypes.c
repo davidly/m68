@@ -1,5 +1,5 @@
 // gnu 13.2.0 targeting 68000 goes into an infinite loop when compiling this file
-// with the two lines noted below aren't #ifdefed out.
+// with the two lines noted below aren't #ifdefed out. With -O1 it just crashes.
 //
 // note: this test's purpose so to have compilers generate many unique instructions
 // so emulators can be validated. The test generates signed integer overflows which
@@ -380,8 +380,10 @@ int main( int argc, char * argv[], char * env[] )
     run_dimension( 31 );
     run_dimension( 32 );
 
-    // gcc 13.2.0 targeting 68000 on Windows hangs when compiling either of these two lines.
-    #if ( __GNUC__ != 13 ) || !defined( WIN_GCC_HANG )
+    // gcc 13.2.0 targeting 68000 on Windows hangs when compiling either of these two lines at -O2 and -Ofast. -O3 segmentation faults.
+
+    // Specific code for GCC 13.2.0 on Windows targeting 68k
+    #if ! ( defined(__GNUC__) && (__GNUC__ == 13) && (__GNUC_MINOR__ == 2) && defined(__m68k__) && defined(_WIN32) )
         run_dimension( 33 );
         run_dimension( 128 );
     #endif

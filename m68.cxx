@@ -1792,7 +1792,7 @@ int initialize_local_kernel_termios( struct local_kernel_termios * pt, int fd )
             #if defined( X32OS ) || defined( SPARCOS )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
                 pt->c_line = 0;
             #endif
-    
+
             pt->c_cc[linux_VINTR]    = 0x03; // ^C
             pt->c_cc[linux_VQUIT]    = 0x1c; //
             pt->c_cc[linux_VERASE]   = 0x7f; // DEL
@@ -1818,12 +1818,12 @@ int initialize_local_kernel_termios( struct local_kernel_termios * pt, int fd )
 
         tracer.Trace( "  initialize_local_kernel_termios iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
         memcpy( & pt->c_cc, & val.c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
-    
+
         pt->c_iflag = val.c_iflag;
         pt->c_oflag = val.c_oflag;
         pt->c_cflag = val.c_cflag;
         pt->c_lflag = val.c_lflag;
-    
+
         #ifdef __APPLE__
             pt->c_iflag = map_termios_iflag_macos_to_linux( pt->c_iflag );
             pt->c_oflag = map_termios_oflag_macos_to_linux( pt->c_oflag );
@@ -1832,7 +1832,7 @@ int initialize_local_kernel_termios( struct local_kernel_termios * pt, int fd )
             tracer.Trace( "  mac translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
             map_c_cc_macos_to_linux( pt->c_cc );
         #endif //__APPLE__
-            
+
         #if ( ( defined( X32OS ) || defined( SPARCOS ) ) && ( defined( __i386__ ) || defined( sparc ) ) )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
             pt->c_line = val.c_line;
         #endif
@@ -3005,7 +3005,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             int result = fork();
             tracer.Trace( "  result of fork: %#x\n", result );
-#endif            
+#endif
             update_result_errno( cpu, result );
             break;
         }
@@ -3852,7 +3852,7 @@ void emulator_invoke_svc( CPUClass & cpu )
 #if defined( SPARCOS ) || defined( M68 ) || defined( X32OS )
              struct sysinfo_syscall32 * psi = (struct sysinfo_syscall32 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
 #else
-             struct sysinfo_syscall64 * psi = (struct sysinfo_syscall64 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );      
+             struct sysinfo_syscall64 * psi = (struct sysinfo_syscall64 *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
 #endif
 
 #if defined(_WIN32) || defined(__APPLE__) || defined( __mc68000__ )
@@ -5503,11 +5503,11 @@ void emulator_invoke_svc( CPUClass & cpu )
                                 break;
                             }
                             tracer.Trace( "  result %d, iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", result, pt->c_iflag, pt->c_oflag, pt->c_cflag, pt->c_lflag );
-            
+
                             g_termios = *pt;
                             tracer.Trace( "  updated local termios via 5401 with iflag %#x, oflag %#x, cflag %#x, lflag %#x\n",
                                           g_termios.c_iflag, g_termios.c_oflag, g_termios.c_cflag, g_termios.c_lflag );
-            
+
                             #ifdef SPARCOS
                                 map_c_cc_linux_to_sparc( pt->c_cc );
                             #endif //SPARCOS
@@ -5527,13 +5527,13 @@ void emulator_invoke_svc( CPUClass & cpu )
                                           g_termios.c_iflag, g_termios.c_oflag, g_termios.c_cflag, g_termios.c_lflag );
 
                             memcpy( & val.c_cc, & pt->c_cc, get_min( sizeof( pt->c_cc ), sizeof( val.c_cc ) ) );
-            
+
                             val.c_iflag = pt->c_iflag;
                             val.c_oflag = pt->c_oflag;
                             val.c_cflag = pt->c_cflag;
                             val.c_lflag = pt->c_lflag;
                             tracer.Trace( "  iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
-        
+
                             #ifdef __APPLE__
                                 val.c_iflag = map_termios_iflag_linux_to_macos( val.c_iflag );
                                 val.c_oflag = map_termios_oflag_linux_to_macos( val.c_oflag );
@@ -5541,17 +5541,17 @@ void emulator_invoke_svc( CPUClass & cpu )
                                 val.c_lflag = map_termios_lflag_linux_to_macos( val.c_lflag );
                                 tracer.Trace( "  translated iflag %#x, oflag %#x, cflag %#x, lflag %#x\n", val.c_iflag, val.c_oflag, val.c_cflag, val.c_lflag );
                             #endif //__APPLE__
-            
+
                             #if ( ( defined( X32OS ) || defined( SPARCOS ) ) && ( defined( __i386__ ) || defined( sparc ) ) )  // older ISAs including x86 and sparc have c_line. modern ISAs don't
                                 val.c_line = pt->c_line;
                             #endif
-            
+
                             #ifdef SPARCOS
                                 map_c_cc_sparc_to_linux( val.c_cc );
                             #endif // SPARCOS
-            
+
                             tracer.TraceBinaryData( (uint8_t *) &val, sizeof( struct termios ), 4 );
-            
+
                             #ifdef __APPLE__
                                 map_c_cc_linux_to_macos( val.c_cc );
                             #endif
@@ -5559,7 +5559,7 @@ void emulator_invoke_svc( CPUClass & cpu )
                             result = tcsetattr( fd, TCSANOW, &val );
                         }
                     #endif //defined( _WIN32 )
-    
+
                     else if ( 0x540b == request || 0x5409 == request ) // TCFLSH or TCSBRK
                     {
                         update_result_errno( cpu, 0 );
@@ -8696,7 +8696,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     if ( 2 != ehead.type )
     {
         printf( "e_type is %d == %s\n", ehead.type, image_type( ehead.type ) );
-        usage( "elf image isn't an executable file (2 expected)" );
+        usage( "elf image isn't a statically-linked executable file (e_type 2 expected)" );
     }
 
     if ( ELF_MACHINE_ISA != ehead.machine )
@@ -9080,20 +9080,20 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
                 wcstombs( acName, tzi.DaylightName, sizeof( acName ) );
             else if ( TIME_ZONE_ID_UNKNOWN == dw )
                 strcpy( acName, "local" );
-    
+
             if ( 0 != acName[ 0 ] )
             {
                 char * ptz_data = penv_cur;
                 aenv[ app_env_count++ ] = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
                 tracer.Trace( "env_tz_address %x\n", aenv[ app_env_count - 1 ] );
                 strcpy( ptz_data, "TZ=" );
-    
+
                 // libc doesn't like spaces in spite of the doc saying it's OK:
                 // https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_node/libc_431.html
-    
+
                 remove_spaces( acName );
                 strcat( (char *) ptz_data, acName );
-    
+
                 if ( tzi.Bias >= 0 )
                     strcat( (char *) ptz_data, "+" );
                 itoa( tzi.Bias / 60, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );
@@ -9190,7 +9190,7 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     paux[irec].a_type = 31; // AT_EXECFN
     paux[irec].a_un.a_val = aexecfn;
     paux[irec++].swap_endianness();
-    
+
 #ifdef M68 // only needed for M68 because it uses newlib. In fact, on Sparc the C runtime infinte loops when it sees a value as large as AT_EH_FRAME_BEGIN
     paux[irec].a_type = AT_EH_FRAME_BEGIN;
     paux[irec].a_un.a_val = the_EH_FRAME_BEGIN;
@@ -9438,7 +9438,7 @@ static bool load_image( const char * pimage, const char * app_args )
     if ( 2 != ehead.type )
     {
         printf( "e_type is %d == %s\n", ehead.type, image_type( ehead.type ) );
-        usage( "elf image isn't an executable file (2)" );
+        usage( "elf image isn't a statically-linked executable file (e_type 2 expected)" );
     }
 
     if ( ELF_MACHINE_ISA != ehead.machine )
@@ -9801,20 +9801,20 @@ static bool load_image( const char * pimage, const char * app_args )
                 wcstombs( acName, tzi.DaylightName, sizeof( acName ) );
             else if ( TIME_ZONE_ID_UNKNOWN == dw )
                 strcpy( acName, "local" );
-    
+
             if ( 0 != acName[ 0 ] )
             {
                 char * ptz_data = penv_cur;
                 aenv[ app_env_count++ ] = (REG_TYPE) ( ptz_data - (char *) memory.data() ) + g_base_address;
                 tracer.Trace( "env_tz_address %x\n", aenv[ app_env_count - 1 ] );
                 strcpy( ptz_data, "TZ=" );
-    
+
                 // libc doesn't like spaces in spite of the doc saying it's OK:
                 // https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_node/libc_431.html
-    
+
                 remove_spaces( acName );
                 strcat( (char *) ptz_data, acName );
-    
+
                 if ( tzi.Bias >= 0 )
                     strcat( (char *) ptz_data, "+" );
                 itoa( tzi.Bias / 60, (char *) ( ptz_data + strlen( ptz_data ) ), 10 );

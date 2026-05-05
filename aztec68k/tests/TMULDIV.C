@@ -9,7 +9,7 @@ typedef long int32_t;
 typedef unsigned int uint;
 typedef int bool;
 #define false 0
-#define true 1;
+#define true 1
 
 #define ab( x ) ( x < 0 ) ? ( -x ) : ( x )
 

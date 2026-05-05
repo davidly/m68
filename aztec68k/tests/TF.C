@@ -365,10 +365,11 @@ int fl_cl_test()
 int modftest()
 {
     float val = 3.14159;
-    float fracpart, intpart;
+    float fracpart;
+    double intpart;
 
     fracpart = modf( val, & intpart );
-    printf( "val %f, intpart %f, fracpart %f\n", val, intpart, fracpart );
+    printf( "val %f, intpart %lf, fracpart %f\n", val, intpart, fracpart );
     return 0;
 } 
 

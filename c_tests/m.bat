@@ -26,8 +26,7 @@ set gcc=%gccpath%\bin\m68k-elf-gcc
 rem the linker makes the address space start at 0x2000 lower than the address of .init. Close enough
 set ldflags=-Wl,--section-start=.init=0x4000 -Wl,--gc-sections
 
-rem WIN_GCC_HANG is defined for the Windows version of gcc 13.2.0, which hangs compiling some normal C code in ttypes.c
-set defines=-DNDEBUG -DWIN_GCC_HANG
+set defines=-DNDEBUG
 set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O%_optflag% -ffunction-sections -fdata-sections
 
 rem generate .s files for debugging
@@ -39,7 +38,7 @@ rem build the assembly portion with _start and syscalls
 
 rem actually build the app
 %gcc% %defines% %includes% %gccflags% %1.c newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o %1.elf %ldflags% 
-%gccpath%\m68k-elf\bin\objdump.exe -d --insn-width=4 %1.elf >%1.txt
+rem %gccpath%\m68k-elf\bin\objdump.exe -d --insn-width=4 %1.elf >%1.txt
 
 goto alldone
 
