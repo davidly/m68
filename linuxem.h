@@ -45,6 +45,7 @@
 #define emulator_sys_fstat64            0x2019 // exists for x86, used by fpc
 #define emulator_sys_chmod              0x2020 // exists for x86, used by fpc after creating a .sh file
 #define emulator_sys_waitpid            0x2021 // exists for x86, used by fpc after forking ld
+#define emulator_sys_lstat64            0x2023 // exists for x32, used by fpc, not gnu
 
 // Linux syscall numbers differ by ISA. InSAne. These are RISC and ARM64, which are the same!
 // Note that there are differences between these two sets. which is correct?

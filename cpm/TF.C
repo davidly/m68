@@ -529,7 +529,7 @@ int main()
     printf( "asin of 0.3 is %f\n", s );
 
     f = tanh( atof( "2.2" ) );
-    printf( "tanh of 2.2 is %f\n", s );
+    printf( "tanh of 2.2 is %f\n", f );
 
     f = log( atof( "0.3" ) );
     printf( "log of 0.3: %f\n", f );

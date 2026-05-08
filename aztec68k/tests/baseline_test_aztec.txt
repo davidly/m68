@@ -1,4 +1,4 @@
-Tue 05/05/2026  8:23:27.14 
+Fri 05/08/2026  8:48:02.05 
 Aztec 680X0 Assembler 3.6B 6-9-88
 lb 3.6a 2-5-88
 lb 3.6a 2-5-88
@@ -539,7 +539,7 @@ acos of 0.3 is 1.266104
 my_acos of 0.3 is 1.266103
 asin of 0.3 is 0.304693
 my_asin of 0.3 is 0.304693
-tanh of 2.2 is 0.304693
+tanh of 2.2 is 0.975743
 log of 0.3: -1.203973
 log10 of 300: 2.477121
 pi has mantissa: 0.785398, exponent 2
@@ -566,4 +566,4 @@ ftoa result:     '3.14159012'
 floattoa result: '3.14159011'
 l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
 test tf completed with great success
-Tue 05/05/2026  8:23:33.32 
+Fri 05/08/2026  8:48:08.17 

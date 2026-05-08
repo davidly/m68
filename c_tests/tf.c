@@ -378,7 +378,7 @@ extern "C" int main()
     printf( "asinf of 0.3 is %lf\n", s );
 
     f = tanhf( 2.2 );
-    printf( "tanhf of 2.2 is %lf\n", s );
+    printf( "tanhf of 2.2 is %lf\n", f );
     
     f = logf( 0.3 );
     printf( "logf of 0.3: %lf\n", f );
