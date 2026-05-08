@@ -1,4 +1,4 @@
-Fri 03/27/2026 11:37:41.27 
+Fri 05/08/2026  9:14:19.29 
 building elfto68k 
 elfto68k.cxx
 building m68 
@@ -3909,7 +3909,7 @@ atanf of 1.000000 is 0.785398
 atan2f of 0.3, 0.2 is 0.982794
 acosf of 0.3 is 1.266104
 asinf of 0.3 is 0.304693
-tanhf of 2.2 is 0.304693
+tanhf of 2.2 is 0.975743
 logf of 0.3: -1.203973
 log10f of 300: 2.477121
 pi has mantissa: 0.785398, exponent 2
@@ -6175,4 +6175,4 @@ building ff
 elfto68k successfully created FF.68K
 running ff 
   rwxrwxrwx         324608  1970-01-01 00:00:00  /M68.68K
-Fri 03/27/2026 11:39:24.15 
+Fri 05/08/2026  9:16:00.64 
