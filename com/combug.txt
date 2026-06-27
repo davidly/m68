@@ -1,3 +1,32 @@
+Update on June 27, 2026:
+
+Jeffrey H. Johnson coded a fix for the issue described below in his repo:
+
+https://github.com/johnsonjh/com-cpm/commit/2d8ed6d6352a877cb612265c0dbe80db771d72ba 
+
+His updated COM.68K is now in this repo and it sets the 8080 parity bit per spec!
+
+MANXE.COM was built with Manx C v1.06d. It fails to run with OROGCOM.68K and runs with
+the updated COM.68K:
+
+    C:\github\m68\com>m68 COM.68K MANXE.COM
+    271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
+    done
+    
+    C:\github\m68\com>m68 ORIGCOM.68K MANXE.COM
+    
+    Illegal instruction DD at 265E.
+    Register contents:
+    -AF- -BC- -DE- -HL- -SP- -S0- -S1- -S2- -S3- -PC- -op-
+    0300 FC53 2393 FC28 FC26 1EA0 0002 0032 262D 265F  E5  PUSH H
+
+============================
+============================
+============================
+============================
+
+Issue with a much oder COM.68K now named ORIGCOM.68K in this repo.
+
 com.68k fails to run binaries created by C Vers. 1.06D 8080  (C) 1982 1983 1984 by Manx Software Systems.
 
 That's because com.68k doesn't set the Parity bit correctly for the ADI instruction. 
