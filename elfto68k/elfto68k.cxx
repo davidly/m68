@@ -857,7 +857,7 @@ int main( int argc, char * argv[] )
     chead.cb_text = cbPreStart + elf_start_data - elf_start_text; // include space between elf text and data as part of text
     chead.cb_data = elf_cb_data;
     chead.cb_bss = past_bss - start_bss;
-    chead.cb_symbols = (uint32_t) ( cpmSymbols.size() * sizeof( SymbolEntryCPM ) );
+    chead.cb_symbols = transfer_symbols ? ( (uint32_t) ( cpmSymbols.size() * sizeof( SymbolEntryCPM ) ) ) : 0;
     chead.text_start = elf_base_address - cbPreStart; // address where code starts and where pc points to begin execution
     chead.relocation_flag = 0xffff; // no relocations, not relocatble.
     chead.reserved = 0;
