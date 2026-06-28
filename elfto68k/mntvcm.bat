@@ -1,15 +1,16 @@
 @echo off
 setlocal
 
-set gccpath=..\gcc-8.2.0
+set gccpath=..\gcc-13.2.0
 path=%gccpath%\bin;%path%
 
-set inc1=%gccpath%\lib\gcc\m68k-elf\8.2.0\include
+set inc1=%gccpath%\lib\gcc\m68k-elf\13.2.0\include
 set inc2=%gccpath%\m68k-elf\include
 set inc3=..\
 set inc4=..\..\djl
-set inc5=%gccpath%\m68k-elf\include\c++\8.2.0\bits
-set includes=-I. -I.\bits -I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5%
+set inc5=%gccpath%\m68k-elf\include\c++\13.2.0\bits
+set inc6=..\ntvcm
+set includes=-I. -I.\bits -I%inc1% -I%inc2% -I%inc3% -I%inc4% -I%inc5% -I%inc6%
 
 set gcc=%gccpath%\bin\m68k-elf-gcc
 set ldflags=-Wl,--section-start=.init=0xa000
