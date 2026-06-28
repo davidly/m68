@@ -819,7 +819,7 @@ int main( int argc, char * argv[] )
     file.close();
 
     char acout[ 255 ];
-    strcpy( acout, argv[ 1 ] );
+    strcpy( acout, pinputfile );
     _strupr( acout );
     char * pdot = strchr( acout, '.' );
     if ( !pdot )
