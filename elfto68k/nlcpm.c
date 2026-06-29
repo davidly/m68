@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/resource.h>
+#include <sys/times.h>
 #include <stdnoreturn.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -828,11 +829,11 @@ extern "C" int rename( const char * oldpath, const char * newpath )
 extern "C" int usleep( useconds_t usec ) { return 0; }
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem ) { return 0; }
 extern "C" int isatty( int fd ) { return 1; /* probably some way to make this work */ }
-extern "C" int gettimeofday( struct timeval *tv, void *tz ) { return -1; }
+extern "C" int gettimeofday( struct timeval *tv, void *tz ) { memset( tv, 0, sizeof( *tv ) ); return -1; }
 extern "C" char * getcwd( char * buf, size_t size ) { strcpy( buf, "." ); return buf; }
 extern "C" int chdir( const char * path ) { return 0; }
 extern "C" int mkdirat( int dirfd, const char * path, mode_t mode ) { return 0; }
-extern "C" clock_t times( struct tms * buf ) { return 0; }
+extern "C" clock_t times( struct tms * buf ) { memset( buf, 0, sizeof( *buf ) ); return 0; }
 int getrusage( int who, struct rusage *usage ) { return 0; }
 extern "C" long syscall( long number, ... ) { return 0; } // no calling into Linux syscalls here
 extern "C" int pipe2( int pipefd[2], int flags ) { return -1; }
