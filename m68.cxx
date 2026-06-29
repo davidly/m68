@@ -6515,7 +6515,7 @@ struct CPM3DateTime
 
     void swap_endian()
     {
-        day = flip_endian16( day );
+        day = swap_endian16( day );
     }
 };
 #pragma pack(pop)
@@ -7788,17 +7788,17 @@ uint16_t days_since_jan1_1978()
     struct tm *time_info;
 
     current_time = time( 0 );
-    time_info = localtime( &current_time );
+    time_info = localtime( & current_time );
 
     struct tm target_date = {0};
     target_date.tm_year = 1978 - 1900; // Years since 1900
-    target_date.tm_mon = 0;         // January (0-indexed)
+    target_date.tm_mon = 0;            // January (0-indexed)
     target_date.tm_mday = 1;
     target_date.tm_hour = 0;
     target_date.tm_min = 0;
     target_date.tm_sec = 0;
 
-    time_t target_time = mktime( &target_date );
+    time_t target_time = mktime(&target_date);
     time_t difference_seconds = current_time - target_time;
     uint16_t days_since_1978 = (uint16_t) ( difference_seconds / ( 24 * 60 * 60 ) );
     return days_since_1978;
@@ -8633,7 +8633,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             time_t time_now = system_clock::to_time_t( now );
             struct tm * plocal = localtime( & time_now );
 
-            ptime->day = 1 + days_since_jan1_1978();
+            ptime->day = 1 + days_since_jan1_1978(); // on cp/m 3.0, jan 1 1978 is day 1.
             ptime->hour = packBCD( (uint8_t) plocal->tm_hour );
             ptime->minute = packBCD( (uint8_t) plocal->tm_min );
             ACCESS_REG( REG_RESULT ) = packBCD( (uint8_t) plocal->tm_sec );
@@ -8641,9 +8641,7 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
             if ( 155 == function )
                 ptime->second = (uint8_t) ACCESS_REG( REG_RESULT );
 
-#ifdef TARGET_BIG_ENDIAN
             ptime->swap_endian();
-#endif
             break;
         }
         case 108: // bdos get put program return code

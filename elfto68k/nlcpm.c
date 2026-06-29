@@ -824,16 +824,15 @@ extern "C" int rename( const char * oldpath, const char * newpath )
     return 0;
 } //rename
 
-// stubs for calls where CP/M 68K has no equivalent
+// stubs for calls where CP/M 68K has no equivalent.
+// bdos extensions could be written for cp/m 68k emulators, but why? just use linux instead.
 
 extern "C" int usleep( useconds_t usec ) { return 0; }
 extern "C" int nanosleep( const struct timespec * duration, struct timespec * rem ) { return 0; }
 extern "C" int isatty( int fd ) { return 1; /* probably some way to make this work */ }
-extern "C" int gettimeofday( struct timeval *tv, void *tz ) { memset( tv, 0, sizeof( *tv ) ); return -1; }
 extern "C" char * getcwd( char * buf, size_t size ) { strcpy( buf, "." ); return buf; }
 extern "C" int chdir( const char * path ) { return 0; }
 extern "C" int mkdirat( int dirfd, const char * path, mode_t mode ) { return 0; }
-extern "C" clock_t times( struct tms * buf ) { memset( buf, 0, sizeof( *buf ) ); return 0; }
 int getrusage( int who, struct rusage *usage ) { return 0; }
 extern "C" long syscall( long number, ... ) { return 0; } // no calling into Linux syscalls here
 extern "C" int pipe2( int pipefd[2], int flags ) { return -1; }
@@ -841,6 +840,41 @@ extern "C" int wait4( pid_t pid, int * wstatus, int options, struct rusage * ru 
 extern "C" pid_t fork() { return -1; }
 extern "C" int waitpid( int pid, int * wstatus, int options ) { return -1; }
 extern "C" int execve( const char * path, char * const argv[], char * const envp[] ) { return -1; }
+extern "C" clock_t times( struct tms * buf ) { memset( buf, 0, sizeof( *buf ) ); return 0; }
+
+#pragma pack( push, 1 )
+struct CPM3DateTime
+{
+    uint16_t day; // day 1 is 1 January 1978
+    uint8_t hour; // packed bcd (nibbles for each digit)
+    uint8_t minute; // packed bcd
+    uint8_t second; // packed bcd. for BDOS 155, not BDOS 105
+};
+#pragma pack(pop)
+
+uint8_t bcd_to_uint8_t( uint8_t bcd ) { return ( ( bcd >> 4 ) * 10 ) | ( bcd & 0xf ); };
+
+extern "C" int gettimeofday( struct timeval *tv, void *tz )
+{
+    // if running on CP/M 3.0 or later variants, bdos 105 works.
+    // don't check the cp/m version because some emulators claim 2.2 yet implement bdos 105.
+
+    CPM3DateTime dt;
+    dt.day = 2; // if bdos 105 isn't supported, this value won't change.
+    int result = bdos_cpm( 105, (long) & dt );
+    if ( 2 == dt.day ) // Is it January 2, 1978? Probably not.
+    {
+        memset( tv, 0, sizeof( *tv ) );
+        return -1;
+    }
+
+    tv->tv_sec = (uint32_t) dt.day * 365ul * 24ul * 60ul * 60ul;
+    tv->tv_sec += (uint32_t) bcd_to_uint8_t( dt.hour ) * 60ul * 60ul;
+    tv->tv_sec += (uint32_t) bcd_to_uint8_t( dt.minute ) * 60ul;
+    tv->tv_sec += (uint32_t) bcd_to_uint8_t( result );
+    tv->tv_usec = 0; // only have second-granularity
+    return 0;
+} //gettimeofday
 
 extern "C" char * realpath( const char * __restrict path, char * __restrict resolved_path )
 {

@@ -17,7 +17,8 @@ set ldflags=-Wl,--section-start=.init=0xa000
 
 rem M68 means we're building the m68.elf binary (vs another emulator).
 set defines=-DTARGET_BIG_ENDIAN -DM68 -DNDEBUG
-set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O3
+rem binary size is 33k smaller with -O2 vs -O3 and perf is similar
+set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit -O2
 
 rem generate .s files for debugging
 rem %gcc% %defines% %includes% %gccflags% ..\ntvcm\ntvcm.cxx -S -fverbose-asm -o ntvcm.s
@@ -32,7 +33,8 @@ rem actually build the app
 
 if %ERRORLEVEL% NEQ 0 ( goto alldone )
 
-elfto68k ntvcm.elf
+rem using -s to strip symbols makes the binary 19k smaller
+elfto68k -s ntvcm.elf
 del ntvcm.elf
 
 :alldone
