@@ -23,7 +23,7 @@ _cls_   ds.l    1
 arg0_value dc.b 'cpmapp'
 
                 bss argvals,256                 ; array of pointers to command line arguments
-                bss cmdtail_copy,12   8         ; a copy of the command tail because it gets overwritten
+                bss cmdtail_copy,128            ; a copy of the command tail because it gets overwritten
 
                 public __H1_org,__H1_end        ;*jd 27 Oct 86
                 public __H2_org,__H2_end        ;*jd 27 Oct 86
