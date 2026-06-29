@@ -868,7 +868,7 @@ extern "C" int gettimeofday( struct timeval *tv, void *tz )
         return -1;
     }
 
-    tv->tv_sec = (uint32_t) dt.day * 365ul * 24ul * 60ul * 60ul;
+    tv->tv_sec = (uint32_t) dt.day * 24ul * 60ul * 60ul;
     tv->tv_sec += (uint32_t) bcd_to_uint8_t( dt.hour ) * 60ul * 60ul;
     tv->tv_sec += (uint32_t) bcd_to_uint8_t( dt.minute ) * 60ul;
     tv->tv_sec += (uint32_t) bcd_to_uint8_t( result );
