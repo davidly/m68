@@ -852,7 +852,7 @@ struct CPM3DateTime
 };
 #pragma pack(pop)
 
-uint8_t bcd_to_uint8_t( uint8_t bcd ) { return ( ( bcd >> 4 ) * 10 ) | ( bcd & 0xf ); };
+uint8_t bcd_to_uint8_t( uint8_t bcd ) { return ( ( bcd >> 4 ) * 10 ) + ( bcd & 0xf ); };
 
 extern "C" int gettimeofday( struct timeval *tv, void *tz )
 {

@@ -1,4 +1,4 @@
-Mon 06/29/2026  6:49:23.68 
+Mon 06/29/2026 17:19:51.20 
 Aztec 680X0 Assembler 3.6B 6-9-88
 lb 3.6a 2-5-88
 lb 3.6a 2-5-88
@@ -6,6 +6,7 @@ lb 3.6a 2-5-88
 lb 3.6a 2-5-88
 lb 3.6a 2-5-88
 Aztec 680X0 Assembler 3.6B 6-9-88
+symto68k.cxx
 test SIEVE 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
@@ -217,6 +218,23 @@ current offset: 0
 result of fseek: 0
 file length from ftell: 1024
 trename completed with great success
+test TBDOS 
+Aztec 680X0 Assembler 3.6B 6-9-88
+Aztec C68K Rom Linker 3.6b  3-22-88
+Base: 000000   Code: 001cd4  Data: 0002a4  Udata: 000464  Total: 0023dc
+62 symbols successfully copied
+CP/M-68K BDOS smoke test
+BDOS version raw: 0x2022
+Current drive: A: raw=0
+Current user: 0
+Console status: 0
+
+BDOS string output works.
+hi multiverse
+Date: 06/29/2026 (Monday)
+Time: 17:19:54
+
+BDOS smoke test done
 test TPHI 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
@@ -565,4 +583,4 @@ ftoa result:     '3.14159012'
 floattoa result: '3.14159011'
 l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
 test tf completed with great success
-Mon 06/29/2026  6:49:29.67 
+Mon 06/29/2026 17:19:57.38 

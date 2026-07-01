@@ -8628,12 +8628,13 @@ void emulator_invoke_68k_trap2( m68000 & cpu ) // bdos
         case 105: // get date time. cp/m 3.0 and later. Returns seconds in A as packed bcd
         case 155: // Get date and time. MP/M, Concurrent CP/M. called by rmcobol v1.5
         {
+            uint16_t days_since = 1 + days_since_jan1_1978(); // on cp/m 3.0, jan 1 1978 is day 1.
             CPM3DateTime * ptime = (CPM3DateTime *) cpu.getmem( ACCESS_REG( REG_ARG0 ) );
             system_clock::time_point now = system_clock::now();
             time_t time_now = system_clock::to_time_t( now );
             struct tm * plocal = localtime( & time_now );
 
-            ptime->day = 1 + days_since_jan1_1978(); // on cp/m 3.0, jan 1 1978 is day 1.
+            ptime->day = days_since;
             ptime->hour = packBCD( (uint8_t) plocal->tm_hour );
             ptime->minute = packBCD( (uint8_t) plocal->tm_min );
             ACCESS_REG( REG_RESULT ) = packBCD( (uint8_t) plocal->tm_sec );
