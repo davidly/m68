@@ -296,7 +296,7 @@ int write( fd, buffer, count ) int fd; char * buffer; int count;
     if ( 0 == count )
         return 0;
 
-    if ( 1 == fd )
+    if ( 1 == fd || 2 == fd ) /* stdout and stderr */
     {
         for ( i = 0; i < count; i++ )
             bdos_cpm( (long) 2, (long) (uint8_t) buffer[ i ] ); /* console output */
@@ -501,7 +501,7 @@ int read( fd, buffer, count ) int fd; char * buffer; int count;
 
 int isatty( fd ) int fd;
 {
-    if ( fd >= 0 && fd <= 3 )
+    if ( fd >= 0 && fd < 3 )
         return 1;
 
     if ( ( fd < 0 ) || ( fd >= _countof( g_afcb ) ) || ( 0 == g_afcb[ fd ].n[ 0 ] ) )

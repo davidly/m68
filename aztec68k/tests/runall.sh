@@ -14,7 +14,7 @@ mlib.sh >>$outputfile
 msymto68k.sh >>$outputfile
 
 # tests without floating point build with m.sh
-for arg in SIEVE E TTT TM TARGS HI TPI MM NQ1D PRIMES NQUEENS T_SETJMP FOPENTST TRW TRW2 FILEOPS TRENAME TBDOS
+for arg in SIEVE E TTT TM TARGS HI TPI MM NQ1D PRIMES NQUEENS T_SETJMP FOPENTST TRW TRW2 FILEOPS TRENAME TBDOS TPRINTF
 do
     echo test $arg
     echo test $arg >>$outputfile

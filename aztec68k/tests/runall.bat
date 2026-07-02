@@ -13,7 +13,7 @@ rem build symto68k utility
 call msymto68k.bat >>%outputfile%
 
 rem tests without floating point build with m.bat
-set _clist=SIEVE E TTT TM TARGS HI TPI MM NQ1D PRIMES NQUEENS T_SETJMP FOPENTST TRW TRW2 FILEOPS TRENAME TBDOS
+set _clist=SIEVE E TTT TM TARGS HI TPI MM NQ1D PRIMES NQUEENS T_SETJMP FOPENTST TRW TRW2 FILEOPS TRENAME TBDOS TPRINTF
 
 ( for %%a in (%_clist%) do (
     echo test %%a
