@@ -1,4 +1,4 @@
-Thu 07/02/2026  8:41:13.00 
+Thu 07/02/2026 20:55:16.73 
 Aztec 680X0 Assembler 3.6B 6-9-88
 lb 3.6a 2-5-88
 lb 3.6a 2-5-88
@@ -10,20 +10,20 @@ symto68k.cxx
 test SIEVE 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 00174e  Data: 000270  Udata: 002464  Total: 003e22
+Base: 000000   Code: 0017ba  Data: 000270  Udata: 0024b4  Total: 003ede
 58 symbols successfully copied
 1899 primes.
 test E 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001762  Data: 000270  Udata: 000464  Total: 001e36
+Base: 000000   Code: 0017ce  Data: 000270  Udata: 0004b4  Total: 001ef2
 57 symbols successfully copied
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
 test TTT 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 00210c  Data: 0002ca  Udata: 00047a  Total: 002850
+Base: 000000   Code: 002178  Data: 0002ca  Udata: 0004ca  Total: 00290c
 79 symbols successfully copied
 move count:      64930
 iteration count: 10
@@ -31,38 +31,38 @@ method:          function pointers
 test TM 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001bb6  Data: 000272  Udata: 000464  Total: 00228c
+Base: 000000   Code: 001c22  Data: 000272  Udata: 0004b4  Total: 002348
 60 symbols successfully copied
 success
 test TARGS 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001774  Data: 000270  Udata: 000464  Total: 001e48
+Base: 000000   Code: 0017e0  Data: 000270  Udata: 0004b4  Total: 001f04
 57 symbols successfully copied
-argc: 1, argv 9ae4, penv 0
+argc: 1, argv 9b50, penv 0
 argv[ 0 ]: 'cpmapp'
 test HI 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001280  Data: 0001dc  Udata: 000464  Total: 0018c0
+Base: 000000   Code: 0012ec  Data: 0001dc  Udata: 0004b4  Total: 00197c
 51 symbols successfully copied
 hi
 test TPI 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001854  Data: 000270  Udata: 000c38  Total: 0026fc
+Base: 000000   Code: 0018c0  Data: 000270  Udata: 000c88  Total: 0027b8
 58 symbols successfully copied
 314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
 test MM 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001986  Data: 000270  Udata: 001742  Total: 003338
+Base: 000000   Code: 0019f2  Data: 000270  Udata: 001792  Total: 0033f4
 70 symbols successfully copied
 summ is: 465880
 test NQ1D 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 0018a4  Data: 000274  Udata: 000474  Total: 001f8c
+Base: 000000   Code: 001910  Data: 000274  Udata: 0004c4  Total: 002048
 62 symbols successfully copied
   size    solutions
      1            1
@@ -76,7 +76,7 @@ Base: 000000   Code: 0018a4  Data: 000274  Udata: 000474  Total: 001f8c
 test PRIMES 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001870  Data: 000270  Udata: 000464  Total: 001f44
+Base: 000000   Code: 0018dc  Data: 000270  Udata: 0004b4  Total: 002000
 60 symbols successfully copied
 10007
 10009
@@ -91,7 +91,7 @@ Base: 000000   Code: 001870  Data: 000270  Udata: 000464  Total: 001f44
 test NQUEENS 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 0018d6  Data: 0002b4  Udata: 000464  Total: 001fee
+Base: 000000   Code: 001942  Data: 0002b4  Udata: 0004b4  Total: 0020aa
 62 symbols successfully copied
   size    solutions
      1            1
@@ -105,7 +105,7 @@ Base: 000000   Code: 0018d6  Data: 0002b4  Udata: 000464  Total: 001fee
 test T_SETJMP 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001770  Data: 000270  Udata: 000490  Total: 001e70
+Base: 000000   Code: 0017dc  Data: 000270  Udata: 0004e0  Total: 001f2c
 61 symbols successfully copied
 second
 back in main
@@ -113,7 +113,7 @@ falling out of main
 test FOPENTST 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001d0c  Data: 0002a6  Udata: 000468  Total: 00241a
+Base: 000000   Code: 001d78  Data: 0002a6  Udata: 0004b8  Total: 0024d6
 63 symbols successfully copied
 O_CREAT: 100
 O_TRUNC: 200
@@ -122,7 +122,7 @@ O_WRONLY: 1
 O_RDWR: 2
 O_APPEND: 800
 O_EXCL: 400
-fp from fopen: 40614
+fp from fopen: 40722
 len in pfl: 128
 length of file before initial close: 128
 len in pfl: 0
@@ -130,13 +130,13 @@ exiting fopentst with great success
 test TRW 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001f32  Data: 000270  Udata: 0004a4  Total: 002646
+Base: 000000   Code: 001f9e  Data: 000270  Udata: 0004f4  Total: 002702
 58 symbols successfully copied
 trw completed with great success
 test TRW2 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001eaa  Data: 000288  Udata: 000c64  Total: 002d96
+Base: 000000   Code: 001f16  Data: 000288  Udata: 000cb4  Total: 002e52
 59 symbols successfully copied
 pass 0 with element count 1
 pass 1 with element count 7
@@ -154,9 +154,9 @@ trw2 completed with great success
 test FILEOPS 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 00212a  Data: 0002a6  Udata: 0006e4  Total: 002ab4
+Base: 000000   Code: 002196  Data: 0002a6  Udata: 000734  Total: 002b70
 68 symbols successfully copied
-fp: a2c4
+fp: a330
 current offset: 0
 result of fseek: 0
 file length from ftell: 0
@@ -169,7 +169,7 @@ file length from ftell: 8320
 8192 + 128 = 8320 file length from portable_filelen: 8320
 result of fseek to middle of file: 0
 result of fwrite to middle of file (should be 1): 1
-fp: a2c4
+fp: a330
 current offset: 0
 result of fseek: 0
 file length from ftell: 8320
@@ -212,7 +212,7 @@ result of read at offset 0: 512
 test TRENAME 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001caa  Data: 0002a6  Udata: 000864  Total: 0027b4
+Base: 000000   Code: 001d16  Data: 0002a6  Udata: 0008b4  Total: 002870
 65 symbols successfully copied
 current offset: 0
 result of fseek: 0
@@ -221,7 +221,7 @@ trename completed with great success
 test TBDOS 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001cd4  Data: 0002a4  Udata: 000464  Total: 0023dc
+Base: 000000   Code: 001d40  Data: 0002a4  Udata: 0004b4  Total: 002498
 62 symbols successfully copied
 CP/M-68K BDOS smoke test
 BDOS version raw: 0x2022
@@ -232,13 +232,13 @@ Console status: 0
 BDOS string output works.
 hi multiverse
 Date: 07/02/2026 (Thursday)
-Time: 08:41:16
+Time: 20:55:20
 
 BDOS smoke test done
 test TPRINTF 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 001750  Data: 000270  Udata: 000468  Total: 001e28
+Base: 000000   Code: 0017bc  Data: 000270  Udata: 0004b8  Total: 001ee4
 58 symbols successfully copied
 printf says hello
 fprintf( stdout ) says hello
@@ -246,7 +246,7 @@ fprintf( stderr ) says hello
 test TBIG 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 0021f2  Data: 000270  Udata: 000464  Total: 0028c6
+Base: 000000   Code: 00225e  Data: 000270  Udata: 0004b4  Total: 002982
 64 symbols successfully copied
 tbig: validating 262144 records (33554432 bytes)
 writing sequentially....
@@ -268,7 +268,7 @@ tbig completed with great success
 test TPHI 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 00210a  Data: 000302  Udata: 000464  Total: 002870
+Base: 000000   Code: 002176  Data: 000302  Udata: 0004b4  Total: 00292c
 69 symbols successfully copied
 should tend towards 1.61803398874989484820458683436563811772030
   at  5 iterations: 1.6250000000000000
@@ -280,7 +280,7 @@ done
 test TAP 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 002322  Data: 000306  Udata: 000464  Total: 002a8c
+Base: 000000   Code: 00238e  Data: 000306  Udata: 0004b4  Total: 002b48
 73 symbols successfully copied
 starting, should tend towards 1.2020569031595942854...
 first implementation...
@@ -297,7 +297,7 @@ done
 test TMULDIV 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 00289a  Data: 000302  Udata: 000464  Total: 003000
+Base: 000000   Code: 002906  Data: 000302  Udata: 0004b4  Total: 0030bc
 76 symbols successfully copied
 app start
 i8 3 * 14: 42
@@ -484,7 +484,7 @@ tmuldiv ended with great success
 test PIS 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 003220  Data: 000738  Udata: 000488  Total: 003de0
+Base: 000000   Code: 00328c  Data: 000738  Udata: 0004d8  Total: 003e9c
 97 symbols successfully copied
 soff128: 0, soff: 0, cGen128 1, cGen 128
 startInChunks: 0, limitInChunks 4
@@ -497,7 +497,7 @@ final: 243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89452821e63
 test MANDLE 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 0024f8  Data: 000302  Udata: 000464  Total: 002c5e
+Base: 000000   Code: 002564  Data: 000302  Udata: 0004b4  Total: 002d1a
 72 symbols successfully copied
 000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
 000001111111111111111122222222333557BF75433222211111000000000000000000000000000
@@ -527,7 +527,7 @@ Base: 000000   Code: 0024f8  Data: 000302  Udata: 000464  Total: 002c5e
 test TS 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 002aba  Data: 000302  Udata: 000464  Total: 003220
+Base: 000000   Code: 002b26  Data: 000302  Udata: 0004b4  Total: 0032dc
 78 symbols successfully copied
 test right shifts
   sizeof int8_t: 1, result ff
@@ -564,7 +564,7 @@ ts completed with great success
 test TF 
 Aztec 680X0 Assembler 3.6B 6-9-88
 Aztec C68K Rom Linker 3.6b  3-22-88
-Base: 000000   Code: 00572e  Data: 000342  Udata: 000470  Total: 005ee0
+Base: 000000   Code: 00579a  Data: 000342  Udata: 0004c0  Total: 005f9c
 115 symbols successfully copied
 float converted by floattoa: -1.23456699
 float converted by floattoa: 1.23456699
@@ -613,4 +613,4 @@ ftoa result:     '3.14159012'
 floattoa result: '3.14159011'
 l,le,l,le,l,le,l,le,l,le,l,le,l,le,l,le,g,ge,g,ge,g,ge,
 test tf completed with great success
-Thu 07/02/2026  8:41:26.32 
+Thu 07/02/2026 20:55:29.77 
