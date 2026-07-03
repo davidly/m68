@@ -137,6 +137,14 @@ bool valid_cpm_filename( pc ) char * pc;
     if ( pcdot && ( ( pcdot - pc ) > 8 ) )
         return false;
 
+    if ( pcdot )
+    {
+        if ( strchr( pcdot + 1, '.' ) )
+            return false;
+        if ( strlen( pcdot + 1 ) > 3 )
+            return false;
+    }
+
     return true;
 } /*valid_cpm_filename*/
 

@@ -35,8 +35,7 @@ struct FCBCPM68K // file control block for cp/m
     uint8_t s1;
     uint8_t s2;         // reserved for system use. set to 0 for open/make/search
     uint8_t rc;         // record count, reserved for system use
-    uint32_t current_offset; // not part of an official FCB -- state for this C runtime
-    uint8_t d[ 12 ];
+    uint8_t d[ 16 ];
     uint8_t cr;         // current reacord to be read or written for sequential read/write operations. apps must set approprately.
     uint8_t r0;         // (optional if app is doing random I/O) random record number. most significant byte in r0 then r1 then r2 as a 24-bit record
     uint8_t r1;         // the byte order is the opposite of CP/M 2.2 for 8080 plus r2 is actually used!
@@ -166,6 +165,7 @@ struct BasePageCPM * g_base_page = 0;  // 256 bytes below _start. initialized by
 uint32_t g_eh_data = 0;                // C++ eh frame data for __register_frame. initialized by _start() in startcpm.s
 char * g_current_brk = 0;              // brk. initialized by _init_nlcpm() at startup
 struct FCBCPM68K g_afcb[ 20 ];         // file descriptors index into this array. initialized by _init_nlcpm() at startup
+static uint32_t g_aoffsets[ 20 ];      // current file offset for the g_afcb files
 
 extern "C" void __attribute__((noreturn)) exit_cpm( int status );
 extern "C" long bdos_cpm( long number, long arg0 );
@@ -249,6 +249,14 @@ bool ValidCPMFilename( const char * pc )
     if ( pcdot && ( ( pcdot - pc ) > 8 ) )
         return false;
 
+    if ( pcdot )
+    {
+        if ( strchr( pcdot + 1, '.' ) )
+            return false;
+        if ( strlen( pcdot + 1 ) > 3 )
+            return false;
+    }
+
     return true;
 } //ValidCPMFilename
 
@@ -317,7 +325,7 @@ extern "C" int open( const char * pathname, int flags, ... )
         return -1;
     }
 
-    fcb.current_offset = 0;
+    g_aoffsets[ fd ] = 0;
     return fd;
 } //open
 
@@ -377,9 +385,9 @@ extern "C" off_t lseek( int fd, off_t offset, int whence )
     FCBCPM68K & fcb = g_afcb[ fd ];
 
     if ( SEEK_SET == whence )
-        fcb.current_offset = offset;
+        g_aoffsets[ fd ] = offset;
     else if ( SEEK_CUR == whence )
-        fcb.current_offset += offset;
+        g_aoffsets[ fd ] += offset;
     else if ( SEEK_END == whence )
     {
         long result = bdos_cpm( 35, (long) & fcb );
@@ -390,7 +398,7 @@ extern "C" off_t lseek( int fd, off_t offset, int whence )
         }
 
         uint32_t file_len = fcb.GetRandomIOOffset() * 128;
-        fcb.current_offset = file_len + offset;
+        g_aoffsets[ fd ] = file_len + offset;
     }
     else
     {
@@ -398,7 +406,7 @@ extern "C" off_t lseek( int fd, off_t offset, int whence )
         return -1;
     }
 
-    return fcb.current_offset;
+    return g_aoffsets[ fd ];
 } //lseek
 
 extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t count )
@@ -440,9 +448,9 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
 
         while ( 0 != remaining )
         {
-            uint32_t record = fcb.current_offset / 128;
+            uint32_t record = g_aoffsets[ fd ] / 128;
             fcb.SetRandomIOOffset( record );
-            uint32_t remainder = fcb.current_offset % 128;
+            uint32_t remainder = g_aoffsets[ fd ] % 128;
     
             if ( ( 0 != remainder ) || ( remaining < 128 ) ) // read, update, then write a 128 byte record
             {
@@ -476,7 +484,7 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
                     return -1;
                 }
 
-                fcb.current_offset += to_copy;
+                g_aoffsets[ fd ] += to_copy;
             }
             else // write a 128 byte record
             {
@@ -488,7 +496,7 @@ extern "C" _READ_WRITE_RETURN_TYPE write( int fd, const void * buffer, size_t co
                     errno = EINVAL;
                     return -1;
                 }
-                fcb.current_offset += 128;
+                g_aoffsets[ fd ] += 128;
                 remaining -= 128;
             }
         }
@@ -531,13 +539,13 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
 
         while ( 0 != remaining )
         {
-            uint32_t record = fcb.current_offset / 128;
+            uint32_t record = g_aoffsets[ fd ] / 128;
             fcb.SetRandomIOOffset( record );
 
             if ( size == ( record * 128 ) )
                 break;
 
-            uint32_t remainder = fcb.current_offset % 128;
+            uint32_t remainder = g_aoffsets[ fd ] % 128;
     
             if ( ( 0 != remainder ) || ( remaining < 128 ) )
             {
@@ -564,7 +572,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
                     remaining = 0;
                 }
 
-                fcb.current_offset += to_copy;
+                g_aoffsets[ fd ] += to_copy;
             }
             else // read a 128 byte record
             {
@@ -576,7 +584,7 @@ extern "C" _READ_WRITE_RETURN_TYPE read( int fd, void * buffer, size_t count )
                 }
                 memcpy( buf, pdma, 128 );
                 buf += 128;
-                fcb.current_offset += 128;
+                g_aoffsets[ fd ] += 128;
                 remaining -= 128;
 
                 if ( 1 == result ) // at end of file, so can't read more
