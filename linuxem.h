@@ -123,6 +123,7 @@
 #define SYS_statx 291
 #define SYS_rseq 293
 #define SYS_clock_gettime64 403
+#define SYS_clone3 435 // takes a struct clone_args* + size instead of clone's raw register args; same number across x64/arm64/riscv64
 
 // open apparently undefined for riscv? the old RISC-V64 g++ compiler/runtime uses these syscalls
 

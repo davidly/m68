@@ -1906,6 +1906,7 @@ static const SysCall syscalls[] =
     { "SYS_munmap", SYS_munmap },
     { "SYS_mremap", SYS_mremap },
     { "SYS_clone", SYS_clone },
+    { "SYS_clone3", SYS_clone3 },
     { "SYS_mmap", SYS_mmap },
     { "SYS_mprotect", SYS_mprotect },
     { "SYS_madvise", SYS_madvise },
@@ -2161,6 +2162,7 @@ static const SyscalltoRV X64ToRiscV[] = // per https://gpages.juszkiewicz.com.pl
     { 302, SYS_prlimit64 },
     { 318, SYS_getrandom },
     { 334, SYS_rseq },
+    { 435, SYS_clone3 },
     { 0x2002, emulator_sys_trace_instructions }, // same value
 };
 
@@ -3009,6 +3011,31 @@ void emulator_invoke_svc( CPUClass & cpu )
 #else
             int result = fork();
             tracer.Trace( "  result of fork: %#x\n", result );
+#endif
+            update_result_errno( cpu, result );
+            break;
+        }
+        case SYS_clone3:
+        {
+            // glibc's posix_spawn()/system() use clone3 for a fast fork-then-exec
+            // spawn. True CLONE_VM/CLONE_THREAD semantics (memory shared with the
+            // parent until exec/exit, real thread creation) aren't implemented -
+            // this behaves exactly like plain fork(): a real, independent
+            // (copy-on-write) host child process. That's indistinguishable from
+            // clone3's usual semantics for the spawn+exec pattern glibc actually
+            // uses it for, since the child only runs a little setup code before
+            // calling execve() or _exit(). Guest code that relies on genuine
+            // shared memory across clone3 (e.g. real thread creation) isn't
+            // supported - such a child never runs under the emulator at all.
+            uint64_t * pflags = (uint64_t *) cpu.getmem( ACCESS_REG( REG_ARG0 ) ); // struct clone_args starts with __u64 flags
+            tracer.Trace( "  syscall command SYS_clone3, flags %#llx\n", pflags ? *pflags : 0 );
+
+#ifdef _WIN32
+            assert( false );
+            int result = -1;
+#else
+            int result = fork();
+            tracer.Trace( "  result of clone3-as-fork: %#x\n", result );
 #endif
             update_result_errno( cpu, result );
             break;
