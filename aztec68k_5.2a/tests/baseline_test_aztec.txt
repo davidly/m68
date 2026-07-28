@@ -1,4 +1,4 @@
-Tue 07/28/2026 10:55:11.51 
+Tue 07/28/2026 12:55:14.87 
 Aztec librarian v5.2a Jul 11 1991 19:49:26
 Aztec librarian v5.2a Jul 11 1991 19:49:26
 Aztec 68000 Assembler v5.2a Jul  5 1991 15:39:34
@@ -146,9 +146,9 @@ trw2 completed with great success
 test FILEOPS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 00396e  Data: 0003f2  Udata: 0006f0  Total: 004450
+Base: 000000   Code: 003978  Data: 0003f2  Udata: 0006f0  Total: 00445a
 84 symbols successfully copied
-fp: bbd4
+fp: bbde
 current offset: 0
 result of fseek: 0
 file length from ftell: 0
@@ -161,7 +161,7 @@ file length from ftell: 8320
 8192 + 128 = 8320 file length from portable_filelen: 8320
 result of fseek to middle of file: 0
 result of fwrite to middle of file (should be 1): 1
-fp: bbd4
+fp: bbde
 current offset: 0
 result of fseek: 0
 file length from ftell: 8320
@@ -224,7 +224,7 @@ Console status: 0
 BDOS string output works.
 hi multiverse
 Date: 07/28/2026 (Tuesday)
-Time: 10:55:15
+Time: 12:55:19
 
 BDOS smoke test done
 test TPRINTF 
@@ -589,4 +589,4 @@ Base: 000000   Code: 003a3e  Data: 0003f2  Udata: 000470  Total: 0042a0
 000111111111111111112222222233445C      643332222111110000000000000000000000000
 000001111111111111111122222222333557BF75433222211111000000000000000000000000000
 000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
-Tue 07/28/2026 10:55:19.44 
+Tue 07/28/2026 12:55:22.92 
