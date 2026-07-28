@@ -672,7 +672,7 @@ void m68000::trace_state()
                 {
                     tracer.Trace( "jsr %s  ;  ", effective_string() );
                     uint8_t * pb = (uint8_t *) getmem( aregs[ 7 ] );
-                    tracer.Trace( "%02x %02x %02x %02x %02x %02x %02x %02x\n", pb[ 0 ], pb[ 1 ], pb[ 2 ], pb[ 3 ], pb[ 4 ], pb[ 5 ], pb[ 6 ], pb[ 7 ] );
+                    tracer.Trace( "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], pb[8], pb[9] );
                 }
                 else if ( 0x3b == bits11_6 ) // jmp
                     tracer.Trace( "jmp %s\n", effective_string() );
