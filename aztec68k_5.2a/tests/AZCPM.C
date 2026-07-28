@@ -48,8 +48,7 @@ struct FCBCPM68K
     uint8_t s1;
     uint8_t s2; 
     uint8_t rc; 
-    uint32_t current_offset;
-    uint8_t d[ 12 ];
+    uint8_t d[ 16 ];
     uint8_t cr;   
     uint8_t r0;  /* r0 and r1 are a 16-bit count of 128 byte records in CP/M 2.2. For CP/M 68K, reverse the byte ordering and add r2 */
     uint8_t r1;   
@@ -57,6 +56,7 @@ struct FCBCPM68K
 };
 
 static struct FCBCPM68K g_afcb[ 20 ];
+static uint32_t g_aoffsets[ 20 ];
 
 long GetRandomIOOffset( struct FCBCPM68K * pfcb )
 {
@@ -138,6 +138,14 @@ bool valid_cpm_filename( const char * pc )
     if ( pcdot && ( ( pcdot - pc ) > 8 ) )
         return false;
 
+    if ( pcdot )
+    {
+        if ( strchr( pcdot + 1, '.' ) )
+            return false;
+        if ( strlen( pcdot + 1 ) > 3 )
+            return false;
+    }
+
     return true;
 } /*valid_cpm_filename*/
 
@@ -185,7 +193,7 @@ int open( const char * uname, int mode, ... )
         return -1;
     }
 
-    pfcb->current_offset = 0;
+    g_aoffsets[ fd ] = 0;
     return fd;
 } /*open*/
 
@@ -251,9 +259,9 @@ long lseek( int fd, long offset, int whence )
     pfcb = & g_afcb[ fd ];
 
     if ( SEEK_SET == whence )
-        pfcb->current_offset = offset;
+        g_aoffsets[ fd ] = offset;
     else if ( SEEK_CUR == whence )
-        pfcb->current_offset += offset;
+        g_aoffsets[ fd ] += offset;
     else if ( SEEK_END == whence )
     {
         result = bdos_cpm( (long) 35, (long) pfcb ); /* compute file size */
@@ -264,7 +272,7 @@ long lseek( int fd, long offset, int whence )
         }
 
         result = GetRandomIOOffset( pfcb ) * 128;
-        pfcb->current_offset = result + offset;
+        g_aoffsets[ fd ] = result + offset;
     }
     else
     {
@@ -272,7 +280,7 @@ long lseek( int fd, long offset, int whence )
         return -1;
     }
 
-    return pfcb->current_offset;
+    return g_aoffsets[ fd ];
 } /*lseek*/
 
 long _lseek( int fd, long offset, int whence )
@@ -312,7 +320,8 @@ size_t write( int fd, void * buffer, size_t count )
     int i, result;
     struct FCBCPM68K * pfcb;
     uint8_t * pdma, * buf;
-    int remaining, to_copy, remainder, record;
+    int remaining, to_copy, remainder;
+    long record;
 
     if ( 0 == count )
         return 0;
@@ -353,9 +362,9 @@ size_t write( int fd, void * buffer, size_t count )
 
         while ( 0 != remaining )
         {
-            record = pfcb->current_offset / 128;
+            record = g_aoffsets[ fd ] / 128;
             SetRandomIOOffset( pfcb, (uint32_t) record );
-            remainder = (int) ( pfcb->current_offset % 128 );
+            remainder = (int) ( g_aoffsets[ fd ] % 128 );
     
             if ( ( 0 != remainder ) || ( remaining < 128 ) ) /* read, update, then write a 128 byte record */
             {
@@ -389,7 +398,7 @@ size_t write( int fd, void * buffer, size_t count )
                     return -1;
                 }
 
-                pfcb->current_offset += to_copy;
+                g_aoffsets[ fd ] += to_copy;
             }
             else /* write a 128 byte record */
             {
@@ -401,7 +410,7 @@ size_t write( int fd, void * buffer, size_t count )
                     errno = EINVAL;
                     return -1;
                 }
-                pfcb->current_offset += 128;
+                g_aoffsets[ fd ] += 128;
                 remaining -= 128;
             }
         }
@@ -434,7 +443,8 @@ static long file_size( struct FCBCPM68K * pfcb )
 
 size_t read( int fd, void * buffer, size_t count )
 {
-    int i, result, remaining, record, to_copy, remainder;
+    int i, result, remaining, to_copy, remainder;
+    long record;
     struct FCBCPM68K * pfcb;
     uint8_t * pdma, * buf;
     long size;
@@ -468,13 +478,13 @@ size_t read( int fd, void * buffer, size_t count )
 
         while ( 0 != remaining )
         {
-            record = pfcb->current_offset / 128;
+            record = g_aoffsets[ fd ] / 128;
             SetRandomIOOffset( pfcb, (uint32_t) record );
 
             if ( size == ( record * 128 ) )
                 break;
 
-            remainder = pfcb->current_offset % 128;
+            remainder = g_aoffsets[ fd ] % 128;
     
             if ( ( 0 != remainder ) || ( remaining < 128 ) )
             {
@@ -501,7 +511,7 @@ size_t read( int fd, void * buffer, size_t count )
                     remaining = 0;
                 }
 
-                pfcb->current_offset += to_copy;
+                g_aoffsets[ fd ] += to_copy;
             }
             else /* read a 128 byte record */
             {
@@ -513,7 +523,7 @@ size_t read( int fd, void * buffer, size_t count )
                 }
                 memcpy( buf, pdma, 128 );
                 buf += 128;
-                pfcb->current_offset += 128;
+                g_aoffsets[ fd ] += 128;
                 remaining -= 128;
 
                 if ( 1 == result ) /* at end of file, so can't read more */
