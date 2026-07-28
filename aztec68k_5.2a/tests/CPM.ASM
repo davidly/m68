@@ -4,16 +4,9 @@
 
                 dseg
                 public  __mbot,__mtop,__mcur    ;*jd 15 Dec 86
-                public  __sbot
-                public  _errno
                 public  _defdma
 
-;__mbot  ds.l    1               ; ptr to bottom of heap         *jd 15 Dec 86
-;__mtop  ds.l    1               ; ptr to top of heap            *jd 15 Dec 86
-;__mcur  ds.l    1               ; ptr to top of allocated heap space    *jd 15 Dec 86
-__sbot  ds.l    1               ; ptr to bottom of stack area           *jd 16 Dec 86
 _defdma ds.l    1               ; ptr to the default cp/m dma location / command tail length
-;_errno  ds.w    1               ; place to store error numbers
 
 arg0_value dc.b 'cpmapp',0
 
@@ -64,8 +57,8 @@ arg0_value dc.b 'cpmapp',0
                 move.l  d0,__mcur               ; current brk space location
                 add.l   $20(a1),d0
                 move.l  d0,__mtop               ; top of brk space
-                add.l   #4,d0
-                move.l  d0,__sbot               ; bottom of stack
+                add.l   #4,d0                   ; stack base (bottom) is in d0. not sure where manx wants it for stack checks.
+                                                ; __stkbase? is it used?
 
 ; initialize argc, argv, envp
                 move.l #1,d4                    ; argc cp/m 68k has no way of knowing the app name!
@@ -123,8 +116,6 @@ arg0_value dc.b 'cpmapp',0
 
 ;##################################
 _exit:
-;                dc.w    $a9f4                   ; macos toolbox a-line ExitToShell
-
                 clr.l d1                        ; clear the high bits of the exit code
                 move.w 4(a7),d1                 ; move the exit code to d1 and invoke the cp/m 68k exit trap
                 clr.l d0

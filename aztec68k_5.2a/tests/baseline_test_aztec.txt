@@ -1,4 +1,4 @@
-Tue 07/28/2026 13:30:23.69 
+Tue 07/28/2026 15:21:06.61 
 Aztec librarian v5.2a Jul 11 1991 19:49:26
 Aztec librarian v5.2a Jul 11 1991 19:49:26
 Aztec 68000 Assembler v5.2a Jul  5 1991 15:39:34
@@ -6,54 +6,54 @@ symto68k.cxx
 test SIEVE 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002eaa  Data: 0003f2  Udata: 0024c0  Total: 00575c
-73 symbols successfully copied
+Base: 000000   Code: 002ea6  Data: 0003ee  Udata: 0024c0  Total: 005754
+72 symbols successfully copied
 1899 primes.
 test E 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002ea8  Data: 0003f2  Udata: 0004c0  Total: 00375a
-72 symbols successfully copied
+Base: 000000   Code: 002ea4  Data: 0003ee  Udata: 0004c0  Total: 003752
+71 symbols successfully copied
 271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359662904357290033429526059563073813232862794349076323382988075319
 done
 test TTT 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 0042e4  Data: 000450  Udata: 0004ca  Total: 004bfe
-92 symbols successfully copied
+Base: 000000   Code: 0042e0  Data: 00044c  Udata: 0004ca  Total: 004bf6
+91 symbols successfully copied
 move count:      64930
 iteration count: 10
 method:          function pointers
 test TARGS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002eae  Data: 0003f2  Udata: 0004c0  Total: 003760
-72 symbols successfully copied
-argc: 1, argv b3a0, penv 0
+Base: 000000   Code: 002eaa  Data: 0003ee  Udata: 0004c0  Total: 003758
+71 symbols successfully copied
+argc: 1, argv b398, penv 0
 argv[ 0 ]: 'cpmapp'
 test HI 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 001d48  Data: 0001dc  Udata: 0004a8  Total: 0023cc
-53 symbols successfully copied
+Base: 000000   Code: 001d44  Data: 0001d8  Udata: 0004a8  Total: 0023c4
+52 symbols successfully copied
 hi
 test TPI 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002f76  Data: 0003f2  Udata: 000c94  Total: 003ffc
-72 symbols successfully copied
+Base: 000000   Code: 002f72  Data: 0003ee  Udata: 000c94  Total: 003ff4
+71 symbols successfully copied
 314159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535
 test MM 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 00315a  Data: 0003f2  Udata: 0017a4  Total: 004cf0
-84 symbols successfully copied
+Base: 000000   Code: 003156  Data: 0003ee  Udata: 0017a4  Total: 004ce8
+83 symbols successfully copied
 summ is: 465880
 test NQ1D 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003028  Data: 0003f6  Udata: 0004e0  Total: 0038fe
-77 symbols successfully copied
+Base: 000000   Code: 003024  Data: 0003f2  Udata: 0004e0  Total: 0038f6
+76 symbols successfully copied
   size    solutions
      1            1
      2            0
@@ -66,8 +66,8 @@ Base: 000000   Code: 003028  Data: 0003f6  Udata: 0004e0  Total: 0038fe
 test PRIMES 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002f9e  Data: 0003f2  Udata: 0004c0  Total: 003850
-74 symbols successfully copied
+Base: 000000   Code: 002f9a  Data: 0003ee  Udata: 0004c0  Total: 003848
+73 symbols successfully copied
 10007
 10009
 10037
@@ -81,8 +81,8 @@ Base: 000000   Code: 002f9e  Data: 0003f2  Udata: 0004c0  Total: 003850
 test NQUEENS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003040  Data: 000436  Udata: 0004c0  Total: 003936
-77 symbols successfully copied
+Base: 000000   Code: 00303c  Data: 000432  Udata: 0004c0  Total: 00392e
+76 symbols successfully copied
   size    solutions
      1            1
      2            0
@@ -95,16 +95,16 @@ Base: 000000   Code: 003040  Data: 000436  Udata: 0004c0  Total: 003936
 test T_SETJMP 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002ec0  Data: 0003f2  Udata: 0004fc  Total: 0037ae
-76 symbols successfully copied
+Base: 000000   Code: 002ebc  Data: 0003ee  Udata: 0004fc  Total: 0037a6
+75 symbols successfully copied
 second
 back in main
 falling out of main
 test FOPENTST 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 00357a  Data: 0003f2  Udata: 0004c0  Total: 003e2c
-79 symbols successfully copied
+Base: 000000   Code: 003576  Data: 0003ee  Udata: 0004c0  Total: 003e24
+78 symbols successfully copied
 O_CREAT: 100
 O_TRUNC: 200
 O_BINARY: 4000
@@ -114,7 +114,7 @@ O_WRONLY: 1
 O_RDWR: 2
 O_APPEND: 800
 O_EXCL: 400
-fp from fopen: 47072
+fp from fopen: 47064
 len in pfl: 128
 length of file before initial close: 128
 len in pfl: 0
@@ -122,14 +122,14 @@ exiting fopentst with great success
 test TRW 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 0036fc  Data: 0003f2  Udata: 000500  Total: 003fee
-73 symbols successfully copied
+Base: 000000   Code: 0036f8  Data: 0003ee  Udata: 000500  Total: 003fe6
+72 symbols successfully copied
 trw completed with great success
 test TRW2 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 00366c  Data: 000422  Udata: 000cc0  Total: 00474e
-74 symbols successfully copied
+Base: 000000   Code: 003668  Data: 00041e  Udata: 000cc0  Total: 004746
+73 symbols successfully copied
 pass 0 with element count 1
 pass 1 with element count 7
 pass 2 with element count 20
@@ -146,9 +146,9 @@ trw2 completed with great success
 test FILEOPS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003a00  Data: 0003f2  Udata: 000740  Total: 004532
-84 symbols successfully copied
-fp: bc66
+Base: 000000   Code: 0039fc  Data: 0003ee  Udata: 000740  Total: 00452a
+83 symbols successfully copied
+fp: bc5e
 current offset: 0
 result of fseek: 0
 file length from ftell: 0
@@ -161,7 +161,7 @@ file length from ftell: 8320
 8192 + 128 = 8320 file length from portable_filelen: 8320
 result of fseek to middle of file: 0
 result of fwrite to middle of file (should be 1): 1
-fp: bc66
+fp: bc5e
 current offset: 0
 result of fseek: 0
 file length from ftell: 8320
@@ -204,8 +204,8 @@ result of read at offset 0: 512
 test TRENAME 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003502  Data: 0003f2  Udata: 0008c0  Total: 0041b4
-81 symbols successfully copied
+Base: 000000   Code: 0034fe  Data: 0003ee  Udata: 0008c0  Total: 0041ac
+80 symbols successfully copied
 current offset: 0
 result of fseek: 0
 file length from ftell: 1024
@@ -213,8 +213,8 @@ trename completed with great success
 test TBDOS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003434  Data: 00043e  Udata: 0004c0  Total: 003d32
-76 symbols successfully copied
+Base: 000000   Code: 003430  Data: 00043a  Udata: 0004c0  Total: 003d2a
+75 symbols successfully copied
 CP/M-68K BDOS smoke test
 BDOS version raw: 0x2022
 Current drive: A: raw=0
@@ -224,28 +224,28 @@ Console status: 0
 BDOS string output works.
 hi multiverse
 Date: 07/28/2026 (Tuesday)
-Time: 13:30:28
+Time: 15:21:11
 
 BDOS smoke test done
 test TPRINTF 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 002e7c  Data: 0003f2  Udata: 0004c0  Total: 00372e
-73 symbols successfully copied
+Base: 000000   Code: 002e78  Data: 0003ee  Udata: 0004c0  Total: 003726
+72 symbols successfully copied
 printf says hello
 fprintf( stdout ) says hello
 fprintf( stderr ) says hello
 test TM 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003368  Data: 0003f6  Udata: 0004c0  Total: 003c1e
-75 symbols successfully copied
+Base: 000000   Code: 003364  Data: 0003f2  Udata: 0004c0  Total: 003c16
+74 symbols successfully copied
 success
 test TPHI 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003688  Data: 0003f2  Udata: 0004c0  Total: 003f3a
-95 symbols successfully copied
+Base: 000000   Code: 003684  Data: 0003ee  Udata: 0004c0  Total: 003f32
+94 symbols successfully copied
 should tend towards 1.61803398874989484820458683436563811772030
   at  5 iterations: 1.6250000000000000
   at 10 iterations: 1.6179774999618530
@@ -256,8 +256,8 @@ done
 test TAP 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 0036c6  Data: 0003f6  Udata: 0004c0  Total: 003f7c
-86 symbols successfully copied
+Base: 000000   Code: 0036c2  Data: 0003f2  Udata: 0004c0  Total: 003f74
+85 symbols successfully copied
 starting, should tend towards 1.2020569031595942854...
 first implementation...
   at           10 iterations: 1.1975319856741931
@@ -273,8 +273,8 @@ done
 test TMULDIV 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 0036d2  Data: 0003f2  Udata: 0004c0  Total: 003f84
-78 symbols successfully copied
+Base: 000000   Code: 0036ce  Data: 0003ee  Udata: 0004c0  Total: 003f7c
+77 symbols successfully copied
 app start
 i8 3 * 14: 42
 i8 3 % 14: 3
@@ -460,8 +460,8 @@ tmuldiv ended with great success
 test TS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 00413c  Data: 0003f2  Udata: 0004c0  Total: 0049ee
-94 symbols successfully copied
+Base: 000000   Code: 004138  Data: 0003ee  Udata: 0004c0  Total: 0049e6
+93 symbols successfully copied
 test right shifts
   sizeof int8_t: 1, result ff
   sizeof uint8_t: 1, result 7f
@@ -497,8 +497,8 @@ ts completed with great success
 test TF 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 00737e  Data: 0004ca  Udata: 0004c8  Total: 007d10
-141 symbols successfully copied
+Base: 000000   Code: 00737a  Data: 0004c6  Udata: 0004c8  Total: 007d08
+140 symbols successfully copied
 float converted by floattoa: -1.23456704
 float converted by floattoa: 1.23456704
 float converted by floattoa: 34.56700134
@@ -549,8 +549,8 @@ test tf completed with great success
 test PIS 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 0047dc  Data: 000828  Udata: 0004e4  Total: 0054e8
-121 symbols successfully copied
+Base: 000000   Code: 0047d8  Data: 000824  Udata: 0004e4  Total: 0054e0
+120 symbols successfully copied
 soff128: 0, soff: 0, cGen128 1, cGen 128
 startInChunks: 0, limitInChunks 4
 percent complete: 25
@@ -562,8 +562,8 @@ final: 243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89452821e63
 test MANDLE 
 Aztec C68K Rom Linker 5.2a  Jul 16 1991 17:27:38
 file: <C68K.lib>(rom68) .begin multiply defined
-Base: 000000   Code: 003ac6  Data: 0003f2  Udata: 0004c0  Total: 004378
-97 symbols successfully copied
+Base: 000000   Code: 003ac2  Data: 0003ee  Udata: 0004c0  Total: 004370
+96 symbols successfully copied
 000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
 000001111111111111111122222222333557BF75433222211111000000000000000000000000000
 000111111111111111112222222233445C      643332222111110000000000000000000000000
@@ -589,4 +589,4 @@ Base: 000000   Code: 003ac6  Data: 0003f2  Udata: 0004c0  Total: 004378
 000111111111111111112222222233445C      643332222111110000000000000000000000000
 000001111111111111111122222222333557BF75433222211111000000000000000000000000000
 000000011111111111111111122222233347E7AB322222111100000000000000000000000000000
-Tue 07/28/2026 13:30:31.59 
+Tue 07/28/2026 15:21:14.70 
