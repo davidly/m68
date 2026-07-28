@@ -1906,7 +1906,6 @@ static const SysCall syscalls[] =
     { "SYS_munmap", SYS_munmap },
     { "SYS_mremap", SYS_mremap },
     { "SYS_clone", SYS_clone },
-    { "SYS_clone3", SYS_clone3 },
     { "SYS_mmap", SYS_mmap },
     { "SYS_mprotect", SYS_mprotect },
     { "SYS_madvise", SYS_madvise },
@@ -1918,6 +1917,7 @@ static const SysCall syscalls[] =
     { "SYS_statx", SYS_statx },
     { "SYS_rseq", SYS_rseq },
     { "SYS_clock_gettime64", SYS_clock_gettime64 },
+    { "SYS_clone3", SYS_clone3 },
     { "SYS_open", SYS_open }, // only called for older systems
     { "SYS_unlink", SYS_unlink }, // only called for older systems
     { "SYS_mkdir", SYS_mkdir }, // only called for older systems
