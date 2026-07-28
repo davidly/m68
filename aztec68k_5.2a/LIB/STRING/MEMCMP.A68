@@ -1,0 +1,48 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	int memcmp(const void *s1, const void *s2, size_t n);
+;
+;
+;	Description
+;
+;	    The memcmp function compares the first n characters of the object
+;	pointed to by s1 to the first n characters of the object pointed to by
+;	s2.
+;
+;
+;	Returns
+;
+;	    The memcmp function returns an integer greater than, equal to, or
+;	less than zero, according as the object pointed to by s1 is greater
+;	than, equal to, or less than the object pointed to by s2.
+
+	xdef	_memcmp
+_memcmp:
+	movem.l	4+0(sp),a0/a1	;a0 is s1, a1 is s2
+	cmp.l	a0,a1
+	beq	equalstr	;don't compare if same string
+	move.l	4+8(sp),d1	;get count
+	beq	equalstr	;don't compare if count is zero
+	sub.l	#1,d1		;decrement for loop
+.1
+	cmp.b	(a1)+,(a0)+	;compare bytes
+	dbne	d1,.1		;loop until mismatch OR n compares made
+	bne	notequal	;skip to 
+	sub.l	#$10000,d1	;loop till high word done
+	bpl	.1
+equalstr:
+	move.l	#0,d0		;return 0 if equal
+	rts
+
+notequal:
+	bls	less
+	move.l	#1,d0		;return 1 if greater
+	rts
+
+less:
+	move.l	#-1,d0		;return -1 if less
+	rts
+

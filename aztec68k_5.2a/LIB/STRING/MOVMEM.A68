@@ -1,0 +1,56 @@
+; Copyright 1989 by Manx Software Systems, Inc.
+; :ts=8
+
+;	Synopsis
+;
+;	void movmem(const void *src, void *dst, size_t n);
+;
+;
+;	Description
+;
+;	    The movmem function copies n characters from the object pointed to
+;	by src into the object pointed to by dst. Copying takes place as if the
+;	n characters from the object pointed to by src are first copied into a
+;	temporary array of n characters that does not overlap the objects
+;	pointed to by dst and src, and then the n characters from the temporary
+;	array are copied into the object pointed to by dst.
+;
+;
+;	Returns
+;
+;	    The movmem function returns no value.
+
+
+	xdef _movmem
+_movmem:
+	movem.l	4(sp),a0/a1	;a0 is src, a1 is dst
+
+	move.l	12(sp),d1	;get count
+
+	cmp.l	a0,a1		;check for move direction
+	beq	.3		;silly to move onto itself
+	bls	forward		;start at beginning
+	add.l	d1,a1		;else start at end
+	add.l	d1,a0
+	bra	.2		;skip so decrement first
+.1
+	move.b	-(a0),-(a1)	;copy byte
+.2
+	dbra	d1,.1		;loop till done
+
+	sub.l	#$10000,d1	;loop till high word done
+	bpl	.2
+
+.3
+	rts			;and return
+
+.4
+	move.b	(a0)+,(a1)+	;copy byte
+forward:
+	dbra	d1,.4		;loop till done
+
+	sub.l	#$10000,d1	;loop till high word done
+	bpl	.4
+
+	rts			;and return
+

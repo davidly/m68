@@ -1,0 +1,36 @@
+; Copyright 1990 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strupr(const char *str);
+;
+;	Description
+;	The strupr() function converts the characters in the string pointed at
+;	by 'str' to upper case.  Non-alpha characters are not affected by the
+;	conversion.  Note that strupr() destroys the original string passed to
+;	it.
+;
+;	Returns
+;	    The strupr function returns a pointer to the converted string
+;	(i.e., it returns the original value of 'str' passed to it).
+
+	xdef	_strupr
+_strupr:
+	move.l	4(sp),a1	;get string pointer
+	move.l	a1,d0		;save pointer for return
+.1
+	move.b	(a1),d1		;get next character in string
+
+	cmp.b	#'a'-1,d1	;Convert it to upper case
+	bls	tu1_done
+	cmp.b	#'z',d1
+	bhi	tu1_done
+	sub.w	#'a'-'A',d1
+
+tu1_done:
+	move.b	d1,(a1)+
+	bne	.1		;loop unless weve reached the 0
+
+	rts
+

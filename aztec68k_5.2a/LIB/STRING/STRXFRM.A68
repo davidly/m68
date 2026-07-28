@@ -1,0 +1,47 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	size_t strxfrm(char *dst, const char *src, size_t n);
+;
+;
+;	Description
+;
+;	    The strxfrm function transforms the string pointed to by src and
+;	places the resulting string into the array pointed to by dst. The
+;	transformation is such that if the strcmp function is applied to two
+;	transformed strings, it returns a value greater than, equal to, or less
+;	than zero, corresponding to the result of the strcoll function applied
+;	to the same two original strings. No more than n characters are
+;	placed into the resulting array pointed to by dst, including the
+;	terminating null character. If n is zero, dst is permitted to be
+;	a null pointer. If copying takes place between objects that overlap,
+;	the behavior is undefined.
+;
+;
+;	Returns
+;
+;	    The strxfrm function returns the length of the transformed string
+;	(not including the terminating null character). If the value returned
+;	is n or more, the contents of the array pointed to by dst are
+;	indeterminate.
+
+	xref	_strncpy
+	xref	_strlen
+
+	xdef	_strxfrm
+_strxfrm:
+	movem.l	4+0(sp),a0/a1	;a0 is dst, a1 is src
+	move.l	a0,d0		;check for null pointer argument
+	beq	.1		;skip to length check
+	move.l	4+8(sp),-(sp)	;push length
+	movem.l	a0/a1,-(sp)	;push argument pointers
+	jsr	_strncpy	;copy string
+	add.w	#12,sp		;pop arguments
+.1
+	move.l	4+4(sp),-(sp)	;push src
+	jsr	_strlen		;get length
+	add.w	#4,sp		;pop argument
+	rts			;return length
+

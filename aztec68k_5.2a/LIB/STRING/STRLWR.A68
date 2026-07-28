@@ -1,0 +1,36 @@
+; Copyright 1990 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strlwr(const char *str);
+;
+;	Description
+;	The strlwr() function converts the characters in the string pointed at
+;	by 'str' to lower case.  Non-alpha characters are not affected by the
+;	conversion.  Note that strlwr() destroys the original string passed to
+;	it.
+;
+;	Returns
+;	    The strlwr function returns a pointer to the converted string
+;	(i.e., it returns the original value of 'str' passed to it).
+
+	xdef	_strlwr
+_strlwr:
+	move.l	4(sp),a1	;get string pointer
+	move.l	a1,d0		;save pointer for return
+.1
+	move.b	(a1),d1		;get next character in string
+
+	cmp.b	#'A'-1,d1	;Convert it to lower case
+	bls	tu1_done
+	cmp.b	#'Z',d1
+	bhi	tu1_done
+	add.w	#'a'-'A',d1
+
+tu1_done:
+	move.b	d1,(a1)+
+	bne	.1		;loop while not a match and d1 not zero
+
+	rts
+

@@ -1,0 +1,27 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *index(const char *s, int c);
+;
+;
+;	Description
+;
+;	    The index function locates the first occurrence of c (converted to
+;	a char) in the string pointed to by s. The terminating null character
+;	is considered to be part of the string.
+;
+;
+;	Returns
+;
+;	    The index function returns a pointer to the located character, or
+;	a null pointer if the character does not occur in the string.
+
+
+	xref	_strchr
+
+	xdef	_index
+_index:
+	jmp	_strchr
+

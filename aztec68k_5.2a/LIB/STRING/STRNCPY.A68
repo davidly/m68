@@ -1,0 +1,47 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strncpy(char *dst, const char *src, size_t n)
+;
+;
+;	Description
+;
+;	    The strncpy function copies not more than n characters (characters
+;	that follow a null character are not copied) from the array pointed to
+;	by src to the array pointed to by dst. If copying takes place between
+;	objects that overlap, the behavior is undefined.
+;
+;	    If the array pointed to by src is a string that is shorter than n
+;	characters, null characters are appended to the copy in the array
+;	pointed to by dst, until n characters have been written.
+;
+;
+;	Returns
+;
+;	    The strncpy function returns the value dst.
+
+	xdef	_strncpy
+_strncpy
+	movem.l	4(sp),a0/a1	;a0 is dst, a1 is src
+	move.l	a0,d0		;return dst
+	move.l	12(sp),d1	;get count
+	bra	.2		;decrement first
+.1
+	move.b	(a1)+,(a0)+	;copy byte
+.2
+	dbeq	d1,.1		;loop till done or null
+	beq	.4		;if null, pad the rest, decrement first
+	sub.l	#$10000,d1	;loop till done
+	bpl	.1
+	rts			;and return
+
+.3
+	clr.b	(a0)+		;clear bytes
+.4
+	dbra	d1,.3		;loop till done
+	sub.l	#$10000,d1	;loop till done
+	bpl	.3
+	rts			;and return
+

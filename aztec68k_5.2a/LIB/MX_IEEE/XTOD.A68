@@ -1,0 +1,106 @@
+; Copyright (C) 1989 by Manx Software Systems, Inc.
+;:ts=8
+;
+;	FLOATING POINT ERROR VALUES
+;
+ERANGE	equ	13
+EDOM	equ	14
+;
+
+	dseg
+	xref	_errno
+	xref	.p0
+
+	cseg
+;
+; Convert extended to double
+;
+; argument in .p0, result in d0/d1
+;
+
+	public	.xtod
+.xtod
+	movem.l	d2-d5,-(sp)
+	movem.l	.p0+4,d0-d1		;get extended mantissa
+	move.w	.p0,d2			;get extended exponent
+	smi	d3			;get sign of result
+	and.w	#$7fff,d2		;extract exponent
+	beq	zero			;no work if zero
+	sub.w	#16383,d2		;unbias
+	move.w	d1,d5			;get low order word
+	and.w	#$7ff,d5		;extract 11 bits
+	cmp.w	#$400,d1		;check for round
+	beq	rstar
+	bcs	nornd
+round:
+	add.l	#$800,d1		;round up
+	bcc	1$
+	add.l	#1,d0
+1$
+	bcc	nornd			;check for overflow
+	roxr.l	#1,d0			;and re-normalize if necessary
+	roxr.l	#1,d1
+	add.w	#1,d2			;bump exponent
+	bra	nornd
+rstar:
+;	or.l	#$800,d1		;rstar case, force low bit to 1
+; IEEE standard way of handling rstar case
+	move.w	d1,d5
+	and.w	#$800,d5		;if last bit is on
+	bne	round			;then round up
+nornd:					;else round down
+	move.l	#11,d5			;pack mantissa for double
+	move.w	d0,d4
+	lsl.w	#5,d4
+	lsr.l	d5,d0
+	lsr.l	d5,d1
+	swap	d1
+	or.w	d4,d1
+	swap	d1
+	and.l	#$fffff,d0		;get rid of hidden bit
+	add.w	#1023,d2		;add in double bias
+	bmi	underflow		;check for underflow
+	cmp.w	#2047,d2		;check for overflow
+	bgt	overflow
+	tst.b	d3			;need to set sign?
+	beq	nosign			;no
+	or.w	#$800,d2		;yes, set it
+nosign:
+	lsl.w	#4,d2			;back in place
+	swap	d0
+	or.w	d2,d0
+	swap	d0
+	bra	exit
+underflow:
+	move.l	#0,d1
+	IF INT32
+	move.l	#ERANGE,_errno		;under flow
+	ELSE
+	move.w	#ERANGE,_errno		;under flow
+	ENDC
+	move.l	#$00100000,d0		;set to smallest number
+dosign:
+	tst.b	d3
+	beq	exit
+	or.l	#$80000000,d0		;set sign
+exit:
+	movem.l	(sp)+,d2-d5
+	rts
+overflow:
+	IF INT32
+	move.l	#ERANGE,_errno		;over flow
+	ELSE
+	move.w	#ERANGE,_errno		;over flow
+	ENDC
+	move.l	#$ffffffff,d1		;set to largest number
+	move.l	#$7fffffff,d0
+	tst.b	d3
+	beq	exit
+	or.l	#$80000000,d0		;set sign
+	ori	#2,ccr			;set overflow condition
+	bra	exit
+zero:
+	move.l	#0,d0
+	move.l	#0,d1
+	bra	exit
+;

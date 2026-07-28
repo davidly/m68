@@ -1,0 +1,41 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	size_t strspn(const char *s1, const char *s2);
+;
+;
+;	Description
+;
+;	    The strspn function computes the length of the maximum initial
+;	segment of the string pointed to by s1 which consists entirely of
+;	characters from the string pointed to by s2.
+;
+;
+;	Returns
+;
+;	    The strspn function returns the length of the segment.
+
+	xdef	_strspn
+_strspn:
+	move.l	a2,-(sp)	;save register
+	movem.l	8(sp),a0/a1	;a0 is s1, a1 is s2
+	bra	.3		;skip to end of loop
+.1
+	move.l	a1,a2		;get pointer to s2
+.2
+	move.b	(a2)+,d1	;get next char from s2
+	beq	.4		;if null, no match, so go calc length
+	cmp.b	d0,d1		;else compare to char from s1
+	bne	.2		;if no match, keep checking s2 chars
+.3
+	move.b	(a0)+,d0	;get next char from s1
+	bne	.1		;continue while chars remain from s1
+.4
+	sub.l	#1,a0		;correct for autoincrement of a0
+	move.l	a0,d0		;copy to d0 for return
+	sub.l	8(sp),d0	;compute length
+	move.l	(sp)+,a2	;restore register
+	rts
+

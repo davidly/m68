@@ -1,0 +1,9 @@
+; Copyright (C) 1988 by Manx Software Systems, Inc.
+; :ts=8
+
+	mc68881
+	public	_fmod
+_fmod
+	fmove.d	4(sp),fp0	;pick up double
+	fmod.d	12(sp),fp0
+	rts

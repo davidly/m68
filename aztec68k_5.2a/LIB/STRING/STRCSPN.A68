@@ -1,0 +1,40 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	size_t strcspn(const char *s1, const char *s2);
+;
+;
+;	Description
+;
+;	    The strcspn function computes the length of the maximum initial
+;	segment of the string pointed to by s1 which consists entirely of
+;	characters NOT from the string pointed to by s2.
+;
+;
+;	Returns
+;
+;	    The strcspn function returns the length of the segment.
+
+	xdef	_strcspn
+_strcspn:
+	movem.l	d2/d3,-(sp)	;save d2 and d3
+	movem.l	12(sp),d2/d3	;d2 is s1, d3 is s2
+	move.l	d2,a0		;a0 is s1
+.1
+	move.b	(a0)+,d0	;get next character from s1
+	beq	.3		;exit if null
+	move.l	d3,a1		;get pointer to s2
+.2
+	move.b	(a1)+,d1	;get next character from s2
+	beq	.1		;loop back if at end of s2
+	cmp.b	d0,d1		;see if matches one we want
+	bne	.2		;loop till done or we have a match
+.3
+	sub.w	#1,a0		;back up to previously unmatched character
+	move.l	a0,d0		;copy for return
+	sub.l	d2,d0		;compute length
+	movem.l	(sp)+,d2/d3	;restore registers
+	rts			;return length
+

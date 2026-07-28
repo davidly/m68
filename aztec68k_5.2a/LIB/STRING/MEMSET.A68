@@ -1,0 +1,39 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	void *memset(void *s, int c, size_t n);
+;
+;
+;	Description
+;
+;	    The memset function copies the value of c (converted to an
+;	unsigned char) into each of the first n characters of the object
+;	pointed to by s.
+;
+;
+;	Returns
+;
+;	    The memset function returns the value of s.
+
+	xdef	_memset
+_memset:
+	move.l	4+0(sp),a0	;a0 is s
+
+	IF INT32
+	movem.l	4+4(sp),d0/d1	;d0 is c, d1 is n
+	ELSE
+	move.w	4+4(sp),d0
+	move.l	4+4+2(sp),d1	;d1 is n
+	ENDC
+	bra	.2		;skip for pre-decrement
+.1
+	move.b	d0,(a0)+	;store value and bump pointer
+.2
+	dbra	d1,.1		;loop for n values
+	sub.l	#$10000,d1	;loop for high part of n
+	bpl	.1
+	move.l	4(sp),d0	;return s
+	rts
+

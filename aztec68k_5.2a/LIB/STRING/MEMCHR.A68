@@ -1,0 +1,48 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	void *memchr(const void *s, int c, size_t n)
+;
+;
+;	Description
+;
+;	    The memchr function locates the first occurrence of c (converted to
+;	an unsigned char) in the initial n characters (each interpreted as
+;	unsigned char) of the object pointed to by s.
+;
+;
+;	Returns
+;
+;	    The memchr function returns a pointer to the located character, or
+;	a null pointer if the character does not occur in the object.
+
+	xdef	_memchr
+_memchr:
+	move.l	4(sp),a0	;a0 is pointer to memory
+	IF INT32
+	move.l	4+8(sp),d0	;d0 is number of characters = n
+	beq	notfound	;return zero if not found
+	move.b	4+4+3(sp),d1	;get character to search for = c
+	ELSE
+	move.l	4+6(sp),d0	;d0 = n
+	beq	notfound
+	move.b	4+4+1(sp),d1	;d1 = c
+	ENDC
+	sub.l	#1,d0		;decrement for first loop
+.1
+	cmp.b	(a0)+,d1	;check against character
+	dbeq	d0,.1		;loop till match or end of count
+	beq	found		;skip if found
+	sub.l	#$10000,d0	;loop till high word done
+	bpl	.1
+notfound:
+	move.l	#0,d0		;return 0 if not found in all n bytes
+	rts
+
+found:
+	sub.w	#1,a0		;back up to character itself
+	move.l	a0,d0		;return pointer to character
+	rts
+

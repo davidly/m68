@@ -1,0 +1,69 @@
+; Copyright 1987 Manx Software Systems, Inc
+;
+;	FLOATING POINT ERROR VALUES
+;
+ERANGE	equ	13
+EDOM	equ	14
+;
+		IFD		MCH_MACINTOSH
+ARGS	equ		4
+		ELSE
+ARGS	equ		8
+		ENDC
+		dseg
+		xref	_errno
+;
+;		ldexp(d, i)
+;
+;		return x = d * 2^i
+;
+		cseg
+		public	_ldexp
+_ldexp:
+		IFND	MCH_MACINTOSH
+		move.l	d2,-(sp)
+		ENDC
+		movem.l	ARGS(sp),d0/d1		;get the number
+		move.l	d0,d2			;get exponent
+		and.l	#$800fffff,d0	;get old exponent out
+		swap	d2
+		and.l	#$7ff0,d2
+		lsr.w	#4,d2
+		IF INT32
+		add.w	ARGS+8+2(sp),d2
+		ELSE
+		add.w	ARGS+8(sp),d2
+		ENDC
+		ble		ldunder
+		cmp.l	#2047,d2
+		bgt		ldover
+		lsl.w	#4,d2
+		swap	d2
+		or.l	d2,d0			;put new exponent in
+		jmp	getout
+ldunder:
+		IF INT32
+		move.l	#ERANGE,_errno
+		ELSE
+		move.w	#ERANGE,_errno
+		ENDC
+;		or.l	#$00100000,d0
+;		move.l	#$ffefffff,d0	;-HUGE_VAL
+;		move.l	#$fffffff9,d1
+		sub.l	d0,d0			;return 0
+		sub.l	d1,d1
+		jmp	getout
+ldover:
+		IF INT32
+		move.l	#ERANGE,_errno	;over flow
+		ELSE
+		move.w	#ERANGE,_errno	;over flow
+		ENDC
+;		or.l	#$7ff00000,d0
+		move.l	#$7fefffff,d0	;HUGE_VAL
+		move.l	#$fffffff9,d1
+getout:
+		IFND	MCH_MACINTOSH
+		move.l	(sp)+,d2
+		ENDC
+		rts

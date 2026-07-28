@@ -1,0 +1,43 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strpbrk(const char *s1, const char *s2);
+;
+;
+;	Description
+;
+;	    The strpbrk function locates the first occurrence in the string
+;	pointed to by s1 of any character from the string pointed to by s2.
+;
+;
+;	Returns
+;
+;	    The strpbrk function returns a pointer to the character, or a null
+;	pointer if no character from s2 occurs in s1.
+
+	xdef	_strpbrk
+_strpbrk:
+	move.l	d2,-(sp)	;save register
+	movem.l	8(sp),a0/a1	;a0 is s1, a1 is s2
+	move.l	a1,d2		;make copy of s2
+.1
+	move.b	(a0)+,d1  	;get next character from s1
+	beq	.3		;done if at end of s1 without a match
+	move.l	d2,a1		;get pointer to s2
+.2
+	move.b	(a1)+,d0	;get next character from s2
+	beq	.1		;loop if at end of s2 without a match
+	cmp.b	d1,d0		;does this char from s2 match char from s1
+	bne	.2		;no, try next
+
+	move.l	(sp)+,d2	;restore register
+	sub.w	#1,a0		;match, back up to it
+	move.l	a0,d0		;and copy to d0 for return
+	rts
+.3
+	move.l	(sp)+,d2	;restore register
+	move.l	#0,d0		;return zero if not found
+	rts
+

@@ -1,0 +1,69 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	int strnicmp(const char *s1, const char *s2, size_t n);
+;
+;
+;	Description
+;
+;	    The strnicmp function compares not more than n characters
+;	(characters that follow a null character are not compared) from the
+;	array pointed to by s1 to the array pointed to by s2.  The comparison
+;	is case-insenstive.
+;
+;
+;	Returns
+;
+;	    The strnicmp function returns an integer greater than, equal to, or
+;	less than zero, according as the possibly null-terminated array pointed
+;	to by s1 is greater than, equal to, or less than the possibly
+;	null-terminated array pointed to by s2.
+
+
+	xdef	_strnicmp
+_strnicmp
+	move.l	d2,-(sp)
+	movem.l	4(sp),a0/a1	;a0 is s1, a1 is s2
+	cmp.l	a0,a1
+	beq	equal		;skip if same string
+	move.l	12(sp),d1	;get count
+	beq	equal		;skip if nothing to compare
+	sub.l	#1,d1		;decrement for later loop
+.1
+	move.b	(a0)+,d0	;get the next s1 byte
+	cmp.b	#'a'-1,d0	;Convert it to upper case
+	bls	tu1_done
+	cmp.b	#'z',d0
+	bhi	tu1_done
+	sub.w	#'a'-'A',d0
+
+tu1_done:
+	move.b	(a1)+,d2
+	cmp.b	#'a'-1,d2	;Convert it to upper case
+	bls	tu2_done
+	cmp.b	#'z',d2
+	bhi	tu2_done
+	sub.w	#'a'-'A',d2
+
+tu2_done:
+	cmp.b	d2,d0		;compare to next s2 byte
+	bne	notequal	;skip if not same
+	tst.b	d0		;see if both were null
+	dbeq	d1,.1		;if not null or more bytes, loop
+	sub.l	#$10000,d1	;loop till high word done
+	bpl	.1
+equal:
+	move.l	#0,d0		;always return zero if equal
+	rts
+
+notequal:
+	bls	less
+	move.l	#1,d0		;return 1 if greater
+	rts
+
+less:
+	move.l	#-1,d0		;return -1 if less
+	rts
+

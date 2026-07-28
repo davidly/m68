@@ -1,0 +1,46 @@
+; Copyright 1991 Manx Software Systems, Inc
+; :ts=8
+;
+; Convert unsigned long integer to extended
+;
+; argument in d0, result in fp0
+; jd 4/3/91 SCR 18
+;
+	mc68881
+	public	.Xflu
+.Xflu:
+	tst.l	d0
+	bge	notneg
+; ul's high bit is on
+	bclr	#31,d0		;turn off high bit
+	fmove.l	d0,fp0		;convert all but high bit
+	fadd.d	#"$41e0000000000000",fp0	;add in high bit
+	rts
+; ul's high bit is off
+notneg:
+	fmove.l	d0,fp0
+	rts
+
+;
+; Convert extended to unsigned long
+;
+; argument in fp0, result in d0
+; jd 4/11/91 SCR 18
+;
+	public	.Xfxu
+.Xfxu:
+	fintrz	fp0				;round down to integer
+	fcmp.d	#"$41e0000000000000",fp0	;fp0>=0x80000000?
+	fbge	big				;br if yes
+	fmove.l	fp0,d0				;convert to int into d0
+	rts					;all done
+big:
+	fcmp.d	#"$41efffffffe00000",fp0	;fp0>0xffffffff?
+	fbgt	toobig				;br if yes
+	fadd.d	#"$c1e0000000000000",fp0	;fp0 = fp0 - 0x80000000
+	fmove.l	fp0,d0				;convert low order part
+	bset	#31,d0				;set high bit to add in hi part
+	rts
+toobig:
+	move.l	#$ffffffff,d0			;set max value
+	rts					;and return

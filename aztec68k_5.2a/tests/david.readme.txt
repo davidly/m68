@@ -1,0 +1,18 @@
+this version of the C compiler v5.2a should be avoided in favor of v3.68:
+
+  * tm.c fails because malloc/free corrupt the heap. it's a bug in the C runtime where free() corrupts the _Free (allocated) list in lib\stdlib\amifree.c
+
+  * tmuldiv.c produces incorrect results for mod expression like 65533 % 65522 (13 instead of 11)
+
+annoyances:
+
+  * azmalloc.c is a really basic allocator to replace the broken one in the C runtime. tm.c now completes.
+
+  * it's not incorrect, but int is apparently always 32-bits though libraries are included for 16-bit as well.
+    note that cpm.asm was updated to reflect 32-bit int.
+
+  * both 32-bit int and worse code gen lead to less efficient code than v3.68. Benchmarks run slower.
+
+  * the C runtime routes I/O through __function names which must call _function for open/lseek/read/write/etc.
+
+

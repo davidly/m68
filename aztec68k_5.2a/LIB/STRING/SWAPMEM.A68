@@ -1,0 +1,35 @@
+; Copyright 1989 by Manx Software Systems, Inc.
+; :ts=8
+
+;	Synopsis
+;
+;	void swapmem(void *s1, void *s2, size_t n);
+;
+;
+;	Description
+;
+;	    The swapmem function swaps n characters between the object pointed
+;	to by s1 and the object pointed to by s2. If swapping takes place
+;	between objects that overlap, the behavior is undefined.
+;
+;
+;	Returns
+;
+;	    The swapmem function returns no value.
+
+
+	xdef	_swapmem
+_swapmem:
+	movem.l	4+0(sp),a0/a1	;a0 is s1, a1 is s2
+	move.l	4+8(sp),d0	;get count
+	bra	.2		;skip for pre-decrement
+.1
+	move.b	(a0),d1		;get byte in s1
+	move.b	(a1),(a0)+	;copy byte from s2 to s1
+	move.b	d1,(a1)+	;copy byte from s1 to s2
+.2
+	dbra	d0,.1		;loop till done
+	sub.l	#$10000,d0	;loop till high word done
+	bpl	.1
+	rts
+

@@ -1,0 +1,98 @@
+; Copyright (C) 1989 by Manx Software Systems, Inc.
+;:ts=8
+;
+;	FLOATING POINT ERROR VALUES
+;
+ERANGE	equ	13
+EDOM	equ	14
+;
+
+	dseg
+	xref	_errno
+	xref	.p0
+
+	cseg
+;
+; Convert extended to float
+;
+; argument in .p0, result in d0
+;
+
+	public	.xtof
+.xtof
+	movem.l	d1-d4,-(sp)
+	movem.l	.p0+4,d0-d1		;get extended mantissa
+	move.w	.p0,d2			;get extended exponent
+	smi	d4			;get sign of result
+	and.w	#$7fff,d2		;extract exponent
+	beq	zero			;no work if zero
+	sub.w	#16383,d2		;unbias
+	lsr.l	#8,d1
+	move.b	d0,d3
+	lsl.w	#8,d3
+	swap	d3
+	move.w	#0,d3
+	or.l	d3,d1
+	lsr.l	#8,d0
+	cmp.l	#$80000000,d1		;check for round
+	beq	rstar
+	bcs	nornd
+round:
+	add.l	#1,d0			;round up
+	cmp.l	#$00ffffff,d0		;check for carry
+	bls	nornd
+	add.w	#1,d2			;bump exponent
+	lsr.l	#1,d0			;and shift result back into place
+	bra	nornd
+rstar:
+;	or.w	#1,d0			;rstar case, force low bit to 1
+; IEEE standard way of handling rstar case
+	btst	#0,d0			;if last bit is on
+	bne	round
+nornd:
+	add.w	#127,d2			;add in float bias
+	bmi	underflow		;can't represent extended in float
+	cmp.w	#255,d2
+	bgt	overflow		;ditto
+	lsl.w	#7,d2			;back in place
+	tst.b	d4			;need to set sign?
+	beq	ndsign			;no
+	or.w	#$8000,d2		;yes, set it
+ndsign:
+	swap	d2			;get exponent in high word
+	clr.w	d2			;clear out
+	and.l	#$7fffff,d0		;get rid of hidden bit
+	or.l	d2,d0			; put back in number
+	bra	exit
+underflow:
+	IF INT32
+	move.l	#ERANGE,_errno		;under flow
+	ELSE
+	move.w	#ERANGE,_errno		;under flow
+	ENDC
+	move.l	#$00800000,d0		;set to smallest number
+dosign:
+	tst.b	d4
+	beq	exit
+	or.l	#$80000000,d0		;set sign
+exit:
+	movem.l	(sp)+,d1-d4
+	rts
+overflow:
+	IF INT32
+	move.l	#ERANGE,_errno		;over flow
+	ELSE
+	move.w	#ERANGE,_errno		;over flow
+	ENDC
+	move.l	#$7fffffff,d0		;set to largest number
+	tst.b	d4
+	beq	1$
+	or.l	#$80000000,d0		;set sign
+1$
+	ori	#2,ccr			;set overflow condition
+	movem.l	(sp)+,d1-d4
+	rts
+zero:
+	move.l	#0,d0
+	bra	exit
+;

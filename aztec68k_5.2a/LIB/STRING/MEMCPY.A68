@@ -1,0 +1,34 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	void *memcpy(void *dst, const void *src, size_t n);
+;
+;
+;	Description
+;
+;	    The memcpy function copies n characters from the object pointed to
+;	by src into the object pointed to by dst. If copying takes place
+;	between objects that overlap, the behavior is undefined.
+;
+;
+;	Returns
+;
+;	    The memcpy function returns the value of dst.
+
+	xdef	_memcpy
+_memcpy:
+	movem.l	4+0(sp),a0/a1	;a0 is dest, a1 is src
+	move.l	a0,d0		;return dest
+	move.l	4+8(sp),d1	;get count
+	bra	.2		;be sure to decrement first
+.1
+	move.b	(a1)+,(a0)+	;copy byte
+.2
+	dbra	d1,.1		;loop till done
+
+	sub.l	#$10000,d1	;see if high word done yet
+	bpl	.1		;loop till done
+	rts
+

@@ -1,0 +1,42 @@
+; Copyright (C) 1989 by Manx Software Systems, Inc.
+;:ts=8
+;
+; Convert float to extended
+;
+; argument in d0, result in .p0
+;
+
+	dseg
+	xref	.p0
+
+	cseg
+
+	public	.ftox
+.ftox
+	movem.l	d1/d2,-(sp)		;preserve registers
+	move.l	d0,d1			;save for mantissa work
+	smi.b	d2			;save sign
+	swap	d0			;get high word
+	and.w	#$7f80,d0		;check if zero exponent
+	beq	zero			;yes, so result is zero
+	lsr.w	#7,d0			;extract exponent
+	add.w	#(16383-127),d0		;add in differences of biases
+	tst.b	d2			;check if negative
+	beq	positive		;no, don't set sign bit
+	or.w	#$8000,d0		;yes, set sign bit
+positive:
+	swap	d0			;put in high word for 96 bit format
+	move.w	#0,d0			;clear low word
+	lsl.l	#8,d1			;extract mantissa
+	or.l	#$80000000,d1		;set normalized bit
+exit:
+	move.l	#0,d2			;low long word always zero
+	movem.l	d0-d2,.p0		;place results into extended
+	movem.l	(sp)+,d1/d2		;restore registers
+	rts
+
+zero:
+	move.l	#0,d0
+	move.l	#0,d1
+	bra	exit
+

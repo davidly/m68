@@ -1,0 +1,23 @@
+; Copyright 1987 Manx Software Systems, Inc.
+;:ts=8
+;
+	public	.mulu
+.mulu:		;unsigned long multiply	(primary = primary*secondary)
+;		condition code must be set correctly upon exit.
+;
+	movem.l	d2/d3,-(sp)
+	move.w	d1,d2
+	mulu	d0,d2		;d0.l * d1.l
+	move.l	d1,d3
+	swap	d3
+	mulu	d0,d3		;d0.l * d1.h
+	swap	d3
+	clr.w	d3
+	add.l	d3,d2
+	swap	d0
+	mulu	d1,d0		;d0.h * d1.l
+	swap	d0
+	clr.w	d0
+	add.l	d2,d0
+	movem.l	(sp)+,d2/d3
+	rts

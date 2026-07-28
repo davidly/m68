@@ -1,0 +1,43 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	int toupper(int c);
+;
+;
+;	Description
+;
+;	    The toupper function converts a lower-case letter to the
+;	corresponding upper-case letter.
+;	
+;
+;	Returns
+;
+;	    If the argument is an lower-case letter, the toupper function
+;	returns the corresponding upper-case letter if there is one; otherwise
+;	the argument is returned unchanged. In the "C" locale, toupper maps
+;	only the characters for which islower is true to the corresponding
+;	characters for which isupper is true.
+
+	public _toupper
+;
+_toupper
+	IF INT32
+	move.l	4(sp),d0
+	cmp.l	#'a'-1,d0
+	bls	tu_done
+	cmp.l	#'z',d0
+	bhi	tu_done
+	sub.l	#'a'-'A',d0
+	ELSE
+	move.w	4(sp),d0
+	cmp.w	#'a'-1,d0
+	bls	tu_done
+	cmp.w	#'z',d0
+	bhi	tu_done
+	sub.w	#'a'-'A',d0
+	ENDC
+tu_done:
+	rts
+

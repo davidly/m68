@@ -1,0 +1,43 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strchr(const char *s, int c);
+;
+;
+;	Description
+;
+;	    The strchr function locates the first occurrence of c (converted to
+;	a char) in the string pointed to by s. The terminating null character
+;	is considered to be part of the string.
+;
+;
+;	Returns
+;
+;	    The strchr function returns a pointer to the located character, or
+;	a null pointer if the character does not occur in the string.
+
+	xdef	_strchr
+_strchr:
+	move.l	4(sp),a0	;get string pointer
+	move.l	#0,d0		;needed to make dbeq loop work
+
+	IF INT32
+	move.b	11(sp),d1	;get character to look for
+	ELSE
+	move.b	9(sp),d1
+	ENDC
+
+.1
+	move.b	(a0)+,d0	;get next character in string
+	cmp.b	d1,d0		;see if matches one we want
+	dbeq	d0,.1		;loop while not a match and d0 not zero
+	beq	.2		;if equal, found character
+	move.l	#0,d0		;d0 was zero, ie. end of string, so no match
+	rts
+.2
+	sub.w	#1,a0		;back up to matched character
+	move.l	a0,d0		;copy to d0 for return
+	rts
+

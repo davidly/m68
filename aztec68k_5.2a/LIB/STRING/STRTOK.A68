@@ -1,0 +1,88 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strtok(char *s1, const char *s2);
+;
+;
+;	Description
+;
+;	    A sequence of calls to the strtok function breaks the string
+;	pointed to by s1 into a sequence of tokens, each of which is delimited
+;	by a character from the string pointed to by s2.  The first call in the
+;	sequence has s1 as its first argument, and is followed by calls with
+;	a null pointer as their first argument. The separator string pointed
+;	to by s2 may be different from call to call.
+;
+;	    The first call in the sequence searches the string pointed to by s1
+;	for the first character that is NOT contained in the current
+;	separator string pointed to by s2. If no such character is found,
+;	then there are no tokens in the string pointed to by s1 and the
+;	strtok function returns a null pointer.  If such a character is found,
+;	it is the start of the first token.
+;
+;	    The strtok function then searches from there for a character that
+;	IS contained in the current separator string.  If no such character is
+;	found, the current token extends to the end of the string pointed to
+;	by s1, and subsequent searches for a token will return a null pointer.
+;	If such a char is found, it is overwritten by a null character, which
+;	terminates the current token. The strtok function saves a pointer to
+;	the following character, from which the next search for a token will
+;	start.
+;
+;	    Each subsequent call, with a null pointer as the value of the
+;	first, argument, starts searching from the saved pointer and behaves as
+;	described above.
+;
+;
+;	Returns
+;
+;	    The strtok function returns a pointer to the first character of a
+;	token, or a null pointer if there is no token.
+
+	bss	save_ptr,4
+
+	xref	_strspn
+	xref	_strpbrk
+
+	xdef	_strtok
+_strtok:
+	movem.l	4(sp),a0/a1	;a0 is s1, a1 is s2
+	move.l	a0,d0		;check if null
+	bne	mainline	;no, skip to mainline
+	move.l	save_ptr,d0	;check if saved pointer is null
+	bne	chkend		;no, check if at end of string
+	rts			;no more tokens, return null pointer
+chkend	move.l	d0,a0		;get saved pointer
+	tst.b	(a0)		;see if at end of string
+	bne	mainline	;no, skip to mainline
+nomore
+	move.l	#0,d0		;no more tokens, return null pointer
+	rts
+
+mainline
+	movem.l	a0/a1,-(sp)	;save pointers
+	movem.l	a0/a1,-(sp)	;push args
+	jsr	_strspn		;skip the leading separators
+	add.w	#8,sp		;pop args
+	movem.l	(sp)+,a0/a1	;restore pointers
+	add.w	d0,a0		;pointer += strspn(pointer, s2);
+	tst.b	(a0)
+	beq	nomore		;if at end of string, no more tokens
+skip
+	move.l	a0,-(sp)	;save pointer to token
+	movem.l	a0/a1,-(sp)	;push args
+	jsr	_strpbrk	;search for char that IS contained in s2
+	add.w	#8,sp		;pop args
+	tst.l	d0		;check return
+	beq	return		;couldn't find, token is rest of string
+
+	move.l	d0,a0		;copy to a0
+	clr.b	(a0)		;write null character
+	add.l	#1,d0		;skip past null for next call
+return
+	move.l	d0,save_ptr	;save pointer for next call
+	move.l	(sp)+,d0	;return pointer to 1st char of token
+	rts
+

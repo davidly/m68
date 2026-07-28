@@ -1,0 +1,48 @@
+; Copyright (C) 1989 by Manx Software Systems, Inc.
+;:ts=8
+;
+; Convert double to extended
+;
+; arg in d0/d1, result in .p0
+;
+
+	dseg
+	xref	.p0
+	cseg
+
+
+	public	.dtox
+.dtox
+	movem.l	d2/d3,-(sp)		;preserve registers
+	move.l	d0,d2			;save sign and mantissa
+	swap	d0			;get exponent for double
+	and.w	#$7ff0,d0		;check if zero exponent
+	beq	zero			;yes, so result is zero
+	lsr.w	#4,d0			;extract exponent
+	add.w	#(16383-1023),d0	;add in differences of biases
+	tst.l	d2			;check if negative
+	bpl	positive		;no, don't set sign bit
+	or.w	#$8000,d0		;yes, set sign bit
+positive:
+	swap	d0			;put in high word for 96 bit format
+	move.w	#0,d0			;clear low word
+	move.w	#11,d3
+	lsl.l	d3,d2			;extract mantissa
+	or.l	#$80000000,d2		;set normalized bit
+	rol.l	d3,d1			;shift low long word
+	move.w	d1,d3			;save low word
+	and.w	#$7ff,d3		;isolate bits
+	or.w	d3,d2			;fill in 11 bits
+	and.w	#$f800,d1		;isolate high bits
+	exg	d1,d2			;put in the right order
+exit:
+	movem.l	d0-d2,.p0		;place results into extended
+	movem.l	(sp)+,d2/d3		;restore registers
+	rts
+
+zero:
+	move.l	#0,d0
+	move.l	#0,d1
+	move.l	#0,d2
+	bra	exit
+

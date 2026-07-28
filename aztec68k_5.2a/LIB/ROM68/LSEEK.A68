@@ -1,0 +1,8 @@
+;
+; Copyright 1991 Manx Software Systems
+; All Rights Reserved
+;
+	public	_lseek,__lseek
+_lseek
+	jmp	__lseek
+	end

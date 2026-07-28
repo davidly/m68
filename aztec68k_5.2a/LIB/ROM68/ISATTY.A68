@@ -1,0 +1,8 @@
+;
+; Copyright 1991 Manx Software Systems
+; All Rights Reserved
+;
+	public	_isatty,__isatty
+_isatty
+	jmp	__isatty
+	end

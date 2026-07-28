@@ -1,0 +1,44 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	int tolower(int c);
+;
+;
+;	Description
+;
+;	    The tolower function converts an upper-case letter to the
+;	corresponding lower-case letter.
+;	
+;
+;	Returns
+;
+;	    If the argument is an upper-case letter, the tolower function
+;	returns the corresponding lower-case letter if there is one; otherwise
+;	the argument is returned unchanged. In the "C" locale, tolower maps
+;	only the characters for which isupper is true to the corresponding
+;	characters for which islower is true.
+
+;
+	public _tolower
+;
+_tolower
+	IF INT32
+	move.l	4(sp),d0
+	cmp.l	#'A'-1,d0
+	bls	tl_done
+	cmp.l	#'Z',d0
+	bhi	tl_done
+	add.l	#'a'-'A',d0
+	ELSE
+	move.w	4(sp),d0
+	cmp.w	#'A'-1,d0
+	bls	tl_done
+	cmp.w	#'Z',d0
+	bhi	tl_done
+	add.w	#'a'-'A',d0
+	ENDC
+tl_done:
+	rts
+

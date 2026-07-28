@@ -1,0 +1,17 @@
+;:ts=8
+;
+;		ldexp(d, i)
+;
+;		return x = d * 2^i
+;
+		mc68881
+		public	_ldexp
+_ldexp:
+	fmove.d	4(sp),fp0		;get the number
+	if INT32
+	fscale.l  12(sp),fp0		;compute the result
+	else
+	fscale.w  12(sp),fp0		;compute the result
+	endc
+	rts
+

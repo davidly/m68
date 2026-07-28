@@ -1,0 +1,45 @@
+; Copyright 1987 Manx Software Systems, Inc
+; :ts=8
+	blanks	off
+	cseg
+	public _memccpy
+;
+;	void memccpy (void *dest, const void *src, int c, size_t n);
+;	copies characters from src to dest, stopping after the first
+;	occurrence of character c has been copied or after n characters have
+;	been copied, whichever comes first.  It returns a pointer to the
+;	character after the copy of c in dest, or a NULL pointer if c was not
+;	found in the first n characters of src.  Overlapping moves are
+;	unpredictable.
+;
+_memccpy:
+	movem.l	4+0(sp),a0/a1	a0 := dest; a1 := src
+	IF INT32
+	move.b	4+8+3(sp),d1	d1 = c;
+	move.l	4+12(sp),d0	d0 = n;
+	ELSE
+	move.b	4+8+1(sp),d1	d1 = c;
+	move.l	4+10(sp),d0	d0 = n;
+	ENDC
+	bpl	.plus
+	move.l	#$7fffffff,d0	insure a positive value for n
+.plus:
+	beq	notfoundr
+	sub.l	#1,d0
+.4
+	move.b	(a1)+,d2
+	move.b	d2,(a0)+
+	cmp.b	d2,d1
+.1
+	dbeq	d0,.4
+	beq	foundit		;bif d2 == d1
+	sub.l	#$10000,d0
+	bpl	.4
+notfound:
+	move.l	#0,d0		;return NULL if can't find c
+notfoundr:
+	rts
+foundit:
+	move.l	a0,d0
+	rts
+

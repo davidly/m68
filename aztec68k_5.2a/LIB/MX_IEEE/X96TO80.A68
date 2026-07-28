@@ -1,0 +1,21 @@
+; Copyright (C) 1989 by Manx Software Systems, Inc.
+;:ts=8
+;
+; Convert 96 bit extended to 80 bit extended: arg1 = arg2
+; Declared as: void _X96to80(extended *arg1, extended96 *arg2)
+; Return address = (sp)
+; arg1 = 4(sp)
+; arg2 = 8(sp)
+;
+	public	_X96to80
+_X96to80
+	movem.l	a0/a1,-(sp)	;preserve a0/a1
+	move.l	12(sp),a0	;get address of extended, arg1
+	move.l	16(sp),a1	;get address of extended96, arg2
+	move.w	(a1)+,(a0)+	;copy 16 bit exponent
+	add.w	#2,a1		;skip zero bytes
+	move.l	(a1)+,(a0)+	;copy first 32 bits of mantissa
+	move.l	(a1),(a0)	;copy last 32 bits of mantissa
+	movem.l	(sp)+,a0/a1	;restore a0/a1
+	rts
+;

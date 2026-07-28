@@ -1,0 +1,111 @@
+; Copyright 1987 Manx Software Systems, Inc.
+;:ts=8
+;
+	public	.divs
+.divs:		;long divide	(primary = primary/secondary)
+;		condition code must be set properly on exit
+	move.l	d1,-(sp)
+	move.w	d4,-(sp)
+	sub.w	d4,d4			;mark result as positive
+	tst.l	d0
+	bpl.s	prim_ok
+	neg.l	d0
+	add.w	#1,d4			;mark as negative
+prim_ok:
+	tst.l	d1
+	bpl.s	sec_ok
+	neg.l	d1
+	eor.w	#1,d4			;flip sign of result
+sec_ok:
+	jsr	comdivide
+chksign:
+	tst.w	d4
+	beq.s	posres
+	neg.l	d0
+posres:
+	move.w	(sp)+,d4
+	move.l	(sp)+,d1
+	tst.l	d0
+	rts
+;
+	public	.mods
+.mods:		;long remainder	(primary = primary%secondary)
+	move.l	d1,-(sp)
+	move.w	d4,-(sp)
+	sub.w	d4,d4			;mark result as positive
+	tst.l	d0
+	bpl.s	rprim_ok
+	neg.l	d0
+	add.w	#1,d4			;mark as negative
+rprim_ok:
+	tst.l	d1
+	bpl.s	rsec_ok
+	neg.l	d1
+rsec_ok:
+	jsr	comdivide
+	move.l	d1,d0
+	jmp	chksign
+;
+	public	.modu
+.modu:		;unsigned long remainder	(primary = primary%secondary)
+	move.l	d1,-(sp)
+	jsr	comdivide
+	move.l	d1,d0
+	move.l	(sp)+,d1
+	tst.l	d0
+	rts
+;
+	public	.divu
+.divu:		;unsigned long divide		(primary = primary/secondary)
+	move.l	d1,-(sp)
+	jsr	comdivide
+	move.l	(sp)+,d1
+	tst.l	d0
+	rts
+
+; divide (dx,ax) by (bx,cx):
+;	quotient in (dx,ax)
+;	remainder in (bx,cx)
+comdivide:
+	swap	d1
+	tst.w	d1
+	bne	hardldv
+	swap	d1
+	move.w	d1,-(sp)	;save divisor
+	move.w	d0,-(sp)	;save second part of dividend
+	clr.w	d0		;get first part of dividend
+	swap	d0
+	divu	d1,d0		;do first divide
+	move.l	d0,d1		;copy first remainder
+	swap	d0		;get first quotient
+	move.w	(sp)+,d1	;get back second part of dividend
+	divu	(sp)+,d1	;do second divide
+	move.w	d1,d0		;get second quotient
+	clr.w	d1		;remainder is small
+	swap	d1		;get it
+	rts			;and return
+
+hardldv:
+	swap	d1
+	move.w	d2,-(sp)
+	move.l	d3,-(sp)
+	move.l	d1,d3		;save divisor
+	move.l	d0,d1		;copy dividend
+	clr.w	d1		;set up remainder
+	swap	d1
+	swap	d0		;set up quotient
+	clr.w	d0
+	move.w	#16-1,d2		;do 16 times
+1$
+	add.l	d0,d0		;shift the quotient
+	addx.l	d1,d1		;shift the remainder
+	cmp.l	d1,d3		;check if big enough to subtract
+	bhi	2$
+	sub.l	d3,d1		;yes, so subtract it
+	add.w	#1,d0		;and add one to quotient
+2$
+	dbf	d2,1$		;and loop till done
+	move.l	(sp)+,d3
+	move.w	(sp)+,d2
+	rts
+

@@ -1,0 +1,45 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strrchr(const char *s, int c);
+;
+;
+;	Description
+;
+;	    The strrchr function locates the last occurrence of c (converted to
+;	a char) in the string pointed to by s. The terminating null character
+;	is considered to be part of the string.
+;
+;
+;	Returns
+;
+;	    The strrchr function returns a pointer to the character, or a null
+;	pointer if c does not occur in the string.
+
+	xdef	_strrchr
+_strrchr:
+	move.l	4+0(sp),a0	;a0 is pointer to string
+	move.l	a0,a1		;make a copy
+.1
+	tst.b	(a0)+		;test for null byte at end of string
+	bne	.1		;loop till found, a0 points at null + 1
+
+	IF INT32
+	move.b	4+4+3(sp),d0	;get character to search for
+	ELSE
+	move.b	4+4+1(sp),d0
+	ENDC
+
+.2
+	cmp.l	a0,a1		;compare to original pointer
+	beq	.3		;if at beginning, no match
+	cmp.b	-(a0),d0	;back up and compare to character
+	bne	.2		;loop if not found
+	move.l	a0,d0		;found, return pointer
+	rts
+.3
+	move.l	#0,d0		;not found, return null pointer
+	rts
+

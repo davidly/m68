@@ -1,0 +1,13 @@
+;
+; Copyright 1991 Manx Software Systems
+; All Rights Reserved
+;
+	public	_open,__open
+_open
+	jmp	__open
+
+	public	_creat,__creat
+_creat
+	jmp	__creat
+
+	end

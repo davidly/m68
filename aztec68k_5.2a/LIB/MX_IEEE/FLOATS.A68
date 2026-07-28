@@ -1,0 +1,112 @@
+; Copyright (C) 1986 by Manx Software Systems, Inc.
+; :ts=8
+
+	public	.Ffix
+.Ffix:
+	move.l	d1,-(sp)
+	jsr	.ftod#
+	jsr	.Pfix#
+	movem.l	(sp)+,d1
+	rts
+
+	public	.Fflu	;jd 4/2/91 SCR 18
+.Fflu:
+	move.l	d1,-(sp)
+	jsr	.Pflu#
+	jsr	.dtof#
+	movem.l	(sp)+,d1
+	rts
+
+	public	.Fflt
+.Fflt:
+	move.l	d1,-(sp)
+	jsr	.Pflt#
+	jsr	.dtof#
+	movem.l	(sp)+,d1
+	rts
+
+	public	.Fneg
+.Fneg:
+	move.l	d1,-(sp)
+	jsr	.ftod#
+	jsr	.Pneg#
+	jsr	.dtof#
+	movem.l	(sp)+,d1
+	rts
+
+	public	.Ftst
+.Ftst:
+	movem.l	d0/d1,-(sp)
+	jsr	.ftod#
+	jsr	.Ptst#
+	movem.l	(sp)+,d0/d1
+	rts
+
+	public	.Fadd
+.Fadd:
+	movem.l	d2/d3,-(sp)
+	move.l	d1,d2
+	jsr	.ftod#
+	exg	d0,d2
+	move.l	d1,d3
+	jsr	.ftod#
+	jsr	.Padd#
+	jsr	.dtof#
+	movem.l	(sp)+,d2/d3
+	rts
+
+	public	.Fcmp
+.Fcmp:
+	movem.l	d2/d3,-(sp)
+	move.l	d0,d2
+	move.l	d1,d0
+	jsr	.ftod#
+	exg	d0,d2
+	move.l	d1,d3
+	jsr	.ftod#
+	jsr	.Pcmp#
+	movem.l	(sp)+,d2/d3
+	rts
+
+	public	.Fdiv
+.Fdiv:
+	movem.l	d2/d3,-(sp)
+	move.l	d0,d2
+	move.l	d1,d0
+	jsr	.ftod#
+	exg	d0,d2
+	move.l	d1,d3
+	jsr	.ftod#
+	jsr	.Pdiv#
+	jsr	.dtof#
+	movem.l	(sp)+,d2/d3
+	rts
+
+	public	.Fmul
+.Fmul:
+	movem.l	d2/d3,-(sp)
+	move.l	d0,d2
+	move.l	d1,d0
+	jsr	.ftod#
+	exg	d0,d2
+	move.l	d1,d3
+	jsr	.ftod#
+	jsr	.Pmul#
+	jsr	.dtof#
+	movem.l	(sp)+,d2/d3
+	rts
+
+	public	.Fsub
+.Fsub:
+	movem.l	d2/d3,-(sp)
+	move.l	d0,d2
+	move.l	d1,d0
+	jsr	.ftod#
+	exg	d0,d2
+	move.l	d1,d3
+	jsr	.ftod#
+	jsr	.Psub#
+	jsr	.dtof#
+	movem.l	(sp)+,d2/d3
+	rts
+

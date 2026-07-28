@@ -1,0 +1,40 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strdup(const char *s);
+;
+;
+;	Description
+;
+;	    The strdup function makes a copy of the string pointed to by s. The
+;	space for the copy is allocated using the malloc function.
+;
+;
+;	Returns
+;
+;	    The strdup function returns a pointer to the array allocated. If
+;	the array could not be allocated, a null pointer is returned.
+
+	xref	_malloc
+
+	xdef	_strdup
+_strdup:
+	move.l	4(sp),a0
+	move.l	a0,d0
+.1	tst.b	(a0)+
+	bne.s	.1
+	sub.l	d0,a0
+	move.l	a0,-(sp)
+	jsr	_malloc
+	add.w	#4,sp
+	tst.l	d0
+	beq	.3
+	move.l	d0,a0
+	move.l	4(sp),a1
+.2	move.b	(a1)+,(a0)+
+	bne.s	.2
+.3
+	rts
+

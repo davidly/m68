@@ -1,0 +1,8 @@
+;
+; Copyright 1987 Manx Software Systems
+; All Rights Reserved
+;
+	public	_close,__close
+_close
+	jmp	__close
+	end

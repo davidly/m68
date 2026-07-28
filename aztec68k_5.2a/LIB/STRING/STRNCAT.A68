@@ -1,0 +1,40 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strncat(char *dst, const char *src, size_t n)
+;
+;
+;	Description
+;
+;	    The strncat function appends not more than n characters (a null
+;	character and characters that follow it are not appended) from the
+;	array pointed to by src to the end of the string pointed to by dst. The
+;	initial character of src overwrites the null character at the end of
+;	dst. A terminating null character is always appended to the result. If
+;	copying takes place between objects that overlap, the behavior is
+;	undefined.
+;
+;
+;	Returns
+;
+;	    The strncat function returns the value of dst.
+
+	xdef	_strncat
+_strncat:
+	movem.l	4+0(sp),a0/a1	;a0 is dst, a1 is src
+	move.l	a0,d0		;return dst
+	move.l	12(sp),d1	;get count
+.1
+	tst.b	(a0)+		;skip to end of dst
+	bne	.1
+	subq.l	#1,a0		;back up to null
+.2
+	move.b	(a1)+,(a0)+	;copy from src
+	dbeq	d1,.2		;loop till done or null
+	sub.l	#$10000,d1	;loop till high word done
+	bpl	.2
+	clr.b	-(a0)		;back up to n'th byte and clear
+	rts			;and return
+

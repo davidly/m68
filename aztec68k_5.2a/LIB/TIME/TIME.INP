@@ -1,0 +1,11 @@
+asctime.c
+clock.c
+ctime.c
+difftime.c
+gmtime.c
+localtim.c
+makefile
+mktime.c
+strftime.c
+time.c
+time.inp

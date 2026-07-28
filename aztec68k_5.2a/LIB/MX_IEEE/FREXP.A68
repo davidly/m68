@@ -1,0 +1,44 @@
+; Copyright 1987 Manx Software Systems, Inc
+;
+;	FLOATING POINT ERROR VALUES
+;
+UNDER_FLOW	equ	1
+OVER_FLOW	equ	2
+DIV_BY_ZERO	equ	3
+;
+;	double frexp(double d, int *i)
+;
+;	returns 1/2 <= |x| < 1
+;	such that d = x *2^i
+;
+		IFD	MCH_MACINTOSH
+ARGS	equ		4
+		ELSE
+ARGS	equ		8
+		ENDC
+		public	_frexp
+_frexp:
+		IFND	MCH_MACINTOSH
+		move.l	d2,-(sp)
+		ENDC
+		movem.l	ARGS(sp),d0/d1/a0	; d0,d1 := d; a0 = &i;
+		move.l	d0,d2
+		swap	d2
+		and.w	#$7ff0,d2
+		beq		zero
+notzero:
+		and.l	#$800fffff,d0	;get rid of old exponent
+		lsr.w	#4,d2
+		sub.w	#1022,d2
+		or.l	#$3fe00000,d0	;change exponent to -1
+zero:
+		IF INT32
+		ext.l	d2
+		move.l	d2,(a0)
+		ELSE
+		move.w	d2,(a0)
+		ENDC
+		IFND	MCH_MACINTOSH
+		move.l	(sp)+,d2
+		ENDC
+		rts

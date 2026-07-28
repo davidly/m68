@@ -1,0 +1,8 @@
+;
+; Copyright 1991 Manx Software Systems
+; All Rights Reserved
+;
+	public	_ioctl,__ioctl
+_ioctl
+	jmp	__ioctl
+	end

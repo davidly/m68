@@ -1,0 +1,42 @@
+; Copyright 1989 Manx Software Systems, Inc. All rights reserved
+; :ts=8
+
+;	Synopsis
+;
+;	char *strstr(const char *s1, const char *s2);
+;
+;
+;	Description
+;
+;	    The strstr function locates the first occurrence in the string
+;	pointed to by s1 of the sequence of characters (excluding the
+;	terminating null character) of the string pointed to by s2.
+;
+;
+;	Returns
+;
+;	    The strstr function returns a pointer to the located string, or a
+;	null pointer if the string is not found.  If s2 points to a string with
+;	zero length, the function returns s1.
+
+	xdef	_strstr
+_strstr:
+	move.l	a2,-(sp)	;save register
+	movem.l	8(sp),a0/a1	;a0 is s1, a1 is s2
+	move.l	a1,d0		;now, d0 is s2
+.1
+	move.l	a0,a1		;a1 is pointer into s1
+	move.l	d0,a2		;a2 is pointer to s2
+.2
+	move.b	(a2)+,d1	;get next character in s2
+	beq	success		;if at end of s2, we have a match
+	cmp.b	(a1)+,d1	;else, check against next char in s1
+	beq	.2		;if match, continue through s2
+	tst.b	(a0)+		;else start to next char in s1
+	bne	.1		;if not at end of s1, start check over again
+	move.l	#0,a0		;if at end of s1, then no match, return zero
+success:
+	move.l	a0,d0		;return position in s1 where s2 starts
+	move.l	(sp)+,a2	;restore register
+	rts
+

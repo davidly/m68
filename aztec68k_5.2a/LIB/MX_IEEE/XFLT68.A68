@@ -1,0 +1,921 @@
+; Copyright 1989 Manx Software Systems, Inc
+;
+;	FLOATING POINT ERRORS
+;
+ERANGE		equ	13
+EDOM		equ	14
+
+FAST_SHIFT	equ	1
+STICKY		equ	1
+;
+INTOVER equ	2
+;
+		dseg
+		xref	_errno
+		xref	.p0,.p1
+
+
+		cseg
+;
+;
+; Convert extended to long integer
+;
+; argument in .p0, result in d0
+;
+
+		public	.Xfix
+.Xfix:
+		move.l	d1,-(sp)
+		movem.l	.p0,d0-d1			; put extended in registers
+		swap	d0					; get exponent in low word
+		ext.l	d0					; shift sign into high word
+		and.w	#$7fff,d0			; extract exponent
+		sub.w	#$3fff,d0			; unbias exponent
+		bmi		zeroresult			; zero or negative exponent is zero
+		sub.w	#31,d0				; exponent greater than 32 is overflow
+		bgt		overflow
+		neg.w	d0					; change sign to positive
+		lsr.l	d0,d1				; (divide) shift by remaining exponent
+		move.l	d0,d0				; negative input?
+		bmi		signed
+exitfix:
+		move.l	d1,d0				; copy in result
+notest:
+		movem.l	(sp)+,d1			; restore registers
+		rts
+signed:
+		neg.l	d1					; negate result
+		bra		exitfix
+zeroresult:
+		move.l	#0,d1
+		bra		exitfix
+overflow:
+		move.l	#$7fffffff,d1		; positive overflow
+		move.l	d0,d0				; negative input?
+		bpl		over1				; bif no
+		neg.l	d1					; negative overflow
+		move.l	d1,d0				; copy in long result
+over1:
+		ori		#INTOVER,ccr		; set overflow bit
+		bra		notest
+
+
+;
+; Convert long integer to extended
+;
+; argument in d0, result in .p0
+;
+
+	public	.Xflt
+.Xflt
+		movem.l	d1-d3,-(sp)			; save registers
+		move.l	d0,d1				; put long in register
+		tst.l	d1					; value is zero ?
+		beq		iszero				; make extended zero
+		movem.l	d6/d7,-(sp)			; (note: movem.l doesn't change cc)
+		smi.b	d6					; determine sign (note: smi doesn't change cc)
+		bgt		notneg				; test for negative value
+		neg.l	d1					; get absoulte value
+notneg:
+		move.l	#0,d2				; zero out LL of result
+		move.l	#0,d3				; zero out guard digits
+		move.l	#31,d0				; set exponent
+		jsr	donormnc				; go normalize without carry in
+		movem.l	(sp)+,d6/d7
+exitflt:
+		movem.l	(sp)+,d1-d3		; restore registers
+		rts
+iszero:
+		move.l	#0,.p0			; answer is zero
+		move.l	#0,.p0+4
+		move.l	#0,.p0+8
+		bra		exitflt
+;
+; Convert unsigned long integer to extended
+;
+; argument in d0, result in .p0
+; jd 4/3/91 SCR 18
+;
+
+	public	.Xflu
+.Xflu
+		movem.l	d1-d3,-(sp)			; save registers
+		move.l	d0,d1				; put long in register
+		tst.l	d1					; value is zero ?
+		beq		iszero				; make extended zero
+		movem.l	d6/d7,-(sp)			; (note: movem.l doesn't change cc)
+		move.l	#0,d6				; positive number
+		jmp	notneg
+
+;
+; Extended compare: (arg1 - arg2)
+;
+; arg1 in .p0, arg2 in .p1
+;
+; returns answer in d0
+;	-1; arg1 < arg2
+;	 0; arg1 = arg2
+;   +1; arg1 > arg2
+;
+		public	.Xcmp
+.Xcmp:
+		movem.l	d1-d5,-(sp)
+		move.l	8*4+4(sp),a0
+		movem.l	.p0,d0-d2		; test if arg1 is zero
+		and.l	#$7fff0000,d0	; by checking if exponent is zero
+		bne		cmpnz1			; bif not
+		move.l	#0,d1			; insure a clean zero for arg1
+		move.l	#0,d2
+cmpnz1:
+		movem.l	.p1,d3-d5			; test if arg2 is zero
+		and.l	#$7fff0000,d3	; by checking if exponent is zero
+		bne		cmpnz2			; bif not
+		move.l	#0,d4			; insure a clean zero for arg2
+		move.l	#0,d5
+cmpnz2:
+		move.l	.p1,d3			; is second negative
+		bmi		cmpmi2			; bif so
+		move.l	.p0,d0			; 2nd is pos; is first negative?
+		bmi		aLTb			; bif so
+		cmp.l	d3,d0			; signed test of 1st longword of each arg
+atstb:
+		blt		aLTb
+		bgt		aGTb
+		cmp.l	d4,d1			; use an unsigned test for 2nd longword
+		bcs		aLTb
+		bhi		aGTb
+		cmp.l	d5,d2			; use an unsigned test for 3rd longword
+		bcs		aLTb
+		bhi		aGTb
+aEQb:
+		move.l	#0,d0			; *arg1 == *arg2
+		movem.l	(sp)+,d1-d5
+		rts
+aLTb:
+		move.l	#-1,d0			; *arg1 < *arg2
+		movem.l	(sp)+,d1-d5
+		rts
+aGTb:
+		move.l	#1,d0			; *arg1 > *arg2
+		movem.l	(sp)+,d1-d5
+		rts
+cmpmi2:							; 2nd is negative.
+		move.l	.p0,d0			; is 1st zero or positive
+		bpl		aGTb			; bif yes
+		exg.l	d1,d4
+		exg.l	d2,d5
+		cmp.l	d0,d3
+		bra		atstb
+
+
+;
+; Extended test: (arg1 - 0L)
+;
+; argument in .p0, result in d0
+;
+	public	.Xtst
+.Xtst
+		move.l	.p0,d0			; test if zero
+		and.l	#$7fff0000,d0	; by checking if exponent is zero
+		beq		tstzero			; argument is zero
+		move.w	.p0,d0
+		bpl		tstpos			; value is positive
+		move.l	#-1,d0			; value is negative
+tstzero:
+		rts
+tstpos:
+		move.l	#1,d0
+		rts
+
+
+;
+; Get absolute value of extended: arg1 = |arg1|
+;
+; argument in .p0, result in .p0
+;
+	public	.Xabs
+.Xabs
+		movem.l	d0,-(sp)
+		move.w	.p0,d0			; test if zero
+		and.w	#$7fff,d0		; by checking if exponent is zero
+		beq		abszero			; argument is zero
+		and.w	#$7fff,.p0		; force sign bit off
+		movem.l	(sp)+,d0
+		rts
+abszero:
+negzero:
+		move.l	#0,.p0
+		move.l	#0,.p0+4
+		move.l	#0,.p0+8
+		movem.l	(sp)+,d0
+		rts
+
+
+;
+; Negate an extended: arg1 = -arg1
+;
+; argument in .p0, result in .p0
+;
+	public	.Xneg
+.Xneg
+		movem.l	d0,-(sp)
+		move.w	.p0,d0			; test if zero
+		and.w	#$7fff,d0		; by checking if exponent is zero
+		beq		negzero			; argument is zero
+		eor.w	#$8000,.p0		; flip sign bit
+		movem.l	(sp)+,d0
+		rts
+
+
+;
+; subtract/add two extended floating point numbers
+; 1st in .p0
+; 2st in .p1
+;
+addret2:
+		movem.l	d3-d5,.p0
+		and.l	#$7fff0000,d3
+		bne		addret1
+divzero:
+		move.l	#0,.p0
+		move.l	#0,.p0+4
+		move.l	#0,.p0+8
+addret1:
+		move.l	.p0,d0				; return with condition code set
+		movem.l	(sp)+,a2/a3/d0-d7
+		rts
+
+;
+; Extended subtract: .p0 = .p0 - .p1
+;
+		public	.Xsub
+.Xsub
+		eor.w	#$8000,.p1		; flip sign bit of second operand
+; Fall through to .Xadd
+
+
+;
+; Extended add: .p0 = .p0 + .p1
+;
+		public	.Xadd
+.Xadd
+		movem.l	a2/a3/d0-d7,-(sp)
+		movem.l	.p0,d0-d2			; load arg1
+		movem.l	.p1,d3-d5			; load arg2
+		move.l	#0,d6
+		move.l	#0,d7
+		move.l	d0,d0
+		smi.b	d6					; sign for arg1 in d6
+		swap	d0
+		and.w	#$7fff,d0
+		beq		addret2				; zero exponent is zero, result is second
+		move.l	d3,d3
+		smi.b	d7					; sign for arg2 in d7
+		swap	d3
+		and.w	#$7fff,d3
+		beq		addret1				; zero exponent is zero, result is first
+		sub.w	#16383,d0			; adjust exponent of arg1
+		sub.w	#16383,d3			; adjust exponent of arg2
+		cmp.w	d3,d0				; find larger exponent
+		bne		1$
+		move.w	#0,d3
+		bra		equdone				; don't need to equalize
+1$
+		bgt		noswap				; first is larger, don't swap
+		exg.l	d0,d3				; swap to equalize
+		exg.l	d1,d4
+		exg.l	d2,d5
+		exg.l	d6,d7
+noswap:
+		move.l	d0,a2				; save final exponent
+		IFD STICKY
+		movem.w	d6/d7,-(sp)			; free up d6/d7
+		move.l	#0,d6
+		ELSE
+		move.w	d7,-(sp)			; free up d7
+		ENDC
+		sub.w	d3,d0				; get equalization shift count
+		move.w	#0,d3				; zero out guard bits
+		cmp.w	#80,d0				; going to shift it all away?
+		bmi		doshft				; no, do the shift
+		move.l	#0,d4				; yes, zero the secondary
+		move.l	#0,d5
+		bra		equdone0
+doshft:
+		IF FAST_SHIFT==1
+		cmp.w	#5,d0
+		bmi		rotadd		; shift counts <5 can be done faster with rotate.
+		cmp.w	#64,d0
+		bmi		shflt64		; fallthrough if right shifting more than 63 bits
+		sub.w	#64,d0
+		IFND STICKY
+		swap	d4
+		move.w	d4,d3
+		lsr.w	d0,d3
+		move.l	#0,d4
+		move.l	#0,d5
+		bra		equdone0
+		ELSE
+		move.w	d4,d4		; if any of the bits being lost are 1
+		bne		1$
+		tst.l	d5
+		beq		sh64lowz
+1$
+		swap	d4
+		move.w	d4,d3
+		lsr.w	d0,d3
+sh64sky:
+		or.w	#STICKY,d3	; then or in STICKY bit.
+		move.l	#0,d4
+		move.l	#0,d5
+		bra		equdone0
+sh64lowz:
+		swap	d4
+		move.w	d4,d3		; 64 bit right shift of d4
+		lsr.l	d0,d3		; d3 >> shift
+		move.l	d3,d7
+		lsl.l	d0,d7		; (d7 >> shift) << shift
+		cmp.w	d4,d7		; if ((d7 >> shift) << shift) != d4,
+		bne		sh64sky		; then bits will be lost during right shift of d7
+		move.l	#0,d4
+		move.l	#0,d5
+		bra		equdone0
+		ENDC
+shflt64:					; shift count < 64
+		cmp.w	#48,d0
+		bmi		shflt48		; fallthrough if right shifting more than 47 bits
+		IFD		STICKY
+		tst.l	d5			; if any of the bits being lost are 1
+		beq		1$
+		move.l	#1,d6
+1$
+		ENDC
+		move.w	d4,d3
+		move.l	#0,d5
+		swap	d4
+		move.w	d4,d5
+		move.l	#0,d4
+		sub.w	#48,d0
+		bra		shflt16
+shflt48:					; shift count < 48
+		cmp.w	#32,d0
+		bmi		shflt32		; fallthrough if right shifting more than 31 bits
+		swap	d5
+		move.w	d5,d3		; if any of the bits being lost are 1
+		IFD		STICKY
+		beq		1$
+		move.l	#1,d6
+1$
+		ENDC
+		move.l	d4,d5
+		move.l	#0,d4
+		sub.w	#32,d0
+		bra		shflt16
+shflt32:					; shift count < 32
+		cmp.w	#16,d0
+		bmi		shflt16		; fallthrough if right shifting more than 15 bits
+		move.w	d5,d3		; if any of the bits being lost are 1
+		move.w	d4,d5
+		swap	d5
+		move.w	#0,d4
+		swap	d4
+		sub.w	#16,d0
+shflt16
+		beq		chksky
+		move.w	d3,d7
+		lsr.w	d0,d7
+		lsl.w	d0,d7
+		cmp.w	d3,d7
+		beq		1$
+		move.l	#1,d6
+1$
+		cmp.w	#5,d0
+		bmi		rotadd		; shift counts <5 can be done faster with rotate.
+		swap	d6			; preserve sticky bit
+		move.w	#16,d6
+		sub.w	d0,d6
+		lsr.w	d0,d3
+		move.w	d5,d7
+		lsl.w	d6,d7
+		or.w	d7,d3
+		move.w	#32,d6
+		sub.w	d0,d6
+		lsr.l	d0,d5
+		move.l	d4,d7
+		lsl.l	d6,d7
+		or.l	d7,d5
+		lsr.l	d0,d4
+		swap	d6			; restore sticky bit
+		bra		chksky
+		ENDC
+rotadd:
+		sub.w	#1,d0
+shfttop:
+		lsr.l	#1,d4		; equalize the secondary
+		roxr.l	#1,d5
+		roxr.w	#1,d3
+		dbra	d0,shfttop
+		IFD STICKY
+chksky
+		tst.l	d6
+		beq		equdone0
+		or.w	#STICKY,d3
+		ENDC
+equdone0:
+		move.l	a2,d0		; restore exponent
+		IFD STICKY
+		movem.w	(sp)+,d6/d7	; restore d6/d7
+		ELSE
+		move.w	(sp)+,d7	; restore d7
+		ENDC
+equdone:
+		cmp.w	d7,d6
+		bgt		sub_2_1		; first is signed, sub first from second
+		blt		sub_1_2		; second is signed, sub second from first
+		add.l	d5,d2		; same sign, just add
+		addx.l	d4,d1
+		bcc		normit		; check for carry out on addition
+		roxr.l	#1,d1		; carry, restore carried bit to result
+		roxr.l	#1,d2
+		roxr.w	#1,d3
+		add.w	#1,d0		; bump exponent
+		bra		normit
+sub_2_1:
+		exg.l	d1,d4		; swap values
+		exg.l	d2,d5
+		move.l	d7,d6
+		sub.l	d5,d2
+		bra		sub_1_2a
+sub_1_2:
+		neg.w	d3			; do subtraction
+		subx.l	d5,d2
+sub_1_2a:
+		subx.l	d4,d1
+		bcc		normit		; did sign change (generated a borrow)?
+		negx.b	d6			; yes, flip sign (-1 -> 0; 0 -> -1)
+		neg.w	d3			; sign changed, subtract result from zero
+		negx.l	d2
+		negx.l	d1
+normit:
+		jsr		donormnc	; go normalize without carry in
+		movem.l	(sp)+,a2/a3/d0-d7
+		rts
+
+
+multzero:
+		move.l	#0,.p0
+		move.l	#0,.p0+4
+		move.l	#0,.p0+8
+		movem.l	(sp)+,a1-a3/d0-d7
+		rts
+;
+; Extended multiply: .p0 = .p0 * .p1
+;
+		public	.Xmul
+.Xmul
+		movem.l	a1-a3/d0-d7,-(sp)
+		movem.l	.p0,d0-d2			; load arg1
+		movem.l	.p1,d3-d5			; load arg2
+		move.l	d0,d0
+		smi.b	d6					; sign for arg1 in d6
+		swap	d0					; exponent in d0
+		and.w	#$7fff,d0
+		beq		multzero			; zero exponent is zero, result is zero
+		move.l	d3,d3
+		smi.b	d7					; sign for arg2 in d7
+		swap	d3					; exponent in d3
+		and.w	#$7fff,d3
+		beq		multzero			; zero exponent is zero, result is zero
+		add.w	d3,d0				; add exponents
+		sub.w	#(16383+16383-1),d0	; unbias result exponent
+		move.w	d0,a2				; save result exponent
+		eor.b	d7,d6				; figure out sign of result
+		move.w	d6,a3				; save sign
+; don't need to adjust mantissa since it fits exactly
+		move.l	#0,d7				; make a zero for carry addition and donorm
+									; because 68000 architecture is brain-damaged
+		move.l	d4,a1				; save HL of multiplier for later
+		move.l	d5,d4				; get LL of mmultiplier into multiplier reg
+		move.l	#0,d5				; clear temporary accumulator
+		move.l	#0,d0				; clear result registers	
+		move.l	#0,d3
+		move.l	#0,d6
+		tst.w	d4					; check for zero LLLW multiplier
+		beq		skip1				; don't bother, it's zero
+		move.w	d1,d5				; check HLLW multiplicand
+		beq		skip11				; don't bother it's zero
+		mulu.w	d4,d5
+		swap	d5					; get high order word of result
+		move.w	d5,d6				; save in LLHW of final result 
+skip11:
+		move.l	d1,d5				; check HLHW multiplicand
+		swap	d5
+		tst.w	d5
+		beq		skip1				; don't bother it's zero
+		mulu.w	d4,d5
+		add.l	d5,d6				; save in LL of final result
+skip1:
+		swap	d4					; check for zero LLHW multiplier
+		tst.w	d4
+		beq		skip2				; don't bother, it's zero
+		move.l	d2,d5				; get LLHW of multiplicand
+		swap	d5
+		tst.w	d5					; check for zero
+		beq		skip2x				; don't bother it's zero
+		mulu.w	d4,d5
+		clr.w	d5					; zero LW of result
+		swap	d5					; get HW of result
+		add.l	d5,d6				; add to LL of final result
+		addx.w	d7,d3				; carry into HLLW of final result
+skip2x:
+		move.w	d1,d5				; check for zero HLLW
+		beq		skip21				; don't bother, it's zero
+		mulu.w	d4,d5
+		add.l	d5,d6				; add to LL of final result
+		addx.w	d7,d3				; carry into MLLW of final result
+skip21:
+		move.l	d1,d5				; get HLHW of multiplicand
+		swap	d5
+
+		mulu.w	d4,d5
+		swap	d6
+		add.w	d5,d6				; add to LLHW of final result
+		swap	d6					; put LLHW back in place
+		clr.w	d5					; zero low part of result
+		swap	d5					; get high part of result
+		addx.l	d5,d3				; add with carry into ML of final result
+skip2:
+		move.l	a1,d4				; get back HL of multiplier
+		tst.w	d4					; check for zero HLLW of multiplier
+		beq		skip3				; don't bother, it's zero
+		move.w	d2,d5				; get LLLW of multiplicand
+		beq		skip3x
+		mulu.w 	d4,d5
+		clr.w	d5
+		swap	d5					; get HW of result
+		add.l	d5,d6				; add into LL of final result
+		addx.l	d7,d3				; carry into ML of final result
+skip3x:
+		move.l	d2,d5
+		swap	d5
+		tst.w	d5					; check for zero
+		beq		skip31				; don't bother, it's zero
+		mulu.w	d4,d5
+		add.l	d5,d6				; add to LL of final result
+		addx.l	d7,d3				; carry into ML of final result
+skip31:
+		move.w	d1,d5				; get HLLW of multiplicand
+		beq		skip32				; don't bother, it's zero
+		mulu.w	d4,d5
+		swap	d6
+		add.w	d5,d6				; add LW of result to LLHW of final result
+		swap	d6					; put LLHW back into place
+		clr.w	d5					; get rid of LW of result
+		swap	d5					; get HW of result
+		addx.l	d5,d3				; carry into ML of final result
+skip32:
+		move.l	d1,d5				; get HLHW of multiplicand
+		swap	d5
+									; don't need usual test for zero, can't happen
+		mulu.w	d4,d5
+		add.l	d5,d3				; add to ML of final result
+		addx.l	d7,d0				; carry into HL of final result
+skip3:
+		swap	d4					; get HLHW of multiplier
+									; don't need usual test for zero, can't happen
+		move.w	d2,d5				; get LLLW of multiplicand
+		beq		skip41
+		mulu.w	d4,d5
+		add.l	d5,d6				; add to LL of final result
+		addx.l	d7,d3				; carry into ML of final result
+		addx.l	d7,d0				; carry into HL of final result
+skip41:
+		swap	d2					; get LLHW of multiplicand
+		move.w	d2,d5
+		beq		skip42				; if zero, skip
+		mulu.w	d4,d5
+		swap	d6					; get LLHW of final result
+		add.w	d5,d6				; add LW of result into LLHW of final result
+		swap	d6					; get LLHW of final result back in place
+		clr.w	d5					; get rid of LW of result
+		swap	d5					; get high word of result
+		addx.l	d5,d3				; add into ML of final result + carry from prev add
+		addx.l	d7,d0				; carry into HL of final result
+skip42:
+		move.w	d1,d5				; get HLLW of multiplicand
+		beq		skip43				; don't bother, it's zero
+		mulu.w	d4,d5
+		add.l	d5,d3				; add to ML of final result
+		addx.l	d7,d0				; carry into HL of final result
+skip43:
+		swap	d1					; get HLHW of multiplicand
+		move.w	d1,d5
+									; don't need check for zero, can't happen
+		mulu.w	d4,d5
+		swap	d3					; get MLHW of final result
+		add.w	d5,d3				; add LW of result to it
+		swap	d3					; put MLHW of final result back into place
+		clr.w	d5					; get rid of LW of result
+		swap	d5					; get HW of result
+		addx.l	d5,d0				; add to HL of final result
+		cmp.l	#$ffff,d0			; check for carry into HLHW of result
+		bls		skip4
+		add.w	#1,a2				; adjust expoonent
+		lsr.l	#1,d0				; shift mantissa over one
+		roxr.l	#1,d3
+		roxr.l	#1,d6
+skip4:
+		move.w	d6,d5
+		move.w	d3,d6				; construct result
+		swap	d6					;  d0  |  d3  |  d6  |
+		move.l	d6,d2				;ov |   result   |rnd|
+		move.w	d0,d3
+		swap	d3
+		move.l	d3,d1
+		move.w	d5,d3
+		move.w	a2,d0				; move expoonent back into d0
+		move.w	a3,d6				; sign into d6
+		jsr	donorm					; normalize	
+		movem.l	(sp)+,a1-a3/d0-d7
+		rts
+
+
+;
+; Extended division: .p0 = .p0 / .p1
+;
+		public	.Xdiv
+.Xdiv
+		movem.l	a2/a3/d0-d7,-(sp)
+		movem.l	.p0,d0-d2			; load arg1
+		movem.l	.p1,d3-d5			; load arg2
+		move.l	d0,d0
+		smi.b	d6					; sign for arg1 in d6
+		swap	d0					; exponent in d0
+		and.w	#$7fff,d0
+		beq		divzero				; zero exponent is zero, result is zero
+		move.l	d3,d3
+		smi.b	d7					; sign for arg2 in d7
+		swap	d3					; exponent in d3
+		and.w	#$7fff,d3
+		beq		divbyzero			; zero exponent is zero, result is fault
+		sub.w	d3,d0				; subtract exponents
+		sub.w	#1,d0				; adjust for result of divide
+		move.l	d0,a2				; save result exponent
+		eor.b	d7,d6				; figure out sign of result
+		swap	d6					; save sign in high half of d6
+; don't need to adjust mantissa since it fits exactly
+;
+;		check for easy divide case
+;
+		move.l	#0,d3		; zero out guard bits
+		tst.w	d4			; check for zero HLLW divisor
+		bne		harddiv
+		tst.l	d5			; check for zero LL divisor
+		bne		harddiv
+;
+		swap	d4			; get HLHW into place as divisor
+		swap	d1
+		cmp.w	d4,d1		; make sure divide won't overflow
+		beq		okdiv
+		bls		ediv
+okdiv:
+		swap	d1			; get dividend back in place
+		add.w	#1,a2		; bump exponent
+		lsr.l	#1,d1		; make dividend smaller
+		roxr.l	#1,d2
+		roxr.w	#1,d3
+		swap	d1			; make nop of next instruction
+ediv:
+		swap	d1			; get dividend back in place
+		divu.w	d4,d1
+		move.w	d1,d0		; save result as HLHW of final result
+		swap	d0			
+		swap	d2			; get next word of dividend
+		move.w	d2,d1		; move it in with remainder of last calc
+		divu.w	d4,d1
+		move.w	d1,d0		; save result as HLLW of final result
+		swap	d2			; get next word of dividend
+		move.w	d2,d1
+		divu.w	d4,d1
+		move.w	d1,d7		; save result as LLHW of result
+		swap	d7
+;		clr.w	d1			; get rid of quotient
+		move.w	d3,d1
+		divu.w	d4,d1
+		move.w	d1,d7		; save result as LLLW of final result
+		clr.w	d1			; get rid of quotient
+		divu.w	d4,d1
+		move.w	d1,d3		; save result as guard bits
+		move.l	d0,d1		; get into place for normalization
+		move.l	d7,d2
+		bra 	divnorm		; go normalize result
+harddiv:
+		cmp.l	d1,d4
+		bne		do_div
+		cmp.l	d2,d5
+		bne		do_div
+		move.l	#$80000000,d1	; mantissas same, answer is one with exponent
+		add.w	#1,a2
+		move.l	#0,d2
+		bra		divnorm		; go normalize and exit
+do_div:
+		bhi		noadjust	;		*jd 9 Oct 86
+		add.w	#1,a2		; bump exponent
+		lsr.l	#1,d1		; shift dividend
+		roxr.l	#1,d2
+		roxr.w	#1,d3
+noadjust:
+		lsr.l	#1,d4
+		roxr.l	#1,d5
+		lsr.l	#1,d1
+		roxr.l	#1,d2
+		roxr.w	#1,d3
+		move.w	#2,d6		; outer loop count (don't use move.l since high
+							; half of d6 contains result sign flag)
+bdiv_loop:
+		move.l	#0,d0		; clear result
+		move.l	#31,d7		; inner loop count
+div_loop:
+		lsl.l	#1,d0		; shift result
+		lsl.w	#1,d3		; shift dividend
+		roxl.l	#1,d2
+		roxl.l	#1,d1
+		sub.l	d5,d2		; subtract divisor from dividend
+		subx.l	d4,d1
+		bmi		zero_bit
+one_bit:
+		;add.l	#1,d0		; set bit in quotient
+		add.w	#1,d0		; set bit in quotient
+		dbra	d7,div_loop
+		sub.w	#1,d6
+		beq		divguard
+		move.l	d0,a3
+		bra		bdiv_loop
+;
+bzero_loop:
+		move.l	d0,a3
+		move.l	#0,d0
+		move.l	#31,d7		; inner loop count
+zero_loop:
+		lsl.l	#1,d0		; shift zero quotient bit in
+		lsl.w	#1,d3		; shift dividend
+		roxl.l	#1,d2
+		roxl.l	#1,d1
+		add.l	d5,d2		; add divisor back in
+		addx.l	d4,d1
+		bpl		one_bit
+zero_bit:
+		dbra	d7,zero_loop
+		sub.w	#1,d6
+		bne		bzero_loop
+;
+divguard:
+; calculate guard digits
+		move.w	#0,d3		; clear result
+		move.l	#15,d7		; inner loop count
+g_div_loop:
+		lsl.l	#1,d3		; shift result
+		lsl.l	#1,d2		; shift dividend
+		roxl.l	#1,d1
+		sub.l	d5,d2		; subtract divisor from dividend
+		subx.l	d4,d1
+		bmi		g_zero_bit
+g_one_bit:
+		add.w	#1,d3		; set bit in quotient
+		dbra	d7,g_div_loop
+		bra		divend
+;
+g_zero_loop:
+		lsl.l	#1,d3		; shift zero quotient bit in
+		lsl.l	#1,d2		; shift dividend
+		roxl.l	#1,d1
+		add.l	d5,d2		; add divisor back in
+		addx.l	d4,d1
+		bpl		g_one_bit
+g_zero_bit:
+		dbra	d7,g_zero_loop
+;
+divend:
+		move.l	a3,d1		; move result into d0,d1
+		move.l	d0,d2
+divnorm:
+		move.l	a2,d0		; get exponent back
+		swap	d6			; get sign back
+		jsr		donormnc	; go normalize without carry in
+divret:
+		movem.l	(sp)+,a2/a3/d0-d7
+		rts
+divbyzero:
+		IF INT32
+		move.l	#EDOM,_errno
+		ELSE
+		move.w	#EDOM,_errno
+		ENDC
+		jsr		setinf
+		bra		divret
+
+
+normzero:
+		move.l	#0,d0				; d1,d2 are already known to contain 0
+		bra		exitnorm
+
+normover:
+		IF INT32
+		move.l	#ERANGE,_errno
+		ELSE
+		move.w	#ERANGE,_errno
+		ENDC
+setinf:	move.l	#$ffffffff,d2
+		move.l	#$ffffffff,d1
+		move.l	#$7fff0000,d0
+		tst.b	d6
+		beq		setover
+		or.l	#$80000000,d0
+setover:
+		ori		#INTOVER,ccr
+		bra		exitnorm
+;
+;		normalize an extended floating point value and pack it
+;
+;		mantissa in d1,d2, exponent in d0, sign in d6, carry in d7
+;		guard bits in low word of d3
+;		store result in .p0
+;		trashes d0-d2,d7
+;		condition code will be set correctly.
+
+donormnc:
+		move.l	#0,d7		; make a zero for donorm
+donorm:
+		tst.l	d1			; test for HL is zero
+		bne		normnext	; is not, go on
+		exg.l	d1,d2		; move up LL
+		exg.l	d3,d2		; move up guard bits
+		swap	d2
+		move.w	#0,d2
+		sub.w	#32,d0		; adjust exponent for zero in HL
+		tst.l	d1			; is LL zero too
+		bne		normnext	; is not, go on
+		exg.l	d1,d2		; check guard bits
+		sub.w	#32,d0		; adjust exponent for zero in LL
+		tst.l	d1			; are guard bits zero too
+		beq		normzero	; yes, result is zero
+normnext:
+		bmi		nonorm		; is sign bit on (i.e. number normalized)?
+normnn:
+		sub.w	#1,d0		; no, adjust exponent
+		lsl.w	#1,d3		; and shift number
+		roxl.l	#1,d2
+		roxl.l	#1,d1
+		;bpl		normnext	; sign on now? no, keep looping
+		;beq		normnext
+		bge		normnn		; loop until sign bit is set
+nonorm:						; normalized, now check for round
+		cmp.w	#$8000,d3			; check for round
+		beq		rstar				; this is the rstar special case
+		bls		noround
+normrnd:
+		add.l	#1,d2
+		addx.l	d7,d1
+		bcc		noround		; check for overflow
+		roxr.l	#1,d1		; and re-normalize if necessary
+		roxr.l	#1,d2
+		add.w	#1,d0		; bump exponent
+		bra 	noround
+rstar:
+;		or.b	#1,d2				; force low order bit to one
+; IEEE standard says that round to nearest is the default rounding mode; the
+; representable value nearest to the infinitely precise result shall be
+; delivered;  if the two nearest representable values are equally near, the one
+; with its least significant bit zero shall be delivered.
+		btst	#0,d2
+		bne		normrnd
+noround:
+; Don't have to readjust mantissa by NGUARD digits since exact fit
+;		or.l	#$80000000,d1	;normalized bit should already be set
+		add.w	#16383,d0	; add bias back into exponent
+		bmi		normunder	; check for underflow case
+		cmp.w	#32767,d0	; check for overflow case
+		bgt		normover
+		tst.b	d6			; check for sign
+		beq		normnsign	
+		or.w	#$8000,d0	; turn sign bit on
+normnsign:
+		and.l	#$ffff,d0
+		swap	d0
+exitnorm:
+		movem.l	d0-d2,.p0	; store exponent & mantissa
+		rts
+normunder:
+		move.l	#$80000000,d1	;set normalized bit
+		move.l	#0,d2
+		IF INT32
+		move.l	#ERANGE,_errno
+		ELSE
+		move.w	#ERANGE,_errno
+		ENDC
+		move.l	#$00010000,d0	; smallest number
+		tst.b	d6
+		beq		exitnorm
+		or.l	#$80000000,d0
+		bra		exitnorm
+		end
