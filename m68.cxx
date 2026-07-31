@@ -5513,6 +5513,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                 {
                     tracer.Trace( "    it's a tty\n" );
                     #if defined( _WIN32 )
+                        // See the matching comment in the non-Windows branch below: SPARC Linux's TCGETS/TCSETS/
+                        // TCSETSW/TCSETSF ioctl codes have different low 16 bits (0x5408/0x5409/0x540a/0x540b)
+                        // than the x86/ARM flat values (0x5401/0x5402/.../0x5404) this branch originally only
+                        // checked. Without recognizing the sparc TCSETS codes here too, a sparc guest's attempt
+                        // to disable ICRNL (raw mode) on Windows silently failed, leaving CR permanently mapped
+                        // to LF on every keystroke read (see the ICRNL translation in the SYS_read handler).
                         if ( 0x5401 == request || 0x5408 == request ) // TCGETS. 5401 is newer, 5408 is older like Linux on sparc
                         {
                             tracer.Trace( "    responding to 5401 with iflag %#x, oflag %#x, cflag %#x, lflag %#x\n",
@@ -5523,7 +5529,8 @@ void emulator_invoke_svc( CPUClass & cpu )
                             update_result_errno( cpu, 0 );
                             break;
                         }
-                        else if ( 0x5402 == request || 0x5404 == request ) // TCSETS or TCSETSF
+                        else if ( 0x5402 == request || 0x5404 == request || // TCSETS or TCSETSF (x86/ARM)
+                                  0x5409 == request || 0x540a == request || 0x540b == request ) // TCSETS/TCSETSW/TCSETSF (sparc)
                         {
                             pt->swap_endianness();
                             if ( isatty( fd ) )
