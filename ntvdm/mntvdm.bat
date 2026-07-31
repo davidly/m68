@@ -24,8 +24,8 @@ set defines=-DTARGET_BIG_ENDIAN -DNDEBUG
 set gccflags=-mcpu=68000 -x c++ -fno-use-cxa-atexit
 
 rem generate .s files for debugging
-%gcc% %defines% %includes% %gccflags% -O%_optflag% ntvcm.cxx -S -fverbose-asm -o ntvcm.s
-%gcc% %defines% %includes% %gccflags% -O%_optflag% x80.cxx -S -fverbose-asm -o x80.s
+%gcc% %defines% %includes% %gccflags% -O%_optflag% ntvdm.cxx -S -fverbose-asm -o ntvdm.s
+%gcc% %defines% %includes% %gccflags% -O%_optflag% i8086.cxx -S -fverbose-asm -o i8086.s
 
 rem build the C runtime stubs .s file
 %gcc% %defines% %includes% %gccflags% -O%_optflag% newlib68.c -S -o newlib68.s
@@ -34,8 +34,9 @@ rem build the assembly portion with _start and syscalls
 %gccpath%\bin\m68k-elf-as -mcpu=68000 m68start.s -o m68start.o
 
 rem actually build the app
-%gcc% %defines% %includes% %gccflags% -O%_optflag% ntvcm.cxx x80.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o ntvcm.elf
+%gcc% %defines% %includes% %gccflags% -O%_optflag% ntvdm.cxx i8086.cxx newlib68.c -l:m68start.o -L./ -l:libm.a -l:libstdc++.a -o ntvdm.elf
 
-copy ntvcm.elf ..\bin\ntvcm
+copy ntvdm.elf ..\bin\ntvdm
+
 
 

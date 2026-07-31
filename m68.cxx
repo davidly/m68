@@ -2309,6 +2309,7 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 136, SYS_mkdir },
     { 137, SYS_rmdir },
     { 143, SYS_gettid },
+    { 166, SYS_set_tid_address },
     { 174, emulator_sys_getdents },
     { 188, SYS_exit_group },
     { 189, SYS_uname },
@@ -2323,13 +2324,16 @@ static const StoRV SparcToRiscV[] = // per https://gpages.juszkiewicz.com.pl/sys
     { 290, SYS_unlinkat },
     { 291, SYS_renameat },
     { 294, SYS_readlinkat },
+    { 300, SYS_set_robust_list },
     { 321, SYS_pipe2 },
+    { 331, SYS_prlimit64 },
     { 345, SYS_renameat2 },
     { 347, SYS_getrandom },
     { 360, SYS_statx },
     { 403, SYS_clock_gettime64 },
     { 407, SYS_clock_nanosleep }, // really, SYS_clock_nanosleep_time64, but here that's redundant
     { 413, SYS_pselect6 }, // SYS_pselect6_time64, which is the same here
+    { 422, SYS_futex }, // really SYS_futex_time64, but here that's redundant
     { 0x2002, emulator_sys_trace_instructions }, // same value
 };
 
@@ -5532,6 +5536,12 @@ void emulator_invoke_svc( CPUClass & cpu )
                             break;
                         }
                     #else //defined( _WIN32 ) // likely a TCGETS or TCSETS on stdin to check or enable non-blocking reads for a keystroke
+                        // SPARC Linux encodes tty ioctls via the generic _IOC() macro, unlike the flat 0x54xx
+                        // values x86/ARM use, so TCGETS/TCSETS/TCSETSW/TCSETSF have different low 16 bits there:
+                        // TCGETS=0x40245408, TCSETS=0x80245409, TCSETSW=0x8024540a, TCSETSF=0x8024540b (masked
+                        // to 0x5408/0x5409/0x540a/0x540b above). TCGETS already matched by coincidence via 0x5408,
+                        // but TCSETS/TCSETSW/TCSETSF didn't, so raw/non-canonical mode was never actually applied
+                        // to the host tty on sparcos -- e.g. Turbo Pascal needed an extra Enter after each keystroke.
                         if ( 0x5401 == request || 0x5408 == request ) // TCGETS
                         {
                             result = initialize_local_kernel_termios( pt, fd );
@@ -5554,7 +5564,8 @@ void emulator_invoke_svc( CPUClass & cpu )
                                           fd, sizeof( struct local_kernel_termios ), sizeof( struct termios ) );
                             pt->swap_endianness();
                         }
-                        else if ( 0x5402 == request || 0x5404 == request ) // TCSETS or TCSETSF
+                        else if ( 0x5402 == request || 0x5404 == request || // TCSETS or TCSETSF (x86/ARM)
+                                  0x5409 == request || 0x540a == request || 0x540b == request ) // TCSETS/TCSETSW/TCSETSF (sparc)
                         {
                             struct termios val;
                             memset( &val, 0, sizeof val );
@@ -8723,7 +8734,7 @@ char * resolve_execfn_path( const char * pimage )
 
 #if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
 
-static bool load_image32( FILE * fp, const char * pimage, const char * app_args )
+static bool load_image32( FILE * fp, const char * pimage, char * const * in_argv, int in_argc )
 {
     ElfHeader32 ehead = {0};
     fseek( fp, (long) 0, SEEK_SET );
@@ -9042,29 +9053,30 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
     // write the command-line arguments into the vm memory in a place where _start can find them.
     // there's an array of pointers to the args followed by the arg strings at offset arg_data_offset.
 
+    // Each argument is copied into buffer_args as its own NUL-terminated string, back to back, so an
+    // argument that itself contains embedded spaces (e.g. a quoted "-e:FOO=bar -baz" value) can't be
+    // mistaken for multiple arguments the way a space-joined-then-resplit string would.
+
     const uint32_t max_args = 40;
     REG_TYPE aargs[ max_args ]; // vm pointers to each argument
     char * buffer_args = (char *) ( memory.data() + arg_data_offset );
-    size_t image_len = strlen( pimage );
-    vector<char> full_command( 2 + image_len + strlen( app_args ) );
-    strcpy( full_command.data(), pimage );
-    backslash_to_slash( full_command.data() );
-    full_command[ image_len ] = ' ';
-    strcpy( full_command.data() + image_len + 1, app_args );
-
-    strcpy( buffer_args, full_command.data() );
     char * pargs = buffer_args;
-    REG_TYPE args_len = (REG_TYPE) strlen( buffer_args );
-
     REG_TYPE app_argc = 0;
-    while ( *pargs && app_argc < max_args )
-    {
-        while ( ' ' == *pargs )
-            pargs++;
 
-        char * space = strchr( pargs, ' ' );
-        if ( space )
-            *space = 0;
+    strcpy( pargs, pimage );
+    backslash_to_slash( pargs );
+    {
+        REG_TYPE offset = (REG_TYPE) ( pargs - buffer_args );
+        tracer.Trace( "offset %x\n", offset );
+        aargs[ app_argc ] = swap_endian32( offset + g_base_address + arg_data_offset );
+        tracer.Trace( "  argument %d is '%s', at vm address %llx\n", app_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
+        app_argc++;
+        pargs += strlen( pargs ) + 1;
+    }
+
+    for ( int i = 0; i < in_argc && app_argc < max_args; i++ )
+    {
+        strcpy( pargs, in_argv[ i ] );
 
         REG_TYPE offset = (REG_TYPE) ( pargs - buffer_args );
         tracer.Trace( "offset %x\n", offset );
@@ -9072,11 +9084,10 @@ static bool load_image32( FILE * fp, const char * pimage, const char * app_args 
         tracer.Trace( "  argument %d is '%s', at vm address %llx\n", app_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
 
         app_argc++;
-        pargs += strlen( pargs );
-
-        if ( space )
-            pargs++;
+        pargs += strlen( pargs ) + 1;
     }
+
+    REG_TYPE args_len = (REG_TYPE) ( pargs - buffer_args );
 
     REG_TYPE aenv[ max_args ]; // vm pointers to each environment variable
     REG_TYPE env_offset = args_len + 1;
@@ -9437,18 +9448,36 @@ static bool load_68000_hex( const char * pimage )
 
 #endif // defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
 
-static bool load_image( const char * pimage, const char * app_args )
+static bool load_image( const char * pimage, char * const * app_argv, int app_argc )
 {
     tracer.Trace( "loading image %s\n", pimage );
 
     strcpy( g_acLoadedApp, pimage );
+
+    // A legacy flat, space-joined app_args string is still needed by callees that expect a single
+    // command-line string (CP/M's command tail, and the 64-bit ELF path below). Individual arguments
+    // that themselves contain spaces can't survive that join, so the ELF (argv-array) path further
+    // below uses app_argv/app_argc directly instead, preserving each argument's exact boundaries.
+
+    static char acAppArgs[ 1024 ] = {0};
+    acAppArgs[ 0 ] = 0;
+    for ( int i = 0; i < app_argc; i++ )
+    {
+        if ( strlen( acAppArgs ) + 3 + strlen( app_argv[ i ] ) >= _countof( acAppArgs ) )
+            break;
+
+        if ( 0 != acAppArgs[0] )
+            strcat( acAppArgs, " " );
+
+        strcat( acAppArgs, app_argv[ i ] );
+    }
 
 #ifdef M68
     if ( ends_with( pimage, ".hex" ) ) // Motorola 68000 hex file special-case
         return load_68000_hex( pimage ); // app args are lost with hex files
 
     if ( ends_with( pimage, ".68k" ) || ends_with( pimage, ".rel" ) ) // Digital Research CP/M 68K executable file
-        return load_cpm68k( pimage, app_args );
+        return load_cpm68k( pimage, acAppArgs );
 #endif
 
     FILE * fp = fopen( pimage, "rb" );
@@ -9470,7 +9499,7 @@ static bool load_image( const char * pimage, const char * app_args )
 
 #if defined( M68 ) || defined( SPARCOS ) || defined( X32OS )
     if ( 1 == ehead.bit_width )
-        return load_image32( fp, pimage, app_args );
+        return load_image32( fp, pimage, app_argv, app_argc );
     else
         usage( "elf image isn't 32-bit" );
 #endif
@@ -9763,41 +9792,39 @@ static bool load_image( const char * pimage, const char * app_args )
 
     // write the command-line arguments into the vm memory in a place where _start can find them.
     // there's an array of pointers to the args followed by the arg strings at offset arg_data_offset.
+    // Each argument is copied into buffer_args as its own NUL-terminated string, back to back, so an
+    // argument that itself contains embedded spaces (e.g. a quoted "-e:FOO=bar -baz" value) can't be
+    // mistaken for multiple arguments the way a space-joined-then-resplit string would.
 
     const uint32_t max_args = 40;
     REG_TYPE aargs[ max_args ]; // vm pointers to each arguments
     char * buffer_args = (char *) ( memory.data() + arg_data_offset );
-    size_t image_len = strlen( pimage );
-    vector<char> full_command( 2 + image_len + strlen( app_args ) );
-    strcpy( full_command.data(), pimage );
-    backslash_to_slash( full_command.data() );
-    full_command[ image_len ] = ' ';
-    strcpy( full_command.data() + image_len + 1, app_args );
-
-    strcpy( buffer_args, full_command.data() );
     char * pargs = buffer_args;
-    size_t args_len = strlen( buffer_args );
+    uint64_t written_argc = 0;
 
-    uint64_t app_argc = 0;
-    while ( *pargs && app_argc < max_args )
+    strcpy( pargs, pimage );
+    backslash_to_slash( pargs );
     {
-        while ( ' ' == *pargs )
-            pargs++;
+        uint64_t offset = pargs - buffer_args;
+        aargs[ written_argc ] = offset + g_base_address + arg_data_offset;
+        tracer.Trace( "  argument %llu is '%s', at vm address %llx\n", written_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
+        written_argc++;
+        pargs += strlen( pargs ) + 1;
+    }
 
-        char * space = strchr( pargs, ' ' );
-        if ( space )
-            *space = 0;
+    for ( int i = 0; i < app_argc && written_argc < max_args; i++ )
+    {
+        strcpy( pargs, app_argv[ i ] );
 
         uint64_t offset = pargs - buffer_args;
-        aargs[ app_argc ] = offset + g_base_address + arg_data_offset;
-        tracer.Trace( "  argument %llu is '%s', at vm address %llx\n", app_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
+        aargs[ written_argc ] = offset + g_base_address + arg_data_offset;
+        tracer.Trace( "  argument %llu is '%s', at vm address %llx\n", written_argc, pargs, (uint64_t) offset + g_base_address + arg_data_offset );
 
-        app_argc++;
-        pargs += strlen( pargs );
-
-        if ( space )
-            pargs++;
+        written_argc++;
+        pargs += strlen( pargs ) + 1;
     }
+
+    size_t args_len = (size_t) ( pargs - buffer_args );
 
     REG_TYPE aenv[ max_args ]; // vm pointers to each environment variable
     REG_TYPE env_offset = args_len + 1;
@@ -9916,7 +9943,7 @@ static bool load_image( const char * pimage, const char * app_args )
 
     // ensure that after all of this the stack is 16-byte aligned
 
-    if ( 0 == ( 1 & ( app_argc + app_env_count ) ) )
+    if ( 0 == ( 1 & ( written_argc + app_env_count ) ) )
         pstack--;
 
     pstack -= 2; // the AT_NULL record will be here since memory is initialized to 0
@@ -9966,14 +9993,14 @@ static bool load_image( const char * pimage, const char * app_args )
 
     pstack--; // the last argv is 0 to indicate the end
 
-    for ( int iarg = (int) app_argc - 1; iarg >= 0; iarg-- )
+    for ( int iarg = (int) written_argc - 1; iarg >= 0; iarg-- )
     {
         pstack--;
         *pstack = swap_endian64( aargs[ iarg ] );
     }
 
     pstack--;
-    *pstack = swap_endian64( app_argc );
+    *pstack = swap_endian64( written_argc );
 
     g_top_of_stack = (uint64_t) ( ( (uint8_t *) pstack - memory.data() ) + g_base_address );
     uint64_t aux_data_size = top_of_aux - (uint64_t) ( (uint8_t *) pstack - memory.data() );
@@ -10423,7 +10450,8 @@ int main( int argc, char * argv[] )
         bool elfInfo = false;
         bool verboseElfInfo = false;
         bool generateRVCTable = false;
-        static char acAppArgs[1024] = {0};
+        static char * appArgv[ 40 ]; // pointers to the original argv strings, boundaries preserved (an arg may itself contain spaces)
+        int appArgc = 0;
         static char acApp[1024] = {0};
 
         setlocale( LC_CTYPE, "en_US.UTF-8" );            // these are needed for printf of utf-8 to work
@@ -10508,13 +10536,8 @@ int main( int argc, char * argv[] )
             {
                 if ( 0 == pcApp )
                     pcApp = parg;
-                else if ( strlen( acAppArgs ) + 3 + strlen( parg ) < _countof( acAppArgs ) )
-                {
-                    if ( 0 != acAppArgs[0] )
-                        strcat( acAppArgs, " " );
-
-                    strcat( acAppArgs, parg );
-                }
+                else if ( appArgc < _countof( appArgv ) )
+                    appArgv[ appArgc++ ] = parg;
             }
         }
 
@@ -10588,7 +10611,7 @@ int main( int argc, char * argv[] )
             return 0;
         }
 
-        bool ok = load_image( acApp, acAppArgs );
+        bool ok = load_image( acApp, appArgv, appArgc );
         if ( ok )
         {
             unique_ptr<CPUClass> cpu( new CPUClass( memory, g_base_address, g_execution_address, g_stack_commit, g_top_of_stack ) );
