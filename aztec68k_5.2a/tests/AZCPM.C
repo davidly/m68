@@ -1,7 +1,6 @@
 /*
-
     This file provides the layer Aztec C calls to do OS-specific work.
-    Version of Aztec C: C68k/ROM v3.6b, for PCDOS/MSDOS Host Systems 
+    Version of Aztec C: C68k/ROM v5.2a, for PCDOS/MSDOS Host Systems 
 
     This file implements: open lseek creat rename close unlink read ioctl write isatty
 
@@ -542,7 +541,7 @@ size_t _read( int fd, void * buffer, size_t count )
 
 int isatty( int fd )
 {
-    if ( fd >= 0 && fd < 3 )
+    if ( fd >= 0 && fd < 3 ) /* broken when stdin/stdout/stderr are redirected */
         return 1;
 
     if ( ( fd < 0 ) || ( fd >= _countof( g_afcb ) ) || ( 0 == g_afcb[ fd ].n[ 0 ] ) )
