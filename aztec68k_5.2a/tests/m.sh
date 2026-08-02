@@ -18,7 +18,7 @@ str=$(tr '[a-z]' '[A-Z]' <<< $1)
 ntvdm -u -r:.. -e:PATH=C:\\BIN\\ ../BIN/C68.EXE -IC:\\INCLUDE -o $str.R $str.C
 
 # Code starts at 0x8100 so the base page is at 0x8000.
-# m68.lib is linked for floating point support in mf.bat, not here.
+# -lm drags in floating point code. if you don't need that, leave it out
 
 ntvdm -u -r:.. -e:CLIB68=C:\\LIB\\LIBS\;PATH=C:\\BIN\\ ../BIN/LN68.EXE +C 8100 -t CPM.R AZCPM.R AZMALLOC.R $str.R -lm -lC68K -T -O $str.68K
 
