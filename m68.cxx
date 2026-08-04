@@ -6913,6 +6913,28 @@ bool cpm_read_console( char * buf, size_t bufsize, uint8_t & out_len )
                 out_len--;
             }
         }
+        else if ( 0x10 == ch ) // ^p. start echoing to the printer. ignore
+            continue;
+        else if ( 0x12 == ch ) // ^r. emits a '#' then retypes the current line after a new line
+        {
+            printf( "#\n" );
+            for ( char i = 0; i < out_len; i++ )
+                send_character( buf[ i ] );
+            fflush( stdout );
+        }
+        else if ( 0x15 == ch ) // ^u. write '#', discard current line, and move to next line for input
+        {
+            printf( "#\n" );
+            out_len = 0;
+            fflush( stdout );
+        }
+        else if ( 0x18 == ch ) // ^x. removes all characters typed so far and starts again
+        {
+            for ( char i = 0; i < out_len; i++ )
+                printf( "\x8 \x8" );
+            out_len = 0;
+            fflush( stdout );
+        }
         else
         {
             send_character( ch );
@@ -7815,6 +7837,15 @@ void emulator_invoke_68k_trap3( m68000 & cpu ) // bios
                 send_character( ch );
                 fflush( stdout );
             }
+            break;
+        }
+        case 5: // list. Write character in c to the printer. If the printer isn't ready, wait until it is.
+        case 6: // punch / auxout. Write the character in c to the paper tape punch.
+            break;
+        case 7: // reader. read a character from the paper tape or other auxilliary device. Return in a.
+        {
+            // Wait until a chracter is ready. Return ^z if not implemented.
+            ACCESS_REG( REG_RESULT ) = map_input( 26 );
             break;
         }
         case 22: // set exception handler address

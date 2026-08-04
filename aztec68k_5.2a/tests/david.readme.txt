@@ -16,3 +16,32 @@ annoyances:
   * the C runtime routes I/O through __function names which must call _function for open/lseek/read/write/etc.
 
 
+more on the modulus bug for unsigned 16 bit ints:
+
+  Verdict: it's an Aztec C compiler code-gen bug, not an m68.exe emulator bug
+  Math check: 65533 % 65522 (unsigned) should be 11 (65533 − 65522×1). The program prints 13, which is wrong — 
+  but it's wrong for a specific, traceable reason.
+  
+  What the trace shows (m68.log around line 2798, inside _ui16_test):
+  
+  move.w 10(a6), d0      ; d0 = 0x0000fffd  (ui16A = 65533, zero-extended)
+  swap d0 / clr.w d0 / swap d0   ; idiom to force-clear the high word — the classic
+                                  ; "set up an unsigned 32/16 dividend" pattern
+  divs.w 14(a6), d0       ; <-- SIGNED divide against ui16B (0xfff2 = 65522)
+  
+  The compiler emitted DIVS.W (signed divide) instead of DIVU.W (unsigned divide) for ui16A % ui16B. 
+  On real 68000 hardware, DIVS.W treats the 16-bit divisor as signed, so 0xfff2 is read as −14, not 65522.
+  
+  Working the actual instruction that ran: dividend = 65533 (positive, since it was zero-extended), 
+  divisor = −14 (signed interpretation). Truncating-toward-zero signed division gives quotient −4680, remainder:
+  
+  65533 − (−4680 × −14) = 65533 − 65520 = 13
+  That 13 is exactly what gets stored and printed — it's the correct result of the DIVS.W instruction that was executed, 
+  just the wrong instruction for an unsigned operation. m68.exe reproduced 68000 DIVS.W semantics faithfully.
+  
+  Root cause / trigger condition: the compiler picks DIVS.W for uint16_t % uint16_t whenever the divisor's high bit is 
+  set (divisor ≥ 32768), since that's when the signed vs. unsigned misinterpretation changes the answer. 
+  With a divisor < 32768, signed and unsigned interpretation agree, which is why smaller-divisor cases in the same test 
+  file print correct values.
+  
+
